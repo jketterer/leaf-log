@@ -24,14 +24,13 @@ class TeaCard extends StatelessWidget {
           color: Colors.lightGreen,
         ),
         title: Text(thisTea.name),
-        subtitle: Row(
-          children: <Widget>[
-            Icon(Icons.star, size: 15),
-            Icon(Icons.star, size: 15),
-            Icon(Icons.star, size: 15),
-            Icon(Icons.star_half, size: 15),
-            Icon(Icons.star_border, size: 15)
-          ],
+        subtitle: Text(thisTea.vendor),
+        trailing: Text(
+          thisTea.rating.toString(),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
       )),
     );
@@ -96,6 +95,7 @@ class DetailPage extends StatelessWidget {
             children: <Widget>[
               Text("Name: ${thisTea.name}"),
               Text("Type: ${thisTea.type}"),
+              Text("Vendor: ${thisTea.vendor}"),
               Text("Rating: ${thisTea.rating}"),
               RaisedButton(
                 color: Colors.lightGreen,
@@ -114,6 +114,7 @@ class DetailPage extends StatelessWidget {
 class NewTeaPage extends StatelessWidget {
   final nameController = TextEditingController();
   final typeController = TextEditingController();
+  final vendorController = TextEditingController();
   final ratingController = TextEditingController();
 
   final headerStyle = TextStyle(
@@ -158,6 +159,16 @@ class NewTeaPage extends StatelessWidget {
                   controller: typeController,
                 )),
             Text(
+              "Vendor:",
+              style: headerStyle,
+            ),
+            Container(
+                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+                width: 200,
+                child: TextField(
+                  controller: vendorController,
+                )),
+            Text(
               "Rating:",
               style: headerStyle,
             ),
@@ -175,6 +186,7 @@ class NewTeaPage extends StatelessWidget {
                       teaModel.add(Tea.full(
                           nameController.text,
                           typeController.text,
+                          vendorController.text,
                           int.parse(ratingController.text)));
                       Navigator.pop(context);
                     },

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:scoped_model/scoped_model.dart';
+import 'package:leaf_log/models/teaModel.dart';
 import 'package:leaf_log/screens/teaPage.dart';
 import 'package:leaf_log/screens/timer.dart';
 
@@ -17,6 +19,18 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_tabTitles[_indexSelected]),
+        actions: <Widget>[
+          ScopedModelDescendant<TeaModel>(
+            builder: (context, child, teaModel) => IconButton(
+            icon: Icon(Icons.sort),
+            onPressed: () {
+              setState(() {
+                teaModel.sort();
+              });
+            },
+          ),
+          )
+        ],
       ),
       body: _tabs[_indexSelected],
       bottomNavigationBar: BottomNavigationBar(

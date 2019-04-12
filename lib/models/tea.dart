@@ -6,33 +6,33 @@ class Tea implements Comparable {
   int brewTime;
   int frequency = 0;
 
-  Tea(name, type, brand, brewTime, rating);
+  Tea(this.name, this.type, this.brand, this.brewTime, this.rating);
 
-  Tea.test(name,
-      {type = "Green", brand = "Harney and Sons", rating = 10, brewTime = 180});
+  Tea.test(this.name,
+      {this.type = "Green", this.brand = "Harney and Sons", this.brewTime = 180, this.rating = 10});
 
   void addBrewCount() {
     frequency++;
   }
 
   void setName(String newName) {
-    name = newName;
+    this.name = newName;
   }
 
   void setType(String newType) {
-    type = newType;
+    this.type = newType;
   }
 
   void setBrand(String newBrand) {
-    brand = newBrand;
+    this.brand = newBrand;
   }
 
   void setRating(int newRating) {
-    rating = newRating;
+    this.rating = newRating;
   }
 
   void setBrewTime(int newBrewTime) {
-    brewTime = newBrewTime;
+    this.brewTime = newBrewTime;
   }
 
   @override

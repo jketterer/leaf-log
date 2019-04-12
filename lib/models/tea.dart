@@ -1,13 +1,39 @@
 class Tea implements Comparable {
-  final String name;
-  final String type;
-  final String vendor;
-  final int rating;
+  String name;
+  String type;
+  String brand;
+  int rating;
+  int brewTime;
+  int frequency = 0;
 
-  Tea(this.name,
-      {this.type = "Green", this.vendor = "Harney and Sons", this.rating = 10});
+  Tea(name, type, brand, brewTime, rating);
 
-  Tea.full(this.name, this.type, this.vendor, this.rating);
+  Tea.test(name,
+      {type = "Green", brand = "Harney and Sons", rating = 10, brewTime = 180});
+
+  void addBrewCount() {
+    frequency++;
+  }
+
+  void setName(String newName) {
+    name = newName;
+  }
+
+  void setType(String newType) {
+    type = newType;
+  }
+
+  void setBrand(String newBrand) {
+    brand = newBrand;
+  }
+
+  void setRating(int newRating) {
+    rating = newRating;
+  }
+
+  void setBrewTime(int newBrewTime) {
+    brewTime = newBrewTime;
+  }
 
   @override
   int compareTo(other) {

@@ -4,9 +4,9 @@ import 'dart:collection';
 
 class TeaModel extends Model {
   final List<Tea> _teaList = [
-    Tea.full("Golden Monkey", "Black", "Harney and Sons", 9),
-    Tea.full("Ti Quan Yin", "Oolong", "Harney and Sons", 9),
-    Tea.full("Big Red Sun", "Black", "Harney and Sons", 7)
+    Tea.test("Golden Monkey"),
+    Tea.test("Ti Quan Yin"),
+    Tea.test("Big Red Sun"),
   ];
 
   UnmodifiableListView<Tea> get teaList => UnmodifiableListView(_teaList);

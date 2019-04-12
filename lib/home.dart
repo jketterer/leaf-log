@@ -24,9 +24,7 @@ class _HomePageState extends State<HomePage> {
             builder: (context, child, teaModel) => IconButton(
             icon: Icon(Icons.sort),
             onPressed: () {
-              setState(() {
-                teaModel.sort();
-              });
+              teaModel.sort();
             },
           ),
           )

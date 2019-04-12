@@ -24,7 +24,7 @@ class TeaCard extends StatelessWidget {
           color: Colors.lightGreen,
         ),
         title: Text(thisTea.name),
-        subtitle: Text(thisTea.vendor),
+        subtitle: Text(thisTea.brand),
         trailing: Text(
           thisTea.rating.toString(),
           style: TextStyle(
@@ -95,7 +95,7 @@ class DetailPage extends StatelessWidget {
             children: <Widget>[
               Text("Name: ${thisTea.name}"),
               Text("Type: ${thisTea.type}"),
-              Text("Vendor: ${thisTea.vendor}"),
+              Text("brand: ${thisTea.brand}"),
               Text("Rating: ${thisTea.rating}"),
               RaisedButton(
                 color: Colors.lightGreen,
@@ -114,11 +114,12 @@ class DetailPage extends StatelessWidget {
 class NewTeaPage extends StatelessWidget {
   final nameController = TextEditingController();
   final typeController = TextEditingController();
-  final vendorController = TextEditingController();
+  final brandController = TextEditingController();
+  final timeController = TextEditingController();
   final ratingController = TextEditingController();
 
   final headerStyle = TextStyle(
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: FontWeight.bold,
   );
 
@@ -159,14 +160,24 @@ class NewTeaPage extends StatelessWidget {
                   controller: typeController,
                 )),
             Text(
-              "Vendor:",
+              "Brand:",
               style: headerStyle,
             ),
             Container(
                 padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
                 width: 200,
                 child: TextField(
-                  controller: vendorController,
+                  controller: brandController,
+                )),
+            Text(
+              "Brew Time:",
+              style: headerStyle,
+            ),
+            Container(
+                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+                width: 200,
+                child: TextField(
+                  controller: timeController,
                 )),
             Text(
               "Rating:",
@@ -183,10 +194,11 @@ class NewTeaPage extends StatelessWidget {
                     color: Colors.lightGreen,
                     child: Text("Finish"),
                     onPressed: () {
-                      teaModel.add(Tea.full(
+                      teaModel.add(Tea(
                           nameController.text,
                           typeController.text,
-                          vendorController.text,
+                          brandController.text,
+                          int.parse(timeController.text),
                           int.parse(ratingController.text)));
                       Navigator.pop(context);
                     },

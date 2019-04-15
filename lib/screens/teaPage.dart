@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leaf_log/models/tea.dart';
 import 'package:leaf_log/models/teaModel.dart';
 import 'package:scoped_model/scoped_model.dart';
@@ -20,7 +21,7 @@ class TeaCard extends StatelessWidget {
       child: Card(
           child: ListTile(
         leading: Icon(
-          Icons.local_cafe,
+          FontAwesomeIcons.leaf,
           color: Colors.lightGreen,
         ),
         title: Text(thisTea.name),
@@ -70,10 +71,10 @@ class TeaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScopedModelDescendant<TeaModel>(
-        builder: (context, child, teaModel) => TeaView(
-              teaList: teaModel.teaList,
-            ),
-      );
+      builder: (context, child, teaModel) => TeaView(
+            teaList: teaModel.teaList,
+          ),
+    );
   }
 }
 
@@ -107,107 +108,5 @@ class DetailPage extends StatelessWidget {
             ],
           ),
         ));
-  }
-}
-
-// TODO Design attractive new tea page
-class NewTeaPage extends StatelessWidget {
-  final nameController = TextEditingController();
-  final typeController = TextEditingController();
-  final brandController = TextEditingController();
-  final timeController = TextEditingController();
-  final ratingController = TextEditingController();
-
-  final headerStyle = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.bold,
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Add New Tea"),
-      ),
-      body: Container(
-        padding: EdgeInsets.all(20),
-        child: ListView(
-          children: <Widget>[Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.fromLTRB(0, 16, 0, 0),
-              child: Text(
-                "Tea Name:",
-                style: headerStyle,
-              ),
-            ),
-            Container(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                width: 200,
-                child: TextField(
-                  controller: nameController,
-                )),
-            Text(
-              "Type:",
-              style: headerStyle,
-            ),
-            Container(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                width: 200,
-                child: TextField(
-                  controller: typeController,
-                )),
-            Text(
-              "Brand:",
-              style: headerStyle,
-            ),
-            Container(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                width: 200,
-                child: TextField(
-                  controller: brandController,
-                )),
-            Text(
-              "Brew Time:",
-              style: headerStyle,
-            ),
-            Container(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                width: 200,
-                child: TextField(
-                  controller: timeController,
-                )),
-            Text(
-              "Rating:",
-              style: headerStyle,
-            ),
-            Container(
-                padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-                width: 200,
-                child: TextField(
-                  controller: ratingController,
-                )),
-            ScopedModelDescendant<TeaModel>(
-              builder: (context, child, teaModel) => RaisedButton(
-                    color: Colors.lightGreen,
-                    child: Text("Finish"),
-                    onPressed: () {
-                      teaModel.add(Tea(
-                          nameController.text,
-                          typeController.text,
-                          brandController.text,
-                          int.parse(timeController.text),
-                          int.parse(ratingController.text)));
-                      Navigator.pop(context);
-                    },
-                  ),
-            )
-          ],
-        ),],
-        )
-      ),
-    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:leaf_log/models/teaModel.dart';
 import 'package:leaf_log/screens/teaPage.dart';
+import 'package:leaf_log/screens/newTea.dart';
 import 'package:leaf_log/screens/timer.dart';
 
 class HomePage extends StatefulWidget {

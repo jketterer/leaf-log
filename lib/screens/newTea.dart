@@ -16,6 +16,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
   final _typeController = TextEditingController();
   final _brandController = TextEditingController();
   final _timeController = TextEditingController();
+  final _tempController = TextEditingController();
   final _ratingController = TextEditingController();
 
   final headerStyle = TextStyle(
@@ -75,6 +76,16 @@ class _NewTeaPageState extends State<NewTeaPage> {
                   },
                 ),
                 TextFormField(
+                  controller: _tempController,
+                  decoration: InputDecoration(labelText: "Brew Time"),
+                  inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return "Please enter some text.";
+                    }
+                  },
+                ),
+                TextFormField(
                   controller: _ratingController,
                   decoration: InputDecoration(labelText: "Rating"),
                   inputFormatters: [WhitelistingTextInputFormatter.digitsOnly],
@@ -95,6 +106,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                                 _typeController.text,
                                 _brandController.text,
                                 int.parse(_timeController.text),
+                                int.parse(_tempController.text),
                                 int.parse(_ratingController.text)));
                             Navigator.pop(context);
                           }

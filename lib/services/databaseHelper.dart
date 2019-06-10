@@ -64,6 +64,12 @@ class DatabaseHelper {
     return id;
   }
 
+  Future<int> deleteTea(int id) async {
+    Database db = await database;
+
+    return await db.delete(teaTable, where: "id = ?", whereArgs: [id]);
+  }
+
   Future<Tea> fetchTea(int id) async {
     Database db = await database;
 
@@ -79,12 +85,12 @@ class DatabaseHelper {
 
     List<Map> results = await db.query(teaTable);
 
-    List<Tea> teaList = List();
+    List<Tea> _teaList = List();
     results.forEach((result) {
       Tea tea = Tea.fromMap(result);
-      teaList.add(tea);
+      _teaList.add(tea);
     });
 
-    return teaList;
+    return _teaList;
   }
 }

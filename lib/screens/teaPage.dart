@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leaf_log/models/tea.dart';
-import 'package:leaf_log/models/teaModel.dart';
 import 'package:leaf_log/services/databaseHelper.dart';
 import 'package:leaf_log/services/timerService.dart';
-import 'package:scoped_model/scoped_model.dart';
 
 class TeaCard extends StatelessWidget {
   final Tea thisTea;
@@ -71,16 +69,21 @@ class TeaView extends StatelessWidget {
 /* Main page */
 class TeaPage extends StatelessWidget {
   final Function callParentFunction;
+  final DatabaseHelper helper = DatabaseHelper.instance;
 
   TeaPage({@required this.callParentFunction});
 
   @override
   Widget build(BuildContext context) {
-    return ScopedModelDescendant<TeaModel>(
-      builder: (context, child, teaModel) => TeaView(
-            teaList: teaModel.teaList,
-            callParentFunction: callParentFunction,
-          ),
+    return FutureBuilder<List<Tea>>(
+      future: helper.getTeaList(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) print(snapshot.error);
+        var data = snapshot.data;
+        return snapshot.hasData
+            ? new TeaView(teaList: data, callParentFunction: callParentFunction,)
+            : new Center(child: new CircularProgressIndicator());
+      },
     );
   }
 }
@@ -167,6 +170,15 @@ class DetailPage extends StatelessWidget {
                   timerService.reset();
                   timerService.start(Duration(seconds: thisTea.brewTime));
                   timerService.currentTea = thisTea;
+                  Navigator.pop(context);
+                },
+              ),
+              RaisedButton(
+                color: Colors.lightGreen,
+                child: Text("Delete"),
+                onPressed: () {
+                  DatabaseHelper helper = DatabaseHelper.instance;
+                  helper.deleteTea(thisTea.id);
                   Navigator.pop(context);
                 },
               ),

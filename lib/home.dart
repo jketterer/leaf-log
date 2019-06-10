@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:scoped_model/scoped_model.dart';
 import 'package:flutter_sidekick/flutter_sidekick.dart';
-import 'package:leaf_log/models/teaModel.dart';
 import 'package:leaf_log/services/timerService.dart';
 import 'package:leaf_log/screens/teaPage.dart';
 import 'package:leaf_log/screens/newTea.dart';
@@ -41,13 +39,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 )
               : Container(),
           _indexSelected == 0
-              ? ScopedModelDescendant<TeaModel>(
-                  builder: (context, child, teaModel) => IconButton(
-                        icon: Icon(Icons.sort),
-                        onPressed: () {
-                          teaModel.sort();
-                        },
-                      ),
+              ? IconButton(
+                  icon: Icon(Icons.sort),
+                  onPressed: () {
+                    //teaModel.sort();
+                  },
                 )
               : Container(),
           // IconButton(

@@ -19,13 +19,15 @@ class _TimerPageState extends State<TimerPage> {
           children: <Widget>[
             Container(
               child: TimeDisplay.styled(
-                timerService: timerService,
-                style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold),
-              ),
+                  timerService: timerService,
+                  style: TextStyle(
+                    fontSize: 80,
+                    fontWeight: FontWeight.bold,
+                  )),
             ),
             timerService.currentTea != null
-              ? Text("Brewing: ${timerService.currentTea.name}")
-              : Text(""),
+                ? Text("Brewing: ${timerService.currentTea.name}")
+                : Text(""),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
@@ -35,21 +37,27 @@ class _TimerPageState extends State<TimerPage> {
                   shape: CircleBorder(),
                   padding: EdgeInsets.all(25),
                   elevation: 3,
-                  onPressed: () {timerService.addTime(10);},
+                  onPressed: () {
+                    timerService.addTime(10);
+                  },
                 ),
                 RaisedButton(
                   child: Text("+30s"),
                   color: Colors.lightGreen,
                   shape: CircleBorder(),
                   padding: EdgeInsets.all(25),
-                  onPressed: () {timerService.addTime(30);},
+                  onPressed: () {
+                    timerService.addTime(30);
+                  },
                 ),
                 RaisedButton(
                   child: Text("+60s"),
                   color: Colors.lightGreen,
                   shape: CircleBorder(),
                   padding: EdgeInsets.all(25),
-                  onPressed: () {timerService.addTime(60);},
+                  onPressed: () {
+                    timerService.addTime(60);
+                  },
                 )
               ],
             ),
@@ -59,12 +67,16 @@ class _TimerPageState extends State<TimerPage> {
                 RaisedButton(
                   child: Text("Reset"),
                   color: Colors.lightGreen,
-                  onPressed: () {timerService.reset();},
+                  onPressed: () {
+                    timerService.reset();
+                  },
                 ),
                 RaisedButton(
                   child: Text("Start"),
                   color: Colors.lightGreen,
-                  onPressed: () {timerService.start();},
+                  onPressed: () {
+                    timerService.start();
+                  },
                 )
               ],
             ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:scoped_model/scoped_model.dart';
+import 'package:leaf_log/services/databaseHelper.dart';
 import 'package:flutter_picker/flutter_picker.dart';
-import 'package:leaf_log/models/teaModel.dart';
 import 'package:leaf_log/models/tea.dart';
 
 class NewTeaPage extends StatefulWidget {
@@ -19,6 +18,8 @@ class _NewTeaPageState extends State<NewTeaPage> {
   final _tempController = TextEditingController();
   final _ratingController = TextEditingController();
   final _notesController = TextEditingController();
+
+  DatabaseHelper helper = DatabaseHelper.instance;
 
   final headerStyle = TextStyle(
     fontSize: 16,
@@ -205,15 +206,14 @@ class _NewTeaPageState extends State<NewTeaPage> {
                   keyboardType: TextInputType.multiline,
                   maxLines: 10,
                 ),
-                ScopedModelDescendant<TeaModel>(
-                    builder: (context, child, teaModel) => Container(
+                    Container(
                           padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                           child: RaisedButton(
                             color: Colors.lightGreen,
                             child: Text("Finish"),
                             onPressed: () {
                               if (_formKey.currentState.validate()) {
-                                teaModel.add(Tea(
+                                helper.insertTea(Tea(
                                     _nameController.text,
                                     _selectedType,
                                     _brandController.text,
@@ -225,7 +225,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                               }
                             },
                           ),
-                        ))
+                        )
               ],
             ),
           )),

@@ -3,15 +3,19 @@ import 'package:leaf_log/models/tea.dart';
 import 'dart:collection';
 
 class TeaModel extends Model {
-  final List<Tea> _teaList = [
-    Tea.test("Golden Monkey"),
-    Tea.test("Ti Quan Yin"),
-    Tea.test("Big Red Sun"),
-  ];
 
-  UnmodifiableListView<Tea> get teaList => UnmodifiableListView(_teaList);
+  List<Tea> _teaList = [Tea("Test Tea", "Harney", "Green", 100, 90, 5, "")];
 
-  void add(Tea tea) {
+  TeaModel() {
+    //_teaList.add(Tea("Test Tea", "Harney", "Green", 5, 90, 100, ""));
+  }
+
+  UnmodifiableListView<Tea> get teaList {
+    //updateTeaList();
+    return UnmodifiableListView(_teaList);
+  }
+
+  add(Tea tea) async{
     _teaList.add(tea);
     notifyListeners();
   }

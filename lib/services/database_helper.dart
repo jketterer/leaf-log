@@ -6,9 +6,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:leaf_log/models/tea.dart';
 
 class DatabaseHelper {
+  // Name of actual file on device
   static final _databaseName = "Tea_Database.db";
+  // Version should increment when schema changes
   static final _databaseVersion = 1;
 
+  // Name of table in database
   final String teaTable = 'teas';
 
   // make this a singleton class
@@ -29,11 +32,11 @@ class DatabaseHelper {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, _databaseName);
     // Open the database
-    //await deleteDatabase(path);
     return await openDatabase(path,
         version: _databaseVersion, onCreate: _create);
   }
 
+  // Creates database with an SQL string
   Future _create(Database db, int version) async {
     await db.execute("""
             CREATE TABLE $teaTable (
@@ -49,6 +52,7 @@ class DatabaseHelper {
           """);
   }
 
+  // Inserts a tea into the database and returns the row id
   Future<int> insertTea(Tea tea) async {
     Database db = await database;
 
@@ -57,19 +61,21 @@ class DatabaseHelper {
     return id;
   }
 
+  // Updates a tea entry in the database and returns the row id
   Future<int> updateTea(Tea tea) async {
     Database db = await database;
 
-    int id = await db.update(teaTable, tea.toMap(), where: "id = ?", whereArgs: [tea.id]);
-    return id;
+    return await db.update(teaTable, tea.toMap(), where: "id = ?", whereArgs: [tea.id]);
   }
 
+  // Deletes tea from the database and returns the row id
   Future<int> deleteTea(int id) async {
     Database db = await database;
 
     return await db.delete(teaTable, where: "id = ?", whereArgs: [id]);
   }
 
+  // Queries the database and returns a tea from its row id
   Future<Tea> fetchTea(int id) async {
     Database db = await database;
 
@@ -80,6 +86,7 @@ class DatabaseHelper {
     return tea;
   }
 
+  // Queries the database and returns a list of all teas within the database
   Future<List<Tea>> getTeaList() async {
     Database db = await database;
 

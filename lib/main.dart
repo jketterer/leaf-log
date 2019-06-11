@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/home.dart';
 import 'package:leaf_log/screens/timer.dart';
-import 'package:leaf_log/services/timerService.dart';
+import 'package:leaf_log/services/timer_service.dart';
 
 // Main function, calls runApp to start the app
 void main() {

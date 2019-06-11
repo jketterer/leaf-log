@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sidekick/flutter_sidekick.dart';
-import 'package:leaf_log/services/timerService.dart';
-import 'package:leaf_log/screens/teaPage.dart';
-import 'package:leaf_log/screens/newTea.dart';
+import 'package:leaf_log/services/timer_service.dart';
+import 'package:leaf_log/screens/tea_widgets.dart';
+import 'package:leaf_log/screens/tea_screens.dart';
 import 'package:leaf_log/screens/timer.dart';
 
 // HomePage is actually the frame that is present in most of the app
@@ -16,12 +16,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _indexSelected = 0;
   final List<String> _tabTitles = ["My Teas", "Tea Timer"];
 
+  // Controller for the persistent timer display
   SidekickController controller;
-
+  // Style for the persistent timer display
   TextStyle timerStyle = TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
 
   void initState() {
     super.initState();
+    // Inits the sidekick controller
     controller =
         SidekickController(vsync: this, duration: Duration(seconds: 1));
   }
@@ -30,8 +32,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // Title is set based on selected page
         title: Text(_tabTitles[_indexSelected]),
         actions: <Widget>[
+          // Display search and sort icons only if user is on tea list page
           _indexSelected == 0
               ? IconButton(
                   icon: Icon(Icons.search),
@@ -74,6 +78,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ],
       ),
 
+      // Displays two icons in the bottom navigation bar; home and timer
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.book), title: Text("Home")),
@@ -99,6 +104,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // Function actively changes _indexSelected when user changes tabs
   void _changeTab(index) {
     setState(() {
       _indexSelected = index;

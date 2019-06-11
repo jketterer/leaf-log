@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:leaf_log/services/databaseHelper.dart';
+import 'package:leaf_log/services/database_helper.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:leaf_log/models/tea.dart';
+import 'package:leaf_log/services/timer_service.dart';
 
 class NewTeaPage extends StatefulWidget {
   @override
@@ -12,6 +13,7 @@ class NewTeaPage extends StatefulWidget {
 class _NewTeaPageState extends State<NewTeaPage> {
   final _formKey = GlobalKey<FormState>();
 
+  // Controllers for the text entry fields
   final _nameController = TextEditingController();
   final _brandController = TextEditingController();
   final _timeController = TextEditingController();
@@ -19,13 +21,16 @@ class _NewTeaPageState extends State<NewTeaPage> {
   final _ratingController = TextEditingController();
   final _notesController = TextEditingController();
 
+  // Provides access to the sqflite database
   DatabaseHelper helper = DatabaseHelper.instance;
 
+  // Textstlye for headers
   final headerStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
   );
 
+  // List of tea types to be chosen from
   final List<String> _typeList = [
     'Green',
     'Black',
@@ -38,6 +43,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
 
   int _minutes, _seconds, _rating;
 
+  // Function shows a number picker for brew time
   void _showTimePicker(BuildContext context) {
     new Picker(
         adapter: NumberPickerAdapter(data: [
@@ -68,6 +74,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
         }).showDialog(context);
   }
 
+  // Function shows a number picker for rating
   void _showRatingPicker(BuildContext context) {
     new Picker(
         adapter: NumberPickerAdapter(data: [
@@ -229,6 +236,122 @@ class _NewTeaPageState extends State<NewTeaPage> {
               ],
             ),
           )),
+    );
+  }
+}
+
+// TODO Design attractive detail page
+// Page that displays details about tea when TeaCard is tapped
+class DetailPage extends StatelessWidget {
+  final Tea thisTea;
+  final Function callParentFunction;
+
+  DetailPage(
+      {Key key, @required this.thisTea, @required this.callParentFunction})
+      : super(key: key);
+
+  final TextStyle headerStyle =
+      TextStyle(fontSize: 26, fontWeight: FontWeight.bold);
+
+  final TextStyle labelStyle = TextStyle(
+    fontSize: 22,
+  );
+
+  final TextStyle timerStyle =
+      TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
+
+  @override
+  Widget build(BuildContext context) {
+    TimerService timerService = TimerService.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Details"),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: Stack(
+        children: <Widget>[
+          Column(
+            //mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.fromLTRB(0, 15, 0, 15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Text(
+                          "Name: ",
+                          style: headerStyle,
+                        ),
+                        Text(
+                          "${thisTea.name}",
+                          style: labelStyle,
+                        )
+                      ],
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Text(
+                          "Type: ",
+                          style: headerStyle,
+                        ),
+                        Text(
+                          "${thisTea.type}",
+                          style: labelStyle,
+                        )
+                      ],
+                    )
+                  ],
+                ),
+              ),
+              Text("Brand: ${thisTea.brand}"),
+              Text("Rating: ${thisTea.rating}"),
+              Text("Notes: \n\n${thisTea.notes}"),
+              RaisedButton(
+                color: Colors.lightGreen,
+                child: Text("Start Brewing"),
+                onPressed: () {
+                  callParentFunction(1);
+                  timerService.reset();
+                  timerService.start(Duration(seconds: thisTea.brewTime));
+                  timerService.currentTea = thisTea;
+                  Navigator.pop(context);
+                },
+              ),
+              RaisedButton(
+                color: Colors.lightGreen,
+                child: Text("Delete"),
+                onPressed: () {
+                  DatabaseHelper helper = DatabaseHelper.instance;
+                  helper.deleteTea(thisTea.id);
+                  Navigator.pop(context);
+                },
+              ),
+              RaisedButton(
+                color: Colors.lightGreen,
+                child: Text("Back"),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          ),
+          Hero(
+            tag: "FloatingTimer",
+            child: FloatingTimer(
+              style: timerStyle,
+            ),
+          )
+        ],
+      ),
     );
   }
 }

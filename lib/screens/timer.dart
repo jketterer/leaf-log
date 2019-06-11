@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:leaf_log/services/timerService.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:leaf_log/services/timer_service.dart';
 
 class TimerPage extends StatefulWidget {
   @override
@@ -10,9 +9,16 @@ class TimerPage extends StatefulWidget {
 class _TimerPageState extends State<TimerPage> {
   @override
   Widget build(BuildContext context) {
+
+    // Get access to app-wide timer service
     TimerService timerService = TimerService.of(context);
+
+    // Animated builder allows the timer to update on time change
     return AnimatedBuilder(
+
+      // Listen to timerService for updates
       animation: timerService,
+      
       builder: (context, child) {
         return Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

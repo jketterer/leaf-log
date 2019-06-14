@@ -65,7 +65,8 @@ class DatabaseHelper {
   Future<int> updateTea(Tea tea) async {
     Database db = await database;
 
-    return await db.update(teaTable, tea.toMap(), where: "id = ?", whereArgs: [tea.id]);
+    return await db
+        .update(teaTable, tea.toMap(), where: "id = ?", whereArgs: [tea.id]);
   }
 
   // Deletes tea from the database and returns the row id
@@ -79,11 +80,25 @@ class DatabaseHelper {
   Future<Tea> fetchTea(int id) async {
     Database db = await database;
 
-    List<Map> results = await db
-        .query(teaTable, columns: Tea.columns, where: "id = ?", whereArgs: [id]);
+    List<Map> results = await db.query(teaTable,
+        columns: Tea.columns, where: "id = ?", whereArgs: [id]);
 
     Tea tea = Tea.fromMap(results[0]);
     return tea;
+  }
+
+  Future<List<Tea>> searchTeaList(String query) async {
+    Database db = await database;
+
+    List<Map> results = await db.rawQuery("SELECT * FROM $teaTable WHERE name LIKE '%$query%'");
+
+    List<Tea> _teaList = List();
+    results.forEach((result) {
+      Tea tea = Tea.fromMap(result);
+      _teaList.add(tea);
+    });
+
+    return _teaList;
   }
 
   // Queries the database and returns a list of all teas within the database

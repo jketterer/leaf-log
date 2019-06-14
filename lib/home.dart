@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sidekick/flutter_sidekick.dart';
+import 'package:leaf_log/services/search_delegate.dart';
 import 'package:leaf_log/services/timer_service.dart';
 import 'package:leaf_log/screens/tea_widgets.dart';
 import 'package:leaf_log/screens/tea_screens.dart';
@@ -39,7 +40,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _indexSelected == 0
               ? IconButton(
                   icon: Icon(Icons.search),
-                  onPressed: () {},
+                  onPressed: () {
+                    showSearch(context: context, delegate: CustomSearchDelegate());
+                  },
                 )
               : Container(),
           _indexSelected == 0

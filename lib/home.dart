@@ -41,7 +41,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ? IconButton(
                   icon: Icon(Icons.search),
                   onPressed: () {
-                    showSearch(context: context, delegate: CustomSearchDelegate());
+                    showSearch(
+                        context: context,
+                        delegate: CustomSearchDelegate(
+                            callParentFunction: _changeTab));
                   },
                 )
               : Container(),

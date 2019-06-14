@@ -45,7 +45,7 @@ class TeaView extends StatelessWidget {
           itemCount: teaList.length,
           itemBuilder: (context, index) {
             return TeaCard(
-              thisTea: teaList[index],
+              tea: teaList[index],
               callParentFunction: callParentFunction,
             );
           }),
@@ -55,21 +55,25 @@ class TeaView extends StatelessWidget {
 
 // Custom card to be displayed in a TeaView
 class TeaCard extends StatelessWidget {
-  final Tea thisTea;
+  final Tea tea;
   final Function callParentFunction;
+  final Function onPressed;
 
-  TeaCard({Key key, @required this.thisTea, @required this.callParentFunction})
+  TeaCard({Key key, @required this.tea, @required this.callParentFunction, this.onPressed})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        if (onPressed != null) {
+          onPressed();
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
               builder: (context) => DetailPage(
-                    thisTea: thisTea,
+                    thisTea: tea,
                     callParentFunction: callParentFunction,
                   )),
         );
@@ -80,10 +84,10 @@ class TeaCard extends StatelessWidget {
           FontAwesomeIcons.leaf,
           color: Colors.lightGreen,
         ),
-        title: Text(thisTea.name),
-        subtitle: Text(thisTea.brand),
+        title: Text(tea.name),
+        subtitle: Text(tea.brand),
         trailing: Text(
-          thisTea.rating.toString(),
+          tea.rating.toString(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,

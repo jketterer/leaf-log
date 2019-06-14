@@ -5,10 +5,11 @@ import 'package:leaf_log/screens/tea_widgets.dart';
 import 'package:leaf_log/services/database_helper.dart';
 
 class CustomSearchDelegate extends SearchDelegate {
-  List<Tea> teaList;
   DatabaseHelper helper = DatabaseHelper.instance;
 
-  CustomSearchDelegate();
+  Function callParentFunction;
+
+  CustomSearchDelegate({this.callParentFunction});
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -58,7 +59,12 @@ class CustomSearchDelegate extends SearchDelegate {
             ? new ListView.builder(
                 itemCount: list.length,
                 itemBuilder: (BuildContext context, int index) {
-                  return new TeaCard(thisTea: list[index],);
+                  return new TeaCard(
+                      tea: list[index],
+                      callParentFunction: callParentFunction,
+                      onPressed: () {
+                        close(context, list[index]);
+                      });
                 },
               )
             : new Center(child: new CircularProgressIndicator());

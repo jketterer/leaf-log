@@ -62,10 +62,10 @@ class TeaCard extends StatelessWidget {
   final Map<String, Color> _typeColors = {
     "Green": Colors.lightGreen,
     "Black": Colors.brown[400],
-    "Oolong": Colors.yellow[300],
+    "Oolong": Colors.lime[500],
     "White": Colors.grey,
     "Herbal": Colors.pink[300],
-    "Other": Colors.blueGrey
+    "Other": Colors.cyan[200]
   };
 
   TeaCard({Key key, @required this.tea, @required this.callParentFunction, this.onPressed})

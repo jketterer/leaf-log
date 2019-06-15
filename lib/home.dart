@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sidekick/flutter_sidekick.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:leaf_log/services/search_delegate.dart';
 import 'package:leaf_log/services/timer_service.dart';
 import 'package:leaf_log/screens/tea_widgets.dart';
@@ -41,6 +42,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ? IconButton(
                   icon: Icon(Icons.search),
                   onPressed: () {
+                    // Opens a search page with functions specified by CustomSearchDelegate
                     showSearch(
                         context: context,
                         delegate: CustomSearchDelegate(
@@ -49,12 +51,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 )
               : Container(),
           _indexSelected == 0
-              ? IconButton(
-                  icon: Icon(Icons.sort),
-                  onPressed: () {
-                    //teaModel.sort();
-                  },
-                )
+              // Displays sort button
+              ? PopupMenuButton(
+                onSelected: (result) {
+                  setState(() {
+                    _setSortMethod(result);
+                  });
+                },
+                icon: Icon(Icons.sort),
+                itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                  const PopupMenuItem(
+                    value: "rating",
+                    child: Text("Sort by rating"),
+                  ),
+                  const PopupMenuItem(
+                    value: "type",
+                    child: Text("Sort by type"),
+                  )
+                ],
+              )
               : Container(),
           // IconButton(
           //   icon: Icon(Icons.settings),
@@ -114,6 +129,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _changeTab(index) {
     setState(() {
       _indexSelected = index;
+    });
+  }
+
+  // Sets shared preferences key to passed string
+  _setSortMethod(String sortMethod) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      prefs.setString("sortMethod", sortMethod);
     });
   }
 }

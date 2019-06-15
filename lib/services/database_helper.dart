@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:leaf_log/models/tea.dart';
 
 class DatabaseHelper {
@@ -87,6 +88,7 @@ class DatabaseHelper {
     return tea;
   }
 
+  // Searches tea list for any tea with a name containing query and returns them
   Future<List<Tea>> searchTeaList(String query) async {
     Database db = await database;
 
@@ -113,6 +115,51 @@ class DatabaseHelper {
       _teaList.add(tea);
     });
 
+    // Get sort method from shared preferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String sortMethod = prefs.get("sortMethod" ?? "");
+
+    // Sort tea list based on desired sort method
+    if (sortMethod != "") {
+      if (sortMethod == "type") {
+        _teaList = sortByType(_teaList);
+      } else if (sortMethod == "rating") {
+        _teaList = sortByRating(_teaList);
+      }
+    }
+
     return _teaList;
+  }
+
+  // Returns a list of all teas sorted by tea type
+  List<Tea> sortByType(List<Tea> teaList) {
+    List<Tea> returnList = List<Tea>();
+
+    List<String> types = ["Green", "Black", "Oolong", "White", "Herbal", "Other"];
+
+    types.forEach((type) {
+      teaList.forEach((tea) {
+        if (tea.type == type) {
+          returnList.add(tea);
+        }
+      });
+    });
+
+    return returnList;
+  }
+
+  // Returns a list of all teas sorted by tea rating
+  List<Tea> sortByRating(List<Tea> teaList) {
+    List<Tea> returnList = List<Tea>();
+
+    for (int i = 10; i > 0; i--) {
+      teaList.forEach((tea) {
+        if (tea.rating == i) {
+          returnList.add(tea);
+        }
+      });
+    }
+
+    return returnList;
   }
 }

@@ -59,6 +59,15 @@ class TeaCard extends StatelessWidget {
   final Function callParentFunction;
   final Function onPressed;
 
+  final Map<String, Color> _typeColors = {
+    "Green": Colors.lightGreen,
+    "Black": Colors.brown[400],
+    "Oolong": Colors.yellow[300],
+    "White": Colors.grey,
+    "Herbal": Colors.pink[300],
+    "Other": Colors.blueGrey
+  };
+
   TeaCard({Key key, @required this.tea, @required this.callParentFunction, this.onPressed})
       : super(key: key);
 
@@ -82,7 +91,7 @@ class TeaCard extends StatelessWidget {
           child: ListTile(
         leading: Icon(
           FontAwesomeIcons.leaf,
-          color: Colors.lightGreen,
+          color: _typeColors[tea.type],
         ),
         title: Text(tea.name),
         subtitle: Text(tea.brand),

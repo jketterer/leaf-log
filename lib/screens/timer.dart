@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_sidekick/flutter_sidekick.dart';
 import 'package:leaf_log/services/timer_service.dart';
 
 class TimerPage extends StatefulWidget {
@@ -13,6 +12,9 @@ class _TimerPageState extends State<TimerPage> with TickerProviderStateMixin {
     // Get access to app-wide timer service
     TimerService timerService = TimerService.of(context);
 
+    TextStyle brewStyle = TextStyle(
+        fontSize: 24, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic);
+
     // Animated builder allows the timer to update on time change
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -21,28 +23,32 @@ class _TimerPageState extends State<TimerPage> with TickerProviderStateMixin {
             // Listen to timerService for updates
             animation: timerService,
             builder: (context, child) {
-              return Card(
-                  elevation: 8,
-                  color: Colors.lightGreen,
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(35, 10, 35, 10),
-                    child: TimeDisplay.styled(
-                        timerService: timerService,
-                        style: TextStyle(
-                          fontSize: 80,
-                          fontWeight: FontWeight.bold,
-                        )),
-                  ));
+              return Column(
+                children: <Widget>[
+                  Card(
+                      elevation: 8,
+                      color: Colors.lightGreen,
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(35, 10, 35, 10),
+                        child: TimeDisplay.styled(
+                            timerService: timerService,
+                            style: TextStyle(
+                              fontSize: 80,
+                              fontWeight: FontWeight.bold,
+                            )),
+                      )),
+                ],
+              );
             }),
-        timerService.currentTea != null
-            ? Text(
-                "Brewing: ${timerService.currentTea.name}",
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    fontStyle: FontStyle.italic),
-              )
-            : Text(""),
+        AnimatedBuilder(
+          animation: timerService,
+          builder: (context, child) {
+            return timerService.currentTea != null
+                ? Text("Brewing: ${timerService.currentTea.name}",
+                    style: brewStyle)
+                : Text("", style: brewStyle);
+          },
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
@@ -113,10 +119,32 @@ class _TimerButtonRowState extends State<TimerButtonRow>
     resetButtonAnimation =
         Tween<Offset>(begin: Offset.zero, end: Offset(0.2, 0.0))
             .animate(controller);
+
+    // Wait for animation to finish before making start button visible
+    stopButtonAnimation.addStatusListener((AnimationStatus status) {
+      if (status == AnimationStatus.dismissed) {
+        setState(() {
+          isTimerRunning = false;
+          isTimerPaused = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    isTimerRunning = TimerService.of(context).isRunning();
+
+    if (isTimerRunning) {
+      controller.forward();
+    }
+
     return Stack(
       children: <Widget>[
         SlideTransition(
@@ -159,13 +187,13 @@ class _TimerButtonRowState extends State<TimerButtonRow>
   _startButtonPressed() {
     // If there is a time set, start timer
     if (TimerService.of(context).currentDuration != Duration.zero) {
+      // Tell timer to start
+      TimerService.of(context).start();
+
       setState(() {
         isTimerRunning = true;
         isTimerPaused = false;
       });
-
-      // Tell timer to start
-      TimerService.of(context).start();
 
       // Animate buttons
       controller.forward();
@@ -178,6 +206,7 @@ class _TimerButtonRowState extends State<TimerButtonRow>
     if (!isTimerPaused) {
       // If not, pause the timer
       TimerService.of(context).stop();
+
       setState(() {
         isTimerPaused = true;
       });
@@ -197,10 +226,5 @@ class _TimerButtonRowState extends State<TimerButtonRow>
 
     // Animate buttons
     controller.reverse();
-
-    setState(() {
-      isTimerRunning = false;
-      isTimerPaused = false;
-    });
   }
 }

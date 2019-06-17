@@ -8,19 +8,6 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> with TickerProviderStateMixin {
-// Controller for animated buttons
-  AnimationController controller;
-
-  bool isTimerRunning = false;
-  bool isTimerPaused = false;
-
-  void initState() {
-    super.initState();
-    // Inits the sidekick controller
-    controller =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 500));
-  }
-
   @override
   Widget build(BuildContext context) {
     // Get access to app-wide timer service
@@ -88,76 +75,132 @@ class _TimerPageState extends State<TimerPage> with TickerProviderStateMixin {
               onPressed: () {
                 timerService.addTime(60);
               },
-            )
+            ),
           ],
         ),
-        AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            return Stack(
-              //mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Positioned(
-                  left: 80,
-                  child: Sidekick(
-                    tag: "Stop",
-                    child: isTimerRunning
-                        ? RaisedButton(
-                            child: Text("Stop"),
-                            color: Colors.lightGreen,
-                            elevation: 8,
-                            onPressed: () {
-                              timerService.stop();
-                            },
-                          )
-                        : Container(),
-                  ),
-                ),
-                Center(
-                  child: Sidekick(
-                    tag: "Start",
-                    targetTag: "Stop",
-                    child: RaisedButton(
-                        child: Text("Start"),
-                        color: Colors.lightGreen,
-                        elevation: 8,
-                        onPressed: !isTimerRunning && !isTimerPaused
-                            ? _startButtonPressed
-                            : null),
-                  ),
-                ),
-                Positioned(
-                  left: 280,
-                  child: Sidekick(
-                    tag: "Reset",
-                    child: isTimerRunning
-                        ? RaisedButton(
-                            child: Text("Reset"),
-                            color: Colors.lightGreen,
-                            elevation: 8,
-                            onPressed: () {
-                              _resetButtonPressed();
-                            },
-                          )
-                        : Container(),
-                  ),
-                ),
-              ],
-            );
-          },
+        TimerButtonRow()
+      ],
+    );
+  }
+}
+
+class TimerButtonRow extends StatefulWidget {
+  @override
+  _TimerButtonRowState createState() => _TimerButtonRowState();
+}
+
+class _TimerButtonRowState extends State<TimerButtonRow>
+    with SingleTickerProviderStateMixin {
+  // Controller for animated buttons
+  AnimationController controller;
+  // Separate animations for buttons
+  Animation<Offset> stopButtonAnimation, resetButtonAnimation;
+
+  // Flags to help us determine state of time
+  bool isTimerRunning = false;
+  bool isTimerPaused = false;
+
+  void initState() {
+    super.initState();
+    // Inits the animation controller
+    controller =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 200));
+
+    // Creates the button animations
+    stopButtonAnimation =
+        Tween<Offset>(begin: Offset.zero, end: Offset(-0.2, 0.0))
+            .animate(controller);
+    resetButtonAnimation =
+        Tween<Offset>(begin: Offset.zero, end: Offset(0.2, 0.0))
+            .animate(controller);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        SlideTransition(
+          position: stopButtonAnimation,
+          child: Center(
+            child: RaisedButton(
+              // Button will change if timer is paused
+              child: isTimerPaused ? Text("Resume") : Text("Stop"),
+              color: Colors.lightGreen,
+              elevation: 8,
+              onPressed: _stopButtonPressed,
+            ),
+          ),
         ),
+        SlideTransition(
+            position: resetButtonAnimation,
+            child: Center(
+              child: RaisedButton(
+                child: Text("Reset"),
+                color: Colors.lightGreen,
+                elevation: 8,
+                onPressed: _resetButtonPressed,
+              ),
+            )),
+        // Start button is only present if timer is running
+        !isTimerRunning
+            ? Center(
+                child: RaisedButton(
+                    child: Text("Start"),
+                    color: Colors.lightGreen,
+                    elevation: 8,
+                    onPressed: _startButtonPressed),
+              )
+            : Container(),
       ],
     );
   }
 
+  // Helper function for start button
   _startButtonPressed() {
-    TimerService.of(context).start();
-    isTimerRunning = true;
+    // If there is a time set, start timer
+    if (TimerService.of(context).currentDuration != Duration.zero) {
+      setState(() {
+        isTimerRunning = true;
+        isTimerPaused = false;
+      });
+
+      // Tell timer to start
+      TimerService.of(context).start();
+
+      // Animate buttons
+      controller.forward();
+    }
   }
 
+  // Helper function for stop/resume button
+  _stopButtonPressed() {
+    // Determine whether or not timer is already paused
+    if (!isTimerPaused) {
+      // If not, pause the timer
+      TimerService.of(context).stop();
+      setState(() {
+        isTimerPaused = true;
+      });
+    } else {
+      // Otherwise resume it
+      TimerService.of(context).start();
+      setState(() {
+        isTimerPaused = false;
+      });
+    }
+  }
+
+  // Helper function for reset button
   _resetButtonPressed() {
-    TimerService.of(context).start();
-    isTimerRunning = false;
-    isTimerPaused = false;
+    // Tell timer to reset
+    TimerService.of(context).reset();
+
+    // Animate buttons
+    controller.reverse();
+
+    setState(() {
+      isTimerRunning = false;
+      isTimerPaused = false;
+    });
   }
 }

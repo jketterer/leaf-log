@@ -161,9 +161,14 @@ class _NewTeaPageState extends State<NewTeaPage> {
                       flex: 3,
                       child: GestureDetector(
                         child: AbsorbPointer(
-                          child: TextField(
+                          child: TextFormField(
                             controller: _timeController,
                             decoration: InputDecoration(labelText: "Brew Time"),
+                            validator: (value) {
+                              if (value.isEmpty) {
+                                return "Required";
+                              }
+                            },
                           ),
                         ),
                         onTap: () => _showTimePicker(context),
@@ -173,26 +178,31 @@ class _NewTeaPageState extends State<NewTeaPage> {
                     Expanded(
                       flex: 3,
                       child: TextFormField(
-                        controller: _tempController,
-                        decoration: InputDecoration(labelText: "Temperature"),
-                        inputFormatters: [
-                          WhitelistingTextInputFormatter.digitsOnly
-                        ],
-                        validator: (value) {
-                          if (value.isEmpty) {
-                            return "Please enter some text.";
-                          }
-                        },
-                      ),
+                          controller: _tempController,
+                          decoration: InputDecoration(labelText: "Temperature"),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            WhitelistingTextInputFormatter.digitsOnly
+                          ],
+                          validator: (value) {
+                            if (value.isEmpty) {
+                              return "Required";
+                            }
+                          }),
                     ),
                     Spacer(),
                     Expanded(
                       flex: 3,
                       child: GestureDetector(
                         child: AbsorbPointer(
-                          child: TextField(
+                          child: TextFormField(
                             controller: _ratingController,
                             decoration: InputDecoration(labelText: "Rating"),
+                            validator: (value) {
+                            if (value.isEmpty) {
+                              return "Required";
+                            }
+                          }
                           ),
                         ),
                         onTap: () => _showRatingPicker(context),
@@ -202,10 +212,11 @@ class _NewTeaPageState extends State<NewTeaPage> {
                 ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(0, 20, 0, 10),
-                  child: Text(
-                    "Notes",
-                    style: TextStyle(fontSize: 16, color: Colors.black54, decoration: TextDecoration.underline)
-                  ),
+                  child: Text("Notes",
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                          decoration: TextDecoration.underline)),
                 ),
                 TextFormField(
                   controller: _notesController,
@@ -213,26 +224,26 @@ class _NewTeaPageState extends State<NewTeaPage> {
                   keyboardType: TextInputType.multiline,
                   maxLines: 10,
                 ),
-                    Container(
-                          padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
-                          child: RaisedButton(
-                            color: Colors.lightGreen,
-                            child: Text("Finish"),
-                            onPressed: () {
-                              if (_formKey.currentState.validate()) {
-                                helper.insertTea(Tea(
-                                    _nameController.text,
-                                    _selectedType,
-                                    _brandController.text,
-                                    _minutes * 60 + _seconds,
-                                    int.parse(_tempController.text),
-                                    _rating,
-                                    _notesController.text));
-                                Navigator.pop(context);
-                              }
-                            },
-                          ),
-                        )
+                Container(
+                  padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
+                  child: RaisedButton(
+                    color: Colors.lightGreen,
+                    child: Text("Finish"),
+                    onPressed: () {
+                      if (_formKey.currentState.validate()) {
+                        helper.insertTea(Tea(
+                            _nameController.text,
+                            _selectedType,
+                            _brandController.text,
+                            _minutes * 60 + _seconds,
+                            int.parse(_tempController.text),
+                            _rating,
+                            _notesController.text));
+                        Navigator.pop(context);
+                      }
+                    },
+                  ),
+                )
               ],
             ),
           )),

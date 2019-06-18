@@ -323,6 +323,7 @@ class DetailPage extends StatelessWidget {
                   timerService.reset();
                   timerService.start(Duration(seconds: thisTea.brewTime));
                   timerService.currentTea = thisTea;
+                  timerService.currentTea.brew();
                   Navigator.pop(context);
                 },
               ),

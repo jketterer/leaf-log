@@ -1,13 +1,10 @@
-class Tea implements Comparable {
-  int id;
-  String name;
-  String type;
-  String brand;
-  int rating;
-  int brewTime;
-  int temperature;
-  int frequency = 0;
-  String notes;
+import 'package:leaf_log/services/database_helper.dart';
+
+class Tea {
+  int id, rating, brewTime, temperature;
+  String name, type, brand, notes;
+  DateTime lastBrewed = DateTime(1900);
+  int brewCount = 0;
 
   static final columns = [
     "id",
@@ -17,14 +14,25 @@ class Tea implements Comparable {
     "rating",
     "time",
     "temp",
-    "notes"
+    "notes",
+    "brewCount",
+    "lastBrewed"
   ];
 
   Tea(this.name, this.type, this.brand, this.brewTime, this.temperature,
       this.rating, this.notes);
 
-  Tea.fromTable(this.id, this.name, this.brand, this.type, this.rating,
-      this.brewTime, this.temperature, this.notes);
+  Tea.fromTable(
+      this.id,
+      this.name,
+      this.brand,
+      this.type,
+      this.rating,
+      this.brewTime,
+      this.temperature,
+      this.notes,
+      this.brewCount,
+      this.lastBrewed);
 
   Tea.test(this.name,
       {this.type = "Green",
@@ -33,8 +41,12 @@ class Tea implements Comparable {
       this.temperature = 212,
       this.rating = 10});
 
-  void addBrewCount() {
-    frequency++;
+  void brew() {
+    brewCount++;
+    lastBrewed = DateTime.now();
+    
+    DatabaseHelper helper = DatabaseHelper.instance;
+    helper.updateTea(this);
   }
 
   Map toMap() {
@@ -46,7 +58,9 @@ class Tea implements Comparable {
       "rating": rating,
       "time": brewTime,
       "temp": temperature,
-      "notes": notes
+      "notes": notes,
+      "brewCount": brewCount,
+      "lastBrewed": lastBrewed.toIso8601String()
     };
 
     if (id != null) {
@@ -57,8 +71,17 @@ class Tea implements Comparable {
   }
 
   static fromMap(Map<String, dynamic> map) {
-    Tea tea = new Tea.fromTable(map["id"], map["name"], map["brand"],
-        map["type"], map["rating"], map["time"], map["temp"], map["notes"]);
+    Tea tea = new Tea.fromTable(
+        map["id"],
+        map["name"],
+        map["brand"],
+        map["type"],
+        map["rating"],
+        map["time"],
+        map["temp"],
+        map["notes"],
+        map["brewCount"],
+        DateTime.parse(map["lastBrewed"]));
 
     return tea;
   }
@@ -85,10 +108,5 @@ class Tea implements Comparable {
 
   void setTemperature(int newTemp) {
     this.temperature = newTemp;
-  }
-
-  @override
-  int compareTo(other) {
-    return other.rating - this.rating;
   }
 }

@@ -67,6 +67,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   const PopupMenuItem(
                     value: "type",
                     child: Text("Sort by type"),
+                  ),
+                  const PopupMenuItem(
+                    value: "frequent",
+                    child: Text("Sort by most brewed"),
+                  ),
+                  const PopupMenuItem(
+                    value: "recent",
+                    child: Text("Sort by recently brewed"),
                   )
                 ],
               )

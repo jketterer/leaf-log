@@ -48,7 +48,9 @@ class DatabaseHelper {
               rating INTEGER NOT NULL,
               time INTEGER NOT NULL,
               temp INTEGER NOT NULL,
-              notes TEXT
+              notes TEXT,
+              brewCount INTEGER NOT NULL,
+              lastBrewed TEXT NOT NULL
             ) 
           """);
   }
@@ -125,6 +127,10 @@ class DatabaseHelper {
         _teaList = sortByType(_teaList);
       } else if (sortMethod == "rating") {
         _teaList = sortByRating(_teaList);
+      } else if (sortMethod == "frequent") {
+        _teaList = sortByBrewCount(_teaList);
+      } else if (sortMethod == "recent"){
+        _teaList = sortByLastBrewed(_teaList);
       }
     }
 
@@ -158,6 +164,55 @@ class DatabaseHelper {
           returnList.add(tea);
         }
       });
+    }
+
+    return returnList;
+  }
+
+  // Returns a list of all teas sorted by most frequently brewed
+  List<Tea> sortByBrewCount(List<Tea> teaList) {
+    List<Tea> returnList = List<Tea>();
+
+    // Find the tea with the highest brew count
+    Tea highest = teaList[0];
+    teaList.forEach((tea) {
+      if (tea.brewCount > highest.brewCount) {
+        highest = tea;
+      }
+    });
+
+    // Add teas in descending order of brew count
+    for (int i = highest.brewCount; i >= 0; i--) {
+      teaList.forEach((tea) {
+        if (tea.brewCount == i) {
+          returnList.add(tea);
+        }
+      });
+    }
+
+    return returnList;
+  }
+
+  // Returns a list of all teas sorted by most recently brewed
+  List<Tea> sortByLastBrewed(List<Tea> teaList) {
+    List<Tea> returnList = List<Tea>();
+
+    returnList.add(teaList[0]);
+
+    // Shuffle sort
+    for (int i = 1; i < teaList.length; i++) {
+      for (int j = 0; j < returnList.length; j++) {
+        // If tea was brewed more recently, add it before the current tea
+        if (teaList[i].lastBrewed.isAfter(returnList[j].lastBrewed)) {
+          returnList.insert(j, teaList[i]);
+          break;
+        }
+      }
+
+      // If tea was brewed before all other teas in the list, add it to the end
+      if (!returnList.contains(teaList[i])) {
+        returnList.add(teaList[i]);
+      }
     }
 
     return returnList;

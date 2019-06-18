@@ -109,4 +109,8 @@ class Tea {
   void setTemperature(int newTemp) {
     this.temperature = newTemp;
   }
+
+  void setNotes(String newNotes) {
+    this.notes = notes;
+  }
 }

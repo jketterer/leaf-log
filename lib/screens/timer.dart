@@ -154,7 +154,7 @@ class _TimerButtonRowState extends State<TimerButtonRow>
               // Button will change if timer is paused
               child: isTimerPaused ? Text("Resume") : Text("Stop"),
               color: Colors.lightGreen,
-              elevation: 8,
+              elevation: isTimerRunning ? 8 : 0,
               onPressed: _stopButtonPressed,
             ),
           ),
@@ -165,7 +165,7 @@ class _TimerButtonRowState extends State<TimerButtonRow>
               child: RaisedButton(
                 child: Text("Reset"),
                 color: Colors.lightGreen,
-                elevation: 8,
+                elevation: isTimerRunning ? 8 : 0,
                 onPressed: _resetButtonPressed,
               ),
             )),

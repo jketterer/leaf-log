@@ -320,7 +320,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
     _minutes = (tea.brewTime / 60).floor();
     _seconds = (tea.brewTime % 60);
     _timeController.text =
-                _minutes.toString() + ":" + _seconds.toString().padLeft(2, '0');
+        _minutes.toString() + ":" + _seconds.toString().padLeft(2, '0');
 
     _tempController = TextEditingController();
     _tempController.text = tea.temperature.toString();
@@ -574,7 +574,6 @@ class _EditTeaPageState extends State<EditTeaPage> {
   }
 }
 
-// TODO Design attractive detail page
 // Page that displays details about tea when TeaCard is tapped
 class DetailPage extends StatelessWidget {
   final Tea thisTea;
@@ -584,12 +583,10 @@ class DetailPage extends StatelessWidget {
       {Key key, @required this.thisTea, @required this.callParentFunction})
       : super(key: key);
 
-  final TextStyle headerStyle =
-      TextStyle(fontSize: 26, fontWeight: FontWeight.bold);
+  final TextStyle labelStyle =
+      TextStyle(fontSize: 24, fontWeight: FontWeight.bold);
 
-  final TextStyle labelStyle = TextStyle(
-    fontSize: 22,
-  );
+  final TextStyle infoStyle = TextStyle(fontSize: 22);
 
   final TextStyle timerStyle =
       TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
@@ -603,87 +600,167 @@ class DetailPage extends StatelessWidget {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.edit),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => EditTeaPage(tea: thisTea)));
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              DatabaseHelper helper = DatabaseHelper.instance;
+              helper.deleteTea(thisTea.id);
+              Navigator.pop(context);
+            },
           ),
         ],
       ),
-      body: Stack(
+      body: ListView(
         children: <Widget>[
           Column(
-            //mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Padding(
+                  padding: EdgeInsets.fromLTRB(20, 15, 0, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Flexible(
+                        flex: 3,
+                        child: Text(
+                          thisTea.name,
+                          style: TextStyle(
+                            fontSize: 40,
+                            //fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Flexible(
+                          flex: 1,
+                          child: Row(
+                            children: <Widget>[
+                              Text(
+                                "${thisTea.rating}",
+                                style: TextStyle(
+                                    fontSize: 45, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                "/10",
+                                style: TextStyle(fontSize: 22),
+                              ),
+                            ],
+                          )),
+                    ],
+                  )),
+              Padding(
+                padding: EdgeInsets.fromLTRB(40, 0, 0, 0),
+                child: Text(
+                  thisTea.brand,
+                  style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              Padding(
                 padding: EdgeInsets.fromLTRB(0, 15, 0, 15),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                child: Container(
+                  height: 3,
+                  color: Colors.grey[300],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
                         Text(
-                          "Name: ",
-                          style: headerStyle,
+                          "Type: ",
+                          style: labelStyle
                         ),
                         Text(
-                          "${thisTea.name}",
-                          style: labelStyle,
+                          thisTea.type,
+                          style: infoStyle
                         )
                       ],
                     ),
+                    Padding(padding: EdgeInsets.all(5)),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
                         Text(
-                          "Type: ",
-                          style: headerStyle,
+                          "Brew Temperature: ",
+                          style: labelStyle
                         ),
                         Text(
-                          "${thisTea.type}",
-                          style: labelStyle,
+                          "${thisTea.temperature}°",
+                          style: infoStyle
                         )
                       ],
-                    )
+                    ),
+                    Padding(padding: EdgeInsets.all(5)),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        Text(
+                          "Brew Time: ",
+                          style: labelStyle
+                        ),
+                        Text(
+                          _convertTime(thisTea.brewTime),
+                          style: infoStyle
+                        )
+                      ],
+                    ),
+                    Padding(padding: EdgeInsets.all(10)),
+                    Text(
+                      "Notes:",
+                      style: labelStyle
+                    ),
+                    Padding(padding: EdgeInsets.all(5)),
                   ],
                 ),
               ),
-              Text("Brand: ${thisTea.brand}"),
-              Text("Rating: ${thisTea.rating}"),
-              Text("Notes: \n\n${thisTea.notes}"),
-              RaisedButton(
-                color: Colors.lightGreen,
-                child: Text("Start Brewing"),
-                onPressed: () {
-                  callParentFunction(1);
-                  timerService.reset();
-                  timerService.start(Duration(seconds: thisTea.brewTime));
-                  timerService.currentTea = thisTea;
-                  timerService.currentTea.brew();
-                  Navigator.pop(context);
-                },
-              ),
-              RaisedButton(
-                color: Colors.lightGreen,
-                child: Text("Edit"),
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => EditTeaPage(tea: thisTea)));
-                },
-              ),
-              RaisedButton(
-                color: Colors.lightGreen,
-                child: Text("Delete"),
-                onPressed: () {
-                  DatabaseHelper helper = DatabaseHelper.instance;
-                  helper.deleteTea(thisTea.id);
-                  Navigator.pop(context);
-                },
-              ),
-              RaisedButton(
-                color: Colors.lightGreen,
-                child: Text("Back"),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+              Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Container(
+                    height: 220,
+                    width: 1000,
+                    padding: EdgeInsets.all(10),
+                    color: Colors.grey[200],
+                    child: SingleChildScrollView(
+                      child: Text(thisTea.notes),
+                    ),
+                  )),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  RaisedButton(
+                    color: Colors.lightGreen,
+                    child: Text("Start Brewing"),
+                    onPressed: () {
+                      callParentFunction(1);
+                      timerService.reset();
+                      timerService.start(Duration(seconds: thisTea.brewTime));
+                      timerService.currentTea = thisTea;
+                      timerService.currentTea.brew();
+                      Navigator.pop(context);
+                    },
+                  ),
+                  RaisedButton(
+                    color: Colors.lightGreen,
+                    child: Text("Back"),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  )
+                ],
               )
             ],
           ),
@@ -696,5 +773,13 @@ class DetailPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Function converts time in seconds to a readable format
+  String _convertTime(int time) {
+    int minutes = (time / 60).floor();
+    int seconds = time % 60;
+
+    return minutes.toString() + ":" + seconds.toString().padLeft(2, '0');
   }
 }

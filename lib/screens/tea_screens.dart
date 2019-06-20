@@ -132,6 +132,9 @@ class _NewTeaPageState extends State<NewTeaPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(labelText: "Name"),
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(25),
+                  ],
                   validator: (value) {
                     if (value.isEmpty) {
                       return "Name must not be blank.";
@@ -146,6 +149,9 @@ class _NewTeaPageState extends State<NewTeaPage> {
                       child: TextFormField(
                         controller: _brandController,
                         decoration: InputDecoration(labelText: "Brand"),
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(25),
+                        ],
                         validator: (value) {
                           if (value.isEmpty) {
                             return "Please enter some text.";
@@ -208,7 +214,8 @@ class _NewTeaPageState extends State<NewTeaPage> {
                           decoration: InputDecoration(labelText: "Temperature"),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
-                            WhitelistingTextInputFormatter.digitsOnly
+                            WhitelistingTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3)
                           ],
                           validator: (value) {
                             if (value.isEmpty) {
@@ -428,6 +435,9 @@ class _EditTeaPageState extends State<EditTeaPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(labelText: "Name"),
+                  inputFormatters: [
+                    LengthLimitingTextInputFormatter(25),
+                  ],
                   validator: (value) {
                     if (value.isEmpty) {
                       return "Name must not be blank.";
@@ -442,6 +452,9 @@ class _EditTeaPageState extends State<EditTeaPage> {
                       child: TextFormField(
                         controller: _brandController,
                         decoration: InputDecoration(labelText: "Brand"),
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(25),
+                        ],
                         validator: (value) {
                           if (value.isEmpty) {
                             return "Please enter some text.";
@@ -504,7 +517,8 @@ class _EditTeaPageState extends State<EditTeaPage> {
                           decoration: InputDecoration(labelText: "Temperature"),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
-                            WhitelistingTextInputFormatter.digitsOnly
+                            WhitelistingTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3)
                           ],
                           validator: (value) {
                             if (value.isEmpty) {
@@ -680,49 +694,28 @@ class DetailPage extends StatelessWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
-                        Text(
-                          "Type: ",
-                          style: labelStyle
-                        ),
-                        Text(
-                          thisTea.type,
-                          style: infoStyle
-                        )
+                        Text("Type: ", style: labelStyle),
+                        Text(thisTea.type, style: infoStyle)
                       ],
                     ),
                     Padding(padding: EdgeInsets.all(5)),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
-                        Text(
-                          "Brew Temperature: ",
-                          style: labelStyle
-                        ),
-                        Text(
-                          "${thisTea.temperature}°",
-                          style: infoStyle
-                        )
+                        Text("Brew Temperature: ", style: labelStyle),
+                        Text("${thisTea.temperature}°", style: infoStyle)
                       ],
                     ),
                     Padding(padding: EdgeInsets.all(5)),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
-                        Text(
-                          "Brew Time: ",
-                          style: labelStyle
-                        ),
-                        Text(
-                          _convertTime(thisTea.brewTime),
-                          style: infoStyle
-                        )
+                        Text("Brew Time: ", style: labelStyle),
+                        Text(_convertTime(thisTea.brewTime), style: infoStyle)
                       ],
                     ),
                     Padding(padding: EdgeInsets.all(10)),
-                    Text(
-                      "Notes:",
-                      style: labelStyle
-                    ),
+                    Text("Notes:", style: labelStyle),
                     Padding(padding: EdgeInsets.all(5)),
                   ],
                 ),

@@ -111,6 +111,6 @@ class Tea {
   }
 
   void setNotes(String newNotes) {
-    this.notes = notes;
+    this.notes = newNotes;
   }
 }

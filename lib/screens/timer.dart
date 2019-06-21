@@ -15,77 +15,111 @@ class _TimerPageState extends State<TimerPage> with TickerProviderStateMixin {
     TextStyle brewStyle = TextStyle(
         fontSize: 24, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic);
 
+    final Map<String, Color> _typeColors = {
+      "Green": Colors.lightGreen,
+      "Black": Colors.brown[400],
+      "Oolong": Colors.lime[500],
+      "White": Colors.grey,
+      "Herbal": Colors.pink[300],
+      "Other": Colors.cyan[200]
+    };
+
     // Animated builder allows the timer to update on time change
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: <Widget>[
-        AnimatedBuilder(
-            // Listen to timerService for updates
-            animation: timerService,
-            builder: (context, child) {
-              return Column(
-                children: <Widget>[
-                  Card(
-                      elevation: 8,
-                      color: Colors.lightGreen,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(35, 10, 35, 10),
-                        child: TimeDisplay.styled(
-                            timerService: timerService,
-                            style: TextStyle(
-                              fontSize: 80,
-                              fontWeight: FontWeight.bold,
-                            )),
-                      )),
-                ],
-              );
-            }),
-        AnimatedBuilder(
-          animation: timerService,
-          builder: (context, child) {
-            return timerService.currentTea != null
-                ? Text("Brewing: ${timerService.currentTea.name}",
-                    style: brewStyle)
-                : Text("", style: brewStyle);
-          },
-        ),
-        Row(
+    return AnimatedBuilder(
+      // Listen to timerService for changes
+      animation: timerService,
+      builder: (context, child) {
+        return Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            RaisedButton(
-              child: Text("+10s"),
-              color: Colors.lightGreen,
-              shape: CircleBorder(),
-              padding: EdgeInsets.all(25),
-              elevation: 8,
-              onPressed: () {
-                timerService.addTime(10);
-              },
+            Column(
+              children: <Widget>[
+                Card(
+                    elevation: 8,
+                    color: timerService.currentTea != null
+                        ? _typeColors[timerService.currentTea.type]
+                        : Colors.lightGreen,
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(35, 10, 35, 10),
+                      child: TimeDisplay.styled(
+                          timerService: timerService,
+                          style: TextStyle(
+                            fontSize: 80,
+                            fontWeight: FontWeight.bold,
+                          )),
+                    )),
+              ],
             ),
-            RaisedButton(
-              child: Text("+30s"),
-              color: Colors.lightGreen,
-              shape: CircleBorder(),
-              padding: EdgeInsets.all(25),
-              elevation: 8,
-              onPressed: () {
-                timerService.addTime(30);
-              },
-            ),
-            RaisedButton(
-              child: Text("+60s"),
-              color: Colors.lightGreen,
-              shape: CircleBorder(),
-              padding: EdgeInsets.all(25),
-              elevation: 8,
-              onPressed: () {
-                timerService.addTime(60);
-              },
-            ),
+            timerService.currentTea != null
+                ? Chip(
+                    backgroundColor: _typeColors[timerService.currentTea.type],
+                    padding: EdgeInsets.all(10),
+                    label: RichText(
+                      maxLines: 10,
+                      text: TextSpan(children: <TextSpan>[
+                        TextSpan(
+                            text: "Brewing: ",
+                            style: TextStyle(
+                                fontSize: 28, fontWeight: FontWeight.bold)),
+                        TextSpan(
+                            text: "${timerService.currentTea.name}",
+                            style: TextStyle(fontSize: 24))
+                      ]),
+                    ),
+                  )
+                : Text("", style: brewStyle),
+            Card(
+                color: timerService.currentTea != null
+                  ? _typeColors[timerService.currentTea.type]
+                  : Colors.lightGreen,
+                margin: EdgeInsets.only(left: 30, right: 30),
+                child: Padding(
+                    padding: EdgeInsets.fromLTRB(10, 30, 10, 30),
+                    child: Column(
+                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            RaisedButton(
+                              child: Text("+10s"),
+                              color: Colors.grey[200],
+                              shape: CircleBorder(),
+                              padding: EdgeInsets.all(25),
+                              elevation: 8,
+                              onPressed: () {
+                                timerService.addTime(10);
+                              },
+                            ),
+                            RaisedButton(
+                              child: Text("+30s"),
+                              color: Colors.grey[200],
+                              shape: CircleBorder(),
+                              padding: EdgeInsets.all(25),
+                              elevation: 8,
+                              onPressed: () {
+                                timerService.addTime(30);
+                              },
+                            ),
+                            RaisedButton(
+                              child: Text("+60s"),
+                              color: Colors.grey[200],
+                              shape: CircleBorder(),
+                              padding: EdgeInsets.all(25),
+                              elevation: 8,
+                              onPressed: () {
+                                timerService.addTime(60);
+                              },
+                            ),
+                          ],
+                        ),
+                        Padding(padding: EdgeInsets.all(20),),
+                        TimerButtonRow()
+                      ],
+                    ))),
           ],
-        ),
-        TimerButtonRow()
-      ],
+        );
+      },
     );
   }
 }
@@ -139,7 +173,9 @@ class _TimerButtonRowState extends State<TimerButtonRow>
 
   @override
   Widget build(BuildContext context) {
-    isTimerRunning = TimerService.of(context).isRunning();
+    TimerService timerService = TimerService.of(context);
+
+    isTimerRunning = timerService.isRunning();
 
     if (isTimerRunning) {
       controller.forward();
@@ -153,7 +189,7 @@ class _TimerButtonRowState extends State<TimerButtonRow>
             child: RaisedButton(
               // Button will change if timer is paused
               child: isTimerPaused ? Text("Resume") : Text("Stop"),
-              color: Colors.lightGreen,
+              color: Colors.grey[200],
               elevation: isTimerRunning ? 8 : 0,
               onPressed: _stopButtonPressed,
             ),
@@ -164,7 +200,7 @@ class _TimerButtonRowState extends State<TimerButtonRow>
             child: Center(
               child: RaisedButton(
                 child: Text("Reset"),
-                color: Colors.lightGreen,
+                color: Colors.grey[200],
                 elevation: isTimerRunning ? 8 : 0,
                 onPressed: _resetButtonPressed,
               ),
@@ -174,7 +210,7 @@ class _TimerButtonRowState extends State<TimerButtonRow>
             ? Center(
                 child: RaisedButton(
                     child: Text("Start"),
-                    color: Colors.lightGreen,
+                    color: Colors.grey[200],
                     elevation: 8,
                     onPressed: _startButtonPressed),
               )

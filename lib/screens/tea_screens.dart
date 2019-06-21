@@ -597,8 +597,17 @@ class DetailPage extends StatelessWidget {
       {Key key, @required this.thisTea, @required this.callParentFunction})
       : super(key: key);
 
-  final TextStyle labelStyle =
-      TextStyle(fontSize: 24, fontWeight: FontWeight.bold);
+  final Map<String, Color> _typeColors = {
+    "Green": Colors.lightGreen,
+    "Black": Colors.brown[400],
+    "Oolong": Colors.lime[500],
+    "White": Colors.grey,
+    "Herbal": Colors.pink[300],
+    "Other": Colors.cyan[200]
+  };
+
+  final TextStyle labelStyle = TextStyle(
+      fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey[800]);
 
   final TextStyle infoStyle = TextStyle(fontSize: 22);
 
@@ -633,129 +642,133 @@ class DetailPage extends StatelessWidget {
       ),
       body: ListView(
         children: <Widget>[
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Padding(
-                  padding: EdgeInsets.fromLTRB(20, 15, 0, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Flexible(
-                        flex: 3,
-                        child: Text(
-                          thisTea.name,
-                          style: TextStyle(
-                            fontSize: 40,
-                            //fontWeight: FontWeight.bold,
-                          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 15, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Flexible(
+                      flex: 3,
+                      child: Text(
+                        thisTea.name,
+                        style: TextStyle(
+                          fontSize: 40,
+                          //fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Flexible(
-                          flex: 1,
-                          child: Row(
-                            children: <Widget>[
-                              Text(
-                                "${thisTea.rating}",
-                                style: TextStyle(
-                                    fontSize: 45, fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                "/10",
-                                style: TextStyle(fontSize: 22),
-                              ),
-                            ],
-                          )),
-                    ],
-                  )),
-              Padding(
-                padding: EdgeInsets.fromLTRB(40, 0, 0, 0),
-                child: Text(
-                  thisTea.brand,
-                  style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(0, 15, 0, 15),
-                child: Container(
-                  height: 3,
-                  color: Colors.grey[300],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        Text("Type: ", style: labelStyle),
-                        Text(thisTea.type, style: infoStyle)
-                      ],
                     ),
-                    Padding(padding: EdgeInsets.all(5)),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        Text("Brew Temperature: ", style: labelStyle),
-                        Text("${thisTea.temperature}°", style: infoStyle)
-                      ],
-                    ),
-                    Padding(padding: EdgeInsets.all(5)),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        Text("Brew Time: ", style: labelStyle),
-                        Text(_convertTime(thisTea.brewTime), style: infoStyle)
-                      ],
-                    ),
-                    Padding(padding: EdgeInsets.all(10)),
-                    Text("Notes:", style: labelStyle),
-                    Padding(padding: EdgeInsets.all(5)),
                   ],
                 ),
-              ),
-              Padding(
-                  padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: Container(
-                    height: 220,
-                    width: 1000,
-                    padding: EdgeInsets.all(10),
-                    color: Colors.grey[200],
-                    child: SingleChildScrollView(
-                      child: Text(thisTea.notes),
-                    ),
-                  )),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  RaisedButton(
-                    color: Colors.lightGreen,
-                    child: Text("Start Brewing"),
-                    onPressed: () {
-                      callParentFunction(1);
-                      timerService.reset();
-                      timerService.start(Duration(seconds: thisTea.brewTime));
-                      timerService.currentTea = thisTea;
-                      timerService.currentTea.brew();
-                      Navigator.pop(context);
-                    },
+                Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: Text(
+                    thisTea.brand,
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[500],
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.bold),
                   ),
-                  RaisedButton(
-                    color: Colors.lightGreen,
-                    child: Text("Back"),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  )
-                ],
-              )
-            ],
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 15, bottom: 15),
+                  child: Container(
+                    height: 3,
+                    color: Colors.grey[300],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Chip(
+                          backgroundColor: _typeColors[thisTea.type],
+                          label: RichText(
+                            text: TextSpan(children: <TextSpan>[
+                              TextSpan(text: "Type: ", style: labelStyle),
+                              TextSpan(text: thisTea.type, style: infoStyle)
+                            ]),
+                          ),
+                        ),
+                        Chip(
+                          backgroundColor: _typeColors[thisTea.type],
+                          label: RichText(
+                            text: TextSpan(children: <TextSpan>[
+                              TextSpan(text: "Temp: ", style: labelStyle),
+                              TextSpan(
+                                  text: "${thisTea.temperature}",
+                                  style: infoStyle)
+                            ]),
+                          ),
+                        ),
+                        Chip(
+                          backgroundColor: _typeColors[thisTea.type],
+                          label: RichText(
+                            text: TextSpan(children: <TextSpan>[
+                              TextSpan(text: "Time: ", style: labelStyle),
+                              TextSpan(
+                                  text: _convertTime(thisTea.brewTime),
+                                  style: infoStyle)
+                            ]),
+                          ),
+                        ),
+                        Padding(padding: EdgeInsets.all(10)),
+                        Text("Notes:", style: labelStyle),
+                        Padding(padding: EdgeInsets.all(5)),
+                      ],
+                    ),
+                    CircleAvatar(
+                      radius: 80,
+                      backgroundColor: _typeColors[thisTea.type],
+                      child: RichText(
+                          text: TextSpan(children: <TextSpan>[
+                        TextSpan(
+                            text: "${thisTea.rating}",
+                            style: TextStyle(fontSize: 50)),
+                        TextSpan(text: "/10", style: infoStyle)
+                      ])),
+                    )
+                  ],
+                ),
+                Container(
+                  height: 220,
+                  width: 1000,
+                  padding: EdgeInsets.all(10),
+                  color: Colors.grey[200],
+                  child: SingleChildScrollView(
+                    child: Text(thisTea.notes),
+                  ),
+                ),
+                Container(
+                    width: 1000,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 15, bottom: 15),
+                      child: RaisedButton(
+                        color: _typeColors[thisTea.type],
+                        child: Text(
+                          "Start Brewing",
+                          style:
+                              TextStyle(fontSize: 18, color: Colors.grey[800]),
+                        ),
+                        onPressed: () {
+                          callParentFunction(1);
+                          timerService.reset();
+                          timerService
+                              .start(Duration(seconds: thisTea.brewTime));
+                          timerService.currentTea = thisTea;
+                          timerService.currentTea.brew();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ))
+              ],
+            ),
           ),
           Hero(
             tag: "FloatingTimer",

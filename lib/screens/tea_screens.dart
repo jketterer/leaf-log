@@ -702,7 +702,7 @@ class DetailPage extends StatelessWidget {
                             text: TextSpan(children: <TextSpan>[
                               TextSpan(text: "Temp: ", style: labelStyle),
                               TextSpan(
-                                  text: "${thisTea.temperature}",
+                                  text: "${thisTea.temperature}°",
                                   style: infoStyle)
                             ]),
                           ),

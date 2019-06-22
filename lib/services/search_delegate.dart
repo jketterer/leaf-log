@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
-import 'package:leaf_log/screens/tea_screens.dart';
 import 'package:leaf_log/screens/tea_widgets.dart';
 import 'package:leaf_log/services/database_helper.dart';
 
@@ -43,13 +42,11 @@ class CustomSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    // TODO: implement buildResults
     return Container();
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    // TODO: implement buildSuggestions
     return FutureBuilder<List<Tea>>(
       future: helper.searchTeaList(query),
       builder: (context, snapshot) {

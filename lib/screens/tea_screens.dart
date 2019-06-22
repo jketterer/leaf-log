@@ -138,7 +138,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                   validator: (value) {
                     if (value.isEmpty) {
                       return "Name must not be blank.";
-                    }
+                    } else return null;
                   },
                 ),
                 Row(
@@ -155,7 +155,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                         validator: (value) {
                           if (value.isEmpty) {
                             return "Please enter some text.";
-                          }
+                          } else return null;
                         },
                       ),
                     ),
@@ -182,7 +182,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                           validator: (value) {
                             if (value == null) {
                               return "Must choose a type.";
-                            }
+                            } else return null;
                           },
                         ))
                   ],
@@ -199,7 +199,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                             validator: (value) {
                               if (value.isEmpty) {
                                 return "Required";
-                              }
+                              } else return null;
                             },
                           ),
                         ),
@@ -220,7 +220,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                           validator: (value) {
                             if (value.isEmpty) {
                               return "Required";
-                            }
+                            } else return null;
                           }),
                     ),
                     Spacer(),
@@ -234,7 +234,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                               validator: (value) {
                                 if (value.isEmpty) {
                                   return "Required";
-                                }
+                                } else return null;
                               }),
                         ),
                         onTap: () => _showRatingPicker(context),
@@ -441,7 +441,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                   validator: (value) {
                     if (value.isEmpty) {
                       return "Name must not be blank.";
-                    }
+                    } else return null;
                   },
                 ),
                 Row(
@@ -458,7 +458,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                         validator: (value) {
                           if (value.isEmpty) {
                             return "Please enter some text.";
-                          }
+                          } else return null;
                         },
                       ),
                     ),
@@ -485,7 +485,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                           validator: (value) {
                             if (value == null) {
                               return "Must choose a type.";
-                            }
+                            } else return null;
                           },
                         ))
                   ],
@@ -502,7 +502,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                             validator: (value) {
                               if (value.isEmpty) {
                                 return "Required";
-                              }
+                              } else return null;
                             },
                           ),
                         ),
@@ -523,7 +523,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                           validator: (value) {
                             if (value.isEmpty) {
                               return "Required";
-                            }
+                            } else return null;
                           }),
                     ),
                     Spacer(),
@@ -537,7 +537,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                               validator: (value) {
                                 if (value.isEmpty) {
                                   return "Required";
-                                }
+                                } else return null;
                               }),
                         ),
                         onTap: () => _showRatingPicker(context),
@@ -761,7 +761,7 @@ class DetailPage extends StatelessWidget {
                           timerService.reset();
                           timerService
                               .start(Duration(seconds: thisTea.brewTime));
-                          timerService.currentTea = thisTea;
+                          timerService.setCurrentTea(thisTea);
                           timerService.currentTea.brew();
                           Navigator.pop(context);
                         },

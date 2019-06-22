@@ -15,8 +15,11 @@ class TimerService extends ChangeNotifier {
   Duration get currentDuration => _currentDuration;
   bool get timerExpired => _timerExpired;
   set timerExpired(bool) => _timerExpired;
-  set currentTea(Tea tea) => _currentTea = tea;
   Tea get currentTea => _currentTea;
+
+  void setCurrentTea(Tea tea) {
+    _currentTea = tea;
+  }
 
   bool isRunning() {
     return _timerStarted;

@@ -240,14 +240,14 @@ class _TimerPageState extends State<TimerPage>
       // Tell timer to start
       TimerService.of(context).start();
 
+      // Animate buttons
+      controller.forward();
+
       setState(() {
         isTimerRunning = true;
         isTimerPaused = false;
         teaName = TimerService.of(context).currentTea.name;
       });
-
-      // Animate buttons
-      controller.forward();
     }
   }
 

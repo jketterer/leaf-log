@@ -109,6 +109,15 @@ class FloatingTimer extends StatelessWidget {
   FloatingTimer({this.style});
   final TextStyle style;
 
+  final Map<String, Color> _typeColors = {
+    "Green": Colors.lightGreen,
+    "Black": Colors.brown[400],
+    "Oolong": Colors.lime[500],
+    "White": Colors.grey,
+    "Herbal": Colors.pink[300],
+    "Other": Colors.cyan[200]
+  };
+
   @override
   Widget build(BuildContext context) {
     TimerService timerService = TimerService.of(context);
@@ -128,7 +137,9 @@ class FloatingTimer extends StatelessWidget {
                       style: style,
                     ),
                   ),
-                  color: Colors.lightGreen,
+                  color: timerService.currentTea != null
+                      ? _typeColors[timerService.currentTea.type]
+                      : Colors.lightGreen
                 )
               : null,
         );

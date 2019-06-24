@@ -624,7 +624,7 @@ class DetailPage extends StatelessWidget {
   final TextStyle infoStyle = TextStyle(fontSize: 22);
 
   final TextStyle timerStyle =
-      TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
+      TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white);
 
   @override
   Widget build(BuildContext context) {
@@ -766,7 +766,7 @@ class DetailPage extends StatelessWidget {
                         child: Text(
                           "Start Brewing",
                           style:
-                              TextStyle(fontSize: 18, color: Colors.grey[800]),
+                              TextStyle(fontSize: 18, color: Colors.white),
                         ),
                         onPressed: () {
                           callParentFunction(1);

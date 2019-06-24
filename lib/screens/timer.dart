@@ -76,7 +76,8 @@ class _TimerPageState extends State<TimerPage>
       controller.forward();
     }
 
-    TextStyle buttonText = TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white);
+    TextStyle buttonText = TextStyle(
+        fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white);
 
     // Animated builder allows the timer to update on time change
     return AnimatedBuilder(
@@ -89,21 +90,24 @@ class _TimerPageState extends State<TimerPage>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               timerService.currentTea != null
-                  ? Chip(
-                      backgroundColor: mainColor,
-                      padding: EdgeInsets.all(10),
-                      label: RichText(
-                        maxLines: 10,
-                        textAlign: TextAlign.center,
-                        text: TextSpan(children: <TextSpan>[
-                          TextSpan(
-                              text: "Brewing: ",
-                              style: TextStyle(
-                                  fontSize: 28, fontWeight: FontWeight.bold)),
-                          TextSpan(
-                              text: "${timerService.currentTea.name}",
-                              style: TextStyle(fontSize: 24))
-                        ]),
+                  ? Container(
+                      padding: EdgeInsets.only(left: 10, right: 10),
+                      child: Chip(
+                        backgroundColor: mainColor,
+                        padding: EdgeInsets.all(10),
+                        label: RichText(
+                          maxLines: 10,
+                          textAlign: TextAlign.center,
+                          text: TextSpan(children: <TextSpan>[
+                            TextSpan(
+                                text: "Brewing: ",
+                                style: TextStyle(
+                                    fontSize: 28, fontWeight: FontWeight.bold)),
+                            TextSpan(
+                                text: "${timerService.currentTea.name}",
+                                style: TextStyle(fontSize: 24))
+                          ]),
+                        ),
                       ),
                     )
                   : Container(),
@@ -207,112 +211,6 @@ class _TimerPageState extends State<TimerPage>
                       : Container(),
                 ],
               )
-              // timerService.currentTea != null
-              //     ? Chip(
-              //         backgroundColor: _typeColors[timerService.currentTea.type],
-              //         padding: EdgeInsets.all(10),
-              //         label: RichText(
-              //           maxLines: 10,
-              //           text: TextSpan(children: <TextSpan>[
-              //             TextSpan(
-              //                 text: "Brewing: ",
-              //                 style: TextStyle(
-              //                     fontSize: 28, fontWeight: FontWeight.bold)),
-              //             TextSpan(
-              //                 text: "${timerService.currentTea.name}",
-              //                 style: TextStyle(fontSize: 24))
-              //           ]),
-              //         ),
-              //       )
-              //     : Text("", style: brewStyle),
-              // Card(
-              //     color: timerService.currentTea != null
-              //         ? _typeColors[timerService.currentTea.type]
-              //         : Colors.lightGreen,
-              //     margin: EdgeInsets.only(left: 30, right: 30),
-              //     child: Padding(
-              //         padding: EdgeInsets.fromLTRB(10, 30, 10, 30),
-              //         child: Column(
-              //           //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //           children: <Widget>[
-              //             Row(
-              //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //               children: <Widget>[
-              //                 RaisedButton(
-              //                   child: Text("+10s"),
-              //                   color: Colors.grey[200],
-              //                   shape: CircleBorder(),
-              //                   padding: EdgeInsets.all(25),
-              //                   elevation: 8,
-              //                   onPressed: () {
-              //                     _addTime(10);
-              //                   },
-              //                 ),
-              //                 RaisedButton(
-              //                   child: Text("+30s"),
-              //                   color: Colors.grey[200],
-              //                   shape: CircleBorder(),
-              //                   padding: EdgeInsets.all(25),
-              //                   elevation: 8,
-              //                   onPressed: () {
-              //                     _addTime(30);
-              //                   },
-              //                 ),
-              //                 RaisedButton(
-              //                   child: Text("+60s"),
-              //                   color: Colors.grey[200],
-              //                   shape: CircleBorder(),
-              //                   padding: EdgeInsets.all(25),
-              //                   elevation: 8,
-              //                   onPressed: () {
-              //                     _addTime(60);
-              //                   },
-              //                 ),
-              //               ],
-              //             ),
-              //             Padding(
-              //               padding: EdgeInsets.all(20),
-              //             ),
-              //             Stack(
-              //               children: <Widget>[
-              //                 SlideTransition(
-              //                   position: stopButtonAnimation,
-              //                   child: Center(
-              //                     child: RaisedButton(
-              //                       // Button will change if timer is paused
-              //                       child: isTimerPaused
-              //                           ? Text("Resume")
-              //                           : Text("Stop"),
-              //                       color: Colors.grey[200],
-              //                       elevation: isTimerRunning ? 8 : 0,
-              //                       onPressed: _stopButtonPressed,
-              //                     ),
-              //                   ),
-              //                 ),
-              //                 SlideTransition(
-              //                     position: resetButtonAnimation,
-              //                     child: Center(
-              //                       child: RaisedButton(
-              //                         child: Text("Reset"),
-              //                         color: Colors.grey[200],
-              //                         elevation: isTimerRunning ? 8 : 0,
-              //                         onPressed: _resetButtonPressed,
-              //                       ),
-              //                     )),
-              //                 // Start button is only present if timer is running
-              //                 !isTimerRunning
-              //                     ? Center(
-              //                         child: RaisedButton(
-              //                             child: Text("Start"),
-              //                             color: Colors.grey[200],
-              //                             elevation: 8,
-              //                             onPressed: _startButtonPressed),
-              //                       )
-              //                     : Container(),
-              //               ],
-              //             )
-              //           ],
-              //         ))),
             ],
           ),
         );

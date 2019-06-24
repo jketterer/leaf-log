@@ -21,7 +21,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Controller for the persistent timer display
   SidekickController controller;
   // Style for the persistent timer display
-  TextStyle timerStyle = TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
+  TextStyle timerStyle = TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white);
 
   void initState() {
     super.initState();

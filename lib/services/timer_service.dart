@@ -75,6 +75,9 @@ class TimerService extends ChangeNotifier {
   void addTime(int seconds) {
     _currentDuration = _currentDuration + Duration(seconds: seconds);
 
+    // Don't let duration increase above 60 minutes
+    if (_currentDuration > Duration(minutes: 60)) _currentDuration = Duration(minutes: 60);
+
     notifyListeners();
   }
 

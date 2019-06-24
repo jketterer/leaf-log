@@ -765,8 +765,7 @@ class DetailPage extends StatelessWidget {
                         color: _typeColors[thisTea.type],
                         child: Text(
                           "Start Brewing",
-                          style:
-                              TextStyle(fontSize: 18, color: Colors.white),
+                          style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                         onPressed: () {
                           callParentFunction(1);
@@ -783,11 +782,16 @@ class DetailPage extends StatelessWidget {
             ),
           ),
           Hero(
-            tag: "FloatingTimer",
-            child: FloatingTimer(
-              style: timerStyle,
-            ),
-          )
+              tag: "FloatingTimer",
+              child: GestureDetector(
+                onTap: () {
+                  callParentFunction(1);
+                  Navigator.pop(context);
+                },
+                child: FloatingTimer(
+                  style: timerStyle,
+                ),
+              ))
         ],
       ),
     );

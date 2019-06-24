@@ -21,7 +21,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Controller for the persistent timer display
   SidekickController controller;
   // Style for the persistent timer display
-  TextStyle timerStyle = TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white);
+  TextStyle timerStyle =
+      TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white);
 
   void initState() {
     super.initState();
@@ -53,31 +54,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _indexSelected == 0
               // Displays sort button
               ? PopupMenuButton(
-                onSelected: (result) {
-                  setState(() {
-                    _setSortMethod(result);
-                  });
-                },
-                icon: Icon(Icons.sort),
-                itemBuilder: (BuildContext context) => <PopupMenuEntry>[
-                  const PopupMenuItem(
-                    value: "rating",
-                    child: Text("Sort by rating"),
-                  ),
-                  const PopupMenuItem(
-                    value: "type",
-                    child: Text("Sort by type"),
-                  ),
-                  const PopupMenuItem(
-                    value: "frequent",
-                    child: Text("Sort by most brewed"),
-                  ),
-                  const PopupMenuItem(
-                    value: "recent",
-                    child: Text("Sort by recently brewed"),
-                  )
-                ],
-              )
+                  onSelected: (result) {
+                    setState(() {
+                      _setSortMethod(result);
+                    });
+                  },
+                  icon: Icon(Icons.sort),
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry>[
+                        const PopupMenuItem(
+                          value: "rating",
+                          child: Text("Sort by rating"),
+                        ),
+                        const PopupMenuItem(
+                          value: "type",
+                          child: Text("Sort by type"),
+                        ),
+                        const PopupMenuItem(
+                          value: "frequent",
+                          child: Text("Sort by most brewed"),
+                        ),
+                        const PopupMenuItem(
+                          value: "recent",
+                          child: Text("Sort by recently brewed"),
+                        )
+                      ],
+                )
               : Container(),
           // IconButton(
           //   icon: Icon(Icons.settings),
@@ -99,10 +100,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _indexSelected == 0
               ? Hero(
                   tag: "FloatingTimer",
-                  child: FloatingTimer(
-                    style: timerStyle,
-                  ),
-                )
+                  child: GestureDetector(
+                    onTap: () {
+                      _changeTab(1);
+                    },
+                    child: FloatingTimer(
+                      style: timerStyle,
+                    ),
+                  ))
               : Container()
         ],
       ),

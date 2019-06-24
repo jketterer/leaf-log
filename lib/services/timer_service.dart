@@ -6,6 +6,7 @@ import 'package:audioplayers/audio_cache.dart';
 class TimerService extends ChangeNotifier {
   Timer _timer;
   Duration _currentDuration = Duration.zero;
+  Duration _initialDuration = Duration(seconds: 1);
   bool _timerStarted = false;
   bool _timerExpired = false;
   Tea _currentTea;
@@ -15,6 +16,8 @@ class TimerService extends ChangeNotifier {
   Duration get currentDuration => _currentDuration;
   bool get timerExpired => _timerExpired;
   set timerExpired(bool) => _timerExpired;
+  set initialDuration(duration) => _initialDuration;
+  Duration get initialDuration => _initialDuration;
   Tea get currentTea => _currentTea;
 
   void setCurrentTea(Tea tea) {
@@ -36,8 +39,8 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void start([Duration duration]) {
-    if (duration != null) _currentDuration = duration;
+  void start() {
+    // Don't start the timer if duration is 0
     if (_timer != null || _currentDuration.inSeconds == 0) return;
 
     _timerStarted = true;
@@ -57,7 +60,6 @@ class TimerService extends ChangeNotifier {
   void resume() {
     if (_timer != null) return;
     start();
-    _timerStarted = true;
 
     notifyListeners();
   }
@@ -67,6 +69,7 @@ class TimerService extends ChangeNotifier {
     _timerStarted = false;
     _timerExpired = false;
     _currentDuration = Duration.zero;
+    _initialDuration = Duration(seconds: 1);
     _currentTea = null;
 
     notifyListeners();
@@ -77,6 +80,10 @@ class TimerService extends ChangeNotifier {
 
     // Don't let duration increase above 60 minutes
     if (_currentDuration > Duration(minutes: 60)) _currentDuration = Duration(minutes: 60);
+
+    // Set or add time to initual duration
+    if (_initialDuration.inSeconds == 1) _initialDuration = Duration(seconds: seconds);
+    else _initialDuration = _initialDuration + Duration(seconds: seconds);
 
     notifyListeners();
   }

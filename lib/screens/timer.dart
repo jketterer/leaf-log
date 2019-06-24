@@ -18,6 +18,9 @@ class _TimerPageState extends State<TimerPage>
   bool isTimerRunning = false;
   bool isTimerPaused = false;
 
+  // Keeps track of tea name after timer service resets
+  String teaName = "";
+
   // Keeps track of original time for circular progress bar
   int initialTime = 1;
 
@@ -73,7 +76,12 @@ class _TimerPageState extends State<TimerPage>
     isTimerRunning = timerService.isRunning();
 
     if (isTimerRunning) {
+      // Animate stop/reset buttons forward if timer is running
       controller.forward();
+
+      // Set tea name if timer service has a tea
+      if (timerService.currentTea != null)
+        teaName = timerService.currentTea.name;
     }
 
     TextStyle buttonText = TextStyle(
@@ -89,28 +97,32 @@ class _TimerPageState extends State<TimerPage>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              timerService.currentTea != null
-                  ? Container(
-                      padding: EdgeInsets.only(left: 10, right: 10),
-                      child: Chip(
-                        backgroundColor: mainColor,
-                        padding: EdgeInsets.all(10),
-                        label: RichText(
-                          maxLines: 10,
-                          textAlign: TextAlign.center,
-                          text: TextSpan(children: <TextSpan>[
-                            TextSpan(
-                                text: "Brewing: ",
-                                style: TextStyle(
-                                    fontSize: 28, fontWeight: FontWeight.bold)),
-                            TextSpan(
-                                text: "${timerService.currentTea.name}",
-                                style: TextStyle(fontSize: 24))
-                          ]),
-                        ),
+              Flexible(
+                flex: 1,
+                child: AnimatedOpacity(
+                  opacity: timerService.currentTea != null ? 1.0 : 0.0,
+                  duration: Duration(milliseconds: 150),
+                  child: Container(
+                    padding: EdgeInsets.only(left: 10, right: 10),
+                    child: Chip(
+                      backgroundColor: mainColor,
+                      padding: EdgeInsets.all(10),
+                      label: RichText(
+                        maxLines: 10,
+                        textAlign: TextAlign.center,
+                        text: TextSpan(children: <TextSpan>[
+                          TextSpan(
+                              text: "Brewing: ",
+                              style: TextStyle(
+                                  fontSize: 28, fontWeight: FontWeight.bold)),
+                          TextSpan(
+                              text: teaName, style: TextStyle(fontSize: 24))
+                        ]),
                       ),
-                    )
-                  : Container(),
+                    ),
+                  ),
+                ),
+              ),
               Flexible(
                 flex: 2,
                 child: CircleAvatar(
@@ -173,43 +185,46 @@ class _TimerPageState extends State<TimerPage>
                   ],
                 ),
               ),
-              Stack(
-                children: <Widget>[
-                  SlideTransition(
-                    position: stopButtonAnimation,
-                    child: Center(
-                      child: RaisedButton(
-                        // Button will change if timer is paused
-                        child: isTimerPaused
-                            ? Text("Resume", style: buttonText)
-                            : Text("Stop", style: buttonText),
-                        color: mainColor,
-                        elevation: isTimerRunning ? 8 : 0,
-                        onPressed: _stopButtonPressed,
-                      ),
-                    ),
-                  ),
-                  SlideTransition(
-                      position: resetButtonAnimation,
+              Flexible(
+                flex: 1,
+                child: Stack(
+                  children: <Widget>[
+                    SlideTransition(
+                      position: stopButtonAnimation,
                       child: Center(
                         child: RaisedButton(
-                          child: Text("Reset", style: buttonText),
+                          // Button will change if timer is paused
+                          child: isTimerPaused
+                              ? Text("Resume", style: buttonText)
+                              : Text("Stop", style: buttonText),
                           color: mainColor,
                           elevation: isTimerRunning ? 8 : 0,
-                          onPressed: _resetButtonPressed,
+                          onPressed: _stopButtonPressed,
                         ),
-                      )),
-                  // Start button is only present if timer is running
-                  !isTimerRunning
-                      ? Center(
+                      ),
+                    ),
+                    SlideTransition(
+                        position: resetButtonAnimation,
+                        child: Center(
                           child: RaisedButton(
-                              child: Text("Start", style: buttonText),
-                              color: mainColor,
-                              elevation: 8,
-                              onPressed: _startButtonPressed),
-                        )
-                      : Container(),
-                ],
+                            child: Text("Reset", style: buttonText),
+                            color: mainColor,
+                            elevation: isTimerRunning ? 8 : 0,
+                            onPressed: _resetButtonPressed,
+                          ),
+                        )),
+                    // Start button is only present if timer is running
+                    !isTimerRunning
+                        ? Center(
+                            child: RaisedButton(
+                                child: Text("Start", style: buttonText),
+                                color: mainColor,
+                                elevation: 8,
+                                onPressed: _startButtonPressed),
+                          )
+                        : Container(),
+                  ],
+                ),
               )
             ],
           ),
@@ -228,6 +243,7 @@ class _TimerPageState extends State<TimerPage>
       setState(() {
         isTimerRunning = true;
         isTimerPaused = false;
+        teaName = TimerService.of(context).currentTea.name;
       });
 
       // Animate buttons

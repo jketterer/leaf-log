@@ -124,7 +124,7 @@ class _TimerPageState extends State<TimerPage>
                 ),
               ),
               Flexible(
-                flex: 2,
+                flex: 4,
                 child: CircleAvatar(
                     radius: 120,
                     backgroundColor: Colors.grey[200],
@@ -246,7 +246,8 @@ class _TimerPageState extends State<TimerPage>
       setState(() {
         isTimerRunning = true;
         isTimerPaused = false;
-        teaName = TimerService.of(context).currentTea.name;
+        if (TimerService.of(context).currentTea != null)
+          teaName = TimerService.of(context).currentTea.name;
       });
     }
   }
@@ -280,6 +281,7 @@ class _TimerPageState extends State<TimerPage>
   }
 
   _addTime(int time) {
-    TimerService.of(context).addTime(time);
+    if (!TimerService.of(context).timerExpired)
+      TimerService.of(context).addTime(time);
   }
 }

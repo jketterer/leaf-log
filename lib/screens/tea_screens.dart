@@ -630,171 +630,176 @@ class DetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     TimerService timerService = TimerService.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Details"),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => EditTeaPage(tea: thisTea)));
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              DatabaseHelper helper = DatabaseHelper.instance;
-              helper.deleteTea(thisTea.id);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(20, 15, 20, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        appBar: AppBar(
+          title: Text("Details"),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.edit),
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => EditTeaPage(tea: thisTea)));
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                DatabaseHelper helper = DatabaseHelper.instance;
+                helper.deleteTea(thisTea.id);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        body: Stack(
+          children: <Widget>[
+            ListView(
               children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Flexible(
-                      flex: 3,
-                      child: Text(
-                        thisTea.name,
-                        style: TextStyle(
-                          fontSize: 40,
-                          //fontWeight: FontWeight.bold,
-                        ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20, 15, 20, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Flexible(
+                            flex: 3,
+                            child: Text(
+                              thisTea.name,
+                              style: TextStyle(
+                                fontSize: 40,
+                                //fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 20),
-                  child: Text(
-                    thisTea.brand,
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.grey[500],
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 15, bottom: 15),
-                  child: Container(
-                    height: 3,
-                    color: Colors.grey[300],
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Chip(
-                          backgroundColor: _typeColors[thisTea.type],
-                          label: RichText(
-                            text: TextSpan(children: <TextSpan>[
-                              TextSpan(text: "Type: ", style: labelStyle),
-                              TextSpan(text: thisTea.type, style: infoStyle)
-                            ]),
-                          ),
-                        ),
-                        Chip(
-                          backgroundColor: _typeColors[thisTea.type],
-                          label: RichText(
-                            text: TextSpan(children: <TextSpan>[
-                              TextSpan(text: "Temp: ", style: labelStyle),
-                              TextSpan(
-                                  text: "${thisTea.temperature}°",
-                                  style: infoStyle)
-                            ]),
-                          ),
-                        ),
-                        Chip(
-                          backgroundColor: _typeColors[thisTea.type],
-                          label: RichText(
-                            text: TextSpan(children: <TextSpan>[
-                              TextSpan(text: "Time: ", style: labelStyle),
-                              TextSpan(
-                                  text: _convertTime(thisTea.brewTime),
-                                  style: infoStyle)
-                            ]),
-                          ),
-                        ),
-                        Padding(padding: EdgeInsets.all(10)),
-                        Text("Notes:", style: labelStyle),
-                        Padding(padding: EdgeInsets.all(5)),
-                      ],
-                    ),
-                    CircleAvatar(
-                      radius: 80,
-                      backgroundColor: _typeColors[thisTea.type],
-                      child: RichText(
-                          text: TextSpan(children: <TextSpan>[
-                        TextSpan(
-                            text: "${thisTea.rating}",
-                            style: TextStyle(fontSize: 50)),
-                        TextSpan(text: "/10", style: infoStyle)
-                      ])),
-                    )
-                  ],
-                ),
-                Container(
-                  height: 220,
-                  width: 1000,
-                  padding: EdgeInsets.all(10),
-                  color: Colors.grey[200],
-                  child: SingleChildScrollView(
-                    child: Text(thisTea.notes),
-                  ),
-                ),
-                Container(
-                    width: 1000,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 15, bottom: 15),
-                      child: RaisedButton(
-                        color: _typeColors[thisTea.type],
+                      Padding(
+                        padding: EdgeInsets.only(left: 20),
                         child: Text(
-                          "Start Brewing",
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                          thisTea.brand,
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[500],
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold),
                         ),
-                        onPressed: () {
-                          callParentFunction(1);
-                          timerService.reset();
-                          timerService.addTime(thisTea.brewTime);
-                          timerService.start();
-                          timerService.setCurrentTea(thisTea);
-                          timerService.currentTea.brew();
-                          Navigator.pop(context);
-                        },
                       ),
-                    ))
+                      Padding(
+                        padding: EdgeInsets.only(top: 15, bottom: 15),
+                        child: Container(
+                          height: 3,
+                          color: Colors.grey[300],
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Chip(
+                                backgroundColor: _typeColors[thisTea.type],
+                                label: RichText(
+                                  text: TextSpan(children: <TextSpan>[
+                                    TextSpan(text: "Type: ", style: labelStyle),
+                                    TextSpan(
+                                        text: thisTea.type, style: infoStyle)
+                                  ]),
+                                ),
+                              ),
+                              Chip(
+                                backgroundColor: _typeColors[thisTea.type],
+                                label: RichText(
+                                  text: TextSpan(children: <TextSpan>[
+                                    TextSpan(text: "Temp: ", style: labelStyle),
+                                    TextSpan(
+                                        text: "${thisTea.temperature}°",
+                                        style: infoStyle)
+                                  ]),
+                                ),
+                              ),
+                              Chip(
+                                backgroundColor: _typeColors[thisTea.type],
+                                label: RichText(
+                                  text: TextSpan(children: <TextSpan>[
+                                    TextSpan(text: "Time: ", style: labelStyle),
+                                    TextSpan(
+                                        text: _convertTime(thisTea.brewTime),
+                                        style: infoStyle)
+                                  ]),
+                                ),
+                              ),
+                              Padding(padding: EdgeInsets.all(10)),
+                              Text("Notes:", style: labelStyle),
+                              Padding(padding: EdgeInsets.all(5)),
+                            ],
+                          ),
+                          CircleAvatar(
+                            radius: 80,
+                            backgroundColor: _typeColors[thisTea.type],
+                            child: RichText(
+                                text: TextSpan(children: <TextSpan>[
+                              TextSpan(
+                                  text: "${thisTea.rating}",
+                                  style: TextStyle(fontSize: 50)),
+                              TextSpan(text: "/10", style: infoStyle)
+                            ])),
+                          )
+                        ],
+                      ),
+                      Container(
+                        height: 300,
+                        width: 1000,
+                        padding: EdgeInsets.all(10),
+                        color: Colors.grey[200],
+                        child: SingleChildScrollView(
+                          child: Text(thisTea.notes),
+                        ),
+                      ),
+                      Container(
+                          width: 1000,
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 15, bottom: 15),
+                            child: RaisedButton(
+                              color: _typeColors[thisTea.type],
+                              child: Text(
+                                "Start Brewing",
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.white),
+                              ),
+                              onPressed: () {
+                                callParentFunction(1);
+                                timerService.reset();
+                                timerService.addTime(thisTea.brewTime);
+                                timerService.start();
+                                timerService.setCurrentTea(thisTea);
+                                timerService.currentTea.brew();
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ))
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-          Hero(
-              tag: "FloatingTimer",
-              child: GestureDetector(
-                onTap: () {
-                  callParentFunction(1);
-                  Navigator.pop(context);
-                },
-                child: FloatingTimer(
-                  style: timerStyle,
-                ),
-              ))
-        ],
-      ),
-    );
+            Hero(
+                tag: "FloatingTimer",
+                child: GestureDetector(
+                  onTap: () {
+                    callParentFunction(1);
+                    Navigator.pop(context);
+                  },
+                  child: FloatingTimer(
+                    style: timerStyle,
+                  ),
+                ))
+          ],
+        ));
   }
 
   // Function converts time in seconds to a readable format

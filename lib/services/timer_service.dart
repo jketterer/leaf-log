@@ -76,14 +76,40 @@ class TimerService extends ChangeNotifier {
   }
 
   void addTime(int seconds) {
-    _currentDuration = _currentDuration + Duration(seconds: seconds);
+    _currentDuration += Duration(seconds: seconds);
 
     // Don't let duration increase above 60 minutes
-    if (_currentDuration > Duration(minutes: 60)) _currentDuration = Duration(minutes: 60);
+    if (_currentDuration > Duration(minutes: 60))
+      _currentDuration = Duration(minutes: 60);
 
-    // Set or add time to initual duration
-    if (_initialDuration.inSeconds == 1) _initialDuration = Duration(seconds: seconds);
-    else _initialDuration = _initialDuration + Duration(seconds: seconds);
+    // Set or add time to initial duration
+    if (_initialDuration.inSeconds == 1)
+      _initialDuration = Duration(seconds: seconds);
+    else
+      _initialDuration += Duration(seconds: seconds);
+
+    notifyListeners();
+  }
+
+  void reduceTime(int seconds) {
+    _currentDuration -= Duration(seconds: seconds);
+
+    // Don't let duration decrease below 0
+    if (_currentDuration < Duration.zero) {
+      // If user tries to reduce time below 0 while timer is running, cancel the action
+      if (isRunning()) {
+        _currentDuration += Duration(seconds: seconds);
+        return;
+      }
+
+      _currentDuration = Duration.zero;
+    }
+
+    // Reset or reduce time from initial duration
+    if (_initialDuration - Duration(seconds: seconds) <= Duration.zero)
+      _initialDuration = Duration(seconds: 1);
+    else
+      _initialDuration -= Duration(seconds: seconds);
 
     notifyListeners();
   }
@@ -139,8 +165,7 @@ class FloatingTimer extends StatelessWidget {
                   ),
                   color: timerService.currentTea != null
                       ? _typeColors[timerService.currentTea.type]
-                      : Colors.lightGreen
-                )
+                      : Colors.lightGreen)
               : null,
         );
       },
@@ -155,7 +180,6 @@ class TimeDisplay extends StatelessWidget {
   final TextStyle style;
 
   String formatTime(int seconds) {
-
     if (timerService._timerExpired) {
       return "Done!";
     }
@@ -168,9 +192,7 @@ class TimeDisplay extends StatelessWidget {
       minutes++;
     }
 
-    return minutes.toString() +
-        ":" +
-        seconds.toString().padLeft(2, '0');
+    return minutes.toString() + ":" + seconds.toString().padLeft(2, '0');
   }
 
   @override

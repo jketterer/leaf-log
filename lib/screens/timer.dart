@@ -152,35 +152,50 @@ class _TimerPageState extends State<TimerPage>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
-                    RaisedButton(
-                      child: Text("+10s", style: buttonText),
-                      color: mainColor,
-                      shape: CircleBorder(),
-                      padding: EdgeInsets.all(25),
-                      elevation: 8,
-                      onPressed: () {
-                        _addTime(10);
+                    GestureDetector(
+                      onLongPress: () {
+                        _reduceTime(10);
                       },
+                      child: RaisedButton(
+                        child: Text("+10s", style: buttonText),
+                        color: mainColor,
+                        shape: CircleBorder(),
+                        padding: EdgeInsets.all(25),
+                        elevation: 8,
+                        onPressed: () {
+                          _addTime(10);
+                        },
+                      ),
                     ),
-                    RaisedButton(
-                      child: Text("+30s", style: buttonText),
-                      color: mainColor,
-                      shape: CircleBorder(),
-                      padding: EdgeInsets.all(25),
-                      elevation: 8,
-                      onPressed: () {
-                        _addTime(30);
+                    GestureDetector(
+                      onLongPress: () {
+                        _reduceTime(30);
                       },
+                      child: RaisedButton(
+                        child: Text("+30s", style: buttonText),
+                        color: mainColor,
+                        shape: CircleBorder(),
+                        padding: EdgeInsets.all(25),
+                        elevation: 8,
+                        onPressed: () {
+                          _addTime(30);
+                        },
+                      ),
                     ),
-                    RaisedButton(
-                      child: Text("+60s", style: buttonText),
-                      color: mainColor,
-                      shape: CircleBorder(),
-                      padding: EdgeInsets.all(25),
-                      elevation: 8,
-                      onPressed: () {
-                        _addTime(60);
+                    GestureDetector(
+                      onLongPress: () {
+                        _reduceTime(60);
                       },
+                      child: RaisedButton(
+                        child: Text("+60s", style: buttonText),
+                        color: mainColor,
+                        shape: CircleBorder(),
+                        padding: EdgeInsets.all(25),
+                        elevation: 8,
+                        onPressed: () {
+                          _addTime(60);
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -283,5 +298,10 @@ class _TimerPageState extends State<TimerPage>
   _addTime(int time) {
     if (!TimerService.of(context).timerExpired)
       TimerService.of(context).addTime(time);
+  }
+
+  _reduceTime(int time) {
+    if (!TimerService.of(context).timerExpired)
+      TimerService.of(context).reduceTime(time);
   }
 }

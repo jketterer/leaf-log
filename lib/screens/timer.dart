@@ -1,6 +1,7 @@
 import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
 import 'package:leaf_log/services/timer_service.dart';
+import 'package:preferences/preference_service.dart';
 
 class TimerPage extends StatefulWidget {
   @override
@@ -31,6 +32,17 @@ class _TimerPageState extends State<TimerPage>
     "White": Colors.grey,
     "Herbal": Colors.pink[300],
     "Other": Colors.cyan[200]
+  };
+
+  // Maps string key to corresponding color
+  final Map<String, Color> _colorMap = {
+    "Green": Colors.lightGreen,
+    "Red": Colors.red,
+    "Blue": Colors.blue,
+    "Yellow": Colors.yellow,
+    "Purple": Colors.purple,
+    "Brown": Colors.brown,
+    "Grey": Colors.grey
   };
 
   void initState() {
@@ -71,7 +83,7 @@ class _TimerPageState extends State<TimerPage>
 
     Color mainColor = timerService.currentTea != null
         ? _typeColors[timerService.currentTea.type]
-        : Colors.lightGreen;
+        : _colorMap[PrefService.getString("theme_color")];
 
     isTimerRunning = timerService.isRunning();
 

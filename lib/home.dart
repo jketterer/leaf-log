@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sidekick/flutter_sidekick.dart';
+import 'package:leaf_log/screens/preference_menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:leaf_log/services/search_delegate.dart';
 import 'package:leaf_log/services/timer_service.dart';
@@ -80,10 +81,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                 )
               : Container(),
-          // IconButton(
-          //   icon: Icon(Icons.settings),
-          //   onPressed: () {},
-          // ),
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => PreferenceMenu()));
+            },
+          ),
         ],
       ),
 

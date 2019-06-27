@@ -4,6 +4,7 @@ import 'package:leaf_log/services/database_helper.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:leaf_log/models/tea.dart';
 import 'package:leaf_log/services/timer_service.dart';
+import 'package:preferences/preferences.dart';
 
 class NewTeaPage extends StatefulWidget {
   @override
@@ -55,6 +56,17 @@ class _NewTeaPageState extends State<NewTeaPage> {
     fontSize: 16,
     fontWeight: FontWeight.bold,
   );
+
+  // Maps string key to corresponding color
+  final Map<String, Color> _colorMap = {
+    "Green": Colors.lightGreen,
+    "Red": Colors.red,
+    "Blue": Colors.blue,
+    "Yellow": Colors.yellow,
+    "Purple": Colors.purple,
+    "Brown": Colors.brown,
+    "Grey": Colors.grey
+  };
 
   // List of tea types to be chosen from
   final List<String> _typeList = [
@@ -265,7 +277,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: Colors.lightGreen,
+                    color: _colorMap[PrefService.getString("theme_color")],
                     child: Text("Finish"),
                     onPressed: () {
                       // Create new tea if form validates
@@ -364,6 +376,17 @@ class _EditTeaPageState extends State<EditTeaPage> {
     fontSize: 16,
     fontWeight: FontWeight.bold,
   );
+
+  // Maps string key to corresponding color
+  final Map<String, Color> _colorMap = {
+    "Green": Colors.lightGreen,
+    "Red": Colors.red,
+    "Blue": Colors.blue,
+    "Yellow": Colors.yellow,
+    "Purple": Colors.purple,
+    "Brown": Colors.brown,
+    "Grey": Colors.grey
+  };
 
   // List of tea types to be chosen from
   final List<String> _typeList = [
@@ -574,7 +597,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: Colors.lightGreen,
+                    color: _colorMap[PrefService.getString("theme_color")],
                     child: Text("Finish"),
                     onPressed: () {
                       // Set new tea values and update database if form validates

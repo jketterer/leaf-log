@@ -1,5 +1,6 @@
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:leaf_log/models/color_maps.dart';
 import 'package:preferences/preferences.dart';
 
 class PreferenceMenu extends StatefulWidget {
@@ -36,18 +37,7 @@ class _PreferenceMenuState extends State<PreferenceMenu> {
   }
 
   _setTheme(String color) {
-    // Maps string key to corresponding color
-    final Map<String, Color> _colorMap = {
-      "Green": Colors.lightGreen,
-      "Red": Colors.red,
-      "Blue": Colors.blue,
-      "Yellow": Colors.yellow,
-      "Purple": Colors.purple,
-      "Brown": Colors.brown,
-      "Grey": Colors.grey
-    };
-
     DynamicTheme.of(context)
-        .setThemeData(ThemeData(primarySwatch: _colorMap[color]));
+        .setThemeData(ThemeData(primarySwatch: ColorMaps.themeColors[color]));
   }
 }

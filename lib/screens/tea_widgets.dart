@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:leaf_log/models/color_maps.dart';
 import 'package:leaf_log/models/tea.dart';
 import 'package:leaf_log/services/database_helper.dart';
 import 'tea_screens.dart';
@@ -59,15 +60,6 @@ class TeaCard extends StatelessWidget {
   final Function callParentFunction;
   final Function onPressed;
 
-  final Map<String, Color> _typeColors = {
-    "Green": Colors.lightGreen,
-    "Black": Colors.brown[400],
-    "Oolong": Colors.lime[500],
-    "White": Colors.grey,
-    "Herbal": Colors.pink[300],
-    "Other": Colors.cyan[200]
-  };
-
   TeaCard({Key key, @required this.tea, @required this.callParentFunction, this.onPressed})
       : super(key: key);
 
@@ -91,7 +83,7 @@ class TeaCard extends StatelessWidget {
           child: ListTile(
         leading: Icon(
           FontAwesomeIcons.leaf,
-          color: _typeColors[tea.type],
+          color: ColorMaps.typeColors[tea.type],
         ),
         title: Text(tea.name),
         subtitle: Text(tea.brand),

@@ -5,6 +5,8 @@ import 'package:leaf_log/screens/timer.dart';
 import 'package:leaf_log/services/timer_service.dart';
 import 'package:preferences/preferences.dart';
 
+import 'models/color_maps.dart';
+
 // Main function, calls runApp to start the app
 void main() async {
   final timerService = TimerService(); // Provides timer to entire app
@@ -21,23 +23,12 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  // Maps string key to corresponding color
-  final Map<String, Color> _colorMap = {
-    "Green": Colors.lightGreen,
-    "Red": Colors.red,
-    "Blue": Colors.blue,
-    "Yellow": Colors.yellow,
-    "Purple": Colors.purple,
-    "Brown": Colors.brown,
-    "Grey": Colors.grey
-  };
-
   @override
   Widget build(BuildContext context) {
     return DynamicTheme(
       defaultBrightness: Brightness.light,
       data: (brightness) => new ThemeData(
-          primarySwatch: _colorMap[PrefService.getString("theme_color")],
+          primarySwatch: ColorMaps.themeColors[PrefService.getString("theme_color")] ?? Colors.lightGreen,
           brightness: brightness),
       themedWidgetBuilder: (context, theme) {
         return new MaterialApp(

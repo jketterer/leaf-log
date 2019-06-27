@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:leaf_log/models/color_maps.dart';
 import 'dart:async';
 import 'package:leaf_log/models/tea.dart';
 import 'package:audioplayers/audio_cache.dart';
+import 'package:preferences/preferences.dart';
 
 class TimerService extends ChangeNotifier {
   Timer _timer;
@@ -135,15 +137,6 @@ class FloatingTimer extends StatelessWidget {
   FloatingTimer({this.style});
   final TextStyle style;
 
-  final Map<String, Color> _typeColors = {
-    "Green": Colors.lightGreen,
-    "Black": Colors.brown[400],
-    "Oolong": Colors.lime[500],
-    "White": Colors.grey,
-    "Herbal": Colors.pink[300],
-    "Other": Colors.cyan[200]
-  };
-
   @override
   Widget build(BuildContext context) {
     TimerService timerService = TimerService.of(context);
@@ -164,8 +157,8 @@ class FloatingTimer extends StatelessWidget {
                     ),
                   ),
                   color: timerService.currentTea != null
-                      ? _typeColors[timerService.currentTea.type]
-                      : Colors.lightGreen)
+                      ? ColorMaps.typeColors[timerService.currentTea.type]
+                      : ColorMaps.themeColors[PrefService.getString("theme_color")])
               : null,
         );
       },

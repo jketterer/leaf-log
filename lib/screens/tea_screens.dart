@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:leaf_log/models/color_maps.dart';
 import 'package:leaf_log/services/database_helper.dart';
 import 'package:flutter_picker/flutter_picker.dart';
 import 'package:leaf_log/models/tea.dart';
@@ -56,17 +57,6 @@ class _NewTeaPageState extends State<NewTeaPage> {
     fontSize: 16,
     fontWeight: FontWeight.bold,
   );
-
-  // Maps string key to corresponding color
-  final Map<String, Color> _colorMap = {
-    "Green": Colors.lightGreen,
-    "Red": Colors.red,
-    "Blue": Colors.blue,
-    "Yellow": Colors.yellow,
-    "Purple": Colors.purple,
-    "Brown": Colors.brown,
-    "Grey": Colors.grey
-  };
 
   // List of tea types to be chosen from
   final List<String> _typeList = [
@@ -277,7 +267,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: _colorMap[PrefService.getString("theme_color")],
+                    color: ColorMaps.themeColors[PrefService.getString("theme_color")],
                     child: Text("Finish"),
                     onPressed: () {
                       // Create new tea if form validates
@@ -376,17 +366,6 @@ class _EditTeaPageState extends State<EditTeaPage> {
     fontSize: 16,
     fontWeight: FontWeight.bold,
   );
-
-  // Maps string key to corresponding color
-  final Map<String, Color> _colorMap = {
-    "Green": Colors.lightGreen,
-    "Red": Colors.red,
-    "Blue": Colors.blue,
-    "Yellow": Colors.yellow,
-    "Purple": Colors.purple,
-    "Brown": Colors.brown,
-    "Grey": Colors.grey
-  };
 
   // List of tea types to be chosen from
   final List<String> _typeList = [
@@ -597,7 +576,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: _colorMap[PrefService.getString("theme_color")],
+                    color: ColorMaps.themeColors[PrefService.getString("theme_color")],
                     child: Text("Finish"),
                     onPressed: () {
                       // Set new tea values and update database if form validates
@@ -631,15 +610,6 @@ class DetailPage extends StatelessWidget {
   DetailPage(
       {Key key, @required this.thisTea, @required this.callParentFunction})
       : super(key: key);
-
-  final Map<String, Color> _typeColors = {
-    "Green": Colors.lightGreen,
-    "Black": Colors.brown[400],
-    "Oolong": Colors.lime[500],
-    "White": Colors.grey,
-    "Herbal": Colors.pink[300],
-    "Other": Colors.cyan[200]
-  };
 
   final TextStyle labelStyle = TextStyle(
       fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey[800]);
@@ -725,7 +695,7 @@ class DetailPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Chip(
-                                backgroundColor: _typeColors[thisTea.type],
+                                backgroundColor: ColorMaps.typeColors[thisTea.type],
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Type: ", style: labelStyle),
@@ -735,7 +705,7 @@ class DetailPage extends StatelessWidget {
                                 ),
                               ),
                               Chip(
-                                backgroundColor: _typeColors[thisTea.type],
+                                backgroundColor: ColorMaps.typeColors[thisTea.type],
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Temp: ", style: labelStyle),
@@ -746,7 +716,7 @@ class DetailPage extends StatelessWidget {
                                 ),
                               ),
                               Chip(
-                                backgroundColor: _typeColors[thisTea.type],
+                                backgroundColor: ColorMaps.typeColors[thisTea.type],
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Time: ", style: labelStyle),
@@ -763,7 +733,7 @@ class DetailPage extends StatelessWidget {
                           ),
                           CircleAvatar(
                             radius: 80,
-                            backgroundColor: _typeColors[thisTea.type],
+                            backgroundColor: ColorMaps.typeColors[thisTea.type],
                             child: RichText(
                                 text: TextSpan(children: <TextSpan>[
                               TextSpan(
@@ -788,7 +758,7 @@ class DetailPage extends StatelessWidget {
                           child: Padding(
                             padding: EdgeInsets.only(top: 15, bottom: 15),
                             child: RaisedButton(
-                              color: _typeColors[thisTea.type],
+                              color: ColorMaps.typeColors[thisTea.type],
                               child: Text(
                                 "Start Brewing",
                                 style: TextStyle(

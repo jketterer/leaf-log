@@ -1,5 +1,6 @@
 import 'package:flutter/animation.dart';
 import 'package:flutter/material.dart';
+import 'package:leaf_log/models/color_maps.dart';
 import 'package:leaf_log/services/timer_service.dart';
 import 'package:preferences/preference_service.dart';
 
@@ -24,26 +25,6 @@ class _TimerPageState extends State<TimerPage>
 
   // Keeps track of original time for circular progress bar
   int initialTime = 1;
-
-  final Map<String, Color> _typeColors = {
-    "Green": Colors.lightGreen,
-    "Black": Colors.brown[400],
-    "Oolong": Colors.lime[500],
-    "White": Colors.grey,
-    "Herbal": Colors.pink[300],
-    "Other": Colors.cyan[200]
-  };
-
-  // Maps string key to corresponding color
-  final Map<String, Color> _colorMap = {
-    "Green": Colors.lightGreen,
-    "Red": Colors.red,
-    "Blue": Colors.blue,
-    "Yellow": Colors.yellow,
-    "Purple": Colors.purple,
-    "Brown": Colors.brown,
-    "Grey": Colors.grey
-  };
 
   void initState() {
     super.initState();
@@ -82,8 +63,8 @@ class _TimerPageState extends State<TimerPage>
     TimerService timerService = TimerService.of(context);
 
     Color mainColor = timerService.currentTea != null
-        ? _typeColors[timerService.currentTea.type]
-        : _colorMap[PrefService.getString("theme_color")];
+        ? ColorMaps.typeColors[timerService.currentTea.type]
+        : ColorMaps.themeColors[PrefService.getString("theme_color")];
 
     isTimerRunning = timerService.isRunning();
 

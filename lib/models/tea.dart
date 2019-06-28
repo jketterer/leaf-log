@@ -6,6 +6,7 @@ class Tea {
   DateTime lastBrewed = DateTime(1900);
   int brewCount = 0;
 
+  // Database columns
   static final columns = [
     "id",
     "name",
@@ -19,9 +20,11 @@ class Tea {
     "lastBrewed"
   ];
 
+  // Basic constructor
   Tea(this.name, this.type, this.brand, this.brewTime, this.temperature,
       this.rating, this.notes);
 
+  // Constructor for generating teas from database tables
   Tea.fromTable(
       this.id,
       this.name,
@@ -34,13 +37,7 @@ class Tea {
       this.brewCount,
       this.lastBrewed);
 
-  Tea.test(this.name,
-      {this.type = "Green",
-      this.brand = "Harney and Sons",
-      this.brewTime = 180,
-      this.temperature = 212,
-      this.rating = 10});
-
+  // Updates brewCount and lastBrewed when user brews the tea
   void brew() {
     brewCount++;
     lastBrewed = DateTime.now();
@@ -49,6 +46,7 @@ class Tea {
     helper.updateTea(this);
   }
 
+  // Converts Tea object to map
   Map toMap() {
     Map map = <String, dynamic>{
       "id": id,
@@ -70,6 +68,7 @@ class Tea {
     return map;
   }
 
+  // Converts map to Tea object
   static fromMap(Map<String, dynamic> map) {
     Tea tea = new Tea.fromTable(
         map["id"],
@@ -86,6 +85,7 @@ class Tea {
     return tea;
   }
 
+  // Setters for editing existing teas
   void setName(String newName) {
     this.name = newName;
   }

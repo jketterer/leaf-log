@@ -24,8 +24,9 @@ class _TimerPageState extends State<TimerPage>
   String teaName = "";
 
   // Keeps track of original time for circular progress bar
-  int initialTime = 1;
+  int initialTime = 1; // Initially 1 to avoid Infinity or NaN errors when dividing
 
+  @override
   void initState() {
     super.initState();
     // Inits the animation controller
@@ -62,10 +63,12 @@ class _TimerPageState extends State<TimerPage>
     // Get access to app-wide timer service
     TimerService timerService = TimerService.of(context);
 
+    // Main color is based on tea being brewed or user defined theme color
     Color mainColor = timerService.currentTea != null
         ? ColorMaps.getTypeColor(timerService.currentTea.type)
         : ColorMaps.themeColors[PrefService.getString("theme_color")];
 
+    // Update flag when returning to timer page
     isTimerRunning = timerService.isRunning();
 
     if (isTimerRunning) {

@@ -5,7 +5,6 @@ import 'package:leaf_log/models/tea.dart';
 import 'package:leaf_log/services/database_helper.dart';
 import 'tea_screens.dart';
 
-/* Main page */
 class TeaPage extends StatelessWidget {
   // This is required so the app can switch to timer page from anywhere inside TeaPage
   final Function callParentFunction;

@@ -13,6 +13,7 @@ class NewTeaPage extends StatefulWidget {
 }
 
 class _NewTeaPageState extends State<NewTeaPage> {
+  // Form key necessary for formfields
   final _formKey = GlobalKey<FormState>();
 
   // Controllers for the text entry fields
@@ -52,7 +53,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
     super.dispose();
   }
 
-  // Textstlye for headers
+  // Textstyle for headers
   final headerStyle = TextStyle(
     fontSize: 16,
     fontWeight: FontWeight.bold,
@@ -302,6 +303,7 @@ class EditTeaPage extends StatefulWidget {
 }
 
 class _EditTeaPageState extends State<EditTeaPage> {
+  // Form key required for formfields
   final _formKey = GlobalKey<FormState>();
 
   Tea tea;
@@ -611,6 +613,7 @@ class DetailPage extends StatelessWidget {
       {Key key, @required this.thisTea, @required this.callParentFunction})
       : super(key: key);
 
+  // Textstyles to reduce code footprint
   final TextStyle labelStyle = TextStyle(
       fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey[800]);
 
@@ -663,7 +666,6 @@ class DetailPage extends StatelessWidget {
                               thisTea.name,
                               style: TextStyle(
                                 fontSize: 40,
-                                //fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),

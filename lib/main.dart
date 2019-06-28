@@ -25,6 +25,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Dynamic theme allows theme to be changed on the fly
     return DynamicTheme(
       defaultBrightness: Brightness.light,
       data: (brightness) => new ThemeData(
@@ -34,12 +35,7 @@ class MyApp extends StatelessWidget {
         return new MaterialApp(
           title: 'Leaf Log',
           theme: theme,
-          initialRoute: '/',
-          // Currently unused
-          routes: {
-            '/': (context) => HomePage(),
-            '/timer': (context) => TimerPage(),
-          },
+          home: new HomePage(),
         );
       },
     );

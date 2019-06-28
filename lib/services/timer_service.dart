@@ -22,6 +22,7 @@ class TimerService extends ChangeNotifier {
   Duration get initialDuration => _initialDuration;
   Tea get currentTea => _currentTea;
 
+  // This setter needs to be explicit to avoid flutter throwing a "problem"
   void setCurrentTea(Tea tea) {
     _currentTea = tea;
   }
@@ -30,6 +31,7 @@ class TimerService extends ChangeNotifier {
     return _timerStarted;
   }
 
+  // Called each second timer is running
   void _onTick(Timer timer) {
     _currentDuration = _currentDuration - Duration(seconds: 1);
     if (_currentDuration == Duration.zero) {
@@ -41,6 +43,7 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Start the timer
   void start() {
     // Don't start the timer if duration is 0
     if (_timer != null || _currentDuration.inSeconds == 0) return;
@@ -51,6 +54,7 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Pause/stop the timer
   void stop() {
     if (_timer == null) return;
     _timer.cancel();
@@ -59,6 +63,7 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Resume the timer
   void resume() {
     if (_timer != null) return;
     start();
@@ -66,6 +71,7 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Reset the timer
   void reset() {
     stop();
     _timerStarted = false;
@@ -77,6 +83,7 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Add time to the timer
   void addTime(int seconds) {
     _currentDuration += Duration(seconds: seconds);
 
@@ -93,6 +100,7 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Reduce time from the timer
   void reduceTime(int seconds) {
     _currentDuration -= Duration(seconds: seconds);
 
@@ -116,6 +124,7 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Provide class to entire widget tree
   static TimerService of(BuildContext context) {
     var provider = context.inheritFromWidgetOfExactType(TimerServiceProvider)
         as TimerServiceProvider;
@@ -133,6 +142,7 @@ class TimerServiceProvider extends InheritedWidget {
   bool updateShouldNotify(TimerServiceProvider old) => service != old.service;
 }
 
+// Widget displays a small timer
 class FloatingTimer extends StatelessWidget {
   FloatingTimer({this.style});
   final TextStyle style;
@@ -166,6 +176,7 @@ class FloatingTimer extends StatelessWidget {
   }
 }
 
+// Widget displays the current time in a readable format
 class TimeDisplay extends StatelessWidget {
   TimeDisplay({this.timerService, this.style = const TextStyle()});
   TimeDisplay.styled({this.timerService, this.style});

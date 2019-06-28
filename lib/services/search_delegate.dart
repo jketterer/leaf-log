@@ -18,6 +18,7 @@ class CustomSearchDelegate extends SearchDelegate {
     return theme;
   }
 
+  // Define actions in appbar
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
@@ -30,6 +31,7 @@ class CustomSearchDelegate extends SearchDelegate {
     ];
   }
 
+  // Define actions at left of appbar
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
@@ -40,11 +42,13 @@ class CustomSearchDelegate extends SearchDelegate {
     );
   }
 
+  // Currently unused
   @override
   Widget buildResults(BuildContext context) {
     return Container();
   }
 
+  // Build a listview of teas containing search query
   @override
   Widget buildSuggestions(BuildContext context) {
     return FutureBuilder<List<Tea>>(

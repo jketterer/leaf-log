@@ -3,7 +3,7 @@ import 'package:preferences/preferences.dart';
 
 class ColorMaps {
   // Maps string key to corresponding color
-  static const Map<String, Color> _colorMap = {
+  static const Map<String, Color> _themeColors = {
     "Green": Colors.lightGreen,
     "Red": Colors.red,
     "Blue": Colors.blue,
@@ -15,6 +15,7 @@ class ColorMaps {
 
   // Gets color from preferences and returns color based on type
   static Color getTypeColor(String type) {
+    // Maps color names to actual color
     Map<String, Color> _colors = {
       "Green": Colors.lightGreen,
       "Brown": Colors.brown[400],
@@ -24,6 +25,7 @@ class ColorMaps {
       "Grey": Colors.grey
     };
 
+    // Maps tea type to user defined color
     Map<String, Color> _types = {
       "Green": _colors[PrefService.getString("green_tea_color")] ?? _colors["Green"],
       "Black": _colors[PrefService.getString("black_tea_color")] ?? _colors["Brown"],
@@ -36,5 +38,5 @@ class ColorMaps {
     return _types[type];
   }
 
-  static Map get themeColors => _colorMap;
+  static Map get themeColors => _themeColors;
 }

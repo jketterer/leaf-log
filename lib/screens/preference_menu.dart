@@ -15,12 +15,6 @@ class _PreferenceMenuState extends State<PreferenceMenu> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Preferences"),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.check),
-            onPressed: () {},
-          )
-        ],
       ),
       body: PreferencePage([
         PreferenceTitle('Customization'),
@@ -78,6 +72,7 @@ class _PreferenceMenuState extends State<PreferenceMenu> {
     );
   }
 
+  // Sets app theme using DynamicTheme
   _setTheme(String color) {
     DynamicTheme.of(context)
         .setThemeData(ThemeData(primarySwatch: ColorMaps.themeColors[color]));

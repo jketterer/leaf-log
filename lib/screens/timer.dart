@@ -152,12 +152,11 @@ class _TimerPageState extends State<TimerPage>
                       onLongPress: () {
                         _reduceTime(10);
                       },
-                      child: RaisedButton(
+                      child: FlatButton(
                         child: Text("+10s", style: buttonText),
                         color: mainColor,
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(25),
-                        elevation: 0,
                         onPressed: () {
                           _addTime(10);
                         },
@@ -167,12 +166,11 @@ class _TimerPageState extends State<TimerPage>
                       onLongPress: () {
                         _reduceTime(30);
                       },
-                      child: RaisedButton(
+                      child: FlatButton(
                         child: Text("+30s", style: buttonText),
                         color: mainColor,
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(25),
-                        elevation: 0,
                         onPressed: () {
                           _addTime(30);
                         },
@@ -182,12 +180,11 @@ class _TimerPageState extends State<TimerPage>
                       onLongPress: () {
                         _reduceTime(60);
                       },
-                      child: RaisedButton(
+                      child: FlatButton(
                         child: Text("+60s", style: buttonText),
                         color: mainColor,
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(25),
-                        elevation: 0,
                         onPressed: () {
                           _addTime(60);
                         },
@@ -203,13 +200,12 @@ class _TimerPageState extends State<TimerPage>
                     SlideTransition(
                       position: stopButtonAnimation,
                       child: Center(
-                        child: RaisedButton(
+                        child: FlatButton(
                           // Button will change if timer is paused
                           child: isTimerPaused
                               ? Text("Resume", style: buttonText)
                               : Text("Stop", style: buttonText),
                           color: mainColor,
-                          elevation: 0,
                           onPressed: _stopButtonPressed,
                         ),
                       ),
@@ -217,20 +213,18 @@ class _TimerPageState extends State<TimerPage>
                     SlideTransition(
                         position: resetButtonAnimation,
                         child: Center(
-                          child: RaisedButton(
+                          child: FlatButton(
                             child: Text("Reset", style: buttonText),
                             color: mainColor,
-                            elevation: 0,
                             onPressed: _resetButtonPressed,
                           ),
                         )),
                     // Start button is only present if timer is running
                     !isTimerRunning
                         ? Center(
-                            child: RaisedButton(
+                            child: FlatButton(
                                 child: Text("Start", style: buttonText),
                                 color: mainColor,
-                                elevation: 0,
                                 onPressed: _startButtonPressed),
                           )
                         : Container(),

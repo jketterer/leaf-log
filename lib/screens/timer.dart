@@ -154,7 +154,7 @@ class _TimerPageState extends State<TimerPage>
                         color: mainColor,
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(25),
-                        elevation: 8,
+                        elevation: 0,
                         onPressed: () {
                           _addTime(10);
                         },
@@ -169,7 +169,7 @@ class _TimerPageState extends State<TimerPage>
                         color: mainColor,
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(25),
-                        elevation: 8,
+                        elevation: 0,
                         onPressed: () {
                           _addTime(30);
                         },
@@ -184,7 +184,7 @@ class _TimerPageState extends State<TimerPage>
                         color: mainColor,
                         shape: CircleBorder(),
                         padding: EdgeInsets.all(25),
-                        elevation: 8,
+                        elevation: 0,
                         onPressed: () {
                           _addTime(60);
                         },
@@ -206,7 +206,7 @@ class _TimerPageState extends State<TimerPage>
                               ? Text("Resume", style: buttonText)
                               : Text("Stop", style: buttonText),
                           color: mainColor,
-                          elevation: isTimerRunning ? 8 : 0,
+                          elevation: 0,
                           onPressed: _stopButtonPressed,
                         ),
                       ),
@@ -217,7 +217,7 @@ class _TimerPageState extends State<TimerPage>
                           child: RaisedButton(
                             child: Text("Reset", style: buttonText),
                             color: mainColor,
-                            elevation: isTimerRunning ? 8 : 0,
+                            elevation: 0,
                             onPressed: _resetButtonPressed,
                           ),
                         )),
@@ -227,7 +227,7 @@ class _TimerPageState extends State<TimerPage>
                             child: RaisedButton(
                                 child: Text("Start", style: buttonText),
                                 color: mainColor,
-                                elevation: 8,
+                                elevation: 0,
                                 onPressed: _startButtonPressed),
                           )
                         : Container(),

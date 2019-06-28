@@ -1,6 +1,7 @@
 import 'package:dynamic_theme/dynamic_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/color_maps.dart';
+import 'package:preferences/preference_dialog.dart';
 import 'package:preferences/preferences.dart';
 
 class PreferenceMenu extends StatefulWidget {
@@ -31,6 +32,47 @@ class _PreferenceMenuState extends State<PreferenceMenu> {
           onChange: (value) {
             _setTheme(value);
           },
+        ),
+        PreferenceDialogLink(
+          'Tea Type Colors',
+          dialog: PreferenceDialog([
+            DropdownPreference(
+              'Green tea',
+              'green_tea_color',
+              defaultVal: 'Green',
+              values: ['Green', 'Brown', 'Yellow', 'Grey', 'Pink', 'Blue'],
+            ),
+            DropdownPreference(
+              'Black tea',
+              'black_tea_color',
+              defaultVal: 'Brown',
+              values: ['Green', 'Brown', 'Yellow', 'Grey', 'Pink', 'Blue'],
+            ),
+            DropdownPreference(
+              'Oolong tea',
+              'oolong_tea_color',
+              defaultVal: 'Yellow',
+              values: ['Green', 'Brown', 'Yellow', 'Grey', 'Pink', 'Blue'],
+            ),
+            DropdownPreference(
+              'White tea',
+              'white_tea_color',
+              defaultVal: 'Grey',
+              values: ['Green', 'Brown', 'Yellow', 'Grey', 'Pink', 'Blue'],
+            ),
+            DropdownPreference(
+              'Herbal tea',
+              'Herbal_tea_color', // This crashes if i use a lowercase "h" in "herbal"????????
+              defaultVal: 'Pink',
+              values: ['Green', 'Brown', 'Yellow', 'Grey', 'Pink', 'Blue'],
+            ),
+            DropdownPreference(
+              'Other tea',
+              'other_tea_color',
+              defaultVal: 'Blue',
+              values: ['Green', 'Brown', 'Yellow', 'Grey', 'Pink', 'Blue'],
+            ),
+          ]),
         )
       ]),
     );

@@ -83,7 +83,7 @@ class TeaCard extends StatelessWidget {
           child: ListTile(
         leading: Icon(
           FontAwesomeIcons.leaf,
-          color: ColorMaps.typeColors[tea.type],
+          color: ColorMaps.getTypeColor(tea.type)
         ),
         title: Text(tea.name),
         subtitle: Text(tea.brand),

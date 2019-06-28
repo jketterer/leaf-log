@@ -157,7 +157,7 @@ class FloatingTimer extends StatelessWidget {
                     ),
                   ),
                   color: timerService.currentTea != null
-                      ? ColorMaps.typeColors[timerService.currentTea.type]
+                      ? ColorMaps.getTypeColor(timerService.currentTea.type)
                       : ColorMaps.themeColors[PrefService.getString("theme_color")])
               : null,
         );

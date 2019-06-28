@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:preferences/preferences.dart';
 
 class ColorMaps {
   // Maps string key to corresponding color
@@ -12,15 +13,28 @@ class ColorMaps {
     "Grey": Colors.grey
   };
 
-  static Map<String, Color> _typeColors = {
-    "Green": Colors.lightGreen,
-    "Black": Colors.brown[400],
-    "Oolong": Colors.lime[500],
-    "White": Colors.grey,
-    "Herbal": Colors.pink[300],
-    "Other": Colors.cyan[200]
-  };
+  // Gets color from preferences and returns color based on type
+  static Color getTypeColor(String type) {
+    Map<String, Color> _colors = {
+      "Green": Colors.lightGreen,
+      "Brown": Colors.brown[400],
+      "Yellow": Colors.lime,
+      "Pink": Colors.pinkAccent,
+      "Blue": Colors.indigoAccent,
+      "Grey": Colors.grey
+    };
+
+    Map<String, Color> _types = {
+      "Green": _colors[PrefService.getString("green_tea_color")] ?? _colors["Green"],
+      "Black": _colors[PrefService.getString("black_tea_color")] ?? _colors["Brown"],
+      "Oolong": _colors[PrefService.getString("oolong_tea_color")] ?? _colors["Yellow"],
+      "White": _colors[PrefService.getString("white_tea_color")] ?? _colors["Grey"],
+      "Herbal": _colors[PrefService.getString("Herbal_tea_color")] ?? _colors["Pink"],
+      "Other": _colors[PrefService.getString("other_tea_color")] ?? _colors["Blue"]
+    };
+
+    return _types[type];
+  }
 
   static Map get themeColors => _colorMap;
-  static Map get typeColors => _typeColors;
 }

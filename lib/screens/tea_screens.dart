@@ -695,7 +695,7 @@ class DetailPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Chip(
-                                backgroundColor: ColorMaps.typeColors[thisTea.type],
+                                backgroundColor: ColorMaps.getTypeColor(thisTea.type),
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Type: ", style: labelStyle),
@@ -705,7 +705,7 @@ class DetailPage extends StatelessWidget {
                                 ),
                               ),
                               Chip(
-                                backgroundColor: ColorMaps.typeColors[thisTea.type],
+                                backgroundColor: ColorMaps.getTypeColor(thisTea.type),
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Temp: ", style: labelStyle),
@@ -716,7 +716,7 @@ class DetailPage extends StatelessWidget {
                                 ),
                               ),
                               Chip(
-                                backgroundColor: ColorMaps.typeColors[thisTea.type],
+                                backgroundColor: ColorMaps.getTypeColor(thisTea.type),
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Time: ", style: labelStyle),
@@ -733,7 +733,7 @@ class DetailPage extends StatelessWidget {
                           ),
                           CircleAvatar(
                             radius: 80,
-                            backgroundColor: ColorMaps.typeColors[thisTea.type],
+                            backgroundColor: ColorMaps.getTypeColor(thisTea.type),
                             child: RichText(
                                 text: TextSpan(children: <TextSpan>[
                               TextSpan(
@@ -758,7 +758,7 @@ class DetailPage extends StatelessWidget {
                           child: Padding(
                             padding: EdgeInsets.only(top: 15, bottom: 15),
                             child: RaisedButton(
-                              color: ColorMaps.typeColors[thisTea.type],
+                              color: ColorMaps.getTypeColor(thisTea.type),
                               child: Text(
                                 "Start Brewing",
                                 style: TextStyle(

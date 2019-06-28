@@ -63,7 +63,7 @@ class _TimerPageState extends State<TimerPage>
     TimerService timerService = TimerService.of(context);
 
     Color mainColor = timerService.currentTea != null
-        ? ColorMaps.typeColors[timerService.currentTea.type]
+        ? ColorMaps.getTypeColor(timerService.currentTea.type)
         : ColorMaps.themeColors[PrefService.getString("theme_color")];
 
     isTimerRunning = timerService.isRunning();

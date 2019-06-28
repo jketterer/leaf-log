@@ -94,7 +94,7 @@ class TimerService extends ChangeNotifier {
     // Set or add time to initial duration
     if (_initialDuration.inSeconds == 1)
       _initialDuration = Duration(seconds: seconds);
-    else
+    else if (_currentDuration < Duration(minutes: 60))
       _initialDuration += Duration(seconds: seconds);
 
     notifyListeners();
@@ -118,7 +118,7 @@ class TimerService extends ChangeNotifier {
     // Reset or reduce time from initial duration
     if (_initialDuration - Duration(seconds: seconds) <= Duration.zero)
       _initialDuration = Duration(seconds: 1);
-    else
+    else if (!isRunning()) // Only reduce initial duration if timer is not running
       _initialDuration -= Duration(seconds: seconds);
 
     notifyListeners();

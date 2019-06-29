@@ -268,7 +268,8 @@ class _NewTeaPageState extends State<NewTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: ColorMaps.themeColors[PrefService.getString("theme_color")],
+                    color: ColorMaps
+                        .themeColors[PrefService.getString("theme_color")],
                     child: Text("Finish"),
                     onPressed: () {
                       // Create new tea if form validates
@@ -578,7 +579,8 @@ class _EditTeaPageState extends State<EditTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: ColorMaps.themeColors[PrefService.getString("theme_color")],
+                    color: ColorMaps
+                        .themeColors[PrefService.getString("theme_color")],
                     child: Text("Finish"),
                     onPressed: () {
                       // Set new tea values and update database if form validates
@@ -641,9 +643,34 @@ class DetailPage extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.delete),
               onPressed: () {
-                DatabaseHelper helper = DatabaseHelper.instance;
-                helper.deleteTea(thisTea.id);
-                Navigator.pop(context);
+                showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text("Delete Tea?"),
+                        content: Text(
+                          "This will permanently delete the selected tea.",
+                          style: TextStyle(color: Colors.grey[500]),
+                        ),
+                        actions: <Widget>[
+                          FlatButton(
+                            child: Text("Cancel"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          FlatButton(
+                            child: Text("Delete"),
+                            onPressed: () {
+                              DatabaseHelper helper = DatabaseHelper.instance;
+                              helper.deleteTea(thisTea.id);
+                              Navigator.of(context).pop();
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    });
               },
             ),
           ],
@@ -697,7 +724,8 @@ class DetailPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Chip(
-                                backgroundColor: ColorMaps.getTypeColor(thisTea.type),
+                                backgroundColor:
+                                    ColorMaps.getTypeColor(thisTea.type),
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Type: ", style: labelStyle),
@@ -707,7 +735,8 @@ class DetailPage extends StatelessWidget {
                                 ),
                               ),
                               Chip(
-                                backgroundColor: ColorMaps.getTypeColor(thisTea.type),
+                                backgroundColor:
+                                    ColorMaps.getTypeColor(thisTea.type),
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Temp: ", style: labelStyle),
@@ -718,7 +747,8 @@ class DetailPage extends StatelessWidget {
                                 ),
                               ),
                               Chip(
-                                backgroundColor: ColorMaps.getTypeColor(thisTea.type),
+                                backgroundColor:
+                                    ColorMaps.getTypeColor(thisTea.type),
                                 label: RichText(
                                   text: TextSpan(children: <TextSpan>[
                                     TextSpan(text: "Time: ", style: labelStyle),
@@ -735,7 +765,8 @@ class DetailPage extends StatelessWidget {
                           ),
                           CircleAvatar(
                             radius: 80,
-                            backgroundColor: ColorMaps.getTypeColor(thisTea.type),
+                            backgroundColor:
+                                ColorMaps.getTypeColor(thisTea.type),
                             child: RichText(
                                 text: TextSpan(children: <TextSpan>[
                               TextSpan(

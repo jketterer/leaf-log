@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:leaf_log/models/color_maps.dart';
 import 'dart:async';
 import 'package:leaf_log/models/tea.dart';
@@ -14,7 +15,22 @@ class TimerService extends ChangeNotifier {
   bool _timerExpired = false;
   Tea _currentTea;
 
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
   static AudioCache player = AudioCache();
+
+  TimerService() {
+    flutterLocalNotificationsPlugin = new FlutterLocalNotificationsPlugin();
+    // initialise the plugin. app_icon needs to be a added as a drawable resource to the Android head project
+    var initializationSettingsAndroid =
+        new AndroidInitializationSettings('app_icon');
+    var initializationSettingsIOS = new IOSInitializationSettings(
+        onDidReceiveLocalNotification: onDidReceiveLocalNotification);
+    var initializationSettings = new InitializationSettings(
+        initializationSettingsAndroid, initializationSettingsIOS);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onSelectNotification: onSelectNotification);
+  }
 
   Duration get currentDuration => _currentDuration;
   bool get timerExpired => _timerExpired;
@@ -39,6 +55,7 @@ class TimerService extends ChangeNotifier {
       stop();
       _timerExpired = true;
       player.play("alarm_sound.mp3");
+      _showNotification();
     }
 
     notifyListeners();
@@ -62,7 +79,7 @@ class TimerService extends ChangeNotifier {
     if (_timer == null) return;
     _timer.cancel();
     _timer = null;
-    
+
     Screen.keepOn(false);
 
     notifyListeners();
@@ -84,6 +101,8 @@ class TimerService extends ChangeNotifier {
     _currentDuration = Duration.zero;
     _initialDuration = Duration(seconds: 1);
     _currentTea = null;
+
+    _clearNotification();
 
     notifyListeners();
   }
@@ -127,6 +146,33 @@ class TimerService extends ChangeNotifier {
       _initialDuration -= Duration(seconds: seconds);
 
     notifyListeners();
+  }
+
+  // iOS specific
+  Future<void> onDidReceiveLocalNotification(
+      int i, String s1, String s2, String s3) {
+    return null;
+  }
+
+  // Called when user taps notification
+  Future<dynamic> onSelectNotification(String payload) {
+    return null;
+  }
+
+  // Shows local notification
+  Future<void> _showNotification() async {
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'channel-leaf-log', 'channel-leaf-log', 'Notifications from Leaf Log',
+        importance: Importance.High, priority: Priority.High, ticker: 'ticker');
+    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
+    var platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.show(
+        0, 'Tea Timer', 'Your tea is done brewing!', platformChannelSpecifics);
+  }
+
+  Future <void> _clearNotification() async {
+    await flutterLocalNotificationsPlugin.cancel(0);
   }
 
   // Provide class to entire widget tree
@@ -173,7 +219,8 @@ class FloatingTimer extends StatelessWidget {
                   ),
                   color: timerService.currentTea != null
                       ? ColorMaps.getTypeColor(timerService.currentTea.type)
-                      : ColorMaps.themeColors[PrefService.getString("theme_color")])
+                      : ColorMaps
+                          .themeColors[PrefService.getString("theme_color")])
               : null,
         );
       },

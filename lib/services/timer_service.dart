@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:leaf_log/models/tea.dart';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:preferences/preferences.dart';
+import 'package:screen/screen.dart';
 
 class TimerService extends ChangeNotifier {
   Timer _timer;
@@ -51,6 +52,8 @@ class TimerService extends ChangeNotifier {
     _timerStarted = true;
     _timer = Timer.periodic(Duration(seconds: 1), _onTick);
 
+    Screen.keepOn(true);
+
     notifyListeners();
   }
 
@@ -59,6 +62,8 @@ class TimerService extends ChangeNotifier {
     if (_timer == null) return;
     _timer.cancel();
     _timer = null;
+    
+    Screen.keepOn(false);
 
     notifyListeners();
   }

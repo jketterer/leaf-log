@@ -218,7 +218,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                       flex: 3,
                       child: TextFormField(
                           controller: _tempController,
-                          decoration: InputDecoration(labelText: "Temperature"),
+                          decoration: InputDecoration(labelText: "Temp."),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
                             WhitelistingTextInputFormatter.digitsOnly,
@@ -529,7 +529,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                       flex: 3,
                       child: TextFormField(
                           controller: _tempController,
-                          decoration: InputDecoration(labelText: "Temperature"),
+                          decoration: InputDecoration(labelText: "Temp."),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
                             WhitelistingTextInputFormatter.digitsOnly,

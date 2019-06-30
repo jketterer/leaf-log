@@ -27,6 +27,9 @@ class _NewTeaPageState extends State<NewTeaPage> {
   // Provides access to the sqflite database
   DatabaseHelper helper = DatabaseHelper.instance;
 
+  // Get user theme color
+  Color themeColor = ColorMaps.themeColors[PrefService.getString("theme_color")] ?? Colors.lightGreen;
+
   // Initialize text controllers
   @override
   void initState() {
@@ -268,8 +271,7 @@ class _NewTeaPageState extends State<NewTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: ColorMaps
-                        .themeColors[PrefService.getString("theme_color")],
+                    color: themeColor,
                     child: Text("Finish"),
                     onPressed: () {
                       // Create new tea if form validates
@@ -320,6 +322,9 @@ class _EditTeaPageState extends State<EditTeaPage> {
 
   // Provides access to the sqflite database
   DatabaseHelper helper = DatabaseHelper.instance;
+
+  // Get user theme color
+  Color themeColor = ColorMaps.themeColors[PrefService.getString("theme_color")] ?? Colors.lightGreen;
 
   // Initialize text controllers and set fields to current values
   @override
@@ -579,8 +584,7 @@ class _EditTeaPageState extends State<EditTeaPage> {
                 Container(
                   padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
                   child: RaisedButton(
-                    color: ColorMaps
-                        .themeColors[PrefService.getString("theme_color")],
+                    color: themeColor,
                     child: Text("Finish"),
                     onPressed: () {
                       // Set new tea values and update database if form validates

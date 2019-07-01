@@ -55,7 +55,7 @@ class TimerService extends ChangeNotifier {
       stop();
       _timerExpired = true;
       player.play("alarm_sound.mp3");
-      _showNotification();
+      //_showNotification();
     }
 
     notifyListeners();
@@ -68,6 +68,7 @@ class TimerService extends ChangeNotifier {
 
     _timerStarted = true;
     _timer = Timer.periodic(Duration(seconds: 1), _onTick);
+    _scheduleNotification(_currentDuration);
 
     Screen.keepOn(true);
 
@@ -79,6 +80,9 @@ class TimerService extends ChangeNotifier {
     if (_timer == null) return;
     _timer.cancel();
     _timer = null;
+
+    // Clear scheduled notification if timer is paused
+    if (_currentDuration.inSeconds > 0) _clearNotification();
 
     Screen.keepOn(false);
 
@@ -145,6 +149,9 @@ class TimerService extends ChangeNotifier {
     else if (!isRunning()) // Only reduce initial duration if timer is not running
       _initialDuration -= Duration(seconds: seconds);
 
+    // Schedule notification for new time
+    _scheduleNotification(_currentDuration);
+
     notifyListeners();
   }
 
@@ -156,19 +163,21 @@ class TimerService extends ChangeNotifier {
 
   // Called when user taps notification
   Future<dynamic> onSelectNotification(String payload) {
+    reset();
     return null;
   }
 
-  // Shows local notification
-  Future<void> _showNotification() async {
+  // Schedule a notification to go off in the future
+  Future<void> _scheduleNotification(Duration duration) async {
+    var scheduledNotificationDateTime = DateTime.now().add(duration);
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
         'channel-leaf-log', 'channel-leaf-log', 'Notifications from Leaf Log',
         importance: Importance.High, priority: Priority.High, ticker: 'ticker');
     var iOSPlatformChannelSpecifics = IOSNotificationDetails();
     var platformChannelSpecifics = NotificationDetails(
         androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
-    await flutterLocalNotificationsPlugin.show(
-        0, 'Tea Timer', 'Your tea is done brewing!', platformChannelSpecifics);
+    await flutterLocalNotificationsPlugin.schedule(
+        0, 'Tea Timer', 'Your tea is done brewing! Tap to reset timer.', scheduledNotificationDateTime, platformChannelSpecifics);
   }
 
   Future <void> _clearNotification() async {

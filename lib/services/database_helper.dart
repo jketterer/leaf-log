@@ -53,6 +53,13 @@ class DatabaseHelper {
               lastBrewed TEXT NOT NULL
             ) 
           """);
+
+    insertTea(Tea("Green Tea", "Green", "Generic", 210, 175, 5,
+        "This is a generic entry for green tea. Green tea is usually brewed at 160-180°F for 2-3 minutes."));
+    insertTea(Tea("Black Tea", "Black", "Generic", 300, 212, 5,
+        "This is a generic entry for oolong tea. Oolong tea is usually brewed at boiling temp for 3-5 minutes."));
+    insertTea(Tea("Oolong Tea", "Oolong", "Generic", 120, 200, 5,
+        "This is a generic entry for oolong tea. Oolong tea is usually brewed at 185-200°F for 1-5 minutes."));
   }
 
   // Inserts a tea into the database and returns the row id
@@ -94,7 +101,8 @@ class DatabaseHelper {
   Future<List<Tea>> searchTeaList(String query) async {
     Database db = await database;
 
-    List<Map> results = await db.rawQuery("SELECT * FROM $teaTable WHERE name LIKE '%$query%'");
+    List<Map> results =
+        await db.rawQuery("SELECT * FROM $teaTable WHERE name LIKE '%$query%'");
 
     List<Tea> _teaList = List();
     results.forEach((result) {
@@ -129,7 +137,7 @@ class DatabaseHelper {
         _teaList = sortByRating(_teaList);
       } else if (sortMethod == "frequent") {
         _teaList = sortByBrewCount(_teaList);
-      } else if (sortMethod == "recent"){
+      } else if (sortMethod == "recent") {
         _teaList = sortByLastBrewed(_teaList);
       }
     }
@@ -141,7 +149,14 @@ class DatabaseHelper {
   List<Tea> sortByType(List<Tea> teaList) {
     List<Tea> returnList = List<Tea>();
 
-    List<String> types = ["Green", "Black", "Oolong", "White", "Herbal", "Other"];
+    List<String> types = [
+      "Green",
+      "Black",
+      "Oolong",
+      "White",
+      "Herbal",
+      "Other"
+    ];
 
     types.forEach((type) {
       teaList.forEach((tea) {

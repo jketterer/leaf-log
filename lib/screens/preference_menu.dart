@@ -67,6 +67,11 @@ class _PreferenceMenuState extends State<PreferenceMenu> {
               values: ['Green', 'Brown', 'Yellow', 'Grey', 'Pink', 'Blue'],
             ),
           ]),
+        ),
+        SwitchPreference(
+          "Falling Leaves Animation",
+          "display_falling_leaf_animation",
+          defaultVal: true,
         )
       ]),
     );

@@ -92,7 +92,10 @@ class _TimerPageState extends State<TimerPage>
 
     return Stack(
       children: <Widget>[
-        FallingLeafBackground(),
+        // Display animation depending on user preference, true by default
+        PrefService.getBool("display_falling_leaf_animation") ?? true
+            ? FallingLeafBackground()
+            : Container(),
         // Animated builder allows everything to update on time change
         AnimatedBuilder(
           // Listen to timerService for changes

@@ -30,32 +30,32 @@ class _FallingLeafBackgroundState extends State<FallingLeafBackground>
 
     // These control the vertical and horizontal animations
     verticalController =
-        AnimationController(vsync: this, duration: Duration(seconds: 40));
+        AnimationController(vsync: this, duration: Duration(seconds: 60));
     horizontalController =
         AnimationController(vsync: this, duration: Duration(seconds: 3));
 
     // Each leaf has its own animation, the only difference being the interval times
-    verticalAnimation1 = Tween(begin: Offset(0, -1), end: Offset(0, 15))
+    verticalAnimation1 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0, 0.5)
         ));
-    verticalAnimation2 = Tween(begin: Offset(0, -1), end: Offset(0, 15))
+    verticalAnimation2 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.3, 0.8)
         ));
-    verticalAnimation3 = Tween(begin: Offset(0, -1), end: Offset(0, 15))
+    verticalAnimation3 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.15, 0.65)
         ));
-    verticalAnimation4 = Tween(begin: Offset(0, -1), end: Offset(0, 15))
+    verticalAnimation4 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.5, 1)
         ));
-    verticalAnimation5 = Tween(begin: Offset(0, -1), end: Offset(0, 15))
+    verticalAnimation5 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.4, 0.9)

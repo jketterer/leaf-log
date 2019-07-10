@@ -54,12 +54,22 @@ class DatabaseHelper {
             ) 
           """);
 
-    insertTea(Tea("Green Tea", "Green", "Generic", 210, 175, 5,
-        "This is a generic entry for green tea. Green tea is usually brewed at 160-180°F for 2-3 minutes."));
-    insertTea(Tea("Black Tea", "Black", "Generic", 300, 212, 5,
-        "This is a generic entry for oolong tea. Oolong tea is usually brewed at boiling temp for 3-5 minutes."));
-    insertTea(Tea("Oolong Tea", "Oolong", "Generic", 120, 200, 5,
-        "This is a generic entry for oolong tea. Oolong tea is usually brewed at 185-200°F for 1-5 minutes."));
+    // Starter teas are inserted without helper function to ensure they appear on initial load
+    db.insert(
+        teaTable,
+        Tea("Green Tea", "Green", "Generic", 210, 175, 5,
+                "This is a generic entry for green tea. Green tea is usually brewed at 160-180°F for 2-3 minutes.")
+            .toMap());
+    db.insert(
+        teaTable,
+        Tea("Black Tea", "Black", "Generic", 300, 212, 5,
+                "This is a generic entry for black tea. Black tea is usually brewed at boiling temp for 3-5 minutes.")
+            .toMap());
+    db.insert(
+        teaTable,
+        Tea("Oolong Tea", "Oolong", "Generic", 120, 200, 5,
+                "This is a generic entry for oolong tea. Oolong tea is usually brewed at 185-200°F for 1-5 minutes.")
+            .toMap());
   }
 
   // Inserts a tea into the database and returns the row id

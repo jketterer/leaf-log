@@ -4,7 +4,7 @@ import 'package:leaf_log/screens/preference_menu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:leaf_log/services/search_delegate.dart';
 import 'package:leaf_log/services/timer_service.dart';
-import 'package:leaf_log/screens/tea_widgets.dart';
+import 'package:leaf_log/widgets/tea_widgets.dart';
 import 'package:leaf_log/screens/tea_screens.dart';
 import 'package:leaf_log/screens/timer.dart';
 

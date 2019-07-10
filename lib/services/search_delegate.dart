@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
-import 'package:leaf_log/screens/tea_widgets.dart';
+import 'package:leaf_log/widgets/tea_widgets.dart';
 import 'package:leaf_log/services/database_helper.dart';
 
 class CustomSearchDelegate extends SearchDelegate {

@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:leaf_log/models/color_maps.dart';
 import 'package:leaf_log/models/tea.dart';
 import 'package:leaf_log/services/database_helper.dart';
-import 'tea_screens.dart';
+import 'package:leaf_log/screens/tea_screens.dart';
 
 class TeaPage extends StatelessWidget {
   // This is required so the app can switch to timer page from anywhere inside TeaPage

@@ -61,6 +61,7 @@ flutter:
 
   assets:
     - assets/alarm_sound.mp3
+    - assets/leaf.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

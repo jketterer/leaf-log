@@ -8,9 +8,9 @@ Leaf log is an Android app built with Flutter.
 It helps you log any and all teas you may drink, keeping track of important information and allowing you to take notes for next time. It also includes a timer, which lets you brew your tea straight from the app!
 
 <p align="center">
-	<img src="assets/readme/ss1.jpg" width=300>
-	<img src="assets/readme/ss2.jpg" width=300>
-	<img src="assets/readme/ss3.jpg" width=300>
+	<img src="assets/readme/ss1.jpg" width=200>
+	<img src="assets/readme/ss2.jpg" width=200>
+	<img src="assets/readme/ss3.jpg" width=200>
 </p>
 
 ## Background

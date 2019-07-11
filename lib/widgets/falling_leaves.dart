@@ -40,22 +40,22 @@ class _FallingLeafBackgroundState extends State<FallingLeafBackground>
           parent: verticalController,
           curve: Interval(0, 0.5)
         ));
-    verticalAnimation2 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
+    verticalAnimation2 = Tween(begin: Offset(0, -1), end: Offset(0, 22))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.3, 0.8)
         ));
-    verticalAnimation3 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
+    verticalAnimation3 = Tween(begin: Offset(0, -1), end: Offset(0, 22))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.15, 0.65)
         ));
-    verticalAnimation4 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
+    verticalAnimation4 = Tween(begin: Offset(0, -1), end: Offset(0, 22))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.5, 1)
         ));
-    verticalAnimation5 = Tween(begin: Offset(0, -1), end: Offset(0, 20))
+    verticalAnimation5 = Tween(begin: Offset(0, -1), end: Offset(0, 22))
         .animate(CurvedAnimation(
           parent: verticalController,
           curve: Interval(0.4, 0.9)

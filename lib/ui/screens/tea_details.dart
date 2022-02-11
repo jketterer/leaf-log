@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
+import 'package:leaf_log/ui/widgets/tea_details_header.dart';
 
 class TeaDetailsScreen extends StatelessWidget {
   final Tea tea;
@@ -12,8 +13,13 @@ class TeaDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Tea Details"),
       ),
-      body: Center(
-        child: Text(tea.name),
+      body: Column(
+        children: [
+          TeaDetailsHeader(tea: tea),
+          Center(
+            child: Text("Session list goes here"),
+          )
+        ],
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:leaf_log/models/brewing_vessel.dart';
 import 'package:leaf_log/models/tea.dart';
 
-class BrewLogEntry {
+class BrewSession {
   Tea tea;
   BrewingVessel? vessel;
   int? teaQuantity;
@@ -9,10 +9,10 @@ class BrewLogEntry {
   int? temperature;
   DateTime timeBrewed;
 
-  BrewLogEntry(this.tea, this.vessel, this.teaQuantity, this.waterQuantity,
+  BrewSession(this.tea, this.vessel, this.teaQuantity, this.waterQuantity,
       this.temperature, this.timeBrewed);
 
-  BrewLogEntry.simple(this.tea)
+  BrewSession.simple(this.tea)
       : vessel = null,
         teaQuantity = null,
         waterQuantity = null,

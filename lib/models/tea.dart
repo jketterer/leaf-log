@@ -13,12 +13,8 @@ class Tea {
   Tea(this.name, this.type, this.vendor, this.rating, this.notes,
       this.brewCount, this.lastBrewed);
 
-// Tea.simple(this.name, this.rating, this.notes)
-//     : brewCount = 0, lastBrewed = DateTime.fromMillisecondsSinceEpoch(0);
-
-  Tea.mock(this.name)
-      : type = TeaType.green(),
-        vendor = Vendor("Vendor", "Vendor description"),
+  Tea.mock(this.name, this.type)
+      : vendor = Vendor("Vendor", "Vendor description"),
         rating = 5,
         notes = "These are mock notes",
         brewCount = 0,

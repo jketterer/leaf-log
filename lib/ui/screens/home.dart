@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
+import 'package:leaf_log/models/tea_type.dart';
 import 'package:leaf_log/ui/widgets/tea_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -18,15 +19,15 @@ class HomeScreen extends StatelessWidget {
           crossAxisSpacing: 4,
           padding: const EdgeInsets.all(12.0),
           children: [
-            TeaCard(tea: Tea.mock("Imperial Mojiang Pure Bud Black Tea")),
-            TeaCard(tea: Tea.mock("Jasmine")),
-            TeaCard(tea: Tea.mock("Big Red Sun")),
-            TeaCard(tea: Tea.mock("Jade Snails")),
-            TeaCard(tea: Tea.mock("High Mountain Red")),
-            TeaCard(tea: Tea.mock("Iron Goddess of Mercy")),
-            TeaCard(tea: Tea.mock("Tea 7")),
-            TeaCard(tea: Tea.mock("Tea 8")),
-            TeaCard(tea: Tea.mock("Tea 9")),
+            TeaCard(tea: Tea.mock("Imperial Mojiang Pure Bud Black Tea", TeaType.black())),
+            TeaCard(tea: Tea.mock("Jasmine", TeaType.green())),
+            TeaCard(tea: Tea.mock("Big Red Sun", TeaType.black())),
+            TeaCard(tea: Tea.mock("Jade Snails", TeaType.green())),
+            TeaCard(tea: Tea.mock("High Mountain Red", TeaType.black())),
+            TeaCard(tea: Tea.mock("Iron Goddess of Mercy", TeaType.oolong())),
+            TeaCard(tea: Tea.mock("Tea 7", TeaType.black())),
+            TeaCard(tea: Tea.mock("Tea 8", TeaType.black())),
+            TeaCard(tea: Tea.mock("Tea 9", TeaType.black())),
           ],
         ),
       ),

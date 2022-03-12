@@ -9,7 +9,6 @@ class TeaCard extends StatelessWidget {
 
   final TextStyle teaNameStyle = const TextStyle(
     fontSize: 22,
-    // height: 100,
   );
 
   final TextStyle teaVendorStyle =
@@ -51,10 +50,10 @@ class TeaCard extends StatelessWidget {
                     children: [
                       IconButton(
                           onPressed: () => {},
-                          icon: const Icon(Icons.coffee_outlined)),
+                          icon: const Icon(Icons.favorite_border)),
                       IconButton(
                           onPressed: () => {},
-                          icon: const Icon(Icons.favorite_border))
+                          icon: const Icon(Icons.coffee_outlined))
                     ],
                   )
                 ],

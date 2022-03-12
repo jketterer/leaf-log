@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:leaf_log/models/brew_session.dart';
 import 'package:leaf_log/models/tea.dart';
+import 'package:leaf_log/ui/widgets/session_list.dart';
 import 'package:leaf_log/ui/widgets/tea_details_header.dart';
 
 class TeaDetailsScreen extends StatelessWidget {
@@ -16,8 +18,14 @@ class TeaDetailsScreen extends StatelessWidget {
       body: Column(
         children: [
           TeaDetailsHeader(tea: tea),
-          Center(
-            child: Text("Session list goes here"),
+          Expanded(
+            child: SessionList(sessionList: [
+              BrewSession.simple(tea),
+              BrewSession.simple(tea),
+              BrewSession.simple(tea),
+              BrewSession.simple(tea),
+              BrewSession.simple(tea),
+            ],),
           )
         ],
       ),

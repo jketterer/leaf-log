@@ -4,6 +4,11 @@ class BrewingVessel {
   String? description;
 
   BrewingVessel(this.name, this.type, this.description);
+
+  BrewingVessel.mock()
+    : name = "DefaultVessel",
+      type = VesselType.mug,
+      description = "Default vessel";
 }
 
 enum VesselType {

@@ -3,19 +3,19 @@ import 'package:leaf_log/models/tea.dart';
 
 class BrewSession {
   Tea tea;
-  BrewingVessel? vessel;
+  BrewingVessel vessel;
+  DateTime timeBrewed;
   int? teaQuantity;
   int? waterQuantity;
   int? temperature;
-  DateTime timeBrewed;
 
   BrewSession(this.tea, this.vessel, this.teaQuantity, this.waterQuantity,
       this.temperature, this.timeBrewed);
 
   BrewSession.simple(this.tea)
-      : vessel = null,
+      : vessel = BrewingVessel.mock(),
+        timeBrewed = DateTime.now(),
         teaQuantity = null,
         waterQuantity = null,
-        temperature = null,
-        timeBrewed = DateTime.now();
+        temperature = null;
 }

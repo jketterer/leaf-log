@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
 import 'package:leaf_log/models/tea_type.dart';
+import 'package:leaf_log/ui/widgets/navbar.dart';
 import 'package:leaf_log/ui/widgets/tea_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -31,16 +32,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: "Teas"),
-          BottomNavigationBarItem(icon: Icon(Icons.history_edu), label: "Logs"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.timer),
-            label: "Timer",
-          ),
-        ],
-      ),
+      bottomNavigationBar: BottomNavBar(),
     );
   }
 }

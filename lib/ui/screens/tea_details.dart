@@ -25,7 +25,8 @@ class TeaDetailsScreen extends StatelessWidget {
               BrewSession.simple(tea),
               BrewSession.simple(tea),
               BrewSession.simple(tea),
-            ],),
+            ],
+            detailsOnly: true,),
           )
         ],
       ),

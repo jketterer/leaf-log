@@ -5,8 +5,10 @@ import 'package:leaf_log/ui/widgets/session_card.dart';
 class SessionList extends StatelessWidget {
   final List<BrewSession> sessionList;
   final bool detailsOnly;
-  
-  const SessionList({Key? key, required this.sessionList, this.detailsOnly = false}) : super(key: key);
+
+  const SessionList(
+      {Key? key, required this.sessionList, this.detailsOnly = false})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,11 +19,16 @@ class SessionList extends StatelessWidget {
         children: [
           const Text("The filter bar will go here eventually"),
           Expanded(
-            child: ListView.builder(
-                itemCount: sessionList.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return SessionCard(session: sessionList[index], detailsOnly: detailsOnly,);
-                }),
+            child: sessionList.isNotEmpty
+                ? ListView.builder(
+                    itemCount: sessionList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return SessionCard(
+                        session: sessionList[index],
+                        detailsOnly: detailsOnly,
+                      );
+                    })
+                : Text("No sessions yet!"),
           )
         ],
       ),

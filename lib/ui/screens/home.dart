@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
-import 'package:leaf_log/models/tea_type.dart';
 import 'package:leaf_log/ui/widgets/navbar.dart';
 import 'package:leaf_log/ui/widgets/tea_card.dart';
+import 'package:provider/provider.dart';
+
+import '../../data/repositories/tea_repository.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,27 +14,28 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Teas"),
+        actions: [IconButton(onPressed: () {}, icon: Icon(Icons.add))],
       ),
       body: Center(
-        child: GridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 4,
-          crossAxisSpacing: 4,
-          padding: const EdgeInsets.all(12.0),
-          children: [
-            TeaCard(tea: Tea.mock("Imperial Mojiang Pure Bud Black Tea", TeaType.black())),
-            TeaCard(tea: Tea.mock("Jasmine", TeaType.green())),
-            TeaCard(tea: Tea.mock("Big Red Sun", TeaType.black())),
-            TeaCard(tea: Tea.mock("Jade Snails", TeaType.green())),
-            TeaCard(tea: Tea.mock("High Mountain Red", TeaType.black())),
-            TeaCard(tea: Tea.mock("Iron Goddess of Mercy", TeaType.oolong())),
-            TeaCard(tea: Tea.mock("Tea 7", TeaType.black())),
-            TeaCard(tea: Tea.mock("Tea 8", TeaType.black())),
-            TeaCard(tea: Tea.mock("Tea 9", TeaType.black())),
-          ],
-        ),
-      ),
+          child: Consumer<TeaRepository>(
+              builder: (context, repository, child) => repository.isLoading
+                  ? CircularProgressIndicator()
+                  : _buildGridView(repository.teas))),
       bottomNavigationBar: BottomNavBar(),
     );
+  }
+
+  GridView _buildGridView(List<Tea> teas) {
+    return GridView.count(
+      crossAxisCount: 2,
+      mainAxisSpacing: 4,
+      crossAxisSpacing: 4,
+      padding: const EdgeInsets.all(12.0),
+      children: _buildTeaCards(teas),
+    );
+  }
+
+  List<TeaCard> _buildTeaCards(List<Tea> teas) {
+    return teas.map((tea) => TeaCard(tea: tea)).toList();
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
 import 'package:leaf_log/ui/screens/tea_details.dart';
+import 'package:provider/provider.dart';
+
+import '../../data/repositories/tea_repository.dart';
 
 class TeaCard extends StatelessWidget {
   final Tea tea;
@@ -18,8 +21,8 @@ class TeaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: InkWell(
-        onTap: () => {openTeaDetails(context, tea)},
-        onLongPress: () => {"delete tea here"},
+        onTap: () => _openTeaDetails(context, tea),
+        onLongPress: () => _removeTea(context, tea),
         child: Padding(
           padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
           child: Column(
@@ -65,9 +68,13 @@ class TeaCard extends StatelessWidget {
     );
   }
 
-  void openTeaDetails(BuildContext context, Tea tea) {
+  void _openTeaDetails(BuildContext context, Tea tea) {
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) {
       return TeaDetailsScreen(tea: tea);
     }));
+  }
+
+  void _removeTea(BuildContext context, Tea tea) {
+    Provider.of<TeaRepository>(context, listen: false).removeTea(tea.id);
   }
 }

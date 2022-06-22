@@ -8,12 +8,15 @@ class BottomNavBar extends StatelessWidget {
     return BottomNavigationBar(
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(icon: Icon(Icons.book), label: "Teas"),
-        BottomNavigationBarItem(icon: Icon(Icons.history_edu), label: "Sessions"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.history_edu), label: "Sessions"),
         BottomNavigationBarItem(
           icon: Icon(Icons.timer),
           label: "Timer",
         ),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
       ],
+      type: BottomNavigationBarType.fixed,
     );
   }
 }

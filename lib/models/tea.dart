@@ -13,7 +13,7 @@ class Tea {
   final int brewCount;
   final DateTime lastBrewed;
 
-  Tea(this.id, this.name, this.type, this.vendor, this.rating, this.notes,
+  const Tea(this.id, this.name, this.type, this.vendor, this.rating, this.notes,
       this.brewCount, this.lastBrewed);
 
   Tea.mock(

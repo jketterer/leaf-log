@@ -5,7 +5,7 @@ class TeaType {
   final Color color;
   final Duration defaultBrewTime;
 
-  TeaType(this.name, this.color, this.defaultBrewTime);
+  const TeaType(this.name, this.color, this.defaultBrewTime);
 
   const TeaType.green()
       : name = "Green",

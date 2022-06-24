@@ -3,7 +3,7 @@ class BrewingVessel {
   final VesselType type;
   final String? description;
 
-  BrewingVessel(this.name, this.type, this.description);
+  const BrewingVessel(this.name, this.type, this.description);
 
   BrewingVessel.mock()
       : name = "DefaultVessel",
@@ -11,12 +11,9 @@ class BrewingVessel {
         description = "Default vessel";
 
   BrewingVessel copyWith(
-      {String? name, VesselType? type, String? description}) =>
-      BrewingVessel(
-          name ?? this.name,
-          type ?? this.type,
-          description ?? this.description
-      );
+          {String? name, VesselType? type, String? description}) =>
+      BrewingVessel(name ?? this.name, type ?? this.type,
+          description ?? this.description);
 }
 
 enum VesselType {

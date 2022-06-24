@@ -1,28 +1,22 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/widgets.dart';
+import 'package:leaf_log/data/repositories/repository.dart';
 
 import '../../models/tea.dart';
 import '../sources/api/tea_data_source.dart';
 
-class TeaRepository extends ChangeNotifier {
+class TeaRepository extends Repository {
   TeaRepository({required this.teaDataSource});
 
   final TeaDataSource teaDataSource;
-
   final List<Tea> _teas = [];
 
   List<Tea> get teas => List.unmodifiable(_teas);
 
-  bool _isLoading = false;
-
-  bool get isLoading => _isLoading;
-
   Future loadTeas() {
-    _isLoading = true;
+    startLoading();
     return teaDataSource.loadTeas().then((loadedTeas) {
       _replaceTeas(loadedTeas);
-      _isLoading = false;
-      notifyListeners();
+      finishLoading();
     });
   }
 
@@ -40,12 +34,20 @@ class TeaRepository extends ChangeNotifier {
   }
 
   void addTea(Tea tea) {
-    _teas.add(tea);
-    notifyListeners();
+    startLoading(message: "Saving tea...");
+    teaDataSource
+        .upsertTea(tea)
+        .then((newId) => _teas.add(tea.copyWith(id: newId)))
+        // .catchError((err) => print("Error upserting tea: $err")) // TODO?
+        .whenComplete(() => finishLoading());
   }
 
   void removeTea(int id) {
+    startLoading(message: "Removing tea...");
     _teas.removeWhere((tea) => tea.id == id);
-    notifyListeners();
+    teaDataSource
+        .deleteTea(id)
+        .catchError((err) => print("Error deleting tea: $err"))
+        .whenComplete(() => finishLoading());
   }
 }

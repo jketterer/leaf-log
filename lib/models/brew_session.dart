@@ -12,8 +12,8 @@ class BrewSession {
   final int? waterQuantity;
   final int? temperature;
 
-  BrewSession(this.id, this.tea, this.vessel, this.timeBrewed, this.teaQuantity,
-      this.waterQuantity, this.temperature);
+  const BrewSession(this.id, this.tea, this.vessel, this.timeBrewed,
+      this.teaQuantity, this.waterQuantity, this.temperature);
 
   BrewSession.simple(this.tea)
       : id = Random().nextInt(999999),

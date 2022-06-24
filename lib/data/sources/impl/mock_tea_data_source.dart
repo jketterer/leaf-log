@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../../../data/sources/api/tea_data_source.dart';
 import '../../../models/tea.dart';
 import '../../../models/tea_type.dart';
@@ -18,8 +20,12 @@ class MockTeaDataSource implements TeaDataSource {
   }
 
   @override
-  Future upsertTeas(Iterable<Tea> teas) async {
-    _teas.clear();
-    _teas.addAll(teas);
+  Future<int> upsertTea(Tea tea) async {
+    return Future.delayed(Duration(seconds: 2), () => Random().nextInt(9999));
+  }
+
+  @override
+  Future deleteTea(int id) async {
+    return Future.delayed(Duration(seconds: 1));
   }
 }

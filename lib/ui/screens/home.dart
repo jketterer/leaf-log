@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:leaf_log/models/tea.dart';
+import 'package:leaf_log/ui/screens/edit_tea_screen.dart';
+import 'package:leaf_log/ui/widgets/loading_indicator.dart';
 import 'package:leaf_log/ui/widgets/navbar.dart';
 import 'package:leaf_log/ui/widgets/tea_card.dart';
 import 'package:provider/provider.dart';
@@ -14,12 +16,22 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("My Teas"),
-        actions: [IconButton(onPressed: () {}, icon: Icon(Icons.add))],
+        actions: [
+          IconButton(onPressed: () {}, icon: Icon(Icons.search)),
+          IconButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (BuildContext context) {
+                  return EditTeaScreen();
+                }));
+              },
+              icon: Icon(Icons.add))
+        ],
       ),
       body: Center(
           child: Consumer<TeaRepository>(
               builder: (context, repository, child) => repository.isLoading
-                  ? CircularProgressIndicator()
+                  ? LoadingIndicator(loadingMessage: repository.loadingMessage)
                   : _buildGridView(repository.teas))),
       bottomNavigationBar: BottomNavBar(),
     );

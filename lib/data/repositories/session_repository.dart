@@ -1,27 +1,21 @@
-import 'package:flutter/widgets.dart';
+import 'package:leaf_log/data/repositories/repository.dart';
 
 import '../../models/brew_session.dart';
 import '../sources/api/brew_session_data_source.dart';
 
-class BrewSessionRepository extends ChangeNotifier {
+class BrewSessionRepository extends Repository {
   BrewSessionRepository({required this.dataSource});
 
   final BrewSessionDataSource dataSource;
-
   final List<BrewSession> _sessions = [];
 
   List<BrewSession> get brewSessions => List.unmodifiable(_sessions);
 
-  bool _isLoading = false;
-
-  get isLoading => _isLoading;
-
   Future loadSessions() {
-    _isLoading = true;
+    startLoading();
     return dataSource.loadBrewSessions().then((sessions) {
       _replaceSessions(sessions);
-      _isLoading = false;
-      notifyListeners();
+      finishLoading();
     });
   }
 
@@ -35,12 +29,21 @@ class BrewSessionRepository extends ChangeNotifier {
   }
 
   void addSession(BrewSession session) {
+    startLoading();
     _sessions.add(session);
-    notifyListeners();
+    _upsertToDataSource(brewSessions);
   }
 
   void removeSession(int id) {
+    startLoading();
     _sessions.removeWhere((session) => session.id == id);
-    notifyListeners();
+    _upsertToDataSource(brewSessions);
+  }
+
+  void _upsertToDataSource(Iterable<BrewSession> sessions) {
+    dataSource
+        .upsertBrewSessions(_sessions)
+        .then((_) => finishLoading())
+        .catchError((err) => "Error saving brew sessions: $err");
   }
 }

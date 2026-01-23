@@ -1,28 +1,35 @@
-# Leaf Log
-###### A modern log for all drinkers of tea.
+This is a Kotlin Multiplatform project targeting Android, iOS.
 
-## About
+* [/composeApp](shared/src) is for code that will be shared across your Compose Multiplatform applications.
+  It contains several subfolders:
+  - [commonMain](shared/src/commonMain/kotlin) is for code that’s common for all targets.
+  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
+    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
+    the [iosMain](shared/src/iosMain/kotlin) folder would be the right place for such calls.
+    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](shared/src/jvmMain/kotlin)
+    folder is the appropriate location.
 
-Leaf log is an Android app built with Flutter.
+* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
+  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
 
-It helps you log any and all teas you may drink, keeping track of important information and allowing you to take notes for next time. It also includes a timer, which lets you brew your tea straight from the app!
+### Build and Run Android Application
 
-<p align="center">
-	<img src="assets/readme/ss1.jpg" width=200>
-	<img src="assets/readme/ss2.jpg" width=200>
-	<img src="assets/readme/ss3.jpg" width=200>
-</p>
+To build and run the development version of the Android app, use the run configuration from the run widget
+in your IDE’s toolbar or build it directly from the terminal:
+- on macOS/Linux
+  ```shell
+  ./gradlew :shared:assembleDebug
+  ```
+- on Windows
+  ```shell
+  .\gradlew.bat :shared:assembleDebug
+  ```
 
-## Background
+### Build and Run iOS Application
 
-This app is a personal project to help me learn the basics of [Flutter](flutter.dev). I've messed around with Android development in the past, but always got overwhelmed before finishing a project. After coming up with the idea for creating my own tea log, I discovered Flutter as a framework to help create beautiful, cross-platform apps. Flutter (and Dart) was relatively simple to learn, and it helped inspire the design of Leaf Log as well as facilitate its development.
+To build and run the development version of the iOS app, use the run configuration from the run widget
+in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
 
-Ultimately, I'm very glad I discovered Flutter, and I'm excited to see how it evolves and to work with it in the future.
+---
 
-## Get Leaf Log
-
-I created Leaf Log as open source, since education was the main purpose of its development. This app will always be free, and it's my hope that people can use and enjoy it. For now, Leaf Log is only available on Android, but I've kept the code inclusive so an iOS version is possible in the future.
-
-You can download Leaf Log today on the Play Store!
-
-<a href="https://play.google.com/store/apps/details?id=com.jketterer.leaf_log"><img src="assets/readme/google-play-badge.png" height=130></a>
+Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…

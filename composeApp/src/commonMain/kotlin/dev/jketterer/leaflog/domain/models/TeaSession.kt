@@ -6,9 +6,11 @@ import kotlin.time.Instant
 data class TeaSession(
     val id: String,
     val teaId: String,
+
     val parentSessionId: String?,
     val steepNumber: Int,
     val status: SessionStatus,
+
     val teaQuantityGrams: Float?,
     val vesselId: String,
     val waterType: WaterType,

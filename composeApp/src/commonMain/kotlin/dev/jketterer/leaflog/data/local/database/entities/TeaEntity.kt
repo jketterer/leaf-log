@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.data.local.database.entities
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -10,7 +11,25 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 
 @Serializable
-@Entity(tableName = "tea", indices = [Index(value = ["teaTypeId"])])
+@Entity(
+    tableName = "tea",
+    foreignKeys = [
+        ForeignKey(
+            entity = TeaTypeEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["teaTypeId"],
+            onDelete = ForeignKey.RESTRICT,
+        )
+    ],
+    indices = [
+        Index(value = ["teaTypeId"]),
+        Index(value = ["name"]),
+        Index(value = ["isFavorite"]),
+        Index(value = ["userId"]),
+        Index(value = ["deletedAt"]),
+        Index(value = ["lastBrewedAt"]),
+    ]
+)
 data class TeaEntity(
     @PrimaryKey val id: String,
     val name: String,

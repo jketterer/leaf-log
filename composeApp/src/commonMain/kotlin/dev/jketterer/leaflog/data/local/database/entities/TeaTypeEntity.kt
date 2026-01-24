@@ -1,13 +1,21 @@
 package dev.jketterer.leaflog.data.local.database.entities
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 import kotlin.time.Instant
 
 @Serializable
-@Entity(tableName = "tea_type")
+@Entity(
+    tableName = "tea_type",
+    indices = [
+        Index("displayOrder"),
+        Index("userId"),
+        Index("deletedAt"),
+    ]
+)
 data class TeaTypeEntity(
     @PrimaryKey val id: String,
     val name: String,

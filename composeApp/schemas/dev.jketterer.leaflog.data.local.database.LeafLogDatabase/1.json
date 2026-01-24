@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "f6af5ca94776b7548853dd5a1e07305e",
+    "identityHash": "81fbd1a04bac450cc2068489976267b6",
     "entities": [
       {
         "tableName": "tea",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `teaTypeId` TEXT NOT NULL, `origin` TEXT, `producer` TEXT, `purchaseDate` INTEGER, `purchasePrice` REAL, `stockAmount` INTEGER, `defaultBrewingTime` INTEGER, `defaultTemperatureCelsius` INTEGER, `defaultQuantity` INTEGER, `description` TEXT, `photos` TEXT NOT NULL, `isFavorite` INTEGER NOT NULL, `totalSessions` INTEGER NOT NULL, `averageRating` REAL, `lastBrewedAt` INTEGER, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `teaTypeId` TEXT NOT NULL, `origin` TEXT, `producer` TEXT, `purchaseDate` INTEGER, `purchasePrice` REAL, `stockAmount` INTEGER, `defaultBrewingTime` INTEGER, `defaultTemperatureCelsius` INTEGER, `defaultQuantity` INTEGER, `description` TEXT, `photos` TEXT NOT NULL, `isFavorite` INTEGER NOT NULL, `totalSessions` INTEGER NOT NULL, `averageRating` REAL, `lastBrewedAt` INTEGER, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`teaTypeId`) REFERENCES `tea_type`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
         "fields": [
           {
             "fieldPath": "id",
@@ -143,12 +143,70 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_teaTypeId` ON `${TABLE_NAME}` (`teaTypeId`)"
+          },
+          {
+            "name": "index_tea_name",
+            "unique": false,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_name` ON `${TABLE_NAME}` (`name`)"
+          },
+          {
+            "name": "index_tea_isFavorite",
+            "unique": false,
+            "columnNames": [
+              "isFavorite"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_isFavorite` ON `${TABLE_NAME}` (`isFavorite`)"
+          },
+          {
+            "name": "index_tea_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_tea_deletedAt",
+            "unique": false,
+            "columnNames": [
+              "deletedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_deletedAt` ON `${TABLE_NAME}` (`deletedAt`)"
+          },
+          {
+            "name": "index_tea_lastBrewedAt",
+            "unique": false,
+            "columnNames": [
+              "lastBrewedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_lastBrewedAt` ON `${TABLE_NAME}` (`lastBrewedAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "tea_type",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "teaTypeId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
           }
         ]
       },
       {
         "tableName": "tea_session",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `teaId` TEXT NOT NULL, `parentSessionId` TEXT, `steepNumber` INTEGER NOT NULL, `status` TEXT NOT NULL, `teaQuantityGrams` REAL, `vesselId` TEXT NOT NULL, `waterType` TEXT NOT NULL, `location` TEXT, `rating` REAL, `timestamp` INTEGER NOT NULL, `brewingTime` INTEGER NOT NULL, `temperatureCelsius` INTEGER NOT NULL, `waterQuantityMl` INTEGER NOT NULL, `notes` TEXT, `photos` TEXT NOT NULL, `userId` TEXT, `syncStatus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `teaId` TEXT NOT NULL, `parentSessionId` TEXT, `steepNumber` INTEGER NOT NULL, `status` TEXT NOT NULL, `teaQuantityGrams` REAL, `vesselId` TEXT NOT NULL, `waterType` TEXT NOT NULL, `location` TEXT, `rating` REAL, `timestamp` INTEGER NOT NULL, `brewingTime` INTEGER NOT NULL, `temperatureCelsius` INTEGER NOT NULL, `waterQuantityMl` INTEGER NOT NULL, `notes` TEXT, `photos` TEXT NOT NULL, `userId` TEXT, `syncStatus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teaId`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vesselId`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`parentSessionId`) REFERENCES `tea_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -285,6 +343,104 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_teaId` ON `${TABLE_NAME}` (`teaId`)"
+          },
+          {
+            "name": "index_tea_session_vesselId",
+            "unique": false,
+            "columnNames": [
+              "vesselId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_vesselId` ON `${TABLE_NAME}` (`vesselId`)"
+          },
+          {
+            "name": "index_tea_session_parentSessionId",
+            "unique": false,
+            "columnNames": [
+              "parentSessionId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_parentSessionId` ON `${TABLE_NAME}` (`parentSessionId`)"
+          },
+          {
+            "name": "index_tea_session_steepNumber",
+            "unique": false,
+            "columnNames": [
+              "steepNumber"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_steepNumber` ON `${TABLE_NAME}` (`steepNumber`)"
+          },
+          {
+            "name": "index_tea_session_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_tea_session_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_tea_session_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_tea_session_deletedAt",
+            "unique": false,
+            "columnNames": [
+              "deletedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_deletedAt` ON `${TABLE_NAME}` (`deletedAt`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "tea",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "teaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "brewing_vessel",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vesselId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "tea_session",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "parentSessionId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
           }
         ]
       },
@@ -360,11 +516,40 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_tea_type_displayOrder",
+            "unique": false,
+            "columnNames": [
+              "displayOrder"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_type_displayOrder` ON `${TABLE_NAME}` (`displayOrder`)"
+          },
+          {
+            "name": "index_tea_type_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_type_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_tea_type_deletedAt",
+            "unique": false,
+            "columnNames": [
+              "deletedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_type_deletedAt` ON `${TABLE_NAME}` (`deletedAt`)"
+          }
+        ]
       },
       {
         "tableName": "brewing_vessel",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `iconName` TEXT, `isSystemDefault` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `iconName` TEXT, `isSystemDefault` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -416,6 +601,12 @@
             "fieldPath": "deletedAt",
             "columnName": "deletedAt",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "syncStatus",
+            "columnName": "syncStatus",
+            "affinity": "TEXT",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -423,12 +614,41 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "index_brewing_vessel_displayOrder",
+            "unique": false,
+            "columnNames": [
+              "displayOrder"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_vessel_displayOrder` ON `${TABLE_NAME}` (`displayOrder`)"
+          },
+          {
+            "name": "index_brewing_vessel_userId",
+            "unique": false,
+            "columnNames": [
+              "userId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_vessel_userId` ON `${TABLE_NAME}` (`userId`)"
+          },
+          {
+            "name": "index_brewing_vessel_deletedAt",
+            "unique": false,
+            "columnNames": [
+              "deletedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_vessel_deletedAt` ON `${TABLE_NAME}` (`deletedAt`)"
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f6af5ca94776b7548853dd5a1e07305e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '81fbd1a04bac450cc2068489976267b6')"
     ]
   }
 }

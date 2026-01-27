@@ -1,0 +1,12 @@
+package dev.jketterer.leaflog.presentation.ui.screens.home
+
+sealed interface HomeIntent {
+    data object LoadData : HomeIntent
+    data object Refresh : HomeIntent
+    data object LogTeaClicked : HomeIntent
+    data class SessionClicked(val sessionId: String) : HomeIntent
+    data object ViewAllSessionsClicked : HomeIntent
+    data object DraftBannerClicked : HomeIntent
+    data object SettingsClicked : HomeIntent
+    data object ClearError : HomeIntent
+}

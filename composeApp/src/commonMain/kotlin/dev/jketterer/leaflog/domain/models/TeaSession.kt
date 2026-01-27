@@ -8,8 +8,8 @@ data class TeaSession(
     val teaId: String,
 
     val parentSessionId: String? = null,
-    val steepNumber: Int,
-    val status: SessionStatus,
+    val steepNumber: Int = 1,
+    val status: SessionStatus = SessionStatus.DRAFT,
 
     val teaQuantityGrams: Float? = null,
     val vesselId: String,
@@ -22,7 +22,7 @@ data class TeaSession(
     val temperatureCelsius: Int,
     val waterQuantityMl: Int,
     val notes: String? = null,
-    val photos: List<String>,
+    val photos: List<String> = emptyList(),
 
     val userId: String? = null,
     val syncStatus: SyncStatus,

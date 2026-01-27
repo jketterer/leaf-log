@@ -18,8 +18,10 @@ import compose.icons.fontawesomeicons.regular.Bookmark
 import compose.icons.fontawesomeicons.regular.Building
 import compose.icons.fontawesomeicons.regular.Clock
 import compose.icons.fontawesomeicons.regular.CommentDots
-import dev.jketterer.leaflog.presentation.ui.screens.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
+import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
+import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
+import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
 
 @Composable
 fun AppNavigation() {
@@ -52,12 +54,42 @@ fun AppNavigation() {
             modifier = Modifier.fillMaxSize().padding(paddingValues),
             entryProvider = { entry ->
                 when (entry) {
-                    is NavRoute.HomeRoute -> NavEntry(entry) { HomeScreen() }
+                    is NavRoute.HomeRoute -> NavEntry(entry) {
+                        HomeScreen(
+                            onNavigateToLogTea = { backStack.add(NavRoute.LogTeaRoute) },
+                            onNavigateToSession = { sessionId ->
+                                backStack.add(NavRoute.SessionDetailsRoute(sessionId))
+                            },
+                            onNavigateToHistory = { backStack.add(NavRoute.HistoryRoute) },
+                            onNavigateToSettings = { backStack.add(NavRoute.SettingsRoute) },
+                        )
+                    }
+
                     is NavRoute.CollectionRoute -> NavEntry(entry) {
                         TeaCollectionScreen(
-                            onNavigateToAddTea = {},
-                            onNavigateToTeaDetail = {}
+                            onNavigateToAddTea = { backStack.add(NavRoute.EditTeaRoute(null)) },
+                            onNavigateToTeaDetail = { teaId ->
+                                backStack.add(NavRoute.TeaDetailsRoute(teaId))
+                            }
                         )
+                    }
+
+                    is NavRoute.HistoryRoute -> NavEntry(entry) {
+                        HistoryScreen(
+                            onNavigateToSession = { sessionId ->
+                                backStack.add(NavRoute.SessionDetailsRoute(sessionId))
+                            },
+                        )
+                    }
+
+                    is NavRoute.LogTeaRoute -> NavEntry(entry) {
+                        LogTeaScreen(
+                            onNavigateBack = { backStack.removeLast() },
+                            onNavigateToTimer = { backStack.add(NavRoute.TimerRoute) },
+                        )
+                    }
+
+                    is NavRoute.EditTeaRoute -> NavEntry(entry) {
                     }
 
                     else -> NavEntry(entry) { Text("ugh") }

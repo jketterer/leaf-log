@@ -19,6 +19,7 @@ import compose.icons.fontawesomeicons.regular.Building
 import compose.icons.fontawesomeicons.regular.Clock
 import compose.icons.fontawesomeicons.regular.CommentDots
 import dev.jketterer.leaflog.presentation.ui.screens.HomeScreen
+import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
 
 @Composable
 fun AppNavigation() {
@@ -52,6 +53,13 @@ fun AppNavigation() {
             entryProvider = { entry ->
                 when (entry) {
                     is NavRoute.HomeRoute -> NavEntry(entry) { HomeScreen() }
+                    is NavRoute.CollectionRoute -> NavEntry(entry) {
+                        TeaCollectionScreen(
+                            onNavigateToAddTea = {},
+                            onNavigateToTeaDetail = {}
+                        )
+                    }
+
                     else -> NavEntry(entry) { Text("ugh") }
                 }
             }

@@ -14,6 +14,7 @@ class TeaRepositoryImpl(
 ) : TeaRepository {
     override fun getAllFlow(): Flow<List<Tea>> {
         return teaDao.getAllFlow().map { entities ->
+            println("tea emission")
             entities.map { it.toTea() }
         }
     }

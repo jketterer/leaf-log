@@ -48,6 +48,9 @@ kotlin {
 
             implementation(libs.composeIcons.fontAwesome)
             implementation(libs.koin.compose)
+            implementation(libs.koin.composeViewmodel)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

@@ -11,7 +11,7 @@ interface TeaSessionRepository {
     suspend fun getById(id: String): TeaSession?
     fun getByIdFlow(id: String): Flow<TeaSession?>
     fun getByTeaIdFlow(teaId: String): Flow<List<TeaSession>>
-    suspend fun getByTeaId(teaId: String): List<TeaSession>
+    suspend fun getByTeaId(teaId: String, limit: Int? = null): List<TeaSession>
     suspend fun getChildSteeps(parentId: String): List<TeaSession>
     fun getDraftsFlow(): Flow<List<TeaSession>>
     fun getDraftsCountFlow(): Flow<Int>

@@ -7,26 +7,26 @@ data class TeaSession(
     val id: String,
     val teaId: String,
 
-    val parentSessionId: String?,
+    val parentSessionId: String? = null,
     val steepNumber: Int,
     val status: SessionStatus,
 
-    val teaQuantityGrams: Float?,
+    val teaQuantityGrams: Float? = null,
     val vesselId: String,
     val waterType: WaterType,
-    val location: String?,
-    val rating: Float?,
+    val location: String? = null,
+    val rating: Float? = null,
 
     val timestamp: Instant,
     val brewingTime: Duration,
     val temperatureCelsius: Int,
     val waterQuantityMl: Int,
-    val notes: String?,
+    val notes: String? = null,
     val photos: List<String>,
 
-    val userId: String?,
+    val userId: String? = null,
     val syncStatus: SyncStatus,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val deletedAt: Instant?,
+    val deletedAt: Instant? = null,
 )

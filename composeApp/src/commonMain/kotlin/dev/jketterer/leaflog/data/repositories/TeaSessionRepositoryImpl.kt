@@ -44,8 +44,13 @@ class TeaSessionRepositoryImpl(
         }
     }
 
-    override suspend fun getByTeaId(teaId: String): List<TeaSession> {
-        return teaSessionDao.getByTeaId(teaId).map { it.toTeaSession() }
+    override suspend fun getByTeaId(teaId: String, limit: Int?): List<TeaSession> {
+        val sessions = teaSessionDao.getByTeaId(teaId).map { it.toTeaSession() }
+        return if (limit != null) {
+            sessions.take(limit)
+        } else {
+            sessions
+        }
     }
 
     override suspend fun getChildSteeps(parentId: String): List<TeaSession> {

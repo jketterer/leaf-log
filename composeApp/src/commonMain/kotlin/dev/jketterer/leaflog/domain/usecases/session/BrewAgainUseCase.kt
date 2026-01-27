@@ -1,0 +1,51 @@
+package dev.jketterer.leaflog.domain.usecases.session
+
+import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SyncStatus
+import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import kotlin.time.Clock
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+class BrewAgainUseCase(
+    private val teaSessionRepository: TeaSessionRepository,
+) {
+    @OptIn(ExperimentalUuidApi::class)
+    suspend operator fun invoke(
+        sourceSession: TeaSession,
+    ): Result<TeaSession> {
+        val now = Clock.System.now()
+
+        // Create new session with same parameters
+        val newSession = TeaSession(
+            id = Uuid.random().toString(),
+            teaId = sourceSession.teaId,
+            parentSessionId = null,
+            steepNumber = 1,
+            status = SessionStatus.DRAFT,  // Start as draft
+            teaQuantityGrams = sourceSession.teaQuantityGrams,
+            vesselId = sourceSession.vesselId,
+            waterType = sourceSession.waterType,
+            location = sourceSession.location,
+            rating = null,
+            timestamp = now,
+            brewingTime = sourceSession.brewingTime,
+            temperatureCelsius = sourceSession.temperatureCelsius,
+            waterQuantityMl = sourceSession.waterQuantityMl,
+            notes = null,  // Don't copy notes
+            photos = emptyList(),  // Don't copy photos
+            userId = null,
+            syncStatus = SyncStatus.LOCAL_ONLY,
+            createdAt = now,
+            updatedAt = now,
+        )
+
+        return try {
+            teaSessionRepository.upsert(newSession)
+            Result.success(newSession)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}

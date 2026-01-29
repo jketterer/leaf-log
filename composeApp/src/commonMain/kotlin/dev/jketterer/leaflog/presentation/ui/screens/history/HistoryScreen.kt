@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,16 +30,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.solid.Eye
-import compose.icons.fontawesomeicons.solid.Filter
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Filter
+import compose.icons.feathericons.Search
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.session.CompleteDraftDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -51,15 +52,31 @@ import kotlin.time.toDuration
  */
 @Composable
 fun HistoryScreen(
+    showDraftsOnly: Boolean = false,
     onNavigateToSession: (String) -> Unit,
     viewModel: HistoryViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
 
+    LaunchedEffect(showDraftsOnly) {
+        if (showDraftsOnly) {
+            viewModel.onIntent(HistoryIntent.ToggleShowDraftsOnly(true))
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.navEvents.collect { event ->
+            when (event) {
+                is HistoryNavEvent.NavigateToSession -> {
+                    onNavigateToSession(event.sessionId)
+                }
+            }
+        }
+    }
+
     HistoryContent(
         state = state,
         onIntent = viewModel::onIntent,
-        onNavigateToSession = onNavigateToSession
     )
 }
 
@@ -68,7 +85,6 @@ fun HistoryScreen(
 private fun HistoryContent(
     state: HistoryState,
     onIntent: (HistoryIntent) -> Unit,
-    onNavigateToSession: (String) -> Unit
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
 
@@ -97,13 +113,13 @@ private fun HistoryContent(
                     actions = {
                         IconButton(onClick = { showSearchBar = true }) {
                             Icon(
-                                imageVector = FontAwesomeIcons.Solid.Eye,
+                                imageVector = FeatherIcons.Search,
                                 contentDescription = "Search"
                             )
                         }
                         IconButton(onClick = { onIntent(HistoryIntent.ShowFilterSheet) }) {
                             Icon(
-                                imageVector = FontAwesomeIcons.Solid.Filter,
+                                imageVector = FeatherIcons.Filter,
                                 contentDescription = "Filter"
                             )
                         }
@@ -170,8 +186,11 @@ private fun HistoryContent(
                                 teaTypeName = teaType?.name ?: "Unknown Type",
                                 teaPhotoUrl = tea?.photos?.firstOrNull(),
                                 onSessionClick = {
-                                    onIntent(HistoryIntent.SessionClicked(session.id))
-                                    onNavigateToSession(session.id)
+                                    if (session.status == SessionStatus.DRAFT) {
+                                        onIntent(HistoryIntent.CompleteDraft(session.id))
+                                    } else {
+                                        onIntent(HistoryIntent.SessionClicked(session.id))
+                                    }
                                 },
                                 onBrewAgainClick = {
                                     onIntent(HistoryIntent.BrewAgain(session.id))
@@ -184,6 +203,27 @@ private fun HistoryContent(
                     }
                 }
             }
+        }
+
+        if (state.showCompleteDraftDialog && state.draftToComplete != null) {
+            val tea = state.teas[state.draftToComplete.teaId]
+
+            CompleteDraftDialog(
+                session = state.draftToComplete,
+                teaName = tea?.name ?: "Unknown Tea",
+                onComplete = { rating, notes ->
+                    onIntent(
+                        HistoryIntent.ConfirmCompleteDraft(
+                            sessionId = state.draftToComplete.id,
+                            rating = rating,
+                            notes = notes,
+                        ),
+                    )
+                },
+                onDismiss = {
+                    onIntent(HistoryIntent.CancelCompleteDraft)
+                },
+            )
         }
 
         // Error snackbar
@@ -210,12 +250,12 @@ private fun HistoryScreenPreview() {
             state = HistoryState(
                 teas = mapOf(
                     "1" to Tea(
-                   id = "1",
-                   name = "Test Tea",
-                   teaTypeId = "",
-                   createdAt = Instant.fromEpochMilliseconds(1),
-                   updatedAt = Instant.fromEpochMilliseconds(1),
-               ),
+                        id = "1",
+                        name = "Test Tea",
+                        teaTypeId = "",
+                        createdAt = Instant.fromEpochMilliseconds(1),
+                        updatedAt = Instant.fromEpochMilliseconds(1),
+                    ),
                 ),
                 groupedSessions = mapOf(
                     "Today" to listOf(
@@ -257,7 +297,6 @@ private fun HistoryScreenPreview() {
                 )
             ),
             onIntent = {},
-            onNavigateToSession = {},
         )
     }
 }

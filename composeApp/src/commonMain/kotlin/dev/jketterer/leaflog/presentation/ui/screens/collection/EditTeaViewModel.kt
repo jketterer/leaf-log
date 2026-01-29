@@ -6,12 +6,14 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -26,6 +28,9 @@ class EditTeaViewModel(
 
     private val _state = MutableStateFlow(EditTeaState())
     val state: StateFlow<EditTeaState> = _state.asStateFlow()
+
+    private val _navEvents = Channel<EditTeaNavEvent>()
+    val navEvents = _navEvents.receiveAsFlow()
 
     init {
         loadTeaTypes()
@@ -53,10 +58,7 @@ class EditTeaViewModel(
             is EditTeaIntent.PhotoRemoved -> removePhoto(intent.photoUri)
             is EditTeaIntent.SaveClicked -> save()
             is EditTeaIntent.BackClicked -> handleBack()
-            is EditTeaIntent.ConfirmDiscard -> {
-                // navigation handled by UI
-            }
-
+            is EditTeaIntent.ConfirmDiscard -> _navEvents.trySend(EditTeaNavEvent.NavigateBack)
             is EditTeaIntent.CancelDiscard -> cancelDiscard()
         }
     }
@@ -265,7 +267,7 @@ class EditTeaViewModel(
 
             result.onSuccess {
                 _state.update { it.copy(isSaving = false) }
-                // navigation handled by UI - navigate back
+                _navEvents.trySend(EditTeaNavEvent.NavigateBack)
             }
                 .onFailure { e ->
                     _state.update {
@@ -282,11 +284,15 @@ class EditTeaViewModel(
         if (_state.value.hasChanges) {
             _state.update { it.copy(showDiscardDialog = true) }
         } else {
-            // navigation handled by UI
+            _navEvents.trySend(EditTeaNavEvent.NavigateBack)
         }
     }
 
     private fun cancelDiscard() {
         _state.update { it.copy(showDiscardDialog = false) }
     }
+}
+
+sealed interface EditTeaNavEvent {
+    data object NavigateBack : EditTeaNavEvent
 }

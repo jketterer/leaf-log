@@ -9,6 +9,6 @@ sealed interface SessionDetailIntent {
     data object CancelDelete : SessionDetailIntent
     data class DeleteSteep(val steepId: String) : SessionDetailIntent
     data object BrewAgainClicked : SessionDetailIntent
-    data object ViewTeaClicked : SessionDetailIntent
+    data class ViewTeaClicked(val teaId: String) : SessionDetailIntent
     data object BackClicked : SessionDetailIntent
 }

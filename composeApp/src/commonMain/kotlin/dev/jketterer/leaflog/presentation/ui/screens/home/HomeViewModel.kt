@@ -7,11 +7,13 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -28,6 +30,9 @@ class HomeViewModel(
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
+    private val _navEvents = Channel<HomeNavEvent>()
+    val navEvents = _navEvents.receiveAsFlow()
+
     init {
         onIntent(HomeIntent.LoadData)
     }
@@ -36,27 +41,17 @@ class HomeViewModel(
         when (intent) {
             is HomeIntent.LoadData -> loadData()
             is HomeIntent.Refresh -> refresh()
-            is HomeIntent.LogTeaClicked -> {
-                // navigation handled by UI
-            }
-
-            is HomeIntent.SessionClicked -> {
-                // navigation handled by UI
-            }
-
-            is HomeIntent.ViewAllSessionsClicked -> {
-                // navigation handled by UI
-            }
-
-            is HomeIntent.DraftBannerClicked -> {
-                // navigation handled by UI - navigate to History with drafts filter
-            }
-
-            is HomeIntent.SettingsClicked -> {
-                // navigation handled by UI
-            }
-
             is HomeIntent.ClearError -> clearError()
+
+            is HomeIntent.LogTeaClicked -> _navEvents.trySend(HomeNavEvent.NavigateToLogTea)
+            is HomeIntent.SessionClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSession(intent.sessionId))
+            is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
+            is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
+            is HomeIntent.DraftBannerClicked -> _navEvents.trySend(
+                HomeNavEvent.NavigateToHistory(
+                    true
+                )
+            )
         }
     }
 
@@ -189,3 +184,10 @@ data class SessionWithTeaData(
     val teaTypeName: String = "Unknown Type",
     val teaPhotoUrl: String? = null,
 )
+
+sealed interface HomeNavEvent {
+    data class NavigateToHistory(val showDraftsOnly: Boolean = false) : HomeNavEvent
+    data class NavigateToSession(val sessionId: String) : HomeNavEvent
+    data object NavigateToLogTea : HomeNavEvent
+    data object NavigateToSettings : HomeNavEvent
+}

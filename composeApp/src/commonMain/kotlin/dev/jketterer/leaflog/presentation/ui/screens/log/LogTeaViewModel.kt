@@ -11,10 +11,12 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
@@ -30,6 +32,9 @@ class LogTeaViewModel(
     private val _state = MutableStateFlow(LogTeaState())
     val state: StateFlow<LogTeaState> = _state.asStateFlow()
 
+    private val _navEvents = Channel<LogTeaNavigationEvent>()
+    val navEvents = _navEvents.receiveAsFlow()
+
     init {
         onIntent(LogTeaIntent.LoadData)
     }
@@ -40,7 +45,7 @@ class LogTeaViewModel(
             is LogTeaIntent.ShowTeaSearchDialog -> showTeaSearchDialog()
             is LogTeaIntent.HideTeaSearchDialog -> hideTeaSearchDialog()
             is LogTeaIntent.TeaSearchQueryChanged -> updateTeaSearchQuery(intent.query)
-            is LogTeaIntent.TeaSelected -> selectTea(intent.tea)
+            is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
             is LogTeaIntent.QuickAddTeaClicked -> showQuickAddTeaDialog()
             is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.tea)
             is LogTeaIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
@@ -57,15 +62,11 @@ class LogTeaViewModel(
 
             is LogTeaIntent.PhotoSelected -> addPhoto(intent.photoUri)
             is LogTeaIntent.PhotoRemoved -> removePhoto(intent.photoUri)
-            is LogTeaIntent.SaveAsDraft -> saveSession(isDraft = true)
-            is LogTeaIntent.SaveAsCompleted -> saveSession(isDraft = false)
-            is LogTeaIntent.StartTimerClicked -> {
-                // Navigation to Timer screen handled by UI
-            }
+            is LogTeaIntent.SaveAsDraft -> saveSession(isDraft = true, startTimer = false)
+            is LogTeaIntent.SaveAsCompleted -> saveSession(isDraft = false, startTimer = false)
 
-            is LogTeaIntent.BackClicked -> {
-                // Navigation handled by UI
-            }
+            is LogTeaIntent.StartTimerClicked -> saveSession(isDraft = true, startTimer = true)
+            is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
         }
     }
 
@@ -74,38 +75,8 @@ class LogTeaViewModel(
             _state.update { it.copy(isLoading = true) }
 
             try {
-                // Load all teas - direct repository call
-                teaRepository.getAllFlow()
-                    .catch { e ->
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                error = "Failed to load teas: ${e.message}"
-                            )
-                        }
-                    }
-                    .collect { teas ->
-                        _state.update {
-                            it.copy(
-                                availableTeas = teas,
-                                isLoading = false
-                            )
-                        }
-                    }
-
-                // Load brewing vessels - direct repository call
-                brewingVesselRepository.getAllFlow()
-                    .catch { e ->
-                        println("Failed to load vessels: ${e.message}")
-                    }
-                    .collect { vessels ->
-                        _state.update {
-                            it.copy(
-                                availableVessels = vessels,
-                                selectedVessel = it.selectedVessel ?: vessels.firstOrNull()
-                            )
-                        }
-                    }
+                collectTeas()
+                collectVessels()
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -115,6 +86,41 @@ class LogTeaViewModel(
                 }
             }
         }
+    }
+
+    private fun collectTeas() = viewModelScope.launch {
+        teaRepository.getAllFlow()
+            .catch { e ->
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Failed to load teas: ${e.message}",
+                    )
+                }
+            }
+            .collect { teas ->
+                _state.update {
+                    it.copy(
+                        availableTeas = teas,
+                        isLoading = false,
+                    )
+                }
+            }
+    }
+
+    private fun collectVessels() = viewModelScope.launch {
+        brewingVesselRepository.getAllFlow()
+            .catch { e ->
+                println("Failed to load vessels: ${e.message}")
+            }
+            .collect { vessels ->
+                _state.update {
+                    it.copy(
+                        availableVessels = vessels,
+                        selectedVessel = it.selectedVessel ?: vessels.firstOrNull()
+                    )
+                }
+            }
     }
 
     private fun showTeaSearchDialog() {
@@ -149,7 +155,8 @@ class LogTeaViewModel(
         }
     }
 
-    private fun selectTea(tea: Tea) {
+    private fun selectTea(teaId: String?) {
+        val tea = _state.value.availableTeas.firstOrNull { it.id == teaId }
         _state.update {
             it.copy(
                 selectedTea = tea,
@@ -161,7 +168,7 @@ class LogTeaViewModel(
         }
 
         // Pre-fill with tea defaults
-        prefillDefaults(tea)
+        tea?.let { prefillDefaults(it) }
     }
 
     private fun prefillDefaults(tea: Tea) {
@@ -193,7 +200,7 @@ class LogTeaViewModel(
 
     private fun handleQuickAddTeaSaved(tea: Tea) {
         _state.update { it.copy(showQuickAddTeaDialog = false) }
-        selectTea(tea)
+        selectTea(tea.id)
     }
 
     private fun updateTeaQuantity(quantity: String) {
@@ -292,7 +299,7 @@ class LogTeaViewModel(
         }
     }
 
-    private fun saveSession(isDraft: Boolean) {
+    private fun saveSession(isDraft: Boolean, startTimer: Boolean) {
         val currentState = _state.value
 
         if (!currentState.isValid) {
@@ -326,7 +333,10 @@ class LogTeaViewModel(
             )
                 .onSuccess {
                     _state.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
-                    // Navigation handled by UI - navigate back or to timer
+
+                    if (startTimer) {
+                        _navEvents.send(LogTeaNavigationEvent.NavigateToTimer(it.id))
+                    }
                 }
                 .onFailure { e ->
                     _state.update {
@@ -338,4 +348,14 @@ class LogTeaViewModel(
                 }
         }
     }
+
+    override fun onCleared() {
+        println("clearing LogTeaViewModel")
+        super.onCleared()
+    }
+}
+
+sealed interface LogTeaNavigationEvent {
+    data object NavigateBack : LogTeaNavigationEvent
+    data class NavigateToTimer(val sessionId: String) : LogTeaNavigationEvent
 }

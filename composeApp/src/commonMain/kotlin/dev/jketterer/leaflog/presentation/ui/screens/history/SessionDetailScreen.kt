@@ -23,7 +23,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -36,12 +35,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.solid.ArrowLeft
-import compose.icons.fontawesomeicons.solid.Circle
-import compose.icons.fontawesomeicons.solid.Edit
-import compose.icons.fontawesomeicons.solid.Trash
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Edit
+import compose.icons.feathericons.Edit2
+import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -66,6 +65,7 @@ fun SessionDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onNavigateToTea: (String) -> Unit,
+    onNavigateToTimer: (String) -> Unit,
     viewModel: SessionDetailViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -74,12 +74,31 @@ fun SessionDetailScreen(
         viewModel.onIntent(SessionDetailIntent.LoadSession(sessionId))
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.navEvents.collect { event ->
+            when (event) {
+                is SessionDetailNavEvent.NavigateToEditSession -> {
+                    onNavigateToEdit(sessionId)
+                }
+
+                is SessionDetailNavEvent.NavigateToTeaDetails -> {
+                    onNavigateToTea(event.teaId)
+                }
+
+                is SessionDetailNavEvent.NavigateToTimer -> {
+                    onNavigateToTimer(event.sessionId)
+                }
+
+                is SessionDetailNavEvent.NavigateBack -> {
+                    onNavigateBack()
+                }
+            }
+        }
+    }
+
     SessionDetailContent(
         state = state,
         onIntent = viewModel::onIntent,
-        onNavigateBack = onNavigateBack,
-        onNavigateToEdit = onNavigateToEdit,
-        onNavigateToTea = onNavigateToTea
     )
 }
 
@@ -88,176 +107,167 @@ fun SessionDetailScreen(
 private fun SessionDetailContent(
     state: SessionDetailState,
     onIntent: (SessionDetailIntent) -> Unit,
-    onNavigateBack: () -> Unit,
-    onNavigateToEdit: (String) -> Unit,
-    onNavigateToTea: (String) -> Unit
 ) {
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+                .padding(bottom = 80.dp),
+        ) {
             TopAppBar(
                 title = { Text("Session Details") },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(SessionDetailIntent.BackClicked) }) {
                         Icon(
-                            imageVector = FontAwesomeIcons.Solid.ArrowLeft,
-                            contentDescription = "Back"
+                            imageVector = FeatherIcons.ArrowLeft,
+                            contentDescription = "Back",
                         )
                     }
                 },
                 actions = {
                     IconButton(onClick = { onIntent(SessionDetailIntent.EditSessionClicked) }) {
                         Icon(
-                            imageVector = FontAwesomeIcons.Solid.Edit,
-                            contentDescription = "Edit"
+                            imageVector = FeatherIcons.Edit2,
+                            contentDescription = "Edit",
                         )
                     }
                     IconButton(onClick = { onIntent(SessionDetailIntent.DeleteSessionClicked) }) {
                         Icon(
-                            imageVector = FontAwesomeIcons.Solid.Trash,
-                            contentDescription = "Delete"
+                            imageVector = FeatherIcons.Trash2,
+                            contentDescription = "Delete",
                         )
                     }
                 }
             )
-        },
-        bottomBar = {
             // Brew Again button
-            state.parentSession?.let {
-                Surface(
-                    tonalElevation = 3.dp
-                ) {
-                    Button(
-                        onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
+            when {
+                state.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Icon(
-                            imageVector = FontAwesomeIcons.Solid.Circle,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Brew Again")
+                        CircularProgressIndicator()
                     }
                 }
-            }
-        }
-    ) { paddingValues ->
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
 
-            state.parentSession != null -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    // Tea Information
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                state.parentSession != null -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Tea Information
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text(
-                                    text = state.tea?.name ?: "Unknown Tea",
-                                    style = MaterialTheme.typography.headlineSmall
-                                )
-                                Text(
-                                    text = state.teaType?.name ?: "Unknown Type",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = state.tea?.name ?: "Unknown Tea",
+                                        style = MaterialTheme.typography.headlineSmall
+                                    )
+                                    Text(
+                                        text = state.teaType?.name ?: "Unknown Type",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
 
-                                if (state.parentSession.rating != null) {
-                                    Row {
-                                        repeat(5) { index ->
+                                    if (state.parentSession.rating != null) {
+                                        Row {
+                                            repeat(5) { index ->
+                                                Text(
+                                                    text = if (index < state.parentSession.rating.toInt()) "⭐" else "☆",
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Text(
-                                                text = if (index < state.parentSession.rating.toInt()) "⭐" else "☆",
-                                                style = MaterialTheme.typography.titleMedium
+                                                text = "(${state.parentSession.rating})",
+                                                style = MaterialTheme.typography.bodyMedium
                                             )
                                         }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "(${state.parentSession.rating})",
-                                            style = MaterialTheme.typography.bodyMedium
+                                    }
+                                }
+                            }
+                        }
+
+                        // All Steeps
+                        items(
+                            items = state.allSteeps,
+                            key = { it.id }
+                        ) { steep ->
+                            SteepCard(
+                                steep = steep,
+                                steepNumber = steep.steepNumber,
+                                onEditClick = { onIntent(SessionDetailIntent.EditSteepClicked(steep.id)) },
+                                onDeleteClick = { onIntent(SessionDetailIntent.DeleteSteep(steep.id)) }
+                            )
+                        }
+
+                        // Session Details
+                        item {
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "Session Details",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                                    BrewingParameterDisplay(
+                                        label = "Vessel",
+                                        value = state.vessel?.name ?: "Unknown"
+                                    )
+                                    BrewingParameterDisplay(
+                                        label = "Water Type",
+                                        value = state.parentSession.waterType.displayName
+                                    )
+                                    if (state.parentSession.location != null) {
+                                        BrewingParameterDisplay(
+                                            label = "Location",
+                                            value = state.parentSession.location
                                         )
                                     }
                                 }
                             }
                         }
                     }
+                }
 
-                    // All Steeps
-                    items(
-                        items = state.allSteeps,
-                        key = { it.id }
-                    ) { steep ->
-                        SteepCard(
-                            steep = steep,
-                            steepNumber = steep.steepNumber,
-                            onEditClick = { onIntent(SessionDetailIntent.EditSteepClicked(steep.id)) },
-                            onDeleteClick = { onIntent(SessionDetailIntent.DeleteSteep(steep.id)) }
-                        )
-                    }
-
-                    // Session Details
-                    item {
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Session Details",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                                BrewingParameterDisplay(
-                                    label = "Vessel",
-                                    value = state.vessel?.name ?: "Unknown"
-                                )
-                                BrewingParameterDisplay(
-                                    label = "Water Type",
-                                    value = state.parentSession.waterType.displayName
-                                )
-                                if (state.parentSession.location != null) {
-                                    BrewingParameterDisplay(
-                                        label = "Location",
-                                        value = state.parentSession.location
-                                    )
-                                }
-                            }
-                        }
-                    }
+                else -> {
+                    EmptyState(
+                        message = "Session not found",
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
             }
+        }
 
-            else -> {
-                EmptyState(
-                    message = "Session not found",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
+        Surface(
+            tonalElevation = 3.dp,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        ) {
+            Button(
+                onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = FeatherIcons.Coffee,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Brew Again")
             }
         }
     }
@@ -314,14 +324,14 @@ private fun SteepCard(
                 Row {
                     IconButton(onClick = onEditClick) {
                         Icon(
-                            imageVector = FontAwesomeIcons.Solid.Edit,
+                            imageVector = FeatherIcons.Edit,
                             contentDescription = "Edit steep"
                         )
                     }
                     if (steepNumber > 1) {
                         IconButton(onClick = onDeleteClick) {
                             Icon(
-                                imageVector = FontAwesomeIcons.Solid.Trash,
+                                imageVector = FeatherIcons.Trash2,
                                 contentDescription = "Delete steep"
                             )
                         }
@@ -422,9 +432,6 @@ private fun SessionDetailScreenPreview() {
                 )
             ),
             onIntent = {},
-            onNavigateBack = {},
-            onNavigateToTea = {},
-            onNavigateToEdit = {},
         )
     }
 }

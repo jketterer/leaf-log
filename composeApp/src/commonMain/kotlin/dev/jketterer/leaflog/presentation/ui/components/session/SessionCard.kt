@@ -33,9 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.solid.Expand
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.MoreVertical
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
@@ -43,7 +42,6 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
 import kotlin.time.toDuration
@@ -154,7 +152,7 @@ fun SessionCard(
             Box {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
-                        imageVector = FontAwesomeIcons.Solid.Expand,
+                        imageVector = FeatherIcons.MoreVertical,
                         contentDescription = "More options"
                     )
                 }

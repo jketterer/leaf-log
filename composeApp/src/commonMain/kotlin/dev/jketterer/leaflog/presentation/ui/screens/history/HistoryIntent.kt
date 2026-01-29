@@ -21,4 +21,14 @@ sealed interface HistoryIntent {
     data class DeleteSession(val sessionId: String) : HistoryIntent
     data class BrewAgain(val sessionId: String) : HistoryIntent
     data object ClearError : HistoryIntent
+
+    // Draft completion
+    data class CompleteDraft(val sessionId: String) : HistoryIntent
+    data class ConfirmCompleteDraft(
+        val sessionId: String,
+        val rating: Float?,
+        val notes: String?,
+    ) : HistoryIntent
+
+    data object CancelCompleteDraft : HistoryIntent
 }

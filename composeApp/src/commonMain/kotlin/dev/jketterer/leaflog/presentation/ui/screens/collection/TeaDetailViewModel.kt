@@ -7,12 +7,18 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
+import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
+import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
+import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
+import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToSession
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,28 +33,21 @@ class TeaDetailViewModel(
     private val _state = MutableStateFlow(TeaDetailState())
     val state: StateFlow<TeaDetailState> = _state.asStateFlow()
 
+    private val _navEvents = Channel<TeaDetailNavigationEvent>()
+    val navEvents = _navEvents.receiveAsFlow()
+
     fun onIntent(intent: TeaDetailIntent) {
         when (intent) {
             is TeaDetailIntent.LoadTea -> loadTea(intent.teaId)
-            is TeaDetailIntent.EditTeaClicked -> {
-                // navigation handled by UI
-            }
-
             is TeaDetailIntent.DeleteTeaClicked -> showDeleteConfirmation()
             is TeaDetailIntent.ConfirmDelete -> confirmDelete()
             is TeaDetailIntent.CancelDelete -> cancelDelete()
             is TeaDetailIntent.ToggleFavorite -> toggleFavorite()
-            is TeaDetailIntent.SessionClicked -> {
-                // navigation handled by UI
-            }
 
-            is TeaDetailIntent.BrewThisTeaClicked -> {
-                // navigation handled by UI
-            }
-
-            is TeaDetailIntent.BackClicked -> {
-                // navigation handled by UI
-            }
+            is TeaDetailIntent.EditTeaClicked -> _navEvents.trySend(NavigateToEditTea)
+            is TeaDetailIntent.SessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
+            is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea)
+            is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
         }
     }
 
@@ -148,4 +147,11 @@ class TeaDetailViewModel(
                 }
         }
     }
+}
+
+sealed interface TeaDetailNavigationEvent {
+    data object NavigateBack : TeaDetailNavigationEvent
+    data class NavigateToSession(val sessionId: String) : TeaDetailNavigationEvent
+    data object NavigateToLogTea : TeaDetailNavigationEvent
+    data object NavigateToEditTea : TeaDetailNavigationEvent
 }

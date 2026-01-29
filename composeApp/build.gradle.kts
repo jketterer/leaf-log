@@ -45,7 +45,9 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
             implementation(libs.androidx.navigation3.ui)
+            implementation(libs.androidx.lifecycle.viewmodel.nav3)
 
+            implementation(libs.composeIcons.feather)
             implementation(libs.composeIcons.fontAwesome)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)

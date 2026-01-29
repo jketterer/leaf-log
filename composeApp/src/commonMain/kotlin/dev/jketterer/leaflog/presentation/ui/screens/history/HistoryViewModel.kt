@@ -2,17 +2,21 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -22,12 +26,16 @@ class HistoryViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
+    private val completeSessionUseCase: CompleteSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HistoryState())
     val state: StateFlow<HistoryState> = _state.asStateFlow()
+
+    private val _navEvents = Channel<HistoryNavEvent>()
+    val navEvents = _navEvents.receiveAsFlow()
 
     init {
         onIntent(HistoryIntent.LoadData)
@@ -45,13 +53,23 @@ class HistoryViewModel(
             is HistoryIntent.FilterByMinRating -> filterByMinRating(intent.minRating)
             is HistoryIntent.ToggleShowDraftsOnly -> toggleShowDraftsOnly(intent.draftsOnly)
             is HistoryIntent.ClearFilters -> clearFilters()
-            is HistoryIntent.SessionClicked -> {
-                // Navigation handled by UI
-            }
-
             is HistoryIntent.DeleteSession -> deleteSession(intent.sessionId)
             is HistoryIntent.BrewAgain -> brewAgain(intent.sessionId)
+            is HistoryIntent.CompleteDraft -> showCompleteDraftDialog(intent.sessionId)
+            is HistoryIntent.ConfirmCompleteDraft -> completeDraftSession(
+                intent.sessionId,
+                intent.rating,
+                intent.notes,
+            )
+
+            is HistoryIntent.CancelCompleteDraft -> hideCompleteDraftDialog()
             is HistoryIntent.ClearError -> clearError()
+
+            is HistoryIntent.SessionClicked -> _navEvents.trySend(
+                HistoryNavEvent.NavigateToSession(
+                    intent.sessionId
+                )
+            )
         }
     }
 
@@ -245,7 +263,75 @@ class HistoryViewModel(
         }
     }
 
+    private fun showCompleteDraftDialog(sessionId: String) {
+        viewModelScope.launch {
+            val session = teaSessionRepository.getById(sessionId)
+            if (session != null && session.status == SessionStatus.DRAFT) {
+                _state.update {
+                    it.copy(
+                        draftToComplete = session,
+                        showCompleteDraftDialog = true,
+                    )
+                }
+            }
+        }
+    }
+
+    private fun hideCompleteDraftDialog() {
+        _state.update {
+            it.copy(
+                draftToComplete = null,
+                showCompleteDraftDialog = false,
+            )
+        }
+    }
+
+    private fun completeDraftSession(
+        sessionId: String,
+        rating: Float?,
+        notes: String?,
+    ) {
+        viewModelScope.launch {
+            val session = teaSessionRepository.getById(sessionId)
+            if (session == null) {
+                _state.update {
+                    it.copy(
+                        showCompleteDraftDialog = false,
+                        error = "Session not found",
+                    )
+                }
+                return@launch
+            }
+
+            completeSessionUseCase(
+                session = session,
+                rating = rating,
+                finalNotes = notes,
+            )
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            draftToComplete = null,
+                            showCompleteDraftDialog = false,
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(
+                            showCompleteDraftDialog = false,
+                            error = "Failed to complete session: ${e.message}",
+                        )
+                    }
+                }
+        }
+    }
+
     private fun clearError() {
         _state.update { it.copy(error = null) }
     }
+}
+
+sealed interface HistoryNavEvent {
+    data class NavigateToSession(val sessionId: String) : HistoryNavEvent
 }

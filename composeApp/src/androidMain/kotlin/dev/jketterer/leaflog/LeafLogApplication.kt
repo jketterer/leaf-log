@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import dev.jketterer.leaflog.di.appModule
-import dev.jketterer.leaflog.di.databaseModule
+import dev.jketterer.leaflog.di.platformModule
 import dev.jketterer.leaflog.di.repositoryModule
 import dev.jketterer.leaflog.di.useCaseModule
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
@@ -25,8 +25,8 @@ class LeafLogApplication : Application() {
             androidLogger()
             androidContext(this@LeafLogApplication)
             modules(
+                platformModule(),
                 appModule,
-                databaseModule,
                 repositoryModule,
                 useCaseModule,
             )

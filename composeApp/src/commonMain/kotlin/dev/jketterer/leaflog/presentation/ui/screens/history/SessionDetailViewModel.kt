@@ -8,11 +8,13 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,28 +30,29 @@ class SessionDetailViewModel(
     private val _state = MutableStateFlow(SessionDetailState())
     val state: StateFlow<SessionDetailState> = _state.asStateFlow()
 
+    private val _navEvents = Channel<SessionDetailNavEvent>()
+    val navEvents = _navEvents.receiveAsFlow()
+
     fun onIntent(intent: SessionDetailIntent) {
         when (intent) {
             is SessionDetailIntent.LoadSession -> loadSession(intent.sessionId)
-            is SessionDetailIntent.EditSessionClicked -> {
-                // navigation handled by UI
-            }
-
-            is SessionDetailIntent.EditSteepClicked -> {
-                // navigation handled by UI
-            }
-
+            is SessionDetailIntent.EditSteepClicked -> {}
             is SessionDetailIntent.DeleteSessionClicked -> showDeleteConfirmation()
             is SessionDetailIntent.ConfirmDelete -> confirmDelete()
             is SessionDetailIntent.CancelDelete -> cancelDelete()
             is SessionDetailIntent.DeleteSteep -> deleteSteep(intent.steepId)
             is SessionDetailIntent.BrewAgainClicked -> brewAgain()
-            is SessionDetailIntent.ViewTeaClicked -> {
-                // navigation handled by UI
-            }
+
+            // navigation intents
+            is SessionDetailIntent.EditSessionClicked -> _navEvents.trySend(SessionDetailNavEvent.NavigateToEditSession)
+            is SessionDetailIntent.ViewTeaClicked -> _navEvents.trySend(
+                SessionDetailNavEvent.NavigateToTeaDetails(
+                    intent.teaId
+                )
+            )
 
             is SessionDetailIntent.BackClicked -> {
-                // navigation handled by UI
+                _navEvents.trySend(SessionDetailNavEvent.NavigateBack)
             }
         }
     }
@@ -153,7 +156,7 @@ class SessionDetailViewModel(
 
             deleteSessionUseCase(session.id)
                 .onSuccess {
-                    // navigation handled by UI - navigate back
+                    _navEvents.send(SessionDetailNavEvent.NavigateBack)
                 }
                 .onFailure { e ->
                     _state.update {
@@ -181,11 +184,18 @@ class SessionDetailViewModel(
         viewModelScope.launch {
             brewAgainUseCase(session)
                 .onSuccess {
-                    // navigation handled by UI - navigate to Log Tea with new session
+                    _navEvents.send(SessionDetailNavEvent.NavigateToTimer(it.id))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
                 }
         }
     }
+}
+
+sealed interface SessionDetailNavEvent {
+    data object NavigateBack : SessionDetailNavEvent
+    data object NavigateToEditSession : SessionDetailNavEvent
+    data class NavigateToTeaDetails(val teaId: String) : SessionDetailNavEvent
+    data class NavigateToTimer(val sessionId: String) : SessionDetailNavEvent
 }

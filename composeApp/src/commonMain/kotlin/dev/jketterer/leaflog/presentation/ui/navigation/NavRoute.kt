@@ -9,7 +9,7 @@ sealed interface NavRoute : NavKey {
     data object HomeRoute : NavRoute
 
     @Serializable
-    data object LogTeaRoute : NavRoute
+    data class LogTeaRoute(val teaId: String? = null) : NavRoute
 
     @Serializable
     data object CollectionRoute : NavRoute
@@ -21,7 +21,7 @@ sealed interface NavRoute : NavKey {
     data class EditTeaRoute(val teaId: String? = null) : NavRoute
 
     @Serializable
-    data object HistoryRoute : NavRoute
+    data class HistoryRoute(val showDraftsOnly: Boolean = false) : NavRoute
 
     @Serializable
     data object MoreRoute : NavRoute
@@ -29,8 +29,10 @@ sealed interface NavRoute : NavKey {
     @Serializable
     data class SessionDetailsRoute(val sessionId: String) : NavRoute
 
+    data class EditSessionRoute(val sessionId: String) : NavRoute
+
     @Serializable
-    data object TimerRoute : NavRoute
+    data class TimerRoute(val sessionId: String) : NavRoute
 
     @Serializable
     data object AnalyticsRoute : NavRoute

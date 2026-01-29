@@ -15,9 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Heart
 import compose.icons.fontawesomeicons.solid.Heart
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.screens.collection.FilterType

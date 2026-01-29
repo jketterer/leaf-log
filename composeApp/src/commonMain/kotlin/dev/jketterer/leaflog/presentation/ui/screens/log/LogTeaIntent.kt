@@ -12,7 +12,7 @@ sealed interface LogTeaIntent {
     data object ShowTeaSearchDialog : LogTeaIntent
     data object HideTeaSearchDialog : LogTeaIntent
     data class TeaSearchQueryChanged(val query: String) : LogTeaIntent
-    data class TeaSelected(val tea: Tea) : LogTeaIntent
+    data class TeaSelected(val teaId: String?) : LogTeaIntent
     data object QuickAddTeaClicked : LogTeaIntent
     data class QuickAddTeaSaved(val tea: Tea) : LogTeaIntent
 

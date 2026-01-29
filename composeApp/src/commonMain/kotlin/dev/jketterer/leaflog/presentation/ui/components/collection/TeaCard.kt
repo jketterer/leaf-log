@@ -30,7 +30,6 @@ import compose.icons.fontawesomeicons.regular.Heart
 import compose.icons.fontawesomeicons.solid.Heart
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 /**
@@ -121,7 +120,8 @@ fun TeaCard(
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                    },
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -139,7 +139,7 @@ private fun TeaCardPreview() {
                 teaTypeId = "1",
                 createdAt = Instant.fromEpochMilliseconds(1),
                 updatedAt = Instant.fromEpochMilliseconds(1),
-        ),
+            ),
             teaTypeName = "Black Tea",
             onTeaClick = {},
             onFavoriteClick = {},

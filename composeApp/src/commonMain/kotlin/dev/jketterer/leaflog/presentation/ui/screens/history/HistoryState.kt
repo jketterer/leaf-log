@@ -25,6 +25,10 @@ data class HistoryState(
     val minRating: Float? = null,
     val showDraftsOnly: Boolean = false,
 
+    // Draft completion
+    val draftToComplete: TeaSession? = null,
+    val showCompleteDraftDialog: Boolean = false,
+
     // UI state
     val isLoading: Boolean = false,
     val error: String? = null,

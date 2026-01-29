@@ -13,6 +13,15 @@ import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
+import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
+import dev.jketterer.leaflog.domain.usecases.vessel.UpdateBrewingVesselUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -37,4 +46,17 @@ val useCaseModule = module {
 
     // Home screen use cases
     factoryOf(::GetDailyStatsUseCase)
+
+    // Timer use cases
+    factoryOf(::StartTimerUseCase)
+    factoryOf(::PauseTimerUseCase)
+    factoryOf(::ResumeTimerUseCase)
+    factoryOf(::AdjustTimeUseCase)
+    factoryOf(::CompleteTimerUseCase)
+    factoryOf(::CancelTimerUseCase)
+
+    // Brewing vessel use cases
+    factoryOf(::CreateBrewingVesselUseCase)
+    factoryOf(::DeleteBrewingVesselUseCase)
+    factoryOf(::UpdateBrewingVesselUseCase)
 }

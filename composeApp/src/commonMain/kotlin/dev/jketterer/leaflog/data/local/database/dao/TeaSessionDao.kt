@@ -77,6 +77,26 @@ interface TeaSessionDao {
     @Query(
         """
         SELECT * FROM tea_session
+        WHERE vesselId = :vesselId
+        AND deletedAt IS NULL
+        ORDER BY timestamp DESC
+    """
+    )
+    suspend fun getByVesselId(vesselId: String): List<TeaSessionEntity>
+
+    @Query(
+        """
+        SELECT * FROM tea_session
+        WHERE vesselId = :vesselId
+        AND deletedAt IS NULL
+        ORDER BY timestamp DESC
+    """
+    )
+    fun getByVesselIdFlow(vesselId: String): Flow<List<TeaSessionEntity>>
+
+    @Query(
+        """
+        SELECT * FROM tea_session
         WHERE deletedAt IS NULL
         AND parentSessionId = :parentId
         ORDER BY steepNumber ASC

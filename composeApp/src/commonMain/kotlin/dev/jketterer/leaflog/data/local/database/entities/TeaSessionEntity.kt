@@ -58,6 +58,7 @@ data class TeaSessionEntity(
     val waterType: WaterType,
     val location: String?,
     val rating: Float?,
+    val averageRating: Float?,
 
     val timestamp: Instant,
     val brewingTime: Duration,

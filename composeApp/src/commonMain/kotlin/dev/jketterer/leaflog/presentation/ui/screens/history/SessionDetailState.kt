@@ -16,6 +16,8 @@ data class SessionDetailState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val showDeleteConfirmation: Boolean = false,
+    val showDeleteSteepConfirmation: Boolean = false,
+    val steepToDelete: String? = null,
 ) {
     val allSteeps: List<TeaSession>
         get() = if (parentSession != null) {

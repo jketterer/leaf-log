@@ -23,12 +23,16 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailScreen
+import dev.jketterer.leaflog.presentation.ui.screens.history.EditSessionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
+import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
+import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
+import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -84,6 +88,9 @@ fun AppNavigation() {
                         onNavigateToAddTea = {
                             backStack.add(NavRoute.EditTeaRoute())
                         },
+                        onNavigateToManageVessels = {
+                            backStack.add(NavRoute.VesselListRoute)
+                        },
                     )
                 }
 
@@ -136,6 +143,39 @@ fun AppNavigation() {
                 }
 
                 // =========================================================
+                // Vessel Management Destinations
+                // =========================================================
+
+                entry<NavRoute.VesselListRoute> {
+                    VesselListScreen(
+                        onNavigateBack = { backStack.removeLast() },
+                        onNavigateToVesselDetail = { vesselId ->
+                            backStack.add(NavRoute.VesselDetailRoute(vesselId))
+                        },
+                        onNavigateToAddVessel = {
+                            backStack.add(NavRoute.EditVesselRoute())
+                        },
+                    )
+                }
+
+                entry<NavRoute.VesselDetailRoute> { route ->
+                    VesselDetailScreen(
+                        vesselId = route.vesselId,
+                        onNavigateBack = { backStack.removeLast() },
+                        onNavigateToEditVessel = { vesselId ->
+                            backStack.add(NavRoute.EditVesselRoute(vesselId))
+                        },
+                    )
+                }
+
+                entry<NavRoute.EditVesselRoute> { route ->
+                    EditVesselScreen(
+                        vesselId = route.vesselId,
+                        onNavigateBack = { backStack.removeLast() },
+                    )
+                }
+
+                // =========================================================
                 // Session Logging Destinations
                 // =========================================================
 
@@ -154,9 +194,8 @@ fun AppNavigation() {
                     SessionDetailScreen(
                         sessionId = entry.sessionId,
                         onNavigateBack = { backStack.removeLast() },
-                        onNavigateToEdit = { sessionId ->
-                            // TODO: edit session screen
-                            println("navigate to edit session with id: $sessionId")
+                        onNavigateToEdit = { sessionId, editFullSession ->
+                            backStack.add(NavRoute.EditSessionRoute(sessionId, editFullSession))
                         },
                         onNavigateToTea = { teaId ->
                             backStack.add(NavRoute.TeaDetailsRoute(teaId))
@@ -169,10 +208,13 @@ fun AppNavigation() {
                     )
                 }
 
-//                    is EditSessionRoute -> EmptyState(
-//                        message = "Edit session screen coming soon",
-//                        onActionClick = { backStack.removeLast() },
-//                    )
+                entry<NavRoute.EditSessionRoute> { route ->
+                    EditSessionScreen(
+                        sessionId = route.sessionId,
+                        editFullSession = route.editFullSession,
+                        onNavigateBack = { backStack.removeLast() },
+                    )
+                }
 
                 // =========================================================
                 // Timer Destinations

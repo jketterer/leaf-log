@@ -10,6 +10,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
@@ -31,6 +32,7 @@ class TimerViewModel(
     private val teaRepository: TeaRepository,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
+    private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
     private val startTimerUseCase: StartTimerUseCase,
     private val pauseTimerUseCase: PauseTimerUseCase,
     private val resumeTimerUseCase: ResumeTimerUseCase,
@@ -74,7 +76,6 @@ class TimerViewModel(
             is TimerIntent.CancelNextSteepDialog -> cancelNextSteepDialog()
             is TimerIntent.UpdateNextSteepDuration -> updateNextSteepDuration(intent.duration)
             is TimerIntent.UpdateNextSteepTemperature -> updateNextSteepTemperature(intent.temperature)
-            is TimerIntent.UpdateNextSteepWaterQuantity -> updateNextSteepWaterQuantity(intent.quantity)
             is TimerIntent.ConfirmNextSteep -> confirmNextSteep(intent.session)
             is TimerIntent.SaveAndFinish -> saveAndFinish(intent.session)
 
@@ -311,10 +312,6 @@ class TimerViewModel(
         _state.update { it.copy(nextSteepTemperature = temperature) }
     }
 
-    private fun updateNextSteepWaterQuantity(quantity: Int) {
-        _state.update { it.copy(nextSteepWaterQuantity = quantity) }
-    }
-
     private fun confirmNextSteep(session: TeaSession) = viewModelScope.launch {
         val duration = _state.value.nextSteepDuration ?: session.brewingTime
         val temperature = _state.value.nextSteepTemperature ?: session.temperatureCelsius
@@ -391,13 +388,21 @@ class TimerViewModel(
     }
 
     private fun saveAndFinish(session: TeaSession) = viewModelScope.launch {
+        // Save current session with rating, notes, and photos
         val updatedSession = session.copy(
             status = SessionStatus.COMPLETED,
+            rating = state.value.rating.takeIf { it > 0f },
             notes = state.value.notes,
             photos = state.value.photos,
             updatedAt = Clock.System.now(),
         )
         teaSessionRepository.upsert(updatedSession)
+
+        // Update parent session's average rating if this is a child session
+        session.parentSessionId?.let { parentId ->
+            updateAverageRatingUseCase(parentId)
+        }
+
         _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
     }
 

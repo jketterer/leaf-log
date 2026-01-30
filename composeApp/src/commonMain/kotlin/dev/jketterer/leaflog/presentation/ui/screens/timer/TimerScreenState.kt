@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * UI State for the Timer screen.
@@ -32,7 +33,11 @@ data class TimerScreenState(
      */
     val formattedTime: String
         get() {
-            val remaining = timerState.remainingDuration
+            val remaining = if (timerState.isRunning) {
+                timerState.remainingDuration.plus(1.seconds)
+            } else {
+                timerState.totalDuration
+            }
             val minutes = remaining.inWholeMinutes
             val seconds = remaining.inWholeSeconds % 60
             return "${minutes}:${seconds.toString().padStart(2, '0')}"

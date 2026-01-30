@@ -36,11 +36,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Trash2
+import compose.icons.fontawesomeicons.Regular
+import compose.icons.fontawesomeicons.Solid
+import compose.icons.fontawesomeicons.regular.Star
+import compose.icons.fontawesomeicons.solid.Star
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -63,7 +68,7 @@ import kotlin.time.toDuration
 fun SessionDetailScreen(
     sessionId: String,
     onNavigateBack: () -> Unit,
-    onNavigateToEdit: (String) -> Unit,
+    onNavigateToEdit: (String, Boolean) -> Unit,
     onNavigateToTea: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     viewModel: SessionDetailViewModel = koinViewModel()
@@ -78,7 +83,7 @@ fun SessionDetailScreen(
         viewModel.navEvents.collect { event ->
             when (event) {
                 is SessionDetailNavEvent.NavigateToEditSession -> {
-                    onNavigateToEdit(sessionId)
+                    onNavigateToEdit(event.sessionId, event.editFullSession)
                 }
 
                 is SessionDetailNavEvent.NavigateToTeaDetails -> {
@@ -174,36 +179,36 @@ private fun SessionDetailContent(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
 
-                                    if (state.parentSession.rating != null) {
-                                        Row {
+                                    // Show average rating for multi-steep sessions, otherwise show rating
+                                    val displayRating = state.parentSession.averageRating
+                                        ?: state.parentSession.rating
+
+                                    if (displayRating != null) {
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
                                             repeat(5) { index ->
-                                                Text(
-                                                    text = if (index < state.parentSession.rating.toInt()) "⭐" else "☆",
-                                                    style = MaterialTheme.typography.titleMedium
+                                                Icon(
+                                                    imageVector = if (index < displayRating.toInt()) {
+                                                        FontAwesomeIcons.Solid.Star
+                                                    } else {
+                                                        FontAwesomeIcons.Regular.Star
+                                                    },
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(18.dp),
+                                                    tint = MaterialTheme.colorScheme.primary
                                                 )
                                             }
-                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
                                             Text(
-                                                text = "(${state.parentSession.rating})",
+                                                text = "(${displayRating})",
                                                 style = MaterialTheme.typography.bodyMedium
                                             )
                                         }
                                     }
                                 }
                             }
-                        }
-
-                        // All Steeps
-                        items(
-                            items = state.allSteeps,
-                            key = { it.id }
-                        ) { steep ->
-                            SteepCard(
-                                steep = steep,
-                                steepNumber = steep.steepNumber,
-                                onEditClick = { onIntent(SessionDetailIntent.EditSteepClicked(steep.id)) },
-                                onDeleteClick = { onIntent(SessionDetailIntent.DeleteSteep(steep.id)) }
-                            )
                         }
 
                         // Session Details
@@ -222,6 +227,16 @@ private fun SessionDetailContent(
 
                                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+                                    if (state.parentSession.teaQuantityGrams != null) {
+                                        BrewingParameterDisplay(
+                                            label = "Tea Amount",
+                                            value = "${state.parentSession.teaQuantityGrams}g"
+                                        )
+                                    }
+                                    BrewingParameterDisplay(
+                                        label = "Water Amount",
+                                        value = "${state.parentSession.waterQuantityMl}ml"
+                                    )
                                     BrewingParameterDisplay(
                                         label = "Vessel",
                                         value = state.vessel?.name ?: "Unknown"
@@ -238,6 +253,25 @@ private fun SessionDetailContent(
                                     }
                                 }
                             }
+                        }
+
+                        // All Steeps
+                        items(
+                            items = state.allSteeps,
+                            key = { it.id }
+                        ) { steep ->
+                            SteepCard(
+                                steep = steep,
+                                steepNumber = steep.steepNumber,
+                                onEditClick = { onIntent(SessionDetailIntent.EditSteepClicked(steep.id)) },
+                                onDeleteClick = {
+                                    onIntent(
+                                        SessionDetailIntent.DeleteSteepClicked(
+                                            steep.id
+                                        )
+                                    )
+                                }
+                            )
                         }
                     }
                 }
@@ -272,7 +306,7 @@ private fun SessionDetailContent(
         }
     }
 
-    // Delete confirmation dialog
+    // Delete session confirmation dialog
     if (state.showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { onIntent(SessionDetailIntent.CancelDelete) },
@@ -290,6 +324,30 @@ private fun SessionDetailContent(
             },
             dismissButton = {
                 TextButton(onClick = { onIntent(SessionDetailIntent.CancelDelete) }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // Delete steep confirmation dialog
+    if (state.showDeleteSteepConfirmation) {
+        AlertDialog(
+            onDismissRequest = { onIntent(SessionDetailIntent.CancelDeleteSteep) },
+            title = { Text("Delete Steep?") },
+            text = { Text("This will delete this steep. Remaining steeps will be renumbered. This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { onIntent(SessionDetailIntent.ConfirmDeleteSteep) },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onIntent(SessionDetailIntent.CancelDeleteSteep) }) {
                     Text("Cancel")
                 }
             }
@@ -349,16 +407,43 @@ private fun SteepCard(
                 label = "Temperature",
                 value = "${steep.temperatureCelsius}°C"
             )
-            if (steep.teaQuantityGrams != null) {
-                BrewingParameterDisplay(
-                    label = "Tea Amount",
-                    value = "${steep.teaQuantityGrams}g"
-                )
+
+            if (steep.rating != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Rating",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(5) { index ->
+                            Icon(
+                                imageVector = if (index < steep.rating.toInt()) {
+                                    FontAwesomeIcons.Solid.Star
+                                } else {
+                                    FontAwesomeIcons.Regular.Star
+                                },
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "(${steep.rating})",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                        )
+                    }
+                }
             }
-            BrewingParameterDisplay(
-                label = "Water Amount",
-                value = "${steep.waterQuantityMl}ml"
-            )
 
             if (steep.notes != null) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

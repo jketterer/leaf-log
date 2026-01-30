@@ -16,6 +16,7 @@ data class TeaSession(
     val waterType: WaterType,
     val location: String? = null,
     val rating: Float? = null,
+    val averageRating: Float? = null, // Average rating across all steeps (parent sessions only)
 
     val timestamp: Instant,
     val brewingTime: Duration,

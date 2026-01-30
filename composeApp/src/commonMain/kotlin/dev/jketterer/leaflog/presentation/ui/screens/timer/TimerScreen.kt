@@ -223,10 +223,8 @@ private fun TimerContent(
             currentSession = currentSession,
             duration = state.nextSteepDuration,
             temperature = state.nextSteepTemperature ?: currentSession.temperatureCelsius,
-            waterQuantity = state.nextSteepWaterQuantity ?: currentSession.waterQuantityMl,
             onDurationChange = { onIntent(TimerIntent.UpdateNextSteepDuration(it)) },
             onTemperatureChange = { onIntent(TimerIntent.UpdateNextSteepTemperature(it)) },
-            onWaterQuantityChange = { onIntent(TimerIntent.UpdateNextSteepWaterQuantity(it)) },
             onConfirm = { onIntent(TimerIntent.ConfirmNextSteep(currentSession)) },
             onDismiss = { onIntent(TimerIntent.CancelNextSteepDialog) },
         )
@@ -497,16 +495,14 @@ private fun NextSteepParameterDialog(
     currentSession: TeaSession,
     duration: Duration?,
     temperature: Int,
-    waterQuantity: Int,
     onDurationChange: (Duration?) -> Unit,
     onTemperatureChange: (Int) -> Unit,
-    onWaterQuantityChange: (Int) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     // Check if all fields are valid
     val isValid =
-        duration != null && duration > Duration.ZERO && temperature > 0 && waterQuantity > 0
+        duration != null && duration > Duration.ZERO && temperature > 0
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -557,25 +553,6 @@ private fun NextSteepParameterDialog(
                             value.toIntOrNull()?.let { onTemperatureChange(it) }
                         },
                         suffix = { Text("°C") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                // Water Quantity
-                Column {
-                    Text(
-                        text = "Water Quantity",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = waterQuantity.toString(),
-                        onValueChange = { value ->
-                            value.toIntOrNull()?.let { onWaterQuantityChange(it) }
-                        },
-                        suffix = { Text("ml") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )

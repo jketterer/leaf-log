@@ -12,6 +12,7 @@ import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
@@ -39,6 +40,7 @@ val useCaseModule = module {
     // Session use cases
     factoryOf(::CreateSessionUseCase)
     factoryOf(::UpdateSessionUseCase)
+    factoryOf(::UpdateAverageRatingUseCase)
     factoryOf(::DeleteSessionUseCase)
     factoryOf(::CompleteSessionUseCase)
     factoryOf(::AddSteepUseCase)

@@ -27,7 +27,6 @@ sealed interface TimerIntent {
     data object CancelNextSteepDialog : TimerIntent
     data class UpdateNextSteepDuration(val duration: Duration?) : TimerIntent
     data class UpdateNextSteepTemperature(val temperature: Int) : TimerIntent
-    data class UpdateNextSteepWaterQuantity(val quantity: Int) : TimerIntent
     data class ConfirmNextSteep(val session: TeaSession) : TimerIntent
     data class SaveAndFinish(val session: TeaSession) : TimerIntent
     data object RestartTimer : TimerIntent

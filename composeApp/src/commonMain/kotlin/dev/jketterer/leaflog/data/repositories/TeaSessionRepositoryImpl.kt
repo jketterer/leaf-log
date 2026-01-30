@@ -53,6 +53,16 @@ class TeaSessionRepositoryImpl(
         }
     }
 
+    override suspend fun getByVesselId(vesselId: String): List<TeaSession> {
+        return teaSessionDao.getByVesselId(vesselId).map { it.toTeaSession() }
+    }
+
+    override fun getByVesselIdFlow(vesselId: String): Flow<List<TeaSession>> {
+        return teaSessionDao.getByVesselIdFlow(vesselId).map { entities ->
+            entities.map { it.toTeaSession() }
+        }
+    }
+
     override suspend fun getChildSteeps(parentId: String): List<TeaSession> {
         return teaSessionDao.getChildSteeps(parentId).map { it.toTeaSession() }
     }

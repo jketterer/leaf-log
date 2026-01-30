@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ class SessionDetailViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
+    private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
     private val brewAgainUseCase: BrewAgainUseCase
 ) : ViewModel() {
 
@@ -36,15 +38,34 @@ class SessionDetailViewModel(
     fun onIntent(intent: SessionDetailIntent) {
         when (intent) {
             is SessionDetailIntent.LoadSession -> loadSession(intent.sessionId)
-            is SessionDetailIntent.EditSteepClicked -> {}
+            is SessionDetailIntent.EditSteepClicked -> {
+                // Edit only steep parameters (editFullSession = false)
+                _navEvents.trySend(
+                    SessionDetailNavEvent.NavigateToEditSession(
+                        sessionId = intent.steepId,
+                        editFullSession = false
+                    )
+                )
+            }
             is SessionDetailIntent.DeleteSessionClicked -> showDeleteConfirmation()
             is SessionDetailIntent.ConfirmDelete -> confirmDelete()
             is SessionDetailIntent.CancelDelete -> cancelDelete()
-            is SessionDetailIntent.DeleteSteep -> deleteSteep(intent.steepId)
+            is SessionDetailIntent.DeleteSteepClicked -> showDeleteSteepConfirmation(intent.steepId)
+            is SessionDetailIntent.ConfirmDeleteSteep -> confirmDeleteSteep()
+            is SessionDetailIntent.CancelDeleteSteep -> cancelDeleteSteep()
             is SessionDetailIntent.BrewAgainClicked -> brewAgain()
 
             // navigation intents
-            is SessionDetailIntent.EditSessionClicked -> _navEvents.trySend(SessionDetailNavEvent.NavigateToEditSession)
+            is SessionDetailIntent.EditSessionClicked -> {
+                val sessionId = _state.value.parentSession?.id ?: return
+                // Edit full session details (editFullSession = true)
+                _navEvents.trySend(
+                    SessionDetailNavEvent.NavigateToEditSession(
+                        sessionId = sessionId,
+                        editFullSession = true
+                    )
+                )
+            }
             is SessionDetailIntent.ViewTeaClicked -> _navEvents.trySend(
                 SessionDetailNavEvent.NavigateToTeaDetails(
                     intent.teaId
@@ -169,11 +190,73 @@ class SessionDetailViewModel(
         }
     }
 
-    private fun deleteSteep(steepId: String) {
+    private fun showDeleteSteepConfirmation(steepId: String) {
+        _state.update {
+            it.copy(
+                showDeleteSteepConfirmation = true,
+                steepToDelete = steepId
+            )
+        }
+    }
+
+    private fun cancelDeleteSteep() {
+        _state.update {
+            it.copy(
+                showDeleteSteepConfirmation = false,
+                steepToDelete = null
+            )
+        }
+    }
+
+    private fun confirmDeleteSteep() {
+        val steepId = _state.value.steepToDelete ?: return
+        val parentSession = _state.value.parentSession ?: return
+
         viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    showDeleteSteepConfirmation = false,
+                    isLoading = true
+                )
+            }
+
+            // Delete the steep
             deleteSessionUseCase(steepId)
+                .onSuccess {
+                    // Get all remaining child steeps
+                    val remainingSteeps = teaSessionRepository.getChildSteeps(parentSession.id)
+                        .sortedBy { it.steepNumber }
+
+                    // Renumber the remaining steeps sequentially
+                    remainingSteeps.forEachIndexed { index, steep ->
+                        val newSteepNumber = index + 2 // +2 because parent is steep 1
+                        if (steep.steepNumber != newSteepNumber) {
+                            val updatedSteep = steep.copy(
+                                steepNumber = newSteepNumber,
+                                updatedAt = kotlin.time.Clock.System.now()
+                            )
+                            teaSessionRepository.upsert(updatedSteep)
+                        }
+                    }
+
+                    // Update parent session's average rating
+                    updateAverageRatingUseCase(parentSession.id)
+
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            steepToDelete = null
+                        )
+                    }
+                }
                 .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to delete steep: ${e.message}") }
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            steepToDelete = null,
+                            error = "Failed to delete steep: ${e.message}"
+                        )
+                    }
                 }
         }
     }
@@ -195,7 +278,10 @@ class SessionDetailViewModel(
 
 sealed interface SessionDetailNavEvent {
     data object NavigateBack : SessionDetailNavEvent
-    data object NavigateToEditSession : SessionDetailNavEvent
+    data class NavigateToEditSession(
+        val sessionId: String,
+        val editFullSession: Boolean = false
+    ) : SessionDetailNavEvent
     data class NavigateToTeaDetails(val teaId: String) : SessionDetailNavEvent
     data class NavigateToTimer(val sessionId: String) : SessionDetailNavEvent
 }

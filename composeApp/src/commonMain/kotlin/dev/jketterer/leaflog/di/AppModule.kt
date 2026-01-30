@@ -4,11 +4,15 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.history.EditSessionViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,9 +35,14 @@ val appModule = module {
     viewModelOf(::TeaDetailViewModel)
     viewModelOf(::EditTeaViewModel)
 
+    viewModelOf(::VesselListViewModel)
+    viewModelOf(::VesselDetailViewModel)
+    viewModelOf(::EditVesselViewModel)
+
     viewModelOf(::LogTeaViewModel)
     viewModelOf(::HistoryViewModel)
     viewModelOf(::SessionDetailViewModel)
+    viewModelOf(::EditSessionViewModel)
 
     viewModelOf(::HomeViewModel)
 

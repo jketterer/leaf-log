@@ -29,7 +29,11 @@ sealed interface NavRoute : NavKey {
     @Serializable
     data class SessionDetailsRoute(val sessionId: String) : NavRoute
 
-    data class EditSessionRoute(val sessionId: String) : NavRoute
+    @Serializable
+    data class EditSessionRoute(
+        val sessionId: String,
+        val editFullSession: Boolean = false
+    ) : NavRoute
 
     @Serializable
     data class TimerRoute(val sessionId: String) : NavRoute
@@ -39,4 +43,13 @@ sealed interface NavRoute : NavKey {
 
     @Serializable
     data object SettingsRoute : NavRoute
+
+    @Serializable
+    data object VesselListRoute : NavRoute
+
+    @Serializable
+    data class VesselDetailRoute(val vesselId: String) : NavRoute
+
+    @Serializable
+    data class EditVesselRoute(val vesselId: String? = null) : NavRoute
 }

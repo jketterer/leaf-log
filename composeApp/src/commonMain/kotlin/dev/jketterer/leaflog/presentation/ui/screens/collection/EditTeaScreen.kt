@@ -13,9 +13,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -131,7 +133,10 @@ private fun EditTeaContent(
                 item(key = "tea_type") {
                     var showTypeMenu by remember { mutableStateOf(false) }
 
-                    Box {
+                    ExposedDropdownMenuBox(
+                        expanded = showTypeMenu,
+                        onExpandedChange = { showTypeMenu = it }
+                    ) {
                         OutlinedTextField(
                             value = state.availableTeaTypes.find { it.id == state.selectedTeaTypeId }?.name
                                 ?: "",
@@ -142,16 +147,14 @@ private fun EditTeaContent(
                             supportingText = state.teaTypeError?.let { { Text(it) } },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickableWithoutRipple { showTypeMenu = true },
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
                             trailingIcon = {
-                                Text(
-                                    text = "▼",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
+                                ExposedDropdownMenuDefaults.TrailingIcon(showTypeMenu)
                             },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                         )
 
-                        DropdownMenu(
+                        ExposedDropdownMenu(
                             expanded = showTypeMenu,
                             onDismissRequest = { showTypeMenu = false },
                         ) {

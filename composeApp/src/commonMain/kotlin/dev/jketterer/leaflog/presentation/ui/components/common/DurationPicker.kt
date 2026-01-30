@@ -31,6 +31,10 @@ fun DurationPicker(
     isError: Boolean = false,
     errorMessage: String? = null,
 ) {
+    // Track whether we've synced from the initial duration prop
+    // This prevents re-syncing after user edits while allowing initial async load
+    var initialDurationSynced by remember { mutableStateOf(duration != null) }
+
     // Initialize field values from duration only on first composition
     // After that, fields maintain their own independent state
     var minutesFieldValue by remember {
@@ -38,6 +42,15 @@ fun DurationPicker(
     }
     var secondsFieldValue by remember {
         mutableStateOf(TextFieldValue((duration?.inWholeSeconds?.rem(60))?.toString() ?: ""))
+    }
+
+    // Sync from prop when duration becomes available for the first time (async load case)
+    LaunchedEffect(duration) {
+        if (duration != null && !initialDurationSynced) {
+            minutesFieldValue = TextFieldValue(duration.inWholeMinutes.toString())
+            secondsFieldValue = TextFieldValue((duration.inWholeSeconds % 60).toString())
+            initialDurationSynced = true
+        }
     }
 
     val minutesInteractionSource = remember { MutableInteractionSource() }

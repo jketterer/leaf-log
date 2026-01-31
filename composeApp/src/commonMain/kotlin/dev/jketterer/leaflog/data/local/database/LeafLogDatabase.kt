@@ -19,7 +19,7 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
         TeaTypeEntity::class,
         BrewingVesselEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

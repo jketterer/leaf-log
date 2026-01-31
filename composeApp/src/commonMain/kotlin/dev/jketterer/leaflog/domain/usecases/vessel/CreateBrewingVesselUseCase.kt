@@ -17,10 +17,15 @@ class CreateBrewingVesselUseCase(
     suspend operator fun invoke(
         name: String,
         iconName: String? = null,
+        capacityMl: Int? = null,
     ): Result<BrewingVessel> {
         // Validation
         if (name.isBlank()) {
             return Result.failure(IllegalArgumentException("Vessel name cannot be empty"))
+        }
+
+        if (capacityMl != null && capacityMl <= 0) {
+            return Result.failure(IllegalArgumentException("Capacity must be greater than 0"))
         }
 
         val now = Clock.System.now()
@@ -33,6 +38,7 @@ class CreateBrewingVesselUseCase(
             id = Uuid.random().toString(),
             name = name.trim(),
             iconName = iconName,
+            capacityMl = capacityMl,
             isSystemDefault = false,
             displayOrder = maxOrder + 1,
             userId = null,

@@ -14,6 +14,7 @@ class UpdateBrewingVesselUseCase(
         existingVessel: BrewingVessel,
         name: String? = null,
         iconName: String? = null,
+        capacityMl: Int? = null,
     ): Result<BrewingVessel> {
         val newName = name ?: existingVessel.name
 
@@ -21,9 +22,20 @@ class UpdateBrewingVesselUseCase(
             return Result.failure(IllegalArgumentException("Vessel name cannot be empty"))
         }
 
+        // Use explicit null check to distinguish between "not provided" and "set to null"
+        val newCapacity = when {
+            capacityMl != null && capacityMl == -1 -> null // -1 means "clear capacity"
+            capacityMl != null && capacityMl <= 0 -> return Result.failure(
+                IllegalArgumentException("Capacity must be greater than 0")
+            )
+            capacityMl != null -> capacityMl
+            else -> existingVessel.capacityMl
+        }
+
         val updatedVessel = existingVessel.copy(
             name = newName.trim(),
             iconName = iconName ?: existingVessel.iconName,
+            capacityMl = newCapacity,
             updatedAt = Clock.System.now(),
         )
 

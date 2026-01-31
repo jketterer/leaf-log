@@ -6,6 +6,7 @@ data class BrewingVessel(
     val id: String,
     val name: String,
     val iconName: String?,
+    val capacityMl: Int? = null,
     val isSystemDefault: Boolean,
     val displayOrder: Int,
 

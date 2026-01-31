@@ -45,6 +45,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
@@ -206,6 +207,27 @@ private fun EditTeaContent(
                     )
                 }
 
+                // Brewing Parameters Header
+                item(key = "brewing_params_header") {
+                    Text(
+                        text = "Default Brewing Parameters",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+
+                // Default Brewing Time
+                item(key = "brewing_time") {
+                    DurationPicker(
+                        duration = state.defaultBrewingTime,
+                        onDurationChange = { duration ->
+                            onIntent(EditTeaIntent.BrewingTimeChanged(duration))
+                        },
+                        label = "Default Brewing Time",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
                 // Default Temperature
                 item(key = "temperature") {
                     OutlinedTextField(
@@ -213,9 +235,26 @@ private fun EditTeaContent(
                         onValueChange = { onIntent(EditTeaIntent.TemperatureChanged(it)) },
                         label = { Text("Default Temperature (°C)") },
                         isError = state.temperatureError != null,
-                        supportingText = state.temperatureError?.let { { Text(it) } },
+                        supportingText = state.temperatureError?.let { { Text(it) } }
+                            ?: { Text("Temperature for brewing this tea") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        suffix = { Text("°C") }
+                    )
+                }
+
+                // Default Tea Quantity
+                item(key = "quantity") {
+                    OutlinedTextField(
+                        value = state.defaultQuantity,
+                        onValueChange = { onIntent(EditTeaIntent.QuantityChanged(it)) },
+                        label = { Text("Default Tea Quantity (g)") },
+                        isError = state.quantityError != null,
+                        supportingText = state.quantityError?.let { { Text(it) } }
+                            ?: { Text("Grams of tea per session") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        suffix = { Text("g") }
                     )
                 }
 

@@ -179,32 +179,6 @@ private fun LogTeaContent(
                 )
             }
 
-            // Water Quantity
-            item(key = "water_quantity") {
-                OutlinedTextField(
-                    value = state.waterQuantityMl,
-                    onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
-                    label = { Text("Water Quantity (ml) *") },
-                    isError = state.waterQuantityError != null,
-                    supportingText = state.waterQuantityError?.let { { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-            }
-
-            // Temperature
-            item(key = "temperature") {
-                OutlinedTextField(
-                    value = state.temperatureCelsius,
-                    onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
-                    label = { Text("Temperature (°C) *") },
-                    isError = state.temperatureError != null,
-                    supportingText = state.temperatureError?.let { { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    suffix = { Text("°C") },
-                )
-            }
 
             // Brewing Time
             item(key = "brewing_time") {
@@ -229,6 +203,33 @@ private fun LogTeaContent(
                         onIntent(LogTeaIntent.VesselSelected(vessel))
                     },
                     modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            // Temperature
+            item(key = "temperature") {
+                OutlinedTextField(
+                    value = state.temperatureCelsius,
+                    onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
+                    label = { Text("Temperature (°C) *") },
+                    isError = state.temperatureError != null,
+                    supportingText = state.temperatureError?.let { { Text(it) } },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    suffix = { Text("°C") },
+                )
+            }
+
+            // Water Quantity
+            item(key = "water_quantity") {
+                OutlinedTextField(
+                    value = state.waterQuantityMl,
+                    onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
+                    label = { Text("Water Quantity (ml) *") },
+                    isError = state.waterQuantityError != null,
+                    supportingText = state.waterQuantityError?.let { { Text(it) } },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
                 )
             }
 

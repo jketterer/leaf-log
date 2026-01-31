@@ -76,6 +76,7 @@ fun VesselSelector(
                         text = {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 if (vessel.iconName != null) {
                                     Text(
@@ -83,7 +84,16 @@ fun VesselSelector(
                                         style = MaterialTheme.typography.titleMedium,
                                     )
                                 }
-                                Text(vessel.name)
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(vessel.name)
+                                    if (vessel.capacityMl != null) {
+                                        Text(
+                                            text = "${vessel.capacityMl} ml",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                             }
                         },
                         onClick = {

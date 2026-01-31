@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import kotlinx.coroutines.channels.Channel
@@ -25,6 +26,7 @@ class LogTeaViewModel(
     private val teaRepository: TeaRepository,
     private val teaSessionRepository: TeaSessionRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val teaTypeRepository: TeaTypeRepository,
     private val searchTeasUseCase: SearchTeasUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
 ) : ViewModel() {
@@ -178,16 +180,22 @@ class LogTeaViewModel(
                 teaSessionRepository.getByTeaId(tea.id, limit = 1).firstOrNull()
             }
 
+            // Get tea type for fallback defaults
+            val teaType = teaTypeRepository.getById(tea.teaTypeId)
+
             _state.update { currentState ->
                 currentState.copy(
-                    // Use last session values if available, otherwise tea defaults
+                    // Use last session values if available, otherwise tea defaults, then tea type defaults
                     waterQuantityMl = lastSession?.waterQuantityMl?.toString()
                         ?: tea.defaultQuantity?.toString()
                         ?: "",
                     temperatureCelsius = lastSession?.temperatureCelsius?.toString()
                         ?: tea.defaultTemperatureCelsius?.toString()
+                        ?: teaType?.defaultTemperatureCelsius?.toString()
                         ?: "",
-                    brewingTime = lastSession?.brewingTime ?: tea.defaultBrewingTime,
+                    brewingTime = lastSession?.brewingTime
+                        ?: tea.defaultBrewingTime
+                        ?: teaType?.defaultBrewingTime,
                     teaQuantityGrams = lastSession?.teaQuantityGrams?.toString() ?: "",
                 )
             }
@@ -261,7 +269,22 @@ class LogTeaViewModel(
     }
 
     private fun selectVessel(vessel: BrewingVessel) {
-        _state.update { it.copy(selectedVessel = vessel, hasUnsavedChanges = true) }
+        _state.update { currentState ->
+            // Auto-populate water quantity if vessel has capacity and water quantity is empty
+            val shouldAutoPopulate = vessel.capacityMl != null && currentState.waterQuantityMl.isBlank()
+            val newWaterQuantity = if (shouldAutoPopulate) {
+                vessel.capacityMl.toString()
+            } else {
+                currentState.waterQuantityMl
+            }
+
+            currentState.copy(
+                selectedVessel = vessel,
+                waterQuantityMl = newWaterQuantity,
+                waterQuantityError = if (shouldAutoPopulate) null else currentState.waterQuantityError,
+                hasUnsavedChanges = true
+            )
+        }
     }
 
     private fun selectWaterType(waterType: WaterType) {

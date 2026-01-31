@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -30,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Search
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
@@ -42,6 +45,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun TeaCollectionScreen(
     onNavigateToTeaDetail: (String) -> Unit,
     onNavigateToAddTea: () -> Unit,
+    onNavigateToManageVessels: () -> Unit,
     viewModel: TeaCollectionViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -50,7 +54,8 @@ fun TeaCollectionScreen(
         state = state,
         onIntent = viewModel::onIntent,
         onNavigateToTeaDetail = onNavigateToTeaDetail,
-        onNavigateToAddTea = onNavigateToAddTea
+        onNavigateToAddTea = onNavigateToAddTea,
+        onNavigateToManageVessels = onNavigateToManageVessels
     )
 }
 
@@ -60,9 +65,11 @@ private fun TeaCollectionContent(
     state: TeaCollectionState,
     onIntent: (TeaCollectionIntent) -> Unit,
     onNavigateToTeaDetail: (String) -> Unit,
-    onNavigateToAddTea: () -> Unit
+    onNavigateToAddTea: () -> Unit,
+    onNavigateToManageVessels: () -> Unit
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -93,6 +100,24 @@ private fun TeaCollectionContent(
                                 Icon(
                                     imageVector = FeatherIcons.Search,
                                     contentDescription = "Search teas"
+                                )
+                            }
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(
+                                    imageVector = FeatherIcons.MoreVertical,
+                                    contentDescription = "More options"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Manage Vessels") },
+                                    onClick = {
+                                        showMenu = false
+                                        onNavigateToManageVessels()
+                                    }
                                 )
                             }
                         }
@@ -209,6 +234,7 @@ private fun TeaCollectionScreenPreview() {
             onIntent = { _ -> },
             onNavigateToTeaDetail = { _ -> },
             onNavigateToAddTea = {},
+            onNavigateToManageVessels = {},
         )
     }
 }

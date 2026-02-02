@@ -17,6 +17,7 @@ data class TeaSession(
     val location: String? = null,
     val rating: Float? = null,
     val averageRating: Float? = null, // Average rating across all steeps (parent sessions only)
+    val usedConfigurationId: String? = null, // Configuration that was used for this session
 
     val timestamp: Instant,
     val brewingTime: Duration,

@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
@@ -26,7 +27,8 @@ class SessionDetailViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
-    private val brewAgainUseCase: BrewAgainUseCase
+    private val brewAgainUseCase: BrewAgainUseCase,
+    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionDetailState())
@@ -34,6 +36,18 @@ class SessionDetailViewModel(
 
     private val _navEvents = Channel<SessionDetailNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    init {
+        loadPreferences()
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            getPreferencesUseCase().collect { preferences ->
+                _state.update { it.copy(userPreferences = preferences) }
+            }
+        }
+    }
 
     fun onIntent(intent: SessionDetailIntent) {
         when (intent) {

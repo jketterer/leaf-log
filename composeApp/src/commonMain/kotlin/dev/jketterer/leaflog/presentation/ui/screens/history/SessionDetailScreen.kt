@@ -52,6 +52,11 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.TemperatureFormatter
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
@@ -235,7 +240,10 @@ private fun SessionDetailContent(
                                     }
                                     BrewingParameterDisplay(
                                         label = "Water Amount",
-                                        value = "${state.parentSession.waterQuantityMl}ml"
+                                        value = VolumeFormatter.format(
+                                            state.parentSession.waterQuantityMl,
+                                            state.userPreferences.volumeUnit
+                                        )
                                     )
                                     BrewingParameterDisplay(
                                         label = "Vessel",
@@ -263,6 +271,7 @@ private fun SessionDetailContent(
                             SteepCard(
                                 steep = steep,
                                 steepNumber = steep.steepNumber,
+                                temperatureUnit = state.userPreferences.temperatureUnit,
                                 onEditClick = { onIntent(SessionDetailIntent.EditSteepClicked(steep.id)) },
                                 onDeleteClick = {
                                     onIntent(
@@ -359,6 +368,7 @@ private fun SessionDetailContent(
 private fun SteepCard(
     steep: TeaSession,
     steepNumber: Int,
+    temperatureUnit: TemperatureUnit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -405,7 +415,10 @@ private fun SteepCard(
             )
             BrewingParameterDisplay(
                 label = "Temperature",
-                value = "${steep.temperatureCelsius}°C"
+                value = TemperatureFormatter.format(
+                    steep.temperatureCelsius,
+                    temperatureUnit,
+                )
             )
 
             if (steep.rating != null) {
@@ -474,6 +487,10 @@ private fun SessionDetailScreenPreview() {
     LeafLogTheme {
         SessionDetailContent(
             state = SessionDetailState(
+                userPreferences = UserPreferences(
+                    temperatureUnit = TemperatureUnit.FAHRENHEIT,
+                    volumeUnit = VolumeUnit.FLUID_OUNCES,
+                ),
                 parentSession = TeaSession(
                     id = "0",
                     teaId = "1",

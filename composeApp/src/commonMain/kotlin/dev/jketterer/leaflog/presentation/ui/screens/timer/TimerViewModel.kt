@@ -6,11 +6,15 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
@@ -30,6 +34,7 @@ import kotlin.time.Duration
 class TimerViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
+    private val brewingVesselRepository: BrewingVesselRepository,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
@@ -39,6 +44,9 @@ class TimerViewModel(
     private val adjustTimeUseCase: AdjustTimeUseCase,
     private val completeTimerUseCase: CompleteTimerUseCase,
     private val cancelTimerUseCase: CancelTimerUseCase,
+    private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
+    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimerScreenState())
@@ -48,7 +56,16 @@ class TimerViewModel(
     val navigationEvents = _navigationEvents.receiveAsFlow()
 
     init {
+        loadPreferences()
         collectTimerState()
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            getPreferencesUseCase().collect { preferences ->
+                _state.update { it.copy(userPreferences = preferences) }
+            }
+        }
     }
 
     fun onIntent(intent: TimerIntent) {
@@ -81,6 +98,9 @@ class TimerViewModel(
 
             is TimerIntent.RestartTimer -> restartTimer()
             is TimerIntent.BackClicked -> _navigationEvents.trySend(TimerNavEvent.NavigateBack)
+
+            is TimerIntent.SaveConfigurationClicked -> saveConfiguration(intent.customLabel)
+            is TimerIntent.SkipSaveConfiguration -> skipSaveConfiguration()
         }
     }
 
@@ -115,10 +135,12 @@ class TimerViewModel(
                 }
 
                 val tea = teaRepository.getById(session.teaId)
+                val vessel = brewingVesselRepository.getById(session.vesselId)
                 _state.update {
                     it.copy(
                         session = session,
                         tea = tea,
+                        vessel = vessel,
                         timerState = TimerState(),
                         isLoading = false,
                     )
@@ -369,6 +391,7 @@ class TimerViewModel(
                     it.copy(
                         session = nextSession,
                         tea = tea,
+                        // Preserve vessel as it doesn't change between steeps
                         timerState = newTimerState,
                         rating = 0f,
                         notes = null,
@@ -403,7 +426,44 @@ class TimerViewModel(
             updateAverageRatingUseCase(parentId)
         }
 
-        _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
+        // Check if we should show the save configuration dialog
+        // Show for first steep (steepNumber == 1) with rating >= 5 stars
+        if (updatedSession.steepNumber == 1 &&
+            updatedSession.rating != null &&
+            updatedSession.rating >= 5f) {
+            _state.update { it.copy(showSaveConfigurationDialog = true, savedSession = updatedSession) }
+        } else {
+            _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
+        }
+    }
+
+    private fun saveConfiguration(customLabel: String?) {
+        val session = _state.value.savedSession ?: return
+
+        viewModelScope.launch {
+            saveBrewingConfigurationUseCase(session, customLabel)
+                .onSuccess {
+                    _state.update { it.copy(showSaveConfigurationDialog = false) }
+                    _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(
+                            error = "Failed to save configuration: ${e.message}",
+                            showSaveConfigurationDialog = false
+                        )
+                    }
+                    _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
+                }
+        }
+    }
+
+    private fun skipSaveConfiguration() {
+        val session = _state.value.savedSession
+        _state.update { it.copy(showSaveConfigurationDialog = false) }
+        if (session != null) {
+            _navigationEvents.trySend(TimerNavEvent.NavigateToComplete(session.id))
+        }
     }
 
     private fun restartTimer() {

@@ -34,6 +34,7 @@ data class HistoryState(
     val error: String? = null,
     val isEmpty: Boolean = false,
     val showFilterSheet: Boolean = false,
+    val userPreferences: dev.jketterer.leaflog.domain.models.UserPreferences = dev.jketterer.leaflog.domain.models.UserPreferences(),
 )
 
 /**

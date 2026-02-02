@@ -2,11 +2,16 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
@@ -26,8 +31,13 @@ class TeaDetailViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val teaSessionRepository: TeaSessionRepository,
+    private val brewingConfigurationRepository: BrewingConfigurationRepository,
+    private val brewingVesselRepository: BrewingVesselRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val deleteTeaUseCase: DeleteTeaUseCase,
+    private val deleteBrewingConfigurationUseCase: DeleteBrewingConfigurationUseCase,
+    private val updateBrewingConfigurationUseCase: UpdateBrewingConfigurationUseCase,
+    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaDetailState())
@@ -35,6 +45,18 @@ class TeaDetailViewModel(
 
     private val _navEvents = Channel<TeaDetailNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    init {
+        loadPreferences()
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            getPreferencesUseCase().collect { preferences ->
+                _state.update { it.copy(userPreferences = preferences) }
+            }
+        }
+    }
 
     fun onIntent(intent: TeaDetailIntent) {
         when (intent) {
@@ -48,6 +70,11 @@ class TeaDetailViewModel(
             is TeaDetailIntent.SessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
             is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea)
             is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
+
+            is TeaDetailIntent.EditConfigurationClicked -> showEditConfigDialog(intent.configId)
+            is TeaDetailIntent.DeleteConfigurationClicked -> deleteConfiguration(intent.configId)
+            is TeaDetailIntent.SaveConfigurationChanges -> saveConfigurationChanges(intent)
+            is TeaDetailIntent.DismissEditConfigDialog -> dismissEditConfigDialog()
         }
     }
 
@@ -63,6 +90,8 @@ class TeaDetailViewModel(
                             _state.update { it.copy(tea = tea, isLoading = false) }
                             loadTeaType(tea.teaTypeId)
                             loadRecentSessions(teaId)
+                            loadConfigurations(teaId)
+                            loadVessels()
                         } else {
                             _state.update {
                                 it.copy(
@@ -110,6 +139,26 @@ class TeaDetailViewModel(
         }
     }
 
+    private fun loadConfigurations(teaId: String) {
+        viewModelScope.launch {
+            brewingConfigurationRepository.getByTeaIdFlow(teaId)
+                .catchError("Failed to load configurations")
+                .collect { configurations ->
+                    _state.update { it.copy(configurations = configurations) }
+                }
+        }
+    }
+
+    private fun loadVessels() {
+        viewModelScope.launch {
+            brewingVesselRepository.getAllFlow()
+                .catchError("Failed to load vessels")
+                .collect { vessels ->
+                    _state.update { it.copy(vessels = vessels) }
+                }
+        }
+    }
+
     private fun showDeleteConfirmation() {
         _state.update { it.copy(showDeleteConfirmation = true) }
     }
@@ -144,6 +193,66 @@ class TeaDetailViewModel(
             toggleFavoriteUseCase(tea)
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to toggle favorite: ${e.message}") }
+                }
+        }
+    }
+
+    private fun showEditConfigDialog(configId: String) {
+        viewModelScope.launch {
+            val config = brewingConfigurationRepository.getById(configId)
+            _state.update {
+                it.copy(
+                    editingConfig = config,
+                    showEditConfigDialog = true
+                )
+            }
+        }
+    }
+
+    private fun dismissEditConfigDialog() {
+        _state.update {
+            it.copy(
+                showEditConfigDialog = false,
+                editingConfig = null
+            )
+        }
+    }
+
+    private fun deleteConfiguration(configId: String) {
+        viewModelScope.launch {
+            deleteBrewingConfigurationUseCase(configId)
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to delete configuration: ${e.message}") }
+                }
+        }
+    }
+
+    private fun saveConfigurationChanges(intent: TeaDetailIntent.SaveConfigurationChanges) {
+        val config = _state.value.editingConfig ?: return
+
+        viewModelScope.launch {
+            updateBrewingConfigurationUseCase(
+                configurationId = config.id,
+                label = intent.label,
+                teaQuantityGrams = intent.teaQuantityGrams,
+                waterQuantityMl = intent.waterQuantityMl,
+                temperatureCelsius = intent.temperatureCelsius,
+                brewingTime = intent.brewingTime,
+                waterType = intent.waterType,
+                isActive = intent.isActive
+            )
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            showEditConfigDialog = false,
+                            editingConfig = null
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(error = "Failed to update configuration: ${e.message}")
+                    }
                 }
         }
     }

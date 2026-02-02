@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.UserPreferences
 
 data class SessionDetailState(
     val parentSession: TeaSession? = null,
@@ -18,6 +19,9 @@ data class SessionDetailState(
     val showDeleteConfirmation: Boolean = false,
     val showDeleteSteepConfirmation: Boolean = false,
     val steepToDelete: String? = null,
+
+    // User preferences
+    val userPreferences: UserPreferences = UserPreferences(),
 ) {
     val allSteeps: List<TeaSession>
         get() = if (parentSession != null) {

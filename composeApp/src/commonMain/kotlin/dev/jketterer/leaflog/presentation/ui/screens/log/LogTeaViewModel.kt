@@ -5,13 +5,19 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
+import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,15 +26,19 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 import kotlin.time.Duration
 
 class LogTeaViewModel(
     private val teaRepository: TeaRepository,
     private val teaSessionRepository: TeaSessionRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val searchTeasUseCase: SearchTeasUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
+    private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
+    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LogTeaState())
@@ -38,7 +48,16 @@ class LogTeaViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     init {
+        loadPreferences()
         onIntent(LogTeaIntent.LoadData)
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            getPreferencesUseCase().collect { preferences ->
+                _state.update { it.copy(userPreferences = preferences) }
+            }
+        }
     }
 
     fun onIntent(intent: LogTeaIntent) {
@@ -69,6 +88,10 @@ class LogTeaViewModel(
 
             is LogTeaIntent.StartTimerClicked -> saveSession(isDraft = true, startTimer = true)
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
+
+            is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
+            is LogTeaIntent.MethodSelected -> selectMethod(intent.configurationId)
+            is LogTeaIntent.DismissChooseMethodDialog -> dismissChooseMethodDialog()
         }
     }
 
@@ -119,7 +142,7 @@ class LogTeaViewModel(
                 _state.update {
                     it.copy(
                         availableVessels = vessels,
-                        selectedVessel = it.selectedVessel ?: vessels.firstOrNull()
+                        // Don't auto-select a vessel - let user choose
                     )
                 }
             }
@@ -169,35 +192,142 @@ class LogTeaViewModel(
             )
         }
 
-        // Pre-fill with tea defaults
-        tea?.let { prefillDefaults(it) }
+        // Load configurations and optionally pre-fill if vessel is also selected
+        if (tea != null) {
+            val vessel = _state.value.selectedVessel
+            if (vessel != null) {
+                loadConfigurationsAndPrefill(tea, vessel)
+            }
+        }
     }
 
-    private fun prefillDefaults(tea: Tea) {
+    private fun loadConfigurationsAndPrefill(tea: Tea, vessel: BrewingVessel) {
         viewModelScope.launch {
-            // Try to get last session for this tea
-            val lastSession = teaRepository.getById(tea.id)?.lastBrewedAt?.let {
-                teaSessionRepository.getByTeaId(tea.id, limit = 1).firstOrNull()
+            // Always load available configurations for this tea + vessel
+            val configurations = brewingConfigurationRepository.getByTeaAndVessel(tea.id, vessel.id)
+
+            // Only prefill if user hasn't manually edited brewing parameters yet
+            if (!_state.value.hasEditedBrewingParameters) {
+                // Use the smart pre-fill use case
+                val prefill = getBrewingParametersPrefillUseCase(tea, vessel.id)
+
+                val currentState = _state.value
+
+                // Convert prefill temperature from Celsius (storage) to user's display unit
+                val displayTemperature = prefill.temperatureCelsius?.let { celsius ->
+                    UnitConverter.celsiusToDisplayTemperature(
+                        celsius,
+                        currentState.userPreferences.temperatureUnit
+                    ).toString()
+                } ?: ""
+
+                // Convert prefill water quantity from mL (storage) to user's display unit
+                val displayWaterQuantity = prefill.waterQuantityMl?.let { ml ->
+                    UnitConverter.millilitersToDisplayVolume(
+                        ml,
+                        currentState.userPreferences.volumeUnit
+                    ).toString()
+                } ?: vessel.capacityMl?.let { ml ->
+                    UnitConverter.millilitersToDisplayVolume(
+                        ml,
+                        currentState.userPreferences.volumeUnit
+                    ).toString()
+                } ?: ""
+
+                _state.update { state ->
+                    state.copy(
+                        teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
+                        waterQuantityMl = displayWaterQuantity,
+                        temperatureCelsius = displayTemperature,
+                        brewingTime = prefill.brewingTime,
+                        selectedWaterType = prefill.waterType ?: state.selectedWaterType,
+                        prefillSource = prefill.source,
+                        availableConfigurations = configurations,
+                        usedConfigurationId = configurations.firstOrNull()?.id,
+                        hasEditedBrewingParameters = false, // Reset flag when prefilling
+                    )
+                }
+            } else {
+                // User has edited parameters, just update configurations without prefilling
+                _state.update { currentState ->
+                    currentState.copy(
+                        availableConfigurations = configurations,
+                        // Clear prefill source since we're not using it anymore
+                        prefillSource = PrefillSource.None,
+                        usedConfigurationId = null,
+                    )
+                }
             }
+        }
+    }
 
-            // Get tea type for fallback defaults
-            val teaType = teaTypeRepository.getById(tea.teaTypeId)
+    private fun showChooseMethodDialog() {
+        _state.update { it.copy(showChooseMethodDialog = true) }
+    }
 
-            _state.update { currentState ->
-                currentState.copy(
-                    // Use last session values if available, otherwise tea defaults, then tea type defaults
-                    waterQuantityMl = lastSession?.waterQuantityMl?.toString()
-                        ?: tea.defaultQuantity?.toString()
-                        ?: "",
-                    temperatureCelsius = lastSession?.temperatureCelsius?.toString()
-                        ?: tea.defaultTemperatureCelsius?.toString()
-                        ?: teaType?.defaultTemperatureCelsius?.toString()
-                        ?: "",
-                    brewingTime = lastSession?.brewingTime
-                        ?: tea.defaultBrewingTime
-                        ?: teaType?.defaultBrewingTime,
-                    teaQuantityGrams = lastSession?.teaQuantityGrams?.toString() ?: "",
+    private fun dismissChooseMethodDialog() {
+        _state.update { it.copy(showChooseMethodDialog = false) }
+    }
+
+    private fun selectMethod(configurationId: String?) {
+        _state.update { it.copy(showChooseMethodDialog = false) }
+
+        if (configurationId == null) {
+            // User chose "Custom" - clear pre-filled parameters
+            _state.update {
+                it.copy(
+                    teaQuantityGrams = "",
+                    waterQuantityMl = "",
+                    temperatureCelsius = "",
+                    brewingTime = null,
+                    usedConfigurationId = null,
+                    prefillSource = PrefillSource.None,
+                    hasEditedBrewingParameters = true, // Mark as edited since user is manually entering
                 )
+            }
+        } else {
+            // Load and apply the selected configuration
+            // This is an explicit user action to use a configuration, so reset the edit flag
+            viewModelScope.launch {
+                val config = brewingConfigurationRepository.getById(configurationId)
+                if (config != null) {
+                    _state.update { currentState ->
+                        // Convert configuration values from storage (Celsius/mL) to user's display unit
+                        val displayTemperature =
+                            UnitConverter.celsiusToDisplayTemperature(
+                                config.temperatureCelsius,
+                                currentState.userPreferences.temperatureUnit
+                            ).toString()
+
+                        val displayWaterQuantity =
+                            UnitConverter.millilitersToDisplayVolume(
+                                config.waterQuantityMl,
+                                currentState.userPreferences.volumeUnit
+                            ).toString()
+
+                        currentState.copy(
+                            teaQuantityGrams = config.teaQuantityGrams?.toString() ?: "",
+                            waterQuantityMl = displayWaterQuantity,
+                            temperatureCelsius = displayTemperature,
+                            brewingTime = config.brewingTime,
+                            selectedWaterType = config.waterType,
+                            usedConfigurationId = configurationId,
+                            hasEditedBrewingParameters = false, // Reset flag - user chose a config
+                            // Restore prefill source so banner shows which config is being used
+                            prefillSource = PrefillSource.DirectSession(
+                                sessionId = config.sourceSessionId,
+                                rating = config.rating,
+                                timestamp = config.lastUsedAt ?: config.createdAt
+                            )
+                        )
+                    }
+
+                    // Increment usage counter
+                    brewingConfigurationRepository.incrementTimesUsed(
+                        configurationId,
+                        Clock.System.now()
+                    )
+                }
             }
         }
     }
@@ -215,7 +345,11 @@ class LogTeaViewModel(
         _state.update {
             it.copy(
                 teaQuantityGrams = quantity,
-                hasUnsavedChanges = true
+                hasUnsavedChanges = true,
+                hasEditedBrewingParameters = true,
+                // Clear prefill source since user is manually editing
+                prefillSource = PrefillSource.None,
+                usedConfigurationId = null
             )
         }
     }
@@ -232,17 +366,34 @@ class LogTeaViewModel(
             it.copy(
                 waterQuantityMl = quantity,
                 waterQuantityError = error,
-                hasUnsavedChanges = true
+                hasUnsavedChanges = true,
+                hasEditedBrewingParameters = true,
+                // Clear prefill source since user is manually editing
+                prefillSource = PrefillSource.None,
+                usedConfigurationId = null
             )
         }
     }
 
     private fun updateTemperature(temperature: String) {
+        val currentState = _state.value
+        val tempUnit = currentState.userPreferences.temperatureUnit
+
         val error = when {
             temperature.isBlank() -> "Temperature is required"
             temperature.toIntOrNull() == null -> "Invalid temperature"
-            temperature.toInt() !in 0..100 -> "Temperature must be 0-100°C"
-            else -> null
+            else -> {
+                val value = temperature.toInt()
+                when (tempUnit) {
+                    TemperatureUnit.CELSIUS -> {
+                        if (value !in 0..100) "Temperature must be 0-100°C" else null
+                    }
+
+                    TemperatureUnit.FAHRENHEIT -> {
+                        if (value !in 32..212) "Temperature must be 32-212°F" else null
+                    }
+                }
+            }
         }
 
         _state.update {
@@ -250,6 +401,10 @@ class LogTeaViewModel(
                 temperatureCelsius = temperature,
                 temperatureError = error,
                 hasUnsavedChanges = true,
+                hasEditedBrewingParameters = true,
+                // Clear prefill source since user is manually editing
+                prefillSource = PrefillSource.None,
+                usedConfigurationId = null
             )
         }
     }
@@ -264,14 +419,37 @@ class LogTeaViewModel(
                 brewingTime = duration,
                 brewingTimeError = error,
                 hasUnsavedChanges = true,
+                hasEditedBrewingParameters = true,
+                // Clear prefill source since user is manually editing
+                prefillSource = PrefillSource.None,
+                usedConfigurationId = null
             )
         }
     }
 
     private fun selectVessel(vessel: BrewingVessel) {
         _state.update { currentState ->
-            // Auto-populate water quantity if vessel has capacity and water quantity is empty
-            val shouldAutoPopulate = vessel.capacityMl != null && currentState.waterQuantityMl.isBlank()
+            currentState.copy(
+                selectedVessel = vessel,
+                vesselError = null, // Clear error when vessel is selected
+                hasUnsavedChanges = true
+            )
+        }
+
+        // Load configurations and optionally pre-fill if tea is also selected
+        val tea = _state.value.selectedTea
+        if (tea != null) {
+            loadConfigurationsAndPrefill(tea, vessel)
+        } else {
+            // If no tea selected, just auto-populate water quantity from vessel capacity
+            autoPopulateWaterQuantity(vessel)
+        }
+    }
+
+    private fun autoPopulateWaterQuantity(vessel: BrewingVessel) {
+        _state.update { currentState ->
+            val shouldAutoPopulate =
+                vessel.capacityMl != null && currentState.waterQuantityMl.isBlank()
             val newWaterQuantity = if (shouldAutoPopulate) {
                 vessel.capacityMl.toString()
             } else {
@@ -279,16 +457,23 @@ class LogTeaViewModel(
             }
 
             currentState.copy(
-                selectedVessel = vessel,
                 waterQuantityMl = newWaterQuantity,
                 waterQuantityError = if (shouldAutoPopulate) null else currentState.waterQuantityError,
-                hasUnsavedChanges = true
             )
         }
     }
 
     private fun selectWaterType(waterType: WaterType) {
-        _state.update { it.copy(selectedWaterType = waterType, hasUnsavedChanges = true) }
+        _state.update {
+            it.copy(
+                selectedWaterType = waterType,
+                hasUnsavedChanges = true,
+                hasEditedBrewingParameters = true,
+                // Clear prefill source since user is manually editing
+                prefillSource = PrefillSource.None,
+                usedConfigurationId = null
+            )
+        }
     }
 
     private fun updateLocation(location: String) {
@@ -329,6 +514,7 @@ class LogTeaViewModel(
             _state.update {
                 it.copy(
                     teaError = if (it.selectedTea == null) "Tea is required" else null,
+                    vesselError = if (it.selectedVessel == null) "Brewing vessel is required" else null,
                     waterQuantityError = if (it.waterQuantityMl.toIntOrNull() == null) "Water quantity is required" else it.waterQuantityError,
                     temperatureError = if (it.temperatureCelsius.toIntOrNull() == null) "Temperature is required" else it.temperatureError,
                     brewingTimeError = if (it.brewingTime == null) "Brewing time is required" else it.brewingTimeError
@@ -340,6 +526,20 @@ class LogTeaViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
 
+            // Convert temperature from user's input unit to Celsius for storage
+            val temperatureCelsius =
+                dev.jketterer.leaflog.domain.models.UnitConverter.inputTemperatureToCelsius(
+                    currentState.temperatureCelsius.toInt(),
+                    currentState.userPreferences.temperatureUnit
+                )
+
+            // Convert water quantity from user's input unit to mL for storage
+            val waterQuantityMl =
+                dev.jketterer.leaflog.domain.models.UnitConverter.inputVolumeToMilliliters(
+                    currentState.waterQuantityMl.toInt(),
+                    currentState.userPreferences.volumeUnit
+                )
+
             // Use the use case - it has business logic (validation, ID generation, timestamps)
             createSessionUseCase(
                 teaId = currentState.selectedTea!!.id,
@@ -348,11 +548,12 @@ class LogTeaViewModel(
                 waterType = currentState.selectedWaterType,
                 location = currentState.location.takeIf { it.isNotBlank() },
                 brewingTime = currentState.brewingTime!!,
-                temperatureCelsius = currentState.temperatureCelsius.toInt(),
-                waterQuantityMl = currentState.waterQuantityMl.toInt(),
+                temperatureCelsius = temperatureCelsius,
+                waterQuantityMl = waterQuantityMl,
                 notes = currentState.notes.takeIf { it.isNotBlank() },
                 photos = currentState.photos,
                 status = if (isDraft) SessionStatus.DRAFT else SessionStatus.COMPLETED,
+                usedConfigurationId = currentState.usedConfigurationId,
             )
                 .onSuccess {
                     _state.update { it.copy(isSaving = false, hasUnsavedChanges = false) }

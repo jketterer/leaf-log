@@ -38,6 +38,7 @@ import compose.icons.feathericons.MoreVertical
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
@@ -58,6 +59,7 @@ fun SessionCard(
     onSessionClick: () -> Unit,
     onBrewAgainClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    temperatureUnit: dev.jketterer.leaflog.domain.models.TemperatureUnit,
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -123,7 +125,12 @@ fun SessionCard(
                 )
 
                 Text(
-                    text = "$teaTypeName • ${session.brewingTime} • ${session.temperatureCelsius}°C",
+                    text = "$teaTypeName • ${session.brewingTime} • ${
+                        dev.jketterer.leaflog.domain.models.TemperatureFormatter.format(
+                            session.temperatureCelsius,
+                            temperatureUnit
+                        )
+                    }",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -208,7 +215,8 @@ private fun SessionCardPreview() {
             teaPhotoUrl = null,
             onSessionClick = {},
             onDeleteClick = {},
-            onBrewAgainClick = {}
+            onBrewAgainClick = {},
+            temperatureUnit = TemperatureUnit.FAHRENHEIT,
         )
     }
 }

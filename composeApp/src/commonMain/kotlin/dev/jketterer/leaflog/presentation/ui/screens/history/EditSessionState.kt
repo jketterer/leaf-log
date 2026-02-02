@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
@@ -10,6 +11,7 @@ data class EditSessionState(
     val existingSession: TeaSession? = null,
     val isParentSession: Boolean = true,
     val steepNumber: Int? = null,
+    val teaName: String? = null,
 
     // Form fields - Brewing Parameters (all sessions)
     val brewingTime: Duration? = null,
@@ -43,6 +45,9 @@ data class EditSessionState(
     val isSaving: Boolean = false,
     val error: String? = null,
     val showDiscardDialog: Boolean = false,
+    val showSaveConfigurationDialog: Boolean = false,
+    val savedSession: TeaSession? = null, // Session that was just saved
+    val userPreferences: UserPreferences = UserPreferences(),
 ) {
     val hasChanges: Boolean
         get() {

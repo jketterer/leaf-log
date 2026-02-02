@@ -31,4 +31,8 @@ sealed interface TimerIntent {
     data class SaveAndFinish(val session: TeaSession) : TimerIntent
     data object RestartTimer : TimerIntent
     data object BackClicked : TimerIntent
+
+    // Configuration save dialog
+    data class SaveConfigurationClicked(val customLabel: String?) : TimerIntent
+    data object SkipSaveConfiguration : TimerIntent
 }

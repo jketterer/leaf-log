@@ -33,4 +33,8 @@ sealed interface EditSessionIntent {
     data object BackClicked : EditSessionIntent
     data object ConfirmDiscard : EditSessionIntent
     data object CancelDiscard : EditSessionIntent
+
+    // Configuration save dialog
+    data class SaveConfigurationClicked(val customLabel: String?) : EditSessionIntent
+    data object SkipSaveConfiguration : EditSessionIntent
 }

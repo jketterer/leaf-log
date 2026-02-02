@@ -1,9 +1,11 @@
 package dev.jketterer.leaflog.presentation.ui.screens.timer
 
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.UserPreferences
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -16,6 +18,7 @@ data class TimerScreenState(
     val timerState: TimerState = TimerState(),
     val session: TeaSession? = null,
     val tea: Tea? = null,
+    val vessel: BrewingVessel? = null,
     val rating: Float = 0f,
     val notes: String? = null,
     val photos: List<String> = emptyList(),
@@ -25,8 +28,11 @@ data class TimerScreenState(
     val nextSteepDuration: Duration? = null,
     val nextSteepTemperature: Int? = null,
     val nextSteepWaterQuantity: Int? = null,
+    val showSaveConfigurationDialog: Boolean = false,
+    val savedSession: TeaSession? = null, // Session that was just saved
     val isLoading: Boolean = false,
     val error: String? = null,
+    val userPreferences: UserPreferences = UserPreferences(),
 ) {
     /**
      * Formatted remaining time as MM:SS.

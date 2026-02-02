@@ -185,6 +185,7 @@ private fun HistoryContent(
                                 teaName = tea?.name ?: "Unknown Tea",
                                 teaTypeName = teaType?.name ?: "Unknown Type",
                                 teaPhotoUrl = tea?.photos?.firstOrNull(),
+                                temperatureUnit = state.userPreferences.temperatureUnit,
                                 onSessionClick = {
                                     if (session.status == SessionStatus.DRAFT) {
                                         onIntent(HistoryIntent.CompleteDraft(session.id))

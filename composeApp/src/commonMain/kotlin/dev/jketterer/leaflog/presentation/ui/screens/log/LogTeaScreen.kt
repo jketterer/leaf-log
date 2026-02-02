@@ -33,10 +33,15 @@ import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TemperatureFormatter
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
+import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
+import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -158,6 +163,21 @@ private fun LogTeaContent(
                 }
             }
 
+            // Vessel Selector
+            item(key = "vessel") {
+                VesselSelector(
+                    vessels = state.availableVessels,
+                    selectedVessel = state.selectedVessel,
+                    onVesselSelected = { vessel ->
+                        onIntent(LogTeaIntent.VesselSelected(vessel))
+                    },
+                    label = "Brewing Vessel *",
+                    isError = state.vesselError != null,
+                    errorMessage = state.vesselError,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
             // Brewing Parameters Section
             item(key = "parameters_header") {
                 Text(
@@ -165,6 +185,37 @@ private fun LogTeaContent(
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                 )
+            }
+
+            // Pre-fill Banner
+            if (state.prefillSource != PrefillSource.None && state.selectedTea != null) {
+                item(key = "prefill_banner") {
+                    PrefillBanner(
+                        source = state.prefillSource,
+                        teaName = state.selectedTea.name,
+                        modifier = Modifier.fillMaxWidth(),
+                        hasMultipleMethods = state.availableConfigurations.size >= 1,
+                        onChooseDifferentMethod = {
+                            onIntent(LogTeaIntent.ChooseDifferentMethodClicked)
+                        }
+                    )
+                }
+            }
+
+            // Brewing Method Selector (when configurations exist but no banner shown)
+            if (state.availableConfigurations.isNotEmpty() &&
+                state.selectedTea != null &&
+                state.selectedVessel != null &&
+                state.prefillSource == PrefillSource.None
+            ) {
+                item(key = "method_selector") {
+                    OutlinedButton(
+                        onClick = { onIntent(LogTeaIntent.ChooseDifferentMethodClicked) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Choose Saved Brewing Method")
+                    }
+                }
             }
 
             // Tea Quantity
@@ -194,29 +245,17 @@ private fun LogTeaContent(
                 )
             }
 
-            // Vessel Selector
-            item(key = "vessel") {
-                VesselSelector(
-                    vessels = state.availableVessels,
-                    selectedVessel = state.selectedVessel,
-                    onVesselSelected = { vessel ->
-                        onIntent(LogTeaIntent.VesselSelected(vessel))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
             // Temperature
             item(key = "temperature") {
                 OutlinedTextField(
                     value = state.temperatureCelsius,
                     onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
-                    label = { Text("Temperature (°C) *") },
+                    label = { Text("${TemperatureFormatter.getInputLabel(state.userPreferences.temperatureUnit)} *") },
                     isError = state.temperatureError != null,
                     supportingText = state.temperatureError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    suffix = { Text("°C") },
+                    suffix = { Text(TemperatureFormatter.getUnitSymbol(state.userPreferences.temperatureUnit)) },
                 )
             }
 
@@ -225,7 +264,7 @@ private fun LogTeaContent(
                 OutlinedTextField(
                     value = state.waterQuantityMl,
                     onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
-                    label = { Text("Water Quantity (ml) *") },
+                    label = { Text("${VolumeFormatter.getInputLabel(state.userPreferences.volumeUnit)} *") },
                     isError = state.waterQuantityError != null,
                     supportingText = state.waterQuantityError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
@@ -338,6 +377,20 @@ private fun LogTeaContent(
             onDismiss = {
                 // TODO: Close dialog
             },
+        )
+    }
+
+    // Choose Method Dialog
+    if (state.showChooseMethodDialog && state.availableConfigurations.isNotEmpty()) {
+        ChooseMethodDialog(
+            configurations = state.availableConfigurations,
+            selectedConfigurationId = state.usedConfigurationId,
+            onSelect = { configId ->
+                onIntent(LogTeaIntent.MethodSelected(configId))
+            },
+            onDismiss = {
+                onIntent(LogTeaIntent.DismissChooseMethodDialog)
+            }
         )
     }
 }

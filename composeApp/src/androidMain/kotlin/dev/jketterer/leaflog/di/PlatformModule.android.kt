@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
+import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
@@ -29,9 +30,15 @@ actual fun platformModule(): Module = module {
     single { get<LeafLogDatabase>().teaSessionDao() }
     single { get<LeafLogDatabase>().teaTypeDao() }
     single { get<LeafLogDatabase>().brewingVesselDao() }
+    single { get<LeafLogDatabase>().brewingConfigurationDao() }
 
     // Platform-specific services
     single {
         TimerNotificationService(context = get())
+    }
+
+    // Preferences
+    single {
+        PreferencesDataStore(context = get())
     }
 }

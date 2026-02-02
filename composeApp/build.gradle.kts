@@ -38,6 +38,7 @@ kotlin {
             implementation(libs.koin.android)
             implementation(libs.koin.compose)
             implementation(libs.koin.core)
+            implementation(libs.androidx.datastore.preferences)
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.datetime)
@@ -60,6 +61,9 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
+
+            implementation(libs.androidx.datastore.core)
+            implementation(libs.androidx.datastore)
         }
     }
 }

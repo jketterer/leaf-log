@@ -5,7 +5,11 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +23,12 @@ import kotlin.time.Duration
 
 class EditSessionViewModel(
     private val teaSessionRepository: TeaSessionRepository,
+    private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val updateSessionUseCase: UpdateSessionUseCase,
+    private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
+    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditSessionState())
@@ -30,7 +38,16 @@ class EditSessionViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     init {
+        loadPreferences()
         loadVessels()
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            getPreferencesUseCase().collect { preferences ->
+                _state.update { it.copy(userPreferences = preferences) }
+            }
+        }
     }
 
     fun onIntent(intent: EditSessionIntent) {
@@ -55,6 +72,8 @@ class EditSessionViewModel(
             is EditSessionIntent.BackClicked -> handleBack()
             is EditSessionIntent.ConfirmDiscard -> confirmDiscard()
             is EditSessionIntent.CancelDiscard -> cancelDiscard()
+            is EditSessionIntent.SaveConfigurationClicked -> saveConfiguration(intent.customLabel)
+            is EditSessionIntent.SkipSaveConfiguration -> skipSaveConfiguration()
         }
     }
 
@@ -78,6 +97,8 @@ class EditSessionViewModel(
                 val session = teaSessionRepository.getById(sessionId)
 
                 if (session != null) {
+                    // Load tea name for SaveConfigurationDialog
+                    val tea = teaRepository.getById(session.teaId)
                     // Use editFullSession flag to determine whether to show parent fields
                     // When true: edit full session (from top app bar)
                     // When false: edit only steep parameters (from steep card)
@@ -96,6 +117,7 @@ class EditSessionViewModel(
                             existingSession = session,
                             isParentSession = isParent,
                             steepNumber = session.steepNumber,
+                            teaName = tea?.name,
                             brewingTime = session.brewingTime,
                             temperatureCelsius = session.temperatureCelsius.toString(),
                             selectedVessel = vessel,
@@ -271,9 +293,18 @@ class EditSessionViewModel(
             }
 
             result
-                .onSuccess {
-                    _state.update { it.copy(isSaving = false) }
-                    _navEvents.send(EditSessionNavEvent.NavigateBack)
+                .onSuccess { updatedSession ->
+                    _state.update { it.copy(isSaving = false, savedSession = updatedSession) }
+
+                    // Check if we should show the save configuration dialog
+                    // Only for steep edits with rating >= 5
+                    if (!currentState.isParentSession &&
+                        updatedSession.rating != null &&
+                        updatedSession.rating >= 5f) {
+                        _state.update { it.copy(showSaveConfigurationDialog = true) }
+                    } else {
+                        _navEvents.send(EditSessionNavEvent.NavigateBack)
+                    }
                 }
                 .onFailure { e ->
                     _state.update {
@@ -284,6 +315,32 @@ class EditSessionViewModel(
                     }
                 }
         }
+    }
+
+    private fun saveConfiguration(customLabel: String?) {
+        val session = _state.value.savedSession ?: return
+
+        viewModelScope.launch {
+            saveBrewingConfigurationUseCase(session, customLabel)
+                .onSuccess {
+                    _state.update { it.copy(showSaveConfigurationDialog = false) }
+                    _navEvents.send(EditSessionNavEvent.NavigateBack)
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(
+                            error = "Failed to save configuration: ${e.message}",
+                            showSaveConfigurationDialog = false
+                        )
+                    }
+                    _navEvents.send(EditSessionNavEvent.NavigateBack)
+                }
+        }
+    }
+
+    private fun skipSaveConfiguration() {
+        _state.update { it.copy(showSaveConfigurationDialog = false) }
+        _navEvents.trySend(EditSessionNavEvent.NavigateBack)
     }
 
     private fun handleBack() {

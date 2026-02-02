@@ -25,6 +25,7 @@ import coil3.compose.AsyncImage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
@@ -43,6 +44,7 @@ fun RecentSessionCard(
     session: TeaSession,
     teaPhotoUrl: String? = null,
     onSessionClick: () -> Unit,
+    temperatureUnit: dev.jketterer.leaflog.domain.models.TemperatureUnit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -91,7 +93,7 @@ fun RecentSessionCard(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = "$teaTypeName • ${session.brewingTime} • ${session.temperatureCelsius}°C",
+                    text = "$teaTypeName • ${session.brewingTime} • ${dev.jketterer.leaflog.domain.models.TemperatureFormatter.format(session.temperatureCelsius, temperatureUnit)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -134,6 +136,7 @@ private fun RecentSessionCardPreview() {
                     updatedAt = Clock.System.now(),
                 ),
                 onSessionClick = {},
+                temperatureUnit = TemperatureUnit.FAHRENHEIT,
             )
             RecentSessionCard(
                 teaName = "Sencha",
@@ -153,6 +156,7 @@ private fun RecentSessionCardPreview() {
                     updatedAt = Clock.System.now(),
                 ),
                 onSessionClick = {},
+                temperatureUnit = TemperatureUnit.FAHRENHEIT,
             )
         }
     }

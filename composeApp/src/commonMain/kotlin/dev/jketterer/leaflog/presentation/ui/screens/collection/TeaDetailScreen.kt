@@ -48,7 +48,6 @@ import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit2
-import compose.icons.feathericons.Heart
 import compose.icons.feathericons.MoreVertical
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
@@ -59,7 +58,10 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.configuration.EditConfigurationDialog
+import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -124,9 +126,10 @@ private fun TeaDetailContent(
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 80.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp),
         ) {
             TopAppBar(
                 title = { Text(state.tea?.name ?: "Tea Details") },
@@ -270,7 +273,10 @@ private fun TeaDetailContent(
                                     if (state.tea.defaultTemperatureCelsius != null) {
                                         DetailRow(
                                             label = "Temperature",
-                                            value = "${state.tea.defaultTemperatureCelsius}°C",
+                                            value = TemperatureFormatter.format(
+                                                state.tea.defaultTemperatureCelsius,
+                                                state.userPreferences.temperatureUnit
+                                            ),
                                         )
                                     }
 
@@ -321,6 +327,28 @@ private fun TeaDetailContent(
                             }
                         }
 
+                        // Saved brewing methods
+                        if (state.configurations.isNotEmpty()) {
+                            item(key = "saved_methods") {
+                                SavedMethodsSection(
+                                    configurations = state.configurations,
+                                    getVesselName = { vesselId ->
+                                        state.vessels.find { it.id == vesselId }?.name ?: "Unknown"
+                                    },
+                                    onEdit = { configId ->
+                                        onIntent(TeaDetailIntent.EditConfigurationClicked(configId))
+                                    },
+                                    onDelete = { configId ->
+                                        onIntent(TeaDetailIntent.DeleteConfigurationClicked(configId))
+                                    }
+                                )
+                            }
+
+                            item(key = "methods_divider") {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
+
                         // Recent sessions
                         if (state.recentSessions.isNotEmpty()) {
                             item(key = "sessions_header") {
@@ -354,6 +382,7 @@ private fun TeaDetailContent(
                                     },
                                     onBrewAgainClick = { /* TODO */ },
                                     onDeleteClick = { /* TODO */ },
+                                    temperatureUnit = state.userPreferences.temperatureUnit,
                                 )
                             }
                         }
@@ -415,6 +444,27 @@ private fun TeaDetailContent(
                         Text("Cancel")
                     }
                 },
+            )
+        }
+
+        // Edit configuration dialog
+        if (state.showEditConfigDialog && state.editingConfig != null) {
+            EditConfigurationDialog(
+                configuration = state.editingConfig,
+                onSave = { label, teaQty, waterQty, temp, time, waterType, isActive ->
+                    onIntent(
+                        TeaDetailIntent.SaveConfigurationChanges(
+                            label = label,
+                            teaQuantityGrams = teaQty,
+                            waterQuantityMl = waterQty,
+                            temperatureCelsius = temp,
+                            brewingTime = time,
+                            waterType = waterType,
+                            isActive = isActive
+                        )
+                    )
+                },
+                onDismiss = { onIntent(TeaDetailIntent.DismissEditConfigDialog) }
             )
         }
     }

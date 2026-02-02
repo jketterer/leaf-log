@@ -29,6 +29,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
@@ -111,10 +112,7 @@ fun AppNavigation() {
                 }
 
                 entry<NavRoute.SettingsRoute> {
-                    EmptyState(
-                        message = "Settings screen will be implemented in Phase 9",
-                        onActionClick = { backStack.removeLast() },
-                    )
+                    SettingsScreen()
                 }
 
                 // =========================================================

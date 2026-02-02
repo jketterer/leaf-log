@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.home
 
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.UserPreferences
 
 data class HomeState(
     val greeting: String = "Good day",
@@ -13,6 +14,7 @@ data class HomeState(
     val isRefreshing: Boolean = false,
     val error: String? = null,
     val isEmpty: Boolean = true,
+    val userPreferences: UserPreferences = UserPreferences(),
 ) {
     /**
      * Whether to show the empty state (no sessions at all).

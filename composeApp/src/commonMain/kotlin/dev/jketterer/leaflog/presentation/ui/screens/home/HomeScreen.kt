@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -214,6 +213,7 @@ private fun HomeContent(
                                 teaTypeName = sessionData.teaTypeName,
                                 session = sessionData.session,
                                 teaPhotoUrl = sessionData.teaPhotoUrl,
+                                temperatureUnit = state.userPreferences.temperatureUnit,
                                 onSessionClick = {
                                     onIntent(HomeIntent.SessionClicked(sessionData.session.id))
                                 },
@@ -269,7 +269,7 @@ private fun HomeScreenPreview() {
                 greeting = "Good morning",
                 dailyStats = DailyStats(
                     sessionCount = 3,
-                    totalWaterQuantityMl = 450,
+                    formattedWaterQuantity = "32 fl oz",
                     differentTeasCount = 2,
                 ),
                 recentSessionsWithTea = listOf(

@@ -43,6 +43,7 @@ import kotlin.time.Instant
         Index(value = ["timestamp"]),
         Index(value = ["userId"]),
         Index(value = ["deletedAt"]),
+        Index(value = ["usedConfigurationId"]),
     ]
 )
 data class TeaSessionEntity(
@@ -59,6 +60,7 @@ data class TeaSessionEntity(
     val location: String?,
     val rating: Float?,
     val averageRating: Float?,
+    val usedConfigurationId: String?, // Configuration that was used for this session
 
     val timestamp: Instant,
     val brewingTime: Duration,

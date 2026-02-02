@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
@@ -29,6 +30,7 @@ class HistoryViewModel(
     private val completeSessionUseCase: CompleteSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
+    private val getPreferencesUseCase: dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HistoryState())
@@ -38,7 +40,16 @@ class HistoryViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     init {
+        loadPreferences()
         onIntent(HistoryIntent.LoadData)
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            getPreferencesUseCase().collect { preferences ->
+                _state.update { it.copy(userPreferences = preferences) }
+            }
+        }
     }
 
     fun onIntent(intent: HistoryIntent) {

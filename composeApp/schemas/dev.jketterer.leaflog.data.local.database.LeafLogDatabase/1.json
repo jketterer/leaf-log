@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3d19d33d4a7cbc75179c855d6885edc6",
+    "identityHash": "456aa79c1a2d705df9f6064fb02cc716",
     "entities": [
       {
         "tableName": "tea",
@@ -206,7 +206,7 @@
       },
       {
         "tableName": "tea_session",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `teaId` TEXT NOT NULL, `parentSessionId` TEXT, `steepNumber` INTEGER NOT NULL, `status` TEXT NOT NULL, `teaQuantityGrams` REAL, `vesselId` TEXT NOT NULL, `waterType` TEXT NOT NULL, `location` TEXT, `rating` REAL, `averageRating` REAL, `timestamp` INTEGER NOT NULL, `brewingTime` INTEGER NOT NULL, `temperatureCelsius` INTEGER NOT NULL, `waterQuantityMl` INTEGER NOT NULL, `notes` TEXT, `photos` TEXT NOT NULL, `userId` TEXT, `syncStatus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teaId`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vesselId`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`parentSessionId`) REFERENCES `tea_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `teaId` TEXT NOT NULL, `parentSessionId` TEXT, `steepNumber` INTEGER NOT NULL, `status` TEXT NOT NULL, `teaQuantityGrams` REAL, `vesselId` TEXT NOT NULL, `waterType` TEXT NOT NULL, `location` TEXT, `rating` REAL, `averageRating` REAL, `usedConfigurationId` TEXT, `timestamp` INTEGER NOT NULL, `brewingTime` INTEGER NOT NULL, `temperatureCelsius` INTEGER NOT NULL, `waterQuantityMl` INTEGER NOT NULL, `notes` TEXT, `photos` TEXT NOT NULL, `userId` TEXT, `syncStatus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teaId`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vesselId`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`parentSessionId`) REFERENCES `tea_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -268,6 +268,11 @@
             "fieldPath": "averageRating",
             "columnName": "averageRating",
             "affinity": "REAL"
+          },
+          {
+            "fieldPath": "usedConfigurationId",
+            "columnName": "usedConfigurationId",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "timestamp",
@@ -411,6 +416,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_deletedAt` ON `${TABLE_NAME}` (`deletedAt`)"
+          },
+          {
+            "name": "index_tea_session_usedConfigurationId",
+            "unique": false,
+            "columnNames": [
+              "usedConfigurationId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_tea_session_usedConfigurationId` ON `${TABLE_NAME}` (`usedConfigurationId`)"
           }
         ],
         "foreignKeys": [
@@ -554,7 +568,7 @@
       },
       {
         "tableName": "brewing_vessel",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `iconName` TEXT, `isSystemDefault` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `iconName` TEXT, `capacityMl` INTEGER, `isSystemDefault` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -572,6 +586,11 @@
             "fieldPath": "iconName",
             "columnName": "iconName",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "capacityMl",
+            "columnName": "capacityMl",
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "isSystemDefault",
@@ -649,11 +668,197 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_vessel_deletedAt` ON `${TABLE_NAME}` (`deletedAt`)"
           }
         ]
+      },
+      {
+        "tableName": "brewing_configurations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `tea_id` TEXT NOT NULL, `vessel_id` TEXT NOT NULL, `tea_quantity_grams` REAL, `water_quantity_ml` INTEGER NOT NULL, `temperature_celsius` INTEGER NOT NULL, `brewing_time` INTEGER NOT NULL, `water_type` TEXT NOT NULL, `source_session_id` TEXT NOT NULL, `rating` REAL NOT NULL, `times_used` INTEGER NOT NULL, `last_used_at` INTEGER, `label` TEXT, `is_active` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tea_id`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vessel_id`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teaId",
+            "columnName": "tea_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vesselId",
+            "columnName": "vessel_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "teaQuantityGrams",
+            "columnName": "tea_quantity_grams",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "waterQuantityMl",
+            "columnName": "water_quantity_ml",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "temperatureCelsius",
+            "columnName": "temperature_celsius",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "brewingTime",
+            "columnName": "brewing_time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "waterType",
+            "columnName": "water_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceSessionId",
+            "columnName": "source_session_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rating",
+            "columnName": "rating",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timesUsed",
+            "columnName": "times_used",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUsedAt",
+            "columnName": "last_used_at",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_brewing_configurations_tea_id",
+            "unique": false,
+            "columnNames": [
+              "tea_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_tea_id` ON `${TABLE_NAME}` (`tea_id`)"
+          },
+          {
+            "name": "index_brewing_configurations_vessel_id",
+            "unique": false,
+            "columnNames": [
+              "vessel_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_vessel_id` ON `${TABLE_NAME}` (`vessel_id`)"
+          },
+          {
+            "name": "index_brewing_configurations_tea_id_vessel_id",
+            "unique": false,
+            "columnNames": [
+              "tea_id",
+              "vessel_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_tea_id_vessel_id` ON `${TABLE_NAME}` (`tea_id`, `vessel_id`)"
+          },
+          {
+            "name": "index_brewing_configurations_rating",
+            "unique": false,
+            "columnNames": [
+              "rating"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_rating` ON `${TABLE_NAME}` (`rating`)"
+          },
+          {
+            "name": "index_brewing_configurations_times_used",
+            "unique": false,
+            "columnNames": [
+              "times_used"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_times_used` ON `${TABLE_NAME}` (`times_used`)"
+          },
+          {
+            "name": "index_brewing_configurations_last_used_at",
+            "unique": false,
+            "columnNames": [
+              "last_used_at"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_last_used_at` ON `${TABLE_NAME}` (`last_used_at`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "tea",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tea_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "brewing_vessel",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vessel_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3d19d33d4a7cbc75179c855d6885edc6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '456aa79c1a2d705df9f6064fb02cc716')"
     ]
   }
 }

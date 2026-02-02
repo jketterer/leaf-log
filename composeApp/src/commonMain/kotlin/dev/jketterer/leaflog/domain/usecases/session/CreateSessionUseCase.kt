@@ -27,6 +27,7 @@ class CreateSessionUseCase(
         notes: String? = null,
         photos: List<String> = emptyList(),
         status: SessionStatus = SessionStatus.DRAFT,
+        usedConfigurationId: String? = null,
     ): Result<TeaSession> {
         if (teaId.isBlank()) {
             return validationFailure("Tea must be selected")
@@ -62,6 +63,7 @@ class CreateSessionUseCase(
             vesselId = vesselId,
             waterType = waterType,
             location = location?.takeIf { it.isNotBlank() }?.trim(),
+            usedConfigurationId = usedConfigurationId,
             timestamp = now,
             brewingTime = brewingTime,
             temperatureCelsius = temperatureCelsius,

@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ class HomeViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
+    private val getPreferencesUseCase: dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -34,7 +36,16 @@ class HomeViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     init {
+        loadPreferences()
         onIntent(HomeIntent.LoadData)
+    }
+
+    private fun loadPreferences() {
+        viewModelScope.launch {
+            getPreferencesUseCase().collect { preferences ->
+                _state.update { it.copy(userPreferences = preferences) }
+            }
+        }
     }
 
     fun onIntent(intent: HomeIntent) {

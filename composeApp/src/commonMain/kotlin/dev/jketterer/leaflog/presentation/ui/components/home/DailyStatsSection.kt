@@ -45,7 +45,7 @@ fun DailyStatsSection(
                 modifier = Modifier.weight(1f),
             )
             DailyStatsCard(
-                value = stats.getFormattedWaterQuantity(useMetric = true),
+                value = stats.formattedWaterQuantity,
                 label = "Water",
                 modifier = Modifier.weight(1f),
             )
@@ -69,7 +69,7 @@ private fun DailyStatsSectionPreview() {
             DailyStatsSection(
                 stats = DailyStats(
                     sessionCount = 3,
-                    totalWaterQuantityMl = 450,
+                    formattedWaterQuantity = "32 fl oz",
                     differentTeasCount = 2,
                 ),
             )

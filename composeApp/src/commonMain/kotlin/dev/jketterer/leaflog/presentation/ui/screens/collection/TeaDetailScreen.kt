@@ -80,7 +80,7 @@ fun TeaDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onNavigateToSession: (String) -> Unit,
-    onNavigateToLogTea: (String) -> Unit,
+    onNavigateToLogTea: (String, String?) -> Unit,
     viewModel: TeaDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -105,7 +105,7 @@ fun TeaDetailScreen(
                 }
 
                 is TeaDetailNavigationEvent.NavigateToLogTea -> {
-                    onNavigateToLogTea(teaId)
+                    onNavigateToLogTea(teaId, event.vesselId)
                 }
             }
         }
@@ -335,6 +335,7 @@ private fun TeaDetailContent(
                                     getVesselName = { vesselId ->
                                         state.vessels.find { it.id == vesselId }?.name ?: "Unknown"
                                     },
+                                    userPreferences = state.userPreferences,
                                     onEdit = { configId ->
                                         onIntent(TeaDetailIntent.EditConfigurationClicked(configId))
                                     },
@@ -372,17 +373,26 @@ private fun TeaDetailContent(
                                 items = state.recentSessions,
                                 key = { it.id },
                             ) { session ->
+                                val vesselName = state.vessels
+                                    .firstOrNull { it.id == session.vesselId }
+                                    ?.name ?: "Unknown"
                                 SessionCard(
                                     session = session,
                                     teaName = state.tea.name,
                                     teaTypeName = state.teaType?.name ?: "",
+                                    vesselName = vesselName,
                                     teaPhotoUrl = state.tea.photos.firstOrNull(),
+                                    userPrefs = state.userPreferences,
                                     onSessionClick = {
                                         onIntent(TeaDetailIntent.SessionClicked(session.id))
                                     },
-                                    onBrewAgainClick = { /* TODO */ },
-                                    onDeleteClick = { /* TODO */ },
-                                    temperatureUnit = state.userPreferences.temperatureUnit,
+                                    onEditClick = {
+                                        onIntent(TeaDetailIntent.EditSessionClicked(session.id))
+                                    },
+                                    onBrewAgainClick = {
+                                        onIntent(TeaDetailIntent.BrewThisTeaClicked(session.vesselId))
+                                    },
+                                    onDeleteClick = { onIntent(TeaDetailIntent.DeleteTeaClicked) },
                                 )
                             }
                         }
@@ -411,7 +421,7 @@ private fun TeaDetailContent(
         ) {
             Button(
                 onClick = {
-                    onIntent(TeaDetailIntent.BrewThisTeaClicked)
+                    onIntent(TeaDetailIntent.BrewThisTeaClicked(vesselId = null))
                 },
                 modifier = Modifier
                     .fillMaxWidth()

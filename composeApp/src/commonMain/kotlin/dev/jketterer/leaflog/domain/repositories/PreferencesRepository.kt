@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface PreferencesRepository {
     fun getPreferencesFlow(): Flow<UserPreferences>
+    suspend fun getPreferences(): UserPreferences
     suspend fun updateTemperatureUnit(unit: TemperatureUnit): Result<Unit>
     suspend fun updateVolumeUnit(unit: VolumeUnit): Result<Unit>
 }

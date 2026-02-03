@@ -2,12 +2,17 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
@@ -27,10 +32,11 @@ class HistoryViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
+    private val brewingVesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val completeSessionUseCase: CompleteSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
-    private val getPreferencesUseCase: dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HistoryState())
@@ -40,16 +46,7 @@ class HistoryViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     init {
-        loadPreferences()
         onIntent(HistoryIntent.LoadData)
-    }
-
-    private fun loadPreferences() {
-        viewModelScope.launch {
-            getPreferencesUseCase().collect { preferences ->
-                _state.update { it.copy(userPreferences = preferences) }
-            }
-        }
     }
 
     fun onIntent(intent: HistoryIntent) {
@@ -95,22 +92,30 @@ class HistoryViewModel(
                     teaSessionRepository.getAllFlow()
                 }
 
-                sessionsFlow
+                combine(
+                    sessionsFlow,
+                    teaRepository.getAllFlow(),
+                    teaTypeRepository.getAllFlow(),
+                    brewingVesselRepository.getAllFlow(),
+                    preferencesRepository.getPreferencesFlow(),
+                ) { sessions, teas, types, vessels, prefs ->
+                    HistoryData(
+                        sessions,
+                        teas,
+                        types,
+                        vessels,
+                        prefs
+                    )
+                }
                     .catch { e ->
                         _state.update {
                             it.copy(
                                 isLoading = false,
-                                error = "Failed to load sessions: ${e.message}",
+                                error = "Failed to load data: ${e.message}",
                             )
                         }
                     }
-                    .combine(teaRepository.getAllFlow()) { sessions, teas ->
-                        sessions to teas
-                    }
-                    .combine(teaTypeRepository.getAllFlow()) { (sessions, teas), types ->
-                        Triple(sessions, teas, types)
-                    }
-                    .collect { (sessions, teas, types) ->
+                    .collect { (sessions, teas, types, vessels, prefs) ->
                         val filteredSessions = applyFilters(sessions)
 
                         _state.update {
@@ -119,6 +124,8 @@ class HistoryViewModel(
                                 groupedSessions = filteredSessions.groupByTimePeriod(),
                                 teas = teas.associateBy { tea -> tea.id },
                                 teaTypes = types.associateBy { type -> type.id },
+                                vessels = vessels.associateBy { vessel -> vessel.id },
+                                userPreferences = prefs,
                                 isLoading = false,
                                 isEmpty = filteredSessions.isEmpty(),
                             )
@@ -346,3 +353,11 @@ class HistoryViewModel(
 sealed interface HistoryNavEvent {
     data class NavigateToSession(val sessionId: String) : HistoryNavEvent
 }
+
+private data class HistoryData(
+    val sessions: List<TeaSession>,
+    val teas: List<Tea>,
+    val types: List<TeaType>,
+    val vessels: List<BrewingVessel>,
+    val prefs: UserPreferences,
+)

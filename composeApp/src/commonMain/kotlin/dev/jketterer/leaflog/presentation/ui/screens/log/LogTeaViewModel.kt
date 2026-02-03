@@ -10,11 +10,9 @@ import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
-import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
@@ -23,6 +21,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -31,14 +31,12 @@ import kotlin.time.Duration
 
 class LogTeaViewModel(
     private val teaRepository: TeaRepository,
-    private val teaSessionRepository: TeaSessionRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
-    private val teaTypeRepository: TeaTypeRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val searchTeasUseCase: SearchTeasUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
-    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LogTeaState())
@@ -48,16 +46,7 @@ class LogTeaViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     init {
-        loadPreferences()
         onIntent(LogTeaIntent.LoadData)
-    }
-
-    private fun loadPreferences() {
-        viewModelScope.launch {
-            getPreferencesUseCase().collect { preferences ->
-                _state.update { it.copy(userPreferences = preferences) }
-            }
-        }
     }
 
     fun onIntent(intent: LogTeaIntent) {
@@ -73,7 +62,7 @@ class LogTeaViewModel(
             is LogTeaIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
             is LogTeaIntent.TemperatureChanged -> updateTemperature(intent.temperature)
             is LogTeaIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
-            is LogTeaIntent.VesselSelected -> selectVessel(intent.vessel)
+            is LogTeaIntent.VesselSelected -> selectVessel(intent.vesselId)
             is LogTeaIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
             is LogTeaIntent.LocationChanged -> updateLocation(intent.location)
             is LogTeaIntent.NotesChanged -> updateNotes(intent.notes)
@@ -99,53 +88,30 @@ class LogTeaViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
-            try {
-                collectTeas()
-                collectVessels()
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load data: ${e.message}"
-                    )
+            combine(
+                preferencesRepository.getPreferencesFlow(),
+                teaRepository.getAllFlow(),
+                brewingVesselRepository.getAllFlow(),
+            ) { prefs, teas, vessels -> Triple(prefs, teas, vessels) }
+                .catch { e ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "Failed to load data: ${e.message}",
+                        )
+                    }
                 }
-            }
+                .collect { (prefs, teas, vessels) ->
+                    _state.update {
+                        it.copy(
+                            userPreferences = prefs,
+                            availableTeas = teas,
+                            availableVessels = vessels,
+                            isLoading = false,
+                        )
+                    }
+                }
         }
-    }
-
-    private fun collectTeas() = viewModelScope.launch {
-        teaRepository.getAllFlow()
-            .catch { e ->
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load teas: ${e.message}",
-                    )
-                }
-            }
-            .collect { teas ->
-                _state.update {
-                    it.copy(
-                        availableTeas = teas,
-                        isLoading = false,
-                    )
-                }
-            }
-    }
-
-    private fun collectVessels() = viewModelScope.launch {
-        brewingVesselRepository.getAllFlow()
-            .catch { e ->
-                println("Failed to load vessels: ${e.message}")
-            }
-            .collect { vessels ->
-                _state.update {
-                    it.copy(
-                        availableVessels = vessels,
-                        // Don't auto-select a vessel - let user choose
-                    )
-                }
-            }
     }
 
     private fun showTeaSearchDialog() {
@@ -180,7 +146,23 @@ class LogTeaViewModel(
         }
     }
 
-    private fun selectTea(teaId: String?) {
+    private fun selectTea(teaId: String?) = viewModelScope.launch {
+        if (teaId == null) {
+            _state.update {
+                it.copy(
+                    selectedTea = null,
+                    teaError = null,
+                    showTeaSearchDialog = false,
+                    teaSearchQuery = "",
+                    hasUnsavedChanges = true,
+                )
+            }
+            return@launch
+        }
+
+        // Wait for initial data load to complete before attempting to find tea
+        state.first { !it.isLoading }
+
         val tea = _state.value.availableTeas.firstOrNull { it.id == teaId }
         _state.update {
             it.copy(
@@ -427,7 +409,13 @@ class LogTeaViewModel(
         }
     }
 
-    private fun selectVessel(vessel: BrewingVessel) {
+    private fun selectVessel(vesselId: String?) = viewModelScope.launch {
+        if (vesselId == null) return@launch
+
+        state.first { !it.isLoading }
+
+        val vessel = _state.value.availableVessels.firstOrNull { it.id == vesselId }
+        println("selected vessel: ${vessel?.name}")
         _state.update { currentState ->
             currentState.copy(
                 selectedVessel = vessel,
@@ -435,6 +423,8 @@ class LogTeaViewModel(
                 hasUnsavedChanges = true
             )
         }
+
+        if (vessel == null) return@launch
 
         // Load configurations and optionally pre-fill if tea is also selected
         val tea = _state.value.selectedTea
@@ -528,14 +518,14 @@ class LogTeaViewModel(
 
             // Convert temperature from user's input unit to Celsius for storage
             val temperatureCelsius =
-                dev.jketterer.leaflog.domain.models.UnitConverter.inputTemperatureToCelsius(
+                UnitConverter.inputTemperatureToCelsius(
                     currentState.temperatureCelsius.toInt(),
                     currentState.userPreferences.temperatureUnit
                 )
 
             // Convert water quantity from user's input unit to mL for storage
             val waterQuantityMl =
-                dev.jketterer.leaflog.domain.models.UnitConverter.inputVolumeToMilliliters(
+                UnitConverter.inputVolumeToMilliliters(
                     currentState.waterQuantityMl.toInt(),
                     currentState.userPreferences.volumeUnit
                 )

@@ -11,7 +11,8 @@ sealed interface TeaDetailIntent {
     data object CancelDelete : TeaDetailIntent
     data object ToggleFavorite : TeaDetailIntent
     data class SessionClicked(val sessionId: String) : TeaDetailIntent
-    data object BrewThisTeaClicked : TeaDetailIntent
+    data class EditSessionClicked(val sessionId: String) : TeaDetailIntent
+    data class BrewThisTeaClicked(val vesselId: String?) : TeaDetailIntent
     data object BackClicked : TeaDetailIntent
 
     // Configuration management
@@ -26,5 +27,6 @@ sealed interface TeaDetailIntent {
         val waterType: WaterType,
         val isActive: Boolean
     ) : TeaDetailIntent
+
     data object DismissEditConfigDialog : TeaDetailIntent
 }

@@ -1,6 +1,5 @@
 package dev.jketterer.leaflog.presentation.ui.screens.log
 
-import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
@@ -21,7 +20,7 @@ sealed interface LogTeaIntent {
     data class WaterQuantityChanged(val quantity: String) : LogTeaIntent
     data class TemperatureChanged(val temperature: String) : LogTeaIntent
     data class BrewingTimeChanged(val duration: Duration) : LogTeaIntent
-    data class VesselSelected(val vessel: BrewingVessel) : LogTeaIntent
+    data class VesselSelected(val vesselId: String?) : LogTeaIntent
     data class WaterTypeSelected(val waterType: WaterType) : LogTeaIntent
     data class LocationChanged(val location: String) : LogTeaIntent
     data class NotesChanged(val notes: String) : LogTeaIntent

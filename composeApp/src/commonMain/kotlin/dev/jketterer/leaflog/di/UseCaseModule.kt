@@ -25,9 +25,6 @@ import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
-import dev.jketterer.leaflog.domain.usecases.preferences.UpdateTemperatureUnitUseCase
-import dev.jketterer.leaflog.domain.usecases.preferences.UpdateVolumeUnitUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.UpdateBrewingVesselUseCase
@@ -76,9 +73,4 @@ val useCaseModule = module {
     factoryOf(::SaveBrewingConfigurationUseCase)
     factoryOf(::UpdateBrewingConfigurationUseCase)
     factoryOf(::DeleteBrewingConfigurationUseCase)
-
-    // Preferences use cases
-    factoryOf(::GetPreferencesUseCase)
-    factoryOf(::UpdateTemperatureUnitUseCase)
-    factoryOf(::UpdateVolumeUnitUseCase)
 }

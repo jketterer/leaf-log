@@ -597,11 +597,11 @@ private fun NextSteepParameterDialog(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = temperature.toString(),
+                        value = TemperatureFormatter.format(temperature, temperatureUnit),
                         onValueChange = { value ->
                             value.toIntOrNull()?.let { onTemperatureChange(it) }
                         },
-                        suffix = { Text(TemperatureFormatter.getUnitSymbol(temperatureUnit)) },
+                        suffix = { Text(temperatureUnit.symbol) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )

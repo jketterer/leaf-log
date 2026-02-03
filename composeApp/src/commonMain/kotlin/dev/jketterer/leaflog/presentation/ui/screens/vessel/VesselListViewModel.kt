@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.vessel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,7 +11,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class VesselListViewModel(
-    private val brewingVesselRepository: BrewingVesselRepository
+    private val brewingVesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(VesselListState())
@@ -21,6 +23,7 @@ class VesselListViewModel(
 
     init {
         loadVessels()
+        loadPreferences()
     }
 
     fun onIntent(intent: VesselListIntent) {
@@ -54,6 +57,12 @@ class VesselListViewModel(
                     )
                 }
             }
+        }
+    }
+
+    private fun loadPreferences() = viewModelScope.launch {
+        preferencesRepository.getPreferencesFlow().collect { prefs ->
+            _state.update { it.copy(userPreferences = prefs) }
         }
     }
 

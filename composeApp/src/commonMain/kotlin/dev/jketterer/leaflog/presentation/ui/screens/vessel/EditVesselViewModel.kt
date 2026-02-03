@@ -2,7 +2,9 @@ package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.UpdateBrewingVesselUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,8 +15,9 @@ import kotlinx.coroutines.launch
 
 class EditVesselViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val createBrewingVesselUseCase: CreateBrewingVesselUseCase,
-    private val updateBrewingVesselUseCase: UpdateBrewingVesselUseCase
+    private val updateBrewingVesselUseCase: UpdateBrewingVesselUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditVesselState())
@@ -22,6 +25,10 @@ class EditVesselViewModel(
 
     private val _navigationEvent = MutableStateFlow<EditVesselNavigationEvent?>(null)
     val navigationEvent: StateFlow<EditVesselNavigationEvent?> = _navigationEvent.asStateFlow()
+
+    init {
+        loadPreferences()
+    }
 
     fun onIntent(intent: EditVesselIntent) {
         when (intent) {
@@ -52,7 +59,11 @@ class EditVesselViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
+                val prefs = preferencesRepository.getPreferences()
                 val vessel = brewingVesselRepository.getById(vesselId)
+                val capacity = vessel?.capacityMl?.let {
+                    UnitConverter.millilitersToDisplayVolume(it, prefs.volumeUnit)
+                }
                 if (vessel != null) {
                     _state.update {
                         it.copy(
@@ -60,8 +71,8 @@ class EditVesselViewModel(
                             existingVessel = vessel,
                             name = vessel.name,
                             selectedIconName = vessel.iconName ?: "generic",
-                            capacityMl = vessel.capacityMl?.toString() ?: "",
-                            isLoading = false
+                            capacity = capacity?.toString() ?: "",
+                            isLoading = false,
                         )
                     }
                 } else {
@@ -80,6 +91,12 @@ class EditVesselViewModel(
                     )
                 }
             }
+        }
+    }
+
+    private fun loadPreferences() = viewModelScope.launch {
+        preferencesRepository.getPreferencesFlow().collect { prefs ->
+            _state.update { it.copy(userPreferences = prefs) }
         }
     }
 
@@ -107,8 +124,8 @@ class EditVesselViewModel(
     private fun onCapacityChanged(capacity: String) {
         _state.update {
             it.copy(
-                capacityMl = capacity,
-                capacityError = validateCapacity(capacity)
+                capacity = capacity,
+                capacityError = validateCapacity(capacity),
             )
         }
     }
@@ -121,7 +138,6 @@ class EditVesselViewModel(
         return when {
             value == null -> "Must be a valid number"
             value <= 0 -> "Capacity must be greater than 0"
-            value > 10000 -> "Capacity must be 10000 ml or less"
             else -> null
         }
     }
@@ -131,7 +147,7 @@ class EditVesselViewModel(
 
         // Validate
         val nameError = validateName(currentState.name)
-        val capacityError = validateCapacity(currentState.capacityMl)
+        val capacityError = validateCapacity(currentState.capacity)
 
         if (nameError != null || capacityError != null || currentState.selectedIconName == null) {
             _state.update {
@@ -146,7 +162,10 @@ class EditVesselViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, error = null) }
 
-            val capacityValue = currentState.capacityMl.toIntOrNull()
+            val volumeUnit = state.value.userPreferences.volumeUnit
+            val capacityValue = currentState.capacity.toIntOrNull()?.let {
+                UnitConverter.inputVolumeToMilliliters(it, volumeUnit)
+            }
 
             val result = if (currentState.isEditMode && currentState.existingVessel != null) {
                 // Update existing vessel
@@ -154,7 +173,7 @@ class EditVesselViewModel(
                     existingVessel = currentState.existingVessel,
                     name = currentState.name,
                     iconName = currentState.selectedIconName,
-                    capacityMl = capacityValue
+                    capacityMl = capacityValue,
                 )
             } else {
                 // Create new vessel

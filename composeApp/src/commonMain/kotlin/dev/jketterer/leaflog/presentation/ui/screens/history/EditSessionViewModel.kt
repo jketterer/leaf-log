@@ -5,11 +5,10 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,10 +24,9 @@ class EditSessionViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val updateSessionUseCase: UpdateSessionUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
-    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
-    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditSessionState())
@@ -44,15 +42,21 @@ class EditSessionViewModel(
 
     private fun loadPreferences() {
         viewModelScope.launch {
-            getPreferencesUseCase().collect { preferences ->
-                _state.update { it.copy(userPreferences = preferences) }
-            }
+            preferencesRepository.getPreferencesFlow()
+                .catch { println("Failed to load preferences") }
+                .collect { preferences ->
+                    _state.update { it.copy(userPreferences = preferences) }
+                }
         }
     }
 
     fun onIntent(intent: EditSessionIntent) {
         when (intent) {
-            is EditSessionIntent.LoadSession -> loadSession(intent.sessionId, intent.editFullSession)
+            is EditSessionIntent.LoadSession -> loadSession(
+                intent.sessionId,
+                intent.editFullSession
+            )
+
             is EditSessionIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
             is EditSessionIntent.TemperatureChanged -> updateTemperature(intent.temperature)
             is EditSessionIntent.VesselSelected -> selectVessel(intent.vessel)
@@ -300,7 +304,8 @@ class EditSessionViewModel(
                     // Only for steep edits with rating >= 5
                     if (!currentState.isParentSession &&
                         updatedSession.rating != null &&
-                        updatedSession.rating >= 5f) {
+                        updatedSession.rating >= 5f
+                    ) {
                         _state.update { it.copy(showSaveConfigurationDialog = true) }
                     } else {
                         _navEvents.send(EditSessionNavEvent.NavigateBack)

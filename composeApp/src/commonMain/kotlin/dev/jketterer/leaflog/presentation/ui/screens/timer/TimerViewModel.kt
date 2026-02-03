@@ -7,14 +7,13 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
@@ -25,6 +24,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,6 +35,7 @@ class TimerViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
@@ -45,8 +46,6 @@ class TimerViewModel(
     private val completeTimerUseCase: CompleteTimerUseCase,
     private val cancelTimerUseCase: CancelTimerUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
-    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
-    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimerScreenState())
@@ -62,9 +61,11 @@ class TimerViewModel(
 
     private fun loadPreferences() {
         viewModelScope.launch {
-            getPreferencesUseCase().collect { preferences ->
-                _state.update { it.copy(userPreferences = preferences) }
-            }
+            preferencesRepository.getPreferencesFlow()
+                .catch { e -> println("Failed to load preferences: ${e.message}") }
+                .collect { preferences ->
+                    _state.update { it.copy(userPreferences = preferences) }
+                }
         }
     }
 
@@ -427,11 +428,17 @@ class TimerViewModel(
         }
 
         // Check if we should show the save configuration dialog
-        // Show for first steep (steepNumber == 1) with rating >= 5 stars
+        // Show for first steep (steepNumber == 1) with rating >= 3 stars
         if (updatedSession.steepNumber == 1 &&
             updatedSession.rating != null &&
-            updatedSession.rating >= 5f) {
-            _state.update { it.copy(showSaveConfigurationDialog = true, savedSession = updatedSession) }
+            updatedSession.rating >= 3f
+        ) {
+            _state.update {
+                it.copy(
+                    showSaveConfigurationDialog = true,
+                    savedSession = updatedSession
+                )
+            }
         } else {
             _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
         }

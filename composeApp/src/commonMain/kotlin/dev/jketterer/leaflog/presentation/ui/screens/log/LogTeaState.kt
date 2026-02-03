@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.log
 
+import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -33,7 +34,7 @@ data class LogTeaState(
     // Pre-fill information
     val prefillSource: PrefillSource = PrefillSource.None,
     val usedConfigurationId: String? = null, // Track which configuration was used
-    val availableConfigurations: List<dev.jketterer.leaflog.domain.models.BrewingConfiguration> = emptyList(),
+    val availableConfigurations: List<BrewingConfiguration> = emptyList(),
     val showChooseMethodDialog: Boolean = false,
     val hasEditedBrewingParameters: Boolean = false, // Track if user has manually edited parameters
 
@@ -56,13 +57,11 @@ data class LogTeaState(
 ) {
     val isValid: Boolean
         get() = selectedTea != null &&
-                waterQuantityMl.toIntOrNull() != null &&
-                waterQuantityMl.toInt() > 0 &&
-                temperatureCelsius.toIntOrNull() != null &&
-                (temperatureCelsius.toInt() in 0..100) &&
-                brewingTime != null &&
-                brewingTime > Duration.ZERO &&
-                selectedVessel != null
+                teaError == null &&
+                vesselError == null &&
+                waterQuantityError == null &&
+                temperatureError == null &&
+                brewingTimeError == null
 
     val canSave: Boolean
         get() = isValid && !isSaving

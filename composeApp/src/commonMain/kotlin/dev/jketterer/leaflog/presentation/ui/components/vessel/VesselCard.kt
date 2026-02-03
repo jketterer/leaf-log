@@ -22,10 +22,13 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronRight
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 
 @Composable
 fun VesselCard(
     vessel: BrewingVessel,
+    volumeUnit: VolumeUnit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -67,7 +70,10 @@ fun VesselCard(
                     // Show capacity if set
                     if (vessel.capacityMl != null) {
                         Text(
-                            text = "${vessel.capacityMl} ml",
+                            text = VolumeFormatter.format(
+                                milliliters = vessel.capacityMl,
+                                unit = volumeUnit,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

@@ -2,11 +2,15 @@ package dev.jketterer.leaflog.presentation.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,8 +29,9 @@ class HomeViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
+    private val vesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
-    private val getPreferencesUseCase: dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -42,9 +47,11 @@ class HomeViewModel(
 
     private fun loadPreferences() {
         viewModelScope.launch {
-            getPreferencesUseCase().collect { preferences ->
-                _state.update { it.copy(userPreferences = preferences) }
-            }
+            preferencesRepository.getPreferencesFlow()
+                .catch { println("Failed to load preferences") }
+                .collect { preferences ->
+                    _state.update { it.copy(userPreferences = preferences) }
+                }
         }
     }
 
@@ -54,7 +61,16 @@ class HomeViewModel(
             is HomeIntent.Refresh -> refresh()
             is HomeIntent.ClearError -> clearError()
 
-            is HomeIntent.LogTeaClicked -> _navEvents.trySend(HomeNavEvent.NavigateToLogTea)
+            is HomeIntent.LogTeaClicked -> _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+            is HomeIntent.BrewAgainClicked -> _navEvents.trySend(
+                HomeNavEvent.NavigateToLogTea(
+                    intent.teaId,
+                    intent.vesselId
+                )
+            )
+
+            is HomeIntent.DeleteSessionClicked -> deleteSession(intent.sessionId)
+
             is HomeIntent.SessionClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSession(intent.sessionId))
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
@@ -109,8 +125,9 @@ class HomeViewModel(
             teaSessionRepository.getRecentFlow(limit = 5),
             teaRepository.getAllFlow(),
             teaTypeRepository.getAllFlow(),
-        ) { sessions, teas, types ->
-            Triple(sessions, teas, types)
+            vesselRepository.getAllFlow(),
+        ) { sessions, teas, types, vessels ->
+            HomeSessionData(sessions, teas, types, vessels)
         }
             .catch { e ->
                 _state.update {
@@ -120,10 +137,11 @@ class HomeViewModel(
                     )
                 }
             }
-            .collect { (sessions, teas, types) ->
+            .collect { (sessions, teas, types, vessels) ->
                 // Create lookup maps for efficient access
                 val teaMap = teas.associateBy { it.id }
                 val typeMap = types.associateBy { it.id }
+                val vesselMap = vessels.associateBy { it.id }
 
                 _state.update {
                     it.copy(
@@ -131,11 +149,13 @@ class HomeViewModel(
                         recentSessionsWithTea = sessions.map { session ->
                             val tea = teaMap[session.teaId]
                             val type = tea?.let { t -> typeMap[t.teaTypeId] }
+                            val vessel = vesselMap[session.vesselId]
                             SessionWithTeaData(
                                 session = session,
                                 teaName = tea?.name ?: "Unknown Tea",
                                 teaTypeName = type?.name ?: "Unknown Type",
                                 teaPhotoUrl = tea?.photos?.firstOrNull(),
+                                vesselName = vessel?.name ?: "Unknown Vessel",
                             )
                         },
                         isEmpty = sessions.isEmpty(),
@@ -184,6 +204,10 @@ class HomeViewModel(
         }
     }
 
+    private fun deleteSession(sessionId: String?) = viewModelScope.launch {
+        sessionId?.let { teaSessionRepository.delete(it) }
+    }
+
     private fun clearError() {
         _state.update { it.copy(error = null) }
     }
@@ -194,11 +218,21 @@ data class SessionWithTeaData(
     val teaName: String = "Unknown Tea",
     val teaTypeName: String = "Unknown Type",
     val teaPhotoUrl: String? = null,
+    val vesselName: String = "Unknown Vessel",
 )
 
 sealed interface HomeNavEvent {
     data class NavigateToHistory(val showDraftsOnly: Boolean = false) : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
-    data object NavigateToLogTea : HomeNavEvent
+    data class NavigateToLogTea(val teaId: String? = null, val vesselId: String? = null) :
+        HomeNavEvent
+
     data object NavigateToSettings : HomeNavEvent
 }
+
+private data class HomeSessionData(
+    val sessions: List<TeaSession>,
+    val teas: List<Tea>,
+    val types: List<TeaType>,
+    val vessels: List<BrewingVessel>,
+)

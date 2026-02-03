@@ -50,14 +50,17 @@ fun VesselListScreen(
                 onNavigateToVesselDetail(event.vesselId)
                 viewModel.onNavigationEventHandled()
             }
+
             is VesselListNavigationEvent.NavigateToAddVessel -> {
                 onNavigateToAddVessel()
                 viewModel.onNavigationEventHandled()
             }
+
             is VesselListNavigationEvent.NavigateBack -> {
                 onNavigateBack()
                 viewModel.onNavigationEventHandled()
             }
+
             null -> {}
         }
     }
@@ -101,12 +104,14 @@ fun VesselListScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 state.vessels.isEmpty() -> {
                     Text(
                         text = "No vessels found",
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
+
                 else -> {
                     LazyColumn(
                         contentPadding = PaddingValues(16.dp),
@@ -118,6 +123,7 @@ fun VesselListScreen(
                         ) { vessel ->
                             VesselCard(
                                 vessel = vessel,
+                                volumeUnit = state.userPreferences.volumeUnit,
                                 onClick = { viewModel.onIntent(VesselListIntent.VesselClicked(vessel.id)) }
                             )
                         }

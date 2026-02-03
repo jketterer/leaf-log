@@ -44,7 +44,7 @@ fun RecentSessionCard(
     session: TeaSession,
     teaPhotoUrl: String? = null,
     onSessionClick: () -> Unit,
-    temperatureUnit: dev.jketterer.leaflog.domain.models.TemperatureUnit,
+    temperatureUnit: TemperatureUnit,
     modifier: Modifier = Modifier,
 ) {
     Card(

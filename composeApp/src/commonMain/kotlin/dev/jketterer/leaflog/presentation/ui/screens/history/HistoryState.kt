@@ -1,8 +1,10 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.UserPreferences
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -15,6 +17,7 @@ data class HistoryState(
     val groupedSessions: Map<String, List<TeaSession>> = emptyMap(),  // "Today", "Yesterday", etc.
     val teas: Map<String, Tea> = emptyMap(),  // teaId -> Tea (for display)
     val teaTypes: Map<String, TeaType> = emptyMap(),  // teaTypeId -> TeaType
+    val vessels: Map<String, BrewingVessel> = emptyMap(),  // vesselId -> BrewingVessel
 
     // Filters
     val searchQuery: String = "",
@@ -34,7 +37,7 @@ data class HistoryState(
     val error: String? = null,
     val isEmpty: Boolean = false,
     val showFilterSheet: Boolean = false,
-    val userPreferences: dev.jketterer.leaflog.domain.models.UserPreferences = dev.jketterer.leaflog.domain.models.UserPreferences(),
+    val userPreferences: UserPreferences = UserPreferences(),
 )
 
 /**

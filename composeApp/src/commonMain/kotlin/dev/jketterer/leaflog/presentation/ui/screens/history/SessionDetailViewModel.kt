@@ -3,10 +3,10 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
@@ -25,10 +25,10 @@ class SessionDetailViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
-    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionDetailState())
@@ -43,9 +43,11 @@ class SessionDetailViewModel(
 
     private fun loadPreferences() {
         viewModelScope.launch {
-            getPreferencesUseCase().collect { preferences ->
-                _state.update { it.copy(userPreferences = preferences) }
-            }
+            preferencesRepository.getPreferencesFlow()
+                .catch { println("Failed to load preferences") }
+                .collect { preferences ->
+                    _state.update { it.copy(userPreferences = preferences) }
+                }
         }
     }
 
@@ -61,6 +63,7 @@ class SessionDetailViewModel(
                     )
                 )
             }
+
             is SessionDetailIntent.DeleteSessionClicked -> showDeleteConfirmation()
             is SessionDetailIntent.ConfirmDelete -> confirmDelete()
             is SessionDetailIntent.CancelDelete -> cancelDelete()
@@ -80,6 +83,7 @@ class SessionDetailViewModel(
                     )
                 )
             }
+
             is SessionDetailIntent.ViewTeaClicked -> _navEvents.trySend(
                 SessionDetailNavEvent.NavigateToTeaDetails(
                     intent.teaId
@@ -296,6 +300,7 @@ sealed interface SessionDetailNavEvent {
         val sessionId: String,
         val editFullSession: Boolean = false
     ) : SessionDetailNavEvent
+
     data class NavigateToTeaDetails(val teaId: String) : SessionDetailNavEvent
     data class NavigateToTimer(val sessionId: String) : SessionDetailNavEvent
 }

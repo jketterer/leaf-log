@@ -43,7 +43,7 @@ import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.DraftSessionsBanner
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
-import dev.jketterer.leaflog.presentation.ui.components.home.RecentSessionCard
+import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
@@ -57,7 +57,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Composable
 fun HomeScreen(
-    onNavigateToLogTea: () -> Unit,
+    onNavigateToLogTea: (String?, String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -69,7 +69,7 @@ fun HomeScreen(
         viewModel.navEvents.collect { event ->
             when (event) {
                 is HomeNavEvent.NavigateToLogTea -> {
-                    onNavigateToLogTea()
+                    onNavigateToLogTea(event.teaId, event.vesselId)
                 }
 
                 is HomeNavEvent.NavigateToSession -> {
@@ -208,14 +208,26 @@ private fun HomeContent(
                             items = state.recentSessionsWithTea,
                             key = { it.session.id },
                         ) { sessionData ->
-                            RecentSessionCard(
+                            SessionCard(
                                 teaName = sessionData.teaName,
                                 teaTypeName = sessionData.teaTypeName,
+                                vesselName = sessionData.vesselName,
                                 session = sessionData.session,
                                 teaPhotoUrl = sessionData.teaPhotoUrl,
-                                temperatureUnit = state.userPreferences.temperatureUnit,
+                                userPrefs = state.userPreferences,
                                 onSessionClick = {
                                     onIntent(HomeIntent.SessionClicked(sessionData.session.id))
+                                },
+                                onBrewAgainClick = {
+                                    onIntent(
+                                        HomeIntent.BrewAgainClicked(
+                                            sessionData.session.teaId,
+                                            sessionData.session.vesselId,
+                                        )
+                                    )
+                                },
+                                onDeleteClick = {
+                                    onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.id))
                                 },
                                 modifier = Modifier.padding(horizontal = 16.dp),
                             )

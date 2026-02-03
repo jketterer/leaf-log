@@ -1,3 +1,5 @@
+package dev.jketterer.leaflog
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.jketterer.leaflog.presentation.ui.navigation.AppNavigation

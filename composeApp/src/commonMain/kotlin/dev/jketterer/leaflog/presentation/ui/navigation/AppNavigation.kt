@@ -72,7 +72,9 @@ fun AppNavigation() {
             entryProvider = entryProvider {
                 entry<NavRoute.HomeRoute> {
                     HomeScreen(
-                        onNavigateToLogTea = { backStack.add(NavRoute.LogTeaRoute()) },
+                        onNavigateToLogTea = { teaId, vesselId ->
+                            backStack.add(NavRoute.LogTeaRoute(teaId, vesselId))
+                        },
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
@@ -129,7 +131,9 @@ fun AppNavigation() {
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
-                        onNavigateToLogTea = { teaId -> backStack.add(NavRoute.LogTeaRoute(teaId)) },
+                        onNavigateToLogTea = { teaId, vesselId ->
+                            backStack.add(NavRoute.LogTeaRoute(teaId, vesselId))
+                        },
                     )
                 }
 
@@ -177,9 +181,10 @@ fun AppNavigation() {
                 // Session Logging Destinations
                 // =========================================================
 
-                entry<NavRoute.LogTeaRoute> { entry ->
+                entry<NavRoute.LogTeaRoute> { route ->
                     LogTeaScreen(
-                        teaId = entry.teaId,
+                        teaId = route.teaId,
+                        vesselId = route.vesselId,
                         onNavigateBack = { backStack.removeLast() },
                         onNavigateToTimer = { sessionId ->
                             backStack.add(NavRoute.TimerRoute(sessionId))

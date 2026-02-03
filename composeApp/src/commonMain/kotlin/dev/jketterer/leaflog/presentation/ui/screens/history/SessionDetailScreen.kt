@@ -59,6 +59,7 @@ import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -189,28 +190,7 @@ private fun SessionDetailContent(
                                         ?: state.parentSession.rating
 
                                     if (displayRating != null) {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            repeat(5) { index ->
-                                                Icon(
-                                                    imageVector = if (index < displayRating.toInt()) {
-                                                        FontAwesomeIcons.Solid.Star
-                                                    } else {
-                                                        FontAwesomeIcons.Regular.Star
-                                                    },
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(18.dp),
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = "(${displayRating})",
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-                                        }
+                                        RatingDisplay(displayRating)
                                     }
                                 }
                             }
@@ -496,6 +476,7 @@ private fun SessionDetailScreenPreview() {
                     teaId = "1",
                     steepNumber = 1,
                     vesselId = "1",
+                    rating = 5f,
                     waterType = WaterType.FILTERED,
                     timestamp = Instant.fromEpochMilliseconds(1),
                     status = SessionStatus.COMPLETED,

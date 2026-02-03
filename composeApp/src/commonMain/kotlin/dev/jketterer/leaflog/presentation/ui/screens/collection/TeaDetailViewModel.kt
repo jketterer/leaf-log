@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -11,7 +12,6 @@ import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.preferences.GetPreferencesUseCase
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
@@ -33,11 +33,11 @@ class TeaDetailViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val deleteTeaUseCase: DeleteTeaUseCase,
     private val deleteBrewingConfigurationUseCase: DeleteBrewingConfigurationUseCase,
     private val updateBrewingConfigurationUseCase: UpdateBrewingConfigurationUseCase,
-    private val getPreferencesUseCase: GetPreferencesUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaDetailState())
@@ -52,9 +52,11 @@ class TeaDetailViewModel(
 
     private fun loadPreferences() {
         viewModelScope.launch {
-            getPreferencesUseCase().collect { preferences ->
-                _state.update { it.copy(userPreferences = preferences) }
-            }
+            preferencesRepository.getPreferencesFlow()
+                .catchError("Failed to load preferences")
+                .collect { preferences ->
+                    _state.update { it.copy(userPreferences = preferences) }
+                }
         }
     }
 
@@ -68,7 +70,8 @@ class TeaDetailViewModel(
 
             is TeaDetailIntent.EditTeaClicked -> _navEvents.trySend(NavigateToEditTea)
             is TeaDetailIntent.SessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
-            is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea)
+            is TeaDetailIntent.EditSessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
+            is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea(intent.vesselId))
             is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
 
             is TeaDetailIntent.EditConfigurationClicked -> showEditConfigDialog(intent.configId)
@@ -261,6 +264,7 @@ class TeaDetailViewModel(
 sealed interface TeaDetailNavigationEvent {
     data object NavigateBack : TeaDetailNavigationEvent
     data class NavigateToSession(val sessionId: String) : TeaDetailNavigationEvent
-    data object NavigateToLogTea : TeaDetailNavigationEvent
+    data class NavigateToEditSession(val sessionId: String) : TeaDetailNavigationEvent
+    data class NavigateToLogTea(val vesselId: String? = null) : TeaDetailNavigationEvent
     data object NavigateToEditTea : TeaDetailNavigationEvent
 }

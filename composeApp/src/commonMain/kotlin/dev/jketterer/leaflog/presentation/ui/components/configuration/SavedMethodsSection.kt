@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.UserPreferences
 
 /**
  * Section showing saved brewing methods for a tea
@@ -20,6 +21,7 @@ import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 fun SavedMethodsSection(
     configurations: List<BrewingConfiguration>,
     getVesselName: (String) -> String,
+    userPreferences: UserPreferences,
     onEdit: (String) -> Unit,
     onDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -41,6 +43,7 @@ fun SavedMethodsSection(
             ConfigurationCard(
                 configuration = config,
                 vesselName = getVesselName(config.vesselId),
+                userPreferences = userPreferences,
                 onEdit = { onEdit(config.id) },
                 onDelete = { onDelete(config.id) }
             )

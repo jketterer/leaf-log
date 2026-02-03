@@ -34,7 +34,6 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
@@ -53,14 +52,16 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun LogTeaScreen(
     teaId: String?,
+    vesselId: String?,
     onNavigateBack: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
     viewModel: LogTeaViewModel,
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(teaId) {
+    LaunchedEffect(teaId, vesselId) {
         viewModel.onIntent(LogTeaIntent.TeaSelected(teaId))
+        viewModel.onIntent(LogTeaIntent.VesselSelected(vesselId))
     }
 
     LaunchedEffect(Unit) {
@@ -169,9 +170,10 @@ private fun LogTeaContent(
                     vessels = state.availableVessels,
                     selectedVessel = state.selectedVessel,
                     onVesselSelected = { vessel ->
-                        onIntent(LogTeaIntent.VesselSelected(vessel))
+                        onIntent(LogTeaIntent.VesselSelected(vessel.id))
                     },
                     label = "Brewing Vessel *",
+                    volumeUnit = state.userPreferences.volumeUnit,
                     isError = state.vesselError != null,
                     errorMessage = state.vesselError,
                     modifier = Modifier.fillMaxWidth(),
@@ -194,7 +196,7 @@ private fun LogTeaContent(
                         source = state.prefillSource,
                         teaName = state.selectedTea.name,
                         modifier = Modifier.fillMaxWidth(),
-                        hasMultipleMethods = state.availableConfigurations.size >= 1,
+                        hasMultipleMethods = state.availableConfigurations.isNotEmpty(),
                         onChooseDifferentMethod = {
                             onIntent(LogTeaIntent.ChooseDifferentMethodClicked)
                         }
@@ -250,7 +252,7 @@ private fun LogTeaContent(
                 OutlinedTextField(
                     value = state.temperatureCelsius,
                     onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
-                    label = { Text("${TemperatureFormatter.getInputLabel(state.userPreferences.temperatureUnit)} *") },
+                    label = { Text("Temperature *") },
                     isError = state.temperatureError != null,
                     supportingText = state.temperatureError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
@@ -264,11 +266,12 @@ private fun LogTeaContent(
                 OutlinedTextField(
                     value = state.waterQuantityMl,
                     onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
-                    label = { Text("${VolumeFormatter.getInputLabel(state.userPreferences.volumeUnit)} *") },
+                    label = { Text("Water Quantity *") },
                     isError = state.waterQuantityError != null,
                     supportingText = state.waterQuantityError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    suffix = { Text(state.userPreferences.volumeUnit.symbol) }
                 )
             }
 

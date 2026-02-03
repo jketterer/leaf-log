@@ -179,13 +179,15 @@ private fun HistoryContent(
                         ) { session ->
                             val tea = state.teas[session.teaId]
                             val teaType = tea?.let { state.teaTypes[it.teaTypeId] }
+                            val vessel = state.vessels[session.vesselId]
 
                             SessionCard(
                                 session = session,
                                 teaName = tea?.name ?: "Unknown Tea",
                                 teaTypeName = teaType?.name ?: "Unknown Type",
+                                vesselName = vessel?.name ?: "Unknown Vessel",
                                 teaPhotoUrl = tea?.photos?.firstOrNull(),
-                                temperatureUnit = state.userPreferences.temperatureUnit,
+                                userPrefs = state.userPreferences,
                                 onSessionClick = {
                                     if (session.status == SessionStatus.DRAFT) {
                                         onIntent(HistoryIntent.CompleteDraft(session.id))

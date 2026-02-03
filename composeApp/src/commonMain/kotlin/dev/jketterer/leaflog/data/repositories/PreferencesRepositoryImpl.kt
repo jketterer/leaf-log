@@ -6,13 +6,18 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class PreferencesRepositoryImpl(
-    private val preferencesDataStore: PreferencesDataStore
+    private val preferencesDataStore: PreferencesDataStore,
 ) : PreferencesRepository {
 
     override fun getPreferencesFlow(): Flow<UserPreferences> {
         return preferencesDataStore.getPreferencesFlow()
+    }
+
+    override suspend fun getPreferences(): UserPreferences {
+        return preferencesDataStore.getPreferencesFlow().first()
     }
 
     override suspend fun updateTemperatureUnit(unit: TemperatureUnit): Result<Unit> {

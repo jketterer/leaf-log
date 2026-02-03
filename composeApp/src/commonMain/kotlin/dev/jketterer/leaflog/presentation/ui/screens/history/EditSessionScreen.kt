@@ -185,6 +185,7 @@ private fun EditSessionContent(
                         onVesselSelected = { vessel ->
                             onIntent(EditSessionIntent.VesselSelected(vessel))
                         },
+                        volumeUnit = state.userPreferences.volumeUnit,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

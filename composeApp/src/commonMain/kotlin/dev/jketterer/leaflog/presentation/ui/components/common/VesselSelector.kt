@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
 
@@ -35,6 +37,7 @@ fun VesselSelector(
     selectedVessel: BrewingVessel?,
     onVesselSelected: (BrewingVessel) -> Unit,
     label: String = "Brewing Vessel",
+    volumeUnit: VolumeUnit,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -88,7 +91,10 @@ fun VesselSelector(
                                     Text(vessel.name)
                                     if (vessel.capacityMl != null) {
                                         Text(
-                                            text = "${vessel.capacityMl} ml",
+                                            text = VolumeFormatter.format(
+                                                milliliters = vessel.capacityMl,
+                                                unit = volumeUnit,
+                                            ),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -171,6 +177,7 @@ private fun VesselSelectorPreview() {
                 ),
                 selectedVessel = null,
                 onVesselSelected = {},
+                volumeUnit = VolumeUnit.FLUID_OUNCES,
             )
         }
     }

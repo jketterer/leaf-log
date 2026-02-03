@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,8 +37,11 @@ import compose.icons.feathericons.MoreVertical
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.TemperatureFormatter
+import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -55,11 +57,13 @@ fun SessionCard(
     session: TeaSession,
     teaName: String,
     teaTypeName: String,
+    vesselName: String,
     teaPhotoUrl: String?,
+    userPrefs: UserPreferences,
     onSessionClick: () -> Unit,
     onBrewAgainClick: () -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    temperatureUnit: dev.jketterer.leaflog.domain.models.TemperatureUnit,
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -114,7 +118,6 @@ fun SessionCard(
                             containerColor = MaterialTheme.colorScheme.errorContainer
                         )
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
                 }
 
                 Text(
@@ -126,10 +129,18 @@ fun SessionCard(
 
                 Text(
                     text = "$teaTypeName • ${session.brewingTime} • ${
-                        dev.jketterer.leaflog.domain.models.TemperatureFormatter.format(
+                        TemperatureFormatter.format(
                             session.temperatureCelsius,
-                            temperatureUnit
+                            userPrefs.temperatureUnit,
                         )
+                    }",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "$vesselName • ${
+                        VolumeFormatter.format(session.waterQuantityMl, userPrefs.volumeUnit)
                     }",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -138,11 +149,19 @@ fun SessionCard(
                 val timeText = session.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
                     .let { "${it.hour}:${it.minute.toString().padStart(2, '0')}" }
 
-                Text(
-                    text = timeText + if (session.rating != null) " • ${"⭐".repeat(session.rating.toInt())}" else "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.Bottom,
+                ) {
+                    Text(
+                        text = timeText + if (session.rating != null) " • " else "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (session.rating != null) {
+                        RatingDisplay(session.rating)
+                    }
+                }
 
                 if (session.notes != null) {
                     Text(
@@ -168,11 +187,20 @@ fun SessionCard(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
+                    if (session.status == SessionStatus.COMPLETED) {
+                        DropdownMenuItem(
+                            text = { Text("Brew Again") },
+                            onClick = {
+                                showMenu = false
+                                onBrewAgainClick()
+                            }
+                        )
+                    }
                     DropdownMenuItem(
-                        text = { Text("Brew Again") },
+                        text = { Text("Edit") },
                         onClick = {
                             showMenu = false
-                            onBrewAgainClick()
+                            onEditClick()
                         }
                     )
                     DropdownMenuItem(
@@ -190,33 +218,185 @@ fun SessionCard(
 
 @Preview
 @Composable
-private fun SessionCardPreview() {
+private fun SessionCardCompletedPreview() {
     LeafLogTheme {
         SessionCard(
             session = TeaSession(
-                id = "0",
-                teaId = "1",
+                id = "1",
+                teaId = "tea-1",
                 steepNumber = 1,
-                vesselId = "1",
+                vesselId = "vessel-1",
                 waterType = WaterType.FILTERED,
-                timestamp = Instant.fromEpochMilliseconds(1),
+                timestamp = Instant.fromEpochMilliseconds(1735747200000), // 2025-01-01 12:00
                 status = SessionStatus.COMPLETED,
-                brewingTime = 200.toDuration(DurationUnit.SECONDS),
-                updatedAt = Instant.fromEpochMilliseconds(1),
-                deletedAt = Instant.fromEpochMilliseconds(1),
-                createdAt = Instant.fromEpochMilliseconds(1),
+                brewingTime = 180.toDuration(DurationUnit.SECONDS),
+                updatedAt = Instant.fromEpochMilliseconds(1735747200000),
+                deletedAt = null,
+                createdAt = Instant.fromEpochMilliseconds(1735747200000),
                 temperatureCelsius = 95,
-                waterQuantityMl = 400,
+                waterQuantityMl = 200,
                 photos = emptyList(),
                 syncStatus = SyncStatus.LOCAL_ONLY,
+                rating = 4.5f,
+                notes = "Perfect brewing time, great flavor profile with hints of honey"
             ),
-            teaName = "Test Tea",
-            teaTypeName = "Black Tea",
+            teaName = "Dragon Well Green Tea",
+            teaTypeName = "Green Tea",
+            vesselName = "Gaiwan",
             teaPhotoUrl = null,
+            userPrefs = UserPreferences.IMPERIAL,
             onSessionClick = {},
+            onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
-            temperatureUnit = TemperatureUnit.FAHRENHEIT,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SessionCardDraftPreview() {
+    LeafLogTheme {
+        SessionCard(
+            session = TeaSession(
+                id = "2",
+                teaId = "tea-2",
+                steepNumber = 1,
+                vesselId = "vessel-2",
+                waterType = WaterType.SPRING,
+                timestamp = Instant.fromEpochMilliseconds(1735833600000), // 2025-01-02 12:00
+                status = SessionStatus.DRAFT,
+                brewingTime = 240.toDuration(DurationUnit.SECONDS),
+                updatedAt = Instant.fromEpochMilliseconds(1735833600000),
+                deletedAt = null,
+                createdAt = Instant.fromEpochMilliseconds(1735833600000),
+                temperatureCelsius = 100,
+                waterQuantityMl = 250,
+                photos = emptyList(),
+                syncStatus = SyncStatus.LOCAL_ONLY,
+                rating = null,
+                notes = null
+            ),
+            teaName = "English Breakfast",
+            teaTypeName = "Black Tea",
+            vesselName = "Mug",
+            teaPhotoUrl = null,
+            userPrefs = UserPreferences.METRIC,
+            onSessionClick = {},
+            onEditClick = {},
+            onDeleteClick = {},
+            onBrewAgainClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SessionCardNoRatingPreview() {
+    LeafLogTheme {
+        SessionCard(
+            session = TeaSession(
+                id = "3",
+                teaId = "tea-3",
+                steepNumber = 1,
+                vesselId = "vessel-3",
+                waterType = WaterType.FILTERED,
+                timestamp = Instant.fromEpochMilliseconds(1735920000000), // 2025-01-03 12:00
+                status = SessionStatus.COMPLETED,
+                brewingTime = 45.toDuration(DurationUnit.SECONDS),
+                updatedAt = Instant.fromEpochMilliseconds(1735920000000),
+                deletedAt = null,
+                createdAt = Instant.fromEpochMilliseconds(1735920000000),
+                temperatureCelsius = 85,
+                waterQuantityMl = 150,
+                photos = emptyList(),
+                syncStatus = SyncStatus.LOCAL_ONLY,
+                rating = null,
+                notes = "Quick morning steep, didn't have time to rate"
+            ),
+            teaName = "Jasmine Silver Needle",
+            teaTypeName = "White Tea",
+            vesselName = "Teapot",
+            teaPhotoUrl = null,
+            userPrefs = UserPreferences.IMPERIAL,
+            onSessionClick = {},
+            onEditClick = {},
+            onDeleteClick = {},
+            onBrewAgainClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SessionCardFahrenheitPreview() {
+    LeafLogTheme {
+        SessionCard(
+            session = TeaSession(
+                id = "4",
+                teaId = "tea-4",
+                steepNumber = 2,
+                vesselId = "vessel-4",
+                waterType = WaterType.TAP,
+                timestamp = Instant.fromEpochMilliseconds(1736006400000), // 2025-01-04 12:00
+                status = SessionStatus.COMPLETED,
+                brewingTime = 300.toDuration(DurationUnit.SECONDS),
+                updatedAt = Instant.fromEpochMilliseconds(1736006400000),
+                deletedAt = null,
+                createdAt = Instant.fromEpochMilliseconds(1736006400000),
+                temperatureCelsius = 90,
+                waterQuantityMl = 355,
+                photos = emptyList(),
+                syncStatus = SyncStatus.LOCAL_ONLY,
+                rating = 3.5f,
+                notes = null
+            ),
+            teaName = "Ti Kuan Yin Oolong",
+            teaTypeName = "Oolong",
+            vesselName = "Teapot",
+            teaPhotoUrl = null,
+            userPrefs = UserPreferences.METRIC,
+            onSessionClick = {},
+            onEditClick = {},
+            onDeleteClick = {},
+            onBrewAgainClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SessionCardLongNamesPreview() {
+    LeafLogTheme {
+        SessionCard(
+            session = TeaSession(
+                id = "5",
+                teaId = "tea-5",
+                steepNumber = 1,
+                vesselId = "vessel-5",
+                waterType = WaterType.FILTERED,
+                timestamp = Instant.fromEpochMilliseconds(1736092800000), // 2025-01-05 12:00
+                status = SessionStatus.COMPLETED,
+                brewingTime = 120.toDuration(DurationUnit.SECONDS),
+                updatedAt = Instant.fromEpochMilliseconds(1736092800000),
+                deletedAt = null,
+                createdAt = Instant.fromEpochMilliseconds(1736092800000),
+                temperatureCelsius = 80,
+                waterQuantityMl = 175,
+                photos = emptyList(),
+                syncStatus = SyncStatus.LOCAL_ONLY,
+                rating = 5.0f,
+                notes = "This is a very long note that will be truncated with an ellipsis because it exceeds the maximum line limit for the card display"
+            ),
+            teaName = "Fujian Province Premium Grade Dragon Phoenix Pearl Green Tea",
+            teaTypeName = "Green Tea - Premium Grade",
+            vesselName = "Black Teapot",
+            teaPhotoUrl = null,
+            userPrefs = UserPreferences(),
+            onSessionClick = {},
+            onEditClick = {},
+            onDeleteClick = {},
+            onBrewAgainClick = {},
         )
     }
 }

@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
+import dev.jketterer.leaflog.presentation.ui.components.common.EditCapacityField
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -69,6 +70,7 @@ fun EditVesselScreen(
                 onNavigateBack()
                 viewModel.onNavigationEventHandled()
             }
+
             null -> {}
         }
     }
@@ -139,18 +141,14 @@ fun EditVesselScreen(
                     )
 
                     // Capacity field
-                    OutlinedTextField(
-                        value = state.capacityMl,
+                    EditCapacityField(
+                        value = state.capacity,
                         onValueChange = { viewModel.onIntent(EditVesselIntent.CapacityChanged(it)) },
-                        label = { Text("Capacity (ml)") },
                         isError = state.capacityError != null,
-                        supportingText = {
-                            Text(state.capacityError ?: "Optional - auto-fill water quantity when selected")
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
+                        supportingText = state.capacityError
+                            ?: "Optional - auto-fills water quantity when selected",
                         enabled = !state.isSaving,
-                        suffix = { Text("ml") }
+                        volumeUnit = state.userPreferences.volumeUnit,
                     )
 
                     // Icon selector section

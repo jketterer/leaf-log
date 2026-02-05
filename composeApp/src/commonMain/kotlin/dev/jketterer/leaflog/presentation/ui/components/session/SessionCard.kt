@@ -44,8 +44,6 @@ import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
 import kotlin.time.toDuration
@@ -147,8 +145,7 @@ fun SessionCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                val timeText = session.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
-                    .let { TimeFormatter.formatClockTime(it.hour, it.minute) }
+                val timeText = TimeFormatter.formatRelativeTimestamp(session.timestamp)
 
                 Row(
                     modifier = Modifier.padding(vertical = 2.dp),

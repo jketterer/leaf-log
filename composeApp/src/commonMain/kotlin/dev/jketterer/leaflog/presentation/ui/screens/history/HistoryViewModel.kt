@@ -14,6 +14,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,6 +42,8 @@ class HistoryViewModel(
 
     private val _navEvents = Channel<HistoryNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    private var loadDataJob: Job? = null
 
     init {
         onIntent(HistoryIntent.LoadData)
@@ -76,7 +79,8 @@ class HistoryViewModel(
     }
 
     private fun loadData() {
-        viewModelScope.launch {
+        loadDataJob?.cancel()
+        loadDataJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
             try {
@@ -110,13 +114,14 @@ class HistoryViewModel(
                         }
                     }
                     .collect { (sessions, teas, types, vessels, prefs) ->
-                        val filteredSessions = applyFilters(sessions)
+                        val teasMap = teas.associateBy { tea -> tea.id }
+                        val filteredSessions = applyFilters(sessions, teasMap)
 
                         _state.update {
                             it.copy(
-                                sessions = filteredSessions,
+                                allSessions = sessions,
                                 groupedSessions = filteredSessions.groupByTimePeriod(),
-                                teas = teas.associateBy { tea -> tea.id },
+                                teas = teasMap,
                                 teaTypes = types.associateBy { type -> type.id },
                                 vessels = vessels.associateBy { vessel -> vessel.id },
                                 userPreferences = prefs,
@@ -136,7 +141,10 @@ class HistoryViewModel(
         }
     }
 
-    private fun applyFilters(sessions: List<TeaSession>): List<TeaSession> {
+    private fun applyFilters(
+        sessions: List<TeaSession>,
+        teasMap: Map<String, Tea>,
+    ): List<TeaSession> {
         var filtered = sessions
 
         val currentState = _state.value
@@ -144,7 +152,7 @@ class HistoryViewModel(
         // Filter by tea type
         if (currentState.selectedTeaTypeId != null) {
             filtered = filtered.filter { session ->
-                currentState.teas[session.teaId]?.teaTypeId == currentState.selectedTeaTypeId
+                teasMap[session.teaId]?.teaTypeId == currentState.selectedTeaTypeId
             }
         }
 
@@ -178,7 +186,7 @@ class HistoryViewModel(
         if (currentState.searchQuery.isNotBlank()) {
             val query = currentState.searchQuery.lowercase()
             filtered = filtered.filter { session ->
-                val teaName = currentState.teas[session.teaId]?.name?.lowercase() ?: ""
+                val teaName = teasMap[session.teaId]?.name?.lowercase() ?: ""
                 val notes = session.notes?.lowercase() ?: ""
                 teaName.contains(query) || notes.contains(query)
             }
@@ -189,7 +197,22 @@ class HistoryViewModel(
 
     private fun updateSearchQuery(query: String) {
         _state.update { it.copy(searchQuery = query) }
-        loadData()  // Reapply filters
+        reapplyFilters()
+    }
+
+    /**
+     * Reapplies filters without showing loading indicator.
+     * Used for search and filter changes where we're just filtering in-memory data.
+     */
+    private fun reapplyFilters() {
+        val currentState = _state.value
+        val filteredSessions = applyFilters(currentState.allSessions, currentState.teas)
+        _state.update {
+            it.copy(
+                groupedSessions = filteredSessions.groupByTimePeriod(),
+                isEmpty = filteredSessions.isEmpty(),
+            )
+        }
     }
 
     private fun showFilterSheet() {
@@ -202,12 +225,12 @@ class HistoryViewModel(
 
     private fun filterByTeaType(teaTypeId: String?) {
         _state.update { it.copy(selectedTeaTypeId = teaTypeId) }
-        loadData()
+        reapplyFilters()
     }
 
     private fun filterByTea(teaId: String?) {
         _state.update { it.copy(selectedTeaId = teaId) }
-        loadData()
+        reapplyFilters()
     }
 
     private fun filterByDateRange(start: LocalDate?, end: LocalDate?) {
@@ -217,20 +240,22 @@ class HistoryViewModel(
                 dateRangeEnd = end
             )
         }
-        loadData()
+        reapplyFilters()
     }
 
     private fun filterByMinRating(minRating: Float?) {
         _state.update { it.copy(minRating = minRating) }
-        loadData()
+        reapplyFilters()
     }
 
     private fun toggleShowDraftsOnly(draftsOnly: Boolean) {
         _state.update { it.copy(showDraftsOnly = draftsOnly) }
+        // This changes the data source, so we need to reload
         loadData()
     }
 
     private fun clearFilters() {
+        val wasShowingDraftsOnly = _state.value.showDraftsOnly
         _state.update {
             it.copy(
                 searchQuery = "",
@@ -242,7 +267,12 @@ class HistoryViewModel(
                 showDraftsOnly = false,
             )
         }
-        loadData()
+        // Only reload if we were showing drafts (data source changes)
+        if (wasShowingDraftsOnly) {
+            loadData()
+        } else {
+            reapplyFilters()
+        }
     }
 
     private fun deleteSession(sessionId: String) {

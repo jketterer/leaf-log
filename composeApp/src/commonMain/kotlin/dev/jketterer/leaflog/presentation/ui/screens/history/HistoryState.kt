@@ -13,8 +13,8 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
 data class HistoryState(
-    val sessions: List<TeaSession> = emptyList(),
-    val groupedSessions: Map<String, List<TeaSession>> = emptyMap(),  // "Today", "Yesterday", etc.
+    val allSessions: List<TeaSession> = emptyList(),  // Unfiltered sessions from repository
+    val groupedSessions: Map<String, List<TeaSession>> = emptyMap(),  // Filtered & grouped
     val teas: Map<String, Tea> = emptyMap(),  // teaId -> Tea (for display)
     val teaTypes: Map<String, TeaType> = emptyMap(),  // teaTypeId -> TeaType
     val vessels: Map<String, BrewingVessel> = emptyMap(),  // vesselId -> BrewingVessel

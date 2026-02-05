@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
@@ -17,10 +19,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -32,18 +35,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Filter
 import compose.icons.feathericons.Search
-import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
+import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -102,26 +112,69 @@ private fun HistoryContent(
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
     val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val searchFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(showSearchBar) {
+        if (showSearchBar) {
+            searchFocusRequester.requestFocus()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (showSearchBar) {
-                SearchBar(
-                    query = state.searchQuery,
-                    onQueryChange = { query ->
-                        onIntent(HistoryIntent.SearchQueryChanged(query))
-                    },
-                    onSearch = {},
-                    active = true,
-                    onActiveChange = { active ->
-                        if (!active) {
-                            showSearchBar = false
-                            onIntent(HistoryIntent.SearchQueryChanged(""))
+                TopAppBar(
+                    navigationIcon = {
+                        IconButton(
+                            onClick = {
+                                showSearchBar = false
+                                onIntent(HistoryIntent.SearchQueryChanged(""))
+                                keyboardController?.hide()
+                            }
+                        ) {
+                            Icon(
+                                imageVector = FeatherIcons.ArrowLeft,
+                                contentDescription = "Close search"
+                            )
                         }
                     },
-                    placeholder = { Text("Search sessions...") },
-                    modifier = Modifier.fillMaxWidth()
-                ) {}
+                    title = {
+                        TextField(
+                            value = state.searchQuery,
+                            onValueChange = { query ->
+                                onIntent(HistoryIntent.SearchQueryChanged(query))
+                            },
+                            placeholder = { Text("Search sessions...") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(
+                                onSearch = { keyboardController?.hide() }
+                            ),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(searchFocusRequester),
+                        )
+                    },
+                    actions = {
+                        if (state.searchQuery.isNotEmpty()) {
+                            IconButton(
+                                onClick = { onIntent(HistoryIntent.SearchQueryChanged("")) }
+                            ) {
+                                Icon(
+                                    imageVector = FeatherIcons.X,
+                                    contentDescription = "Clear search"
+                                )
+                            }
+                        }
+                    }
+                )
             } else {
                 TopAppBar(
                     title = { Text("History") },
@@ -168,11 +221,13 @@ private fun HistoryContent(
                             "Clear Filters",
                             { onIntent(HistoryIntent.ClearFilters) },
                         )
+
                         state.showDraftsOnly -> Triple(
                             "No draft sessions",
                             null,
                             null,
                         )
+
                         else -> Triple(
                             "No sessions logged yet",
                             null,

@@ -28,17 +28,30 @@ data class HistoryState(
     val minRating: Float? = null,
     val showDraftsOnly: Boolean = false,
 
-    // Draft completion
-    val draftToComplete: TeaSession? = null,
-    val showCompleteDraftDialog: Boolean = false,
-
     // UI state
     val isLoading: Boolean = false,
     val error: String? = null,
     val isEmpty: Boolean = false,
     val showFilterSheet: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
-)
+) {
+    val hasActiveFilters: Boolean
+        get() = selectedTeaTypeId != null ||
+                selectedTeaId != null ||
+                dateRangeStart != null ||
+                dateRangeEnd != null ||
+                minRating != null ||
+                showDraftsOnly
+
+    val activeFilterCount: Int
+        get() = listOf(
+            selectedTeaTypeId != null,
+            selectedTeaId != null,
+            dateRangeStart != null || dateRangeEnd != null,
+            minRating != null,
+            showDraftsOnly,
+        ).count { it }
+}
 
 /**
  * Helper to group sessions by time period.

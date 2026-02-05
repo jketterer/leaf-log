@@ -3,14 +3,17 @@ package dev.jketterer.leaflog.presentation.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +35,7 @@ class HomeViewModel(
     private val vesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
+    private val timerService: TimerService,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -42,6 +46,7 @@ class HomeViewModel(
 
     init {
         loadPreferences()
+        collectTimerState()
         onIntent(HomeIntent.LoadData)
     }
 
@@ -52,6 +57,16 @@ class HomeViewModel(
                 .collect { preferences ->
                     _state.update { it.copy(userPreferences = preferences) }
                 }
+        }
+    }
+
+    private fun collectTimerState() {
+        viewModelScope.launch {
+            timerService.timerState.collect { timerState ->
+                // Only update if there's an active timer (has a session ID)
+                val liveState = if (timerState.sessionId != null) timerState else null
+                _state.update { it.copy(liveTimerState = liveState) }
+            }
         }
     }
 
@@ -70,8 +85,13 @@ class HomeViewModel(
             )
 
             is HomeIntent.DeleteSessionClicked -> deleteSession(intent.sessionId)
+            is HomeIntent.EditSessionClicked -> _navEvents.trySend(
+                HomeNavEvent.NavigateToEditSession(
+                    intent.sessionId
+                )
+            )
 
-            is HomeIntent.SessionClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSession(intent.sessionId))
+            is HomeIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
             is HomeIntent.DraftBannerClicked -> _navEvents.trySend(
@@ -79,6 +99,27 @@ class HomeViewModel(
                     true
                 )
             )
+
+            is HomeIntent.ResumeDraftClicked -> handleResumeDraft()
+        }
+    }
+
+    private fun handleResumeDraft() {
+        val draft = _state.value.mostRecentDraft?.session ?: return
+        when (draft.timerStatus) {
+            TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(draft.id))
+            else -> _navEvents.trySend(HomeNavEvent.ResumeTimer(draft.id))
+        }
+    }
+
+    private fun handleSessionClick(sessionId: String) {
+        viewModelScope.launch {
+            val session = teaSessionRepository.getById(sessionId)
+            if (session?.status == SessionStatus.DRAFT) {
+                _navEvents.trySend(HomeNavEvent.ResumeTimer(sessionId))
+            } else {
+                _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))
+            }
         }
     }
 
@@ -94,6 +135,7 @@ class HomeViewModel(
                 collectDailyStats()
                 collectRecentSessions()
                 collectDraftCount()
+                collectMostRecentDraft()
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -171,6 +213,27 @@ class HomeViewModel(
             .collect { count -> _state.update { it.copy(draftSessionsCount = count) } }
     }
 
+    private fun collectMostRecentDraft() = viewModelScope.launch {
+        combine(
+            teaSessionRepository.getDraftsFlow(),
+            teaRepository.getAllFlow(),
+            vesselRepository.getAllFlow(),
+        ) { drafts, teas, vessels ->
+            val mostRecent = drafts.firstOrNull() ?: return@combine null
+            val tea = teas.find { it.id == mostRecent.teaId }
+            val vessel = vessels.find { it.id == mostRecent.vesselId }
+            DraftSessionInfo(
+                session = mostRecent,
+                teaName = tea?.name ?: "Unknown Tea",
+                vesselName = vessel?.name ?: "Unknown Vessel",
+            )
+        }
+            .catch { e -> println("Failed to load most recent draft: ${e.message}") }
+            .collect { draftInfo ->
+                _state.update { it.copy(mostRecentDraft = draftInfo) }
+            }
+    }
+
     private fun refresh() {
         viewModelScope.launch {
             _state.update { it.copy(isRefreshing = true) }
@@ -224,10 +287,13 @@ data class SessionWithTeaData(
 sealed interface HomeNavEvent {
     data class NavigateToHistory(val showDraftsOnly: Boolean = false) : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
+    data class NavigateToEditSession(val sessionId: String) : HomeNavEvent
     data class NavigateToLogTea(val teaId: String? = null, val vesselId: String? = null) :
         HomeNavEvent
 
     data object NavigateToSettings : HomeNavEvent
+    data class ResumeTimer(val sessionId: String) : HomeNavEvent
+    data class CompleteSession(val sessionId: String) : HomeNavEvent
 }
 
 private data class HomeSessionData(

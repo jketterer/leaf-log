@@ -2,23 +2,27 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,13 +37,13 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Filter
 import compose.icons.feathericons.Search
+import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
-import dev.jketterer.leaflog.presentation.ui.components.session.CompleteDraftDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -54,6 +58,8 @@ import kotlin.time.toDuration
 fun HistoryScreen(
     showDraftsOnly: Boolean = false,
     onNavigateToSession: (String) -> Unit,
+    onNavigateToEditSession: (String) -> Unit = {},
+    onNavigateToTimer: (String) -> Unit,
     viewModel: HistoryViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -69,6 +75,14 @@ fun HistoryScreen(
             when (event) {
                 is HistoryNavEvent.NavigateToSession -> {
                     onNavigateToSession(event.sessionId)
+                }
+
+                is HistoryNavEvent.NavigateToEditSession -> {
+                    onNavigateToEditSession(event.sessionId)
+                }
+
+                is HistoryNavEvent.NavigateToTimer -> {
+                    onNavigateToTimer(event.sessionId)
                 }
             }
         }
@@ -87,9 +101,10 @@ private fun HistoryContent(
     onIntent: (HistoryIntent) -> Unit,
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
+    val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             if (showSearchBar) {
                 SearchBar(
                     query = state.searchQuery,
@@ -118,129 +133,138 @@ private fun HistoryContent(
                             )
                         }
                         IconButton(onClick = { onIntent(HistoryIntent.ShowFilterSheet) }) {
-                            Icon(
-                                imageVector = FeatherIcons.Filter,
-                                contentDescription = "Filter"
-                            )
-                        }
-                    }
-                )
-            }
-        }
-    ) { paddingValues ->
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            state.isEmpty -> {
-                EmptyState(
-                    message = if (state.showDraftsOnly) {
-                        "No draft sessions"
-                    } else {
-                        "No sessions logged yet"
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                )
-            }
-
-            else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    state.groupedSessions.forEach { (period, sessions) ->
-                        // Period header
-                        item(key = "header_$period") {
-                            Text(
-                                text = period,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-
-                        // Sessions in this period
-                        items(
-                            items = sessions,
-                            key = { it.id }
-                        ) { session ->
-                            val tea = state.teas[session.teaId]
-                            val teaType = tea?.let { state.teaTypes[it.teaTypeId] }
-                            val vessel = state.vessels[session.vesselId]
-
-                            SessionCard(
-                                session = session,
-                                teaName = tea?.name ?: "Unknown Tea",
-                                teaTypeName = teaType?.name ?: "Unknown Type",
-                                vesselName = vessel?.name ?: "Unknown Vessel",
-                                teaPhotoUrl = tea?.photos?.firstOrNull(),
-                                userPrefs = state.userPreferences,
-                                onSessionClick = {
-                                    if (session.status == SessionStatus.DRAFT) {
-                                        onIntent(HistoryIntent.CompleteDraft(session.id))
-                                    } else {
-                                        onIntent(HistoryIntent.SessionClicked(session.id))
+                            BadgedBox(
+                                badge = {
+                                    if (state.activeFilterCount > 0) {
+                                        Badge { Text(state.activeFilterCount.toString()) }
                                     }
-                                },
-                                onBrewAgainClick = {
-                                    onIntent(HistoryIntent.BrewAgain(session.id))
-                                },
-                                onDeleteClick = {
-                                    onIntent(HistoryIntent.DeleteSession(session.id))
                                 }
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = FeatherIcons.Filter,
+                                    contentDescription = "Filter",
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+
+            when {
+                state.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                state.isEmpty -> {
+                    val (message, actionText, onAction) = when {
+                        state.hasActiveFilters -> Triple(
+                            "No sessions match filters",
+                            "Clear Filters",
+                            { onIntent(HistoryIntent.ClearFilters) },
+                        )
+                        state.showDraftsOnly -> Triple(
+                            "No draft sessions",
+                            null,
+                            null,
+                        )
+                        else -> Triple(
+                            "No sessions logged yet",
+                            null,
+                            null,
+                        )
+                    }
+                    EmptyState(
+                        message = message,
+                        actionText = actionText,
+                        onActionClick = onAction,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        state.groupedSessions.forEach { (period, sessions) ->
+                            // Period header
+                            item(key = "header_$period") {
+                                Text(
+                                    text = period,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+
+                            // Sessions in this period
+                            items(
+                                items = sessions,
+                                key = { it.id }
+                            ) { session ->
+                                val tea = state.teas[session.teaId]
+                                val teaType = tea?.let { state.teaTypes[it.teaTypeId] }
+                                val vessel = state.vessels[session.vesselId]
+
+                                SessionCard(
+                                    session = session,
+                                    teaName = tea?.name ?: "Unknown Tea",
+                                    teaTypeName = teaType?.name ?: "Unknown Type",
+                                    vesselName = vessel?.name ?: "Unknown Vessel",
+                                    teaPhotoUrl = tea?.photos?.firstOrNull(),
+                                    userPrefs = state.userPreferences,
+                                    onSessionClick = {
+                                        if (session.status == SessionStatus.DRAFT) {
+                                            onIntent(HistoryIntent.CompleteDraft(session.id))
+                                        } else {
+                                            onIntent(HistoryIntent.SessionClicked(session.id))
+                                        }
+                                    },
+                                    onBrewAgainClick = {
+                                        onIntent(HistoryIntent.BrewAgain(session.id))
+                                    },
+                                    onEditClick = {
+                                        onIntent(HistoryIntent.EditSession(session.id))
+                                    },
+                                    onDeleteClick = {
+                                        onIntent(HistoryIntent.DeleteSession(session.id))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (state.showCompleteDraftDialog && state.draftToComplete != null) {
-            val tea = state.teas[state.draftToComplete.teaId]
-
-            CompleteDraftDialog(
-                session = state.draftToComplete,
-                teaName = tea?.name ?: "Unknown Tea",
-                onComplete = { rating, notes ->
-                    onIntent(
-                        HistoryIntent.ConfirmCompleteDraft(
-                            sessionId = state.draftToComplete.id,
-                            rating = rating,
-                            notes = notes,
-                        ),
-                    )
-                },
-                onDismiss = {
-                    onIntent(HistoryIntent.CancelCompleteDraft)
-                },
-            )
-        }
-
-        // Error snackbar
-        state.error?.let { error ->
-            Snackbar(
-                modifier = Modifier.padding(16.dp),
-                action = {
-                    TextButton(onClick = { onIntent(HistoryIntent.ClearError) }) {
-                        Text("Dismiss")
+            // Error snackbar
+            state.error?.let { error ->
+                Snackbar(
+                    modifier = Modifier.padding(16.dp),
+                    action = {
+                        TextButton(onClick = { onIntent(HistoryIntent.ClearError) }) {
+                            Text("Dismiss")
+                        }
                     }
+                ) {
+                    Text(error)
                 }
-            ) {
-                Text(error)
             }
+        }
+
+        // Filter bottom sheet
+        if (state.showFilterSheet) {
+            HistoryFilterSheet(
+                state = state,
+                onIntent = onIntent,
+                sheetState = filterSheetState,
+            )
         }
     }
 }

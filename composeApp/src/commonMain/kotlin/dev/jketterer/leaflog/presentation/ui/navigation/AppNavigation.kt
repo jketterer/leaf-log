@@ -78,8 +78,14 @@ fun AppNavigation() {
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
+                        onNavigateToEditSession = { sessionId ->
+                            backStack.add(NavRoute.EditSessionRoute(sessionId, false))
+                        },
                         onNavigateToHistory = { backStack.add(NavRoute.HistoryRoute()) },
                         onNavigateToSettings = { backStack.add(NavRoute.SettingsRoute) },
+                        onNavigateToTimer = { sessionId ->
+                            backStack.add(NavRoute.TimerRoute(sessionId))
+                        },
                     )
                 }
 
@@ -102,6 +108,12 @@ fun AppNavigation() {
                         showDraftsOnly = route.showDraftsOnly,
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
+                        },
+                        onNavigateToEditSession = { sessionId ->
+                            backStack.add(NavRoute.EditSessionRoute(sessionId, false))
+                        },
+                        onNavigateToTimer = { sessionId ->
+                            backStack.add(NavRoute.TimerRoute(sessionId))
                         },
                     )
                 }
@@ -131,8 +143,14 @@ fun AppNavigation() {
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
+                        onNavigateToEditSession = { sessionId ->
+                            backStack.add(NavRoute.EditSessionRoute(sessionId, false))
+                        },
                         onNavigateToLogTea = { teaId, vesselId ->
                             backStack.add(NavRoute.LogTeaRoute(teaId, vesselId))
+                        },
+                        onNavigateToTimer = { sessionId ->
+                            backStack.add(NavRoute.TimerRoute(sessionId))
                         },
                     )
                 }

@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.data.local.database
 import androidx.room.TypeConverter
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.json.Json
@@ -81,5 +82,15 @@ class Converters {
     @TypeConverter
     fun toSessionStatus(value: String?): SessionStatus? {
         return SessionStatus.entries.firstOrNull { it.name == value }
+    }
+
+    @TypeConverter
+    fun fromTimerStatus(timerStatus: TimerStatus?): String? {
+        return timerStatus?.name
+    }
+
+    @TypeConverter
+    fun toTimerStatus(value: String?): TimerStatus? {
+        return value?.let { TimerStatus.entries.firstOrNull { e -> e.name == it } }
     }
 }

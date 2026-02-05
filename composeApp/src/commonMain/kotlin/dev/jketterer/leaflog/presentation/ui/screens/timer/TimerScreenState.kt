@@ -30,6 +30,7 @@ data class TimerScreenState(
     val nextSteepWaterQuantity: Int? = null,
     val showSaveConfigurationDialog: Boolean = false,
     val savedSession: TeaSession? = null, // Session that was just saved
+    val showDiscardConfirmation: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val userPreferences: UserPreferences = UserPreferences(),
@@ -39,10 +40,11 @@ data class TimerScreenState(
      */
     val formattedTime: String
         get() {
-            val remaining = if (timerState.isRunning) {
-                timerState.remainingDuration.plus(1.seconds)
-            } else {
-                timerState.totalDuration
+            val remaining = when (timerState.status) {
+                TimerStatus.RUNNING, TimerStatus.PAUSED ->
+                    timerState.remainingDuration.plus(1.seconds)
+
+                else -> timerState.totalDuration
             }
             val minutes = remaining.inWholeMinutes
             val seconds = remaining.inWholeSeconds % 60

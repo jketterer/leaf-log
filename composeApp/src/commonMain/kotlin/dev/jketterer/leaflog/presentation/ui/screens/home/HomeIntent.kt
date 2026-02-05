@@ -6,9 +6,11 @@ sealed interface HomeIntent {
     data object LogTeaClicked : HomeIntent
     data class BrewAgainClicked(val teaId: String, val vesselId: String? = null) : HomeIntent
     data class DeleteSessionClicked(val sessionId: String) : HomeIntent
+    data class EditSessionClicked(val sessionId: String) : HomeIntent
     data class SessionClicked(val sessionId: String) : HomeIntent
     data object ViewAllSessionsClicked : HomeIntent
     data object DraftBannerClicked : HomeIntent
+    data object ResumeDraftClicked : HomeIntent
     data object SettingsClicked : HomeIntent
     data object ClearError : HomeIntent
 }

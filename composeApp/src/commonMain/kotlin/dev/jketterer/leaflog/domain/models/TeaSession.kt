@@ -31,4 +31,10 @@ data class TeaSession(
     val createdAt: Instant,
     val updatedAt: Instant,
     val deletedAt: Instant? = null,
+
+    // Timer state persistence fields (null = timer not started)
+    val timerStatus: TimerStatus? = null,
+    val timerStartedAt: Instant? = null,
+    val timerPausedAt: Instant? = null,
+    val timerRemainingMs: Long? = null,
 )

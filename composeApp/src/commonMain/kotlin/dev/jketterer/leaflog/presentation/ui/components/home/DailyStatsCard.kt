@@ -6,6 +6,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -33,11 +37,19 @@ fun DailyStatsCard(
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            val baseStyle = MaterialTheme.typography.headlineMedium
+            var scaleFactor by remember { mutableFloatStateOf(1f) }
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium,
+                style = baseStyle.copy(fontSize = baseStyle.fontSize * scaleFactor),
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                onTextLayout = { result ->
+                    if (result.hasVisualOverflow) {
+                        scaleFactor *= 0.9f
+                    }
+                },
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(

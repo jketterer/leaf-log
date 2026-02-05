@@ -29,6 +29,7 @@ val appModule = module {
         TimerService(
             coroutineScope = get(),
             notificationService = get(),
+            saveTimerStateUseCase = get(),
         )
     }
 

@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
@@ -69,7 +70,7 @@ class TeaDetailViewModel(
             is TeaDetailIntent.ToggleFavorite -> toggleFavorite()
 
             is TeaDetailIntent.EditTeaClicked -> _navEvents.trySend(NavigateToEditTea)
-            is TeaDetailIntent.SessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
+            is TeaDetailIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is TeaDetailIntent.EditSessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
             is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea(intent.vesselId))
             is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
@@ -259,6 +260,17 @@ class TeaDetailViewModel(
                 }
         }
     }
+
+    private fun handleSessionClick(sessionId: String) {
+        viewModelScope.launch {
+            val session = teaSessionRepository.getById(sessionId)
+            if (session?.status == SessionStatus.DRAFT) {
+                _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(sessionId))
+            } else {
+                _navEvents.trySend(NavigateToSession(sessionId))
+            }
+        }
+    }
 }
 
 sealed interface TeaDetailNavigationEvent {
@@ -266,5 +278,6 @@ sealed interface TeaDetailNavigationEvent {
     data class NavigateToSession(val sessionId: String) : TeaDetailNavigationEvent
     data class NavigateToEditSession(val sessionId: String) : TeaDetailNavigationEvent
     data class NavigateToLogTea(val vesselId: String? = null) : TeaDetailNavigationEvent
+    data class NavigateToTimer(val sessionId: String) : TeaDetailNavigationEvent
     data object NavigateToEditTea : TeaDetailNavigationEvent
 }

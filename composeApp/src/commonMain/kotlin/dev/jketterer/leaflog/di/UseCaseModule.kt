@@ -23,7 +23,9 @@ import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
@@ -62,6 +64,8 @@ val useCaseModule = module {
     factoryOf(::AdjustTimeUseCase)
     factoryOf(::CompleteTimerUseCase)
     factoryOf(::CancelTimerUseCase)
+    factoryOf(::SaveTimerStateUseCase)
+    factoryOf(::RestoreTimerStateUseCase)
 
     // Brewing vessel use cases
     factoryOf(::CreateBrewingVesselUseCase)

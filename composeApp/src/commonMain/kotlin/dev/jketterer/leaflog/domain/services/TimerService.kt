@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.domain.services
 
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,10 +20,12 @@ import kotlin.time.Duration
  *
  * @param coroutineScope Application-level scope (survives ViewModels)
  * @param notificationService Platform-specific notification service
+ * @param saveTimerStateUseCase Persists timer state to database (for completion while backgrounded)
  */
 class TimerService(
     private val coroutineScope: CoroutineScope,
     private val notificationService: TimerNotificationService,
+    private val saveTimerStateUseCase: SaveTimerStateUseCase,
 ) {
     private val _timerState = MutableStateFlow(TimerState())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
@@ -67,10 +70,15 @@ class TimerService(
 
                 // Check if timer completed
                 if (remaining == Duration.ZERO) {
-                    _timerState.update {
-                        it.copy(status = TimerStatus.COMPLETE, remainingDuration = Duration.ZERO)
-                    }
+                    val completedState = current.copy(
+                        status = TimerStatus.COMPLETE,
+                        remainingDuration = Duration.ZERO,
+                    )
+                    _timerState.update { completedState }
                     notificationService.showTimerComplete(current.teaName)
+                    // Persist completion so HomeScreen banner reflects correct state
+                    // even if no ViewModel is active (e.g., app backgrounded)
+                    saveTimerStateUseCase(completedState)
                     break
                 }
             }

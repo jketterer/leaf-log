@@ -80,7 +80,9 @@ fun TeaDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onNavigateToSession: (String) -> Unit,
+    onNavigateToEditSession: (String) -> Unit = {},
     onNavigateToLogTea: (String, String?) -> Unit,
+    onNavigateToTimer: (String) -> Unit,
     viewModel: TeaDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -106,6 +108,14 @@ fun TeaDetailScreen(
 
                 is TeaDetailNavigationEvent.NavigateToLogTea -> {
                     onNavigateToLogTea(teaId, event.vesselId)
+                }
+
+                is TeaDetailNavigationEvent.NavigateToEditSession -> {
+                    onNavigateToEditSession(event.sessionId)
+                }
+
+                is TeaDetailNavigationEvent.NavigateToTimer -> {
+                    onNavigateToTimer(event.sessionId)
                 }
             }
         }

@@ -38,6 +38,7 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -147,7 +148,7 @@ fun SessionCard(
                 )
 
                 val timeText = session.timestamp.toLocalDateTime(TimeZone.currentSystemDefault())
-                    .let { "${it.hour}:${it.minute.toString().padStart(2, '0')}" }
+                    .let { TimeFormatter.formatClockTime(it.hour, it.minute) }
 
                 Row(
                     modifier = Modifier.padding(vertical = 2.dp),
@@ -158,7 +159,9 @@ fun SessionCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (session.rating != null) {
+                    if (session.averageRating != null) {
+                        RatingDisplay(session.averageRating)
+                    } else if (session.rating != null) {
                         RatingDisplay(session.rating)
                     }
                 }

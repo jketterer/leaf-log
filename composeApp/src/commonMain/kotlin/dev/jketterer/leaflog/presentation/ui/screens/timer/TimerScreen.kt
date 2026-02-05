@@ -235,6 +235,30 @@ private fun TimerContent(
         )
     }
 
+    // Discard session confirmation dialog
+    if (state.showDiscardConfirmation) {
+        AlertDialog(
+            onDismissRequest = { onIntent(TimerIntent.CancelDiscardSession) },
+            title = { Text("Discard Session?") },
+            text = { Text("This session will be permanently deleted. This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { onIntent(TimerIntent.ConfirmDiscardSession) },
+                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("Discard")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onIntent(TimerIntent.CancelDiscardSession) }) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+
     // Save Configuration Dialog
     if (state.showSaveConfigurationDialog && state.savedSession != null) {
         val session = state.savedSession
@@ -528,6 +552,19 @@ private fun CompletionContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Restart Timer")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Discard session
+                TextButton(
+                    onClick = { onIntent(TimerIntent.DiscardSession) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("Discard Session")
                 }
             }
         }

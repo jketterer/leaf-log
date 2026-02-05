@@ -28,6 +28,10 @@ fun TeaSessionEntity.toTeaSession(): TeaSession {
         createdAt = createdAt,
         updatedAt = updatedAt,
         deletedAt = deletedAt,
+        timerStatus = timerStatus,
+        timerStartedAt = timerStartedAt,
+        timerPausedAt = timerPausedAt,
+        timerRemainingMs = timerRemainingMs,
     )
 }
 
@@ -56,5 +60,9 @@ fun TeaSession.toEntity(): TeaSessionEntity {
         createdAt = createdAt,
         updatedAt = updatedAt,
         deletedAt = deletedAt,
+        timerStatus = timerStatus,
+        timerStartedAt = timerStartedAt,
+        timerPausedAt = timerPausedAt,
+        timerRemainingMs = timerRemainingMs,
     )
 }

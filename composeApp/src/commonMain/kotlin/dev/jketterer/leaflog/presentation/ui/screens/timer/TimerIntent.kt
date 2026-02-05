@@ -35,4 +35,9 @@ sealed interface TimerIntent {
     // Configuration save dialog
     data class SaveConfigurationClicked(val customLabel: String?) : TimerIntent
     data object SkipSaveConfiguration : TimerIntent
+
+    // Discard session
+    data object DiscardSession : TimerIntent
+    data object ConfirmDiscardSession : TimerIntent
+    data object CancelDiscardSession : TimerIntent
 }

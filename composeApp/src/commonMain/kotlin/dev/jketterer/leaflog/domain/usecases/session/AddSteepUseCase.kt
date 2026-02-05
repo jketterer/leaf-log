@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -46,7 +47,7 @@ class AddSteepUseCase(
             teaId = parentSession.teaId,
             parentSessionId = parentSession.id,
             steepNumber = nextSteepNumber,
-            status = parentSession.status,  // Inherit parent status
+            status = SessionStatus.DRAFT,  // New steeps always start as drafts
             teaQuantityGrams = parentSession.teaQuantityGrams,  // Inherit (same tea leaves)
             vesselId = parentSession.vesselId,  // Inherit
             waterType = parentSession.waterType,  // Inherit

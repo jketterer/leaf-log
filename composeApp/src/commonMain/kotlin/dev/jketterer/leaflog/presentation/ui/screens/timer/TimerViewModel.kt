@@ -18,7 +18,9 @@ import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +48,8 @@ class TimerViewModel(
     private val completeTimerUseCase: CompleteTimerUseCase,
     private val cancelTimerUseCase: CancelTimerUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val saveTimerStateUseCase: SaveTimerStateUseCase,
+    private val restoreTimerStateUseCase: RestoreTimerStateUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimerScreenState())
@@ -57,6 +61,19 @@ class TimerViewModel(
     init {
         loadPreferences()
         collectTimerState()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Save timer state if timer is running or paused
+        val currentState = timerService.getCurrentState()
+        if (currentState.status == TimerStatus.RUNNING || currentState.status == TimerStatus.PAUSED) {
+            // Use runBlocking since we need to complete this before ViewModel is destroyed
+            // This is acceptable in onCleared as it's called during cleanup
+            kotlinx.coroutines.runBlocking {
+                saveTimerStateUseCase(currentState)
+            }
+        }
     }
 
     private fun loadPreferences() {
@@ -102,6 +119,10 @@ class TimerViewModel(
 
             is TimerIntent.SaveConfigurationClicked -> saveConfiguration(intent.customLabel)
             is TimerIntent.SkipSaveConfiguration -> skipSaveConfiguration()
+
+            is TimerIntent.DiscardSession -> showDiscardConfirmation()
+            is TimerIntent.ConfirmDiscardSession -> confirmDiscardSession()
+            is TimerIntent.CancelDiscardSession -> cancelDiscardConfirmation()
         }
     }
 
@@ -137,12 +158,45 @@ class TimerViewModel(
 
                 val tea = teaRepository.getById(session.teaId)
                 val vessel = brewingVesselRepository.getById(session.vesselId)
+
+                // Prefer live TimerService state if it's already tracking this session
+                // (e.g., navigating back while timer is still running)
+                val currentTimerState = timerService.getCurrentState()
+                val initialTimerState = if (currentTimerState.sessionId == sessionId &&
+                    currentTimerState.status != TimerStatus.NOT_STARTED
+                ) {
+                    currentTimerState.copy(teaName = tea?.name ?: "")
+                } else {
+                    // Fall back to restoring from database (e.g., app was killed)
+                    val restoredTimerState = restoreTimerStateUseCase(sessionId).getOrNull()
+                    if (restoredTimerState != null) {
+                        restoredTimerState.copy(teaName = tea?.name ?: "")
+                    } else {
+                        TimerState(
+                            sessionId = session.id,
+                            teaId = session.teaId,
+                            teaName = tea?.name ?: "",
+                            steepNumber = session.steepNumber,
+                            totalDuration = session.brewingTime,
+                            remainingDuration = session.brewingTime,
+                        )
+                    }
+                }
+
+                // Update timer service with restored/initial state
+                timerService.updateState(initialTimerState)
+
+                // If timer was running, restart the countdown
+                if (initialTimerState.status == TimerStatus.RUNNING) {
+                    timerService.startCountdown()
+                }
+
                 _state.update {
                     it.copy(
                         session = session,
                         tea = tea,
                         vessel = vessel,
-                        timerState = TimerState(),
+                        timerState = initialTimerState,
                         isLoading = false,
                     )
                 }
@@ -172,6 +226,9 @@ class TimerViewModel(
 
                     timerService.updateState(updatedState)
                     timerService.startCountdown()
+
+                    // Persist running state for restoration
+                    saveTimerStateUseCase(updatedState)
                 }
                 .onFailure { e ->
                     _state.update {
@@ -191,6 +248,9 @@ class TimerViewModel(
 
                     // 3. Cancel countdown
                     timerService.cancelCountdown()
+
+                    // 4. Persist timer state for later restoration
+                    saveTimerStateUseCase(newState)
                 }
                 .onFailure { e ->
                     _state.update {
@@ -226,6 +286,9 @@ class TimerViewModel(
                 .onSuccess { newState ->
                     // 2. Update TimerService with adjusted state
                     timerService.updateState(newState)
+
+                    // 3. Persist adjusted state so it survives process death
+                    saveTimerStateUseCase(newState)
                 }
                 .onFailure { e ->
                     _state.update {
@@ -279,6 +342,11 @@ class TimerViewModel(
                     // 3. Stop countdown
                     timerService.stop()
 
+                    // 4. Clear persisted timer state
+                    _state.value.session?.id?.let { sessionId ->
+                        saveTimerStateUseCase.clear(sessionId)
+                    }
+
                     _navigationEvents.send(TimerNavEvent.NavigateBack)
                 }
                 .onFailure { e ->
@@ -297,7 +365,11 @@ class TimerViewModel(
                 currentState = timerService.getCurrentState(),
                 session = session,
             )
-                .onSuccess { newState -> timerService.updateState(newState) }
+                .onSuccess { newState ->
+                    timerService.updateState(newState)
+                    // Persist completed state so user can resume to completion screen
+                    saveTimerStateUseCase(newState)
+                }
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to complete timer: ${e.message}") }
                 }
@@ -347,12 +419,17 @@ class TimerViewModel(
             )
         }
 
-        // Save current session with rating and notes
+        // Save current session as completed with rating and notes, clear timer state
         val updatedSession = session.copy(
+            status = SessionStatus.COMPLETED,
             rating = _state.value.rating.takeIf { it > 0f },
             notes = _state.value.notes?.takeIf { it.isNotBlank() },
             photos = _state.value.photos,
             updatedAt = Clock.System.now(),
+            timerStatus = null,
+            timerStartedAt = null,
+            timerPausedAt = null,
+            timerRemainingMs = null,
         )
         teaSessionRepository.upsert(updatedSession)
 
@@ -413,12 +490,17 @@ class TimerViewModel(
 
     private fun saveAndFinish(session: TeaSession) = viewModelScope.launch {
         // Save current session with rating, notes, and photos
+        // Clear timer state fields since session is being completed
         val updatedSession = session.copy(
             status = SessionStatus.COMPLETED,
             rating = state.value.rating.takeIf { it > 0f },
             notes = state.value.notes,
             photos = state.value.photos,
             updatedAt = Clock.System.now(),
+            timerStatus = null,
+            timerStartedAt = null,
+            timerPausedAt = null,
+            timerRemainingMs = null,
         )
         teaSessionRepository.upsert(updatedSession)
 
@@ -429,9 +511,11 @@ class TimerViewModel(
 
         // Check if we should show the save configuration dialog
         // Show for first steep (steepNumber == 1) with rating >= 3 stars
+        // Skip if session already used a saved configuration
         if (updatedSession.steepNumber == 1 &&
             updatedSession.rating != null &&
-            updatedSession.rating >= 3f
+            updatedSession.rating >= 3f &&
+            updatedSession.usedConfigurationId == null
         ) {
             _state.update {
                 it.copy(
@@ -470,6 +554,44 @@ class TimerViewModel(
         _state.update { it.copy(showSaveConfigurationDialog = false) }
         if (session != null) {
             _navigationEvents.trySend(TimerNavEvent.NavigateToComplete(session.id))
+        }
+    }
+
+    private fun showDiscardConfirmation() {
+        _state.update { it.copy(showDiscardConfirmation = true) }
+    }
+
+    private fun cancelDiscardConfirmation() {
+        _state.update { it.copy(showDiscardConfirmation = false) }
+    }
+
+    private fun confirmDiscardSession() {
+        val session = _state.value.session ?: return
+        _state.update { it.copy(showDiscardConfirmation = false, isLoading = true) }
+
+        viewModelScope.launch {
+            try {
+                // Delete the session from the database
+                teaSessionRepository.delete(session.id)
+
+                // If this was a child steep, update the parent's average rating
+                session.parentSessionId?.let { parentId ->
+                    updateAverageRatingUseCase(parentId)
+                }
+
+                // Clear timer state
+                timerService.stop()
+                saveTimerStateUseCase.clear(session.id)
+
+                _navigationEvents.send(TimerNavEvent.NavigateBack)
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Failed to discard session: ${e.message}",
+                    )
+                }
+            }
         }
     }
 

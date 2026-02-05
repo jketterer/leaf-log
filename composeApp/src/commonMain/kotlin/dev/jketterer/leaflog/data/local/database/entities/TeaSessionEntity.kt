@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
@@ -74,4 +75,10 @@ data class TeaSessionEntity(
     val createdAt: Instant,
     val updatedAt: Instant,
     val deletedAt: Instant?,
+
+    // Timer state persistence fields (null = timer not started)
+    val timerStatus: TimerStatus? = null,
+    val timerStartedAt: Instant? = null,
+    val timerPausedAt: Instant? = null,
+    val timerRemainingMs: Long? = null,
 )

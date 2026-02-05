@@ -53,6 +53,34 @@ fun QuickAdjustButtons(
                 Text("+1m")
             }
         }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedButton(
+                onClick = { onAdjust(Duration.parse("-10s")) },
+                enabled = enabled,
+            ) {
+                Text("-10s")
+            }
+            OutlinedButton(
+                onClick = { onAdjust(Duration.parse("-5s")) },
+                enabled = enabled,
+            ) {
+                Text("-5s")
+            }
+            OutlinedButton(
+                onClick = { onAdjust(Duration.parse("5s")) },
+                enabled = enabled,
+            ) {
+                Text("+5s")
+            }
+            OutlinedButton(
+                onClick = { onAdjust(Duration.parse("10s")) },
+                enabled = enabled,
+            ) {
+                Text("+10s")
+            }
+        }
     }
 }
 

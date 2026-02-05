@@ -32,6 +32,7 @@ interface TeaSessionDao {
         """
         SELECT * FROM tea_session
         WHERE deletedAt IS NULL
+        AND parentSessionId IS NULL
         ORDER BY timestamp DESC
         LIMIT :limit
     """
@@ -42,6 +43,7 @@ interface TeaSessionDao {
         """
         SELECT * FROM tea_session
         WHERE deletedAt IS NULL
+        AND parentSessionId IS NULL
         ORDER BY timestamp DESC
         LIMIT :limit
     """

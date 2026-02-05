@@ -38,6 +38,7 @@ import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.DraftSessionsBanner
@@ -59,8 +60,10 @@ import kotlin.time.Duration.Companion.seconds
 fun HomeScreen(
     onNavigateToLogTea: (String?, String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
+    onNavigateToEditSession: (String) -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToTimer: (String) -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -76,12 +79,25 @@ fun HomeScreen(
                     onNavigateToSession(event.sessionId)
                 }
 
+                is HomeNavEvent.NavigateToEditSession -> {
+                    onNavigateToEditSession(event.sessionId)
+                }
+
                 is HomeNavEvent.NavigateToHistory -> {
                     onNavigateToHistory()
                 }
 
                 is HomeNavEvent.NavigateToSettings -> {
                     onNavigateToSettings()
+                }
+
+                is HomeNavEvent.ResumeTimer -> {
+                    onNavigateToTimer(event.sessionId)
+                }
+
+                is HomeNavEvent.CompleteSession -> {
+                    // Navigate to timer screen which will show completion UI
+                    onNavigateToTimer(event.sessionId)
                 }
             }
         }
@@ -163,8 +179,13 @@ private fun HomeContent(
                         if (state.shouldShowDraftBanner) {
                             item(key = "draft_banner") {
                                 DraftSessionsBanner(
-                                    draftCount = state.draftSessionsCount,
-                                    onBannerClick = {
+                                    draftInfo = state.mostRecentDraft,
+                                    totalDraftCount = state.draftSessionsCount,
+                                    timerProgress = state.liveTimerState?.progress,
+                                    onResumeClick = {
+                                        onIntent(HomeIntent.ResumeDraftClicked)
+                                    },
+                                    onViewAllClick = {
                                         onIntent(HomeIntent.DraftBannerClicked)
                                     },
                                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -226,6 +247,9 @@ private fun HomeContent(
                                         )
                                     )
                                 },
+                                onEditClick = {
+                                    onIntent(HomeIntent.EditSessionClicked(sessionData.session.id))
+                                },
                                 onDeleteClick = {
                                     onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.id))
                                 },
@@ -275,6 +299,7 @@ private fun HomeContent(
 @Preview(showBackground = true)
 @Composable
 private fun HomeScreenPreview() {
+    val now = Clock.System.now()
     LeafLogTheme {
         HomeContent(
             state = HomeState(
@@ -293,14 +318,14 @@ private fun HomeScreenPreview() {
                                 teaId = "tea-1",
                                 vesselId = "gaiwan",
                                 waterType = WaterType.FILTERED,
-                                timestamp = Clock.System.now(),
+                                timestamp = now,
                                 brewingTime = 2.minutes + 30.seconds,
                                 temperatureCelsius = 80,
                                 waterQuantityMl = 200,
                                 status = SessionStatus.COMPLETED,
                                 syncStatus = SyncStatus.LOCAL_ONLY,
-                                createdAt = Clock.System.now(),
-                                updatedAt = Clock.System.now(),
+                                createdAt = now,
+                                updatedAt = now,
                             )
                     ),
                     SessionWithTeaData(
@@ -311,18 +336,39 @@ private fun HomeScreenPreview() {
                                 teaId = "tea-2",
                                 vesselId = "kyusu",
                                 waterType = WaterType.FILTERED,
-                                timestamp = Clock.System.now(),
+                                timestamp = now,
                                 brewingTime = 2.minutes,
                                 temperatureCelsius = 75,
                                 waterQuantityMl = 150,
                                 status = SessionStatus.COMPLETED,
                                 syncStatus = SyncStatus.LOCAL_ONLY,
-                                createdAt = Clock.System.now(),
-                                updatedAt = Clock.System.now(),
+                                createdAt = now,
+                                updatedAt = now,
                             )
                     ),
                 ),
                 draftSessionsCount = 2,
+                mostRecentDraft = DraftSessionInfo(
+                    session = TeaSession(
+                        id = "draft-1",
+                        teaId = "tea-3",
+                        vesselId = "gaiwan",
+                        waterType = WaterType.FILTERED,
+                        timestamp = now,
+                        brewingTime = 3.minutes,
+                        temperatureCelsius = 85,
+                        waterQuantityMl = 150,
+                        status = SessionStatus.DRAFT,
+                        syncStatus = SyncStatus.LOCAL_ONLY,
+                        createdAt = now,
+                        updatedAt = now,
+                        steepNumber = 2,
+                        timerStatus = TimerStatus.PAUSED,
+                        timerRemainingMs = 90_000L,
+                    ),
+                    teaName = "Dragon Well Green",
+                    vesselName = "Gaiwan",
+                ),
                 isEmpty = false,
             ),
             onIntent = {},

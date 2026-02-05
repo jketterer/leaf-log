@@ -13,12 +13,13 @@ class ResumeTimerUseCase {
         return try {
             val now = Clock.System.now()
 
-            // Recalculate start time to maintain remaining duration
+            // Adjust startedAt to account for time already elapsed before pause,
+            // preserving totalDuration so progress ring stays correct
+            val alreadyElapsed = currentState.totalDuration - currentState.remainingDuration
             val resumedState = currentState.copy(
                 status = TimerStatus.RUNNING,
-                startedAt = now,
+                startedAt = now - alreadyElapsed,
                 pausedAt = null,
-                totalDuration = currentState.remainingDuration,  // New total is the remaining
             )
 
             Result.success(resumedState)

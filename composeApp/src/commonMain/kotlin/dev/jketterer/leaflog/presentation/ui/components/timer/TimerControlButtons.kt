@@ -34,19 +34,19 @@ fun TimerControlButtons(
                     Text("Stop")
                 }
                 Button(onClick = onPauseClick) {
-                    Text("⏸ Pause")
+                    Text("Pause")
                 }
             }
 
             isPaused -> {
                 OutlinedButton(onClick = onResetClick) {
-                    Text("↺ Reset")
+                    Text("Reset")
                 }
                 OutlinedButton(onClick = onStopClick) {
                     Text("Stop")
                 }
                 Button(onClick = onResumeClick) {
-                    Text("▶ Resume")
+                    Text("Resume")
                 }
             }
 

@@ -177,10 +177,8 @@ class TimerViewModel(
                 } else {
                     // Fall back to restoring from database (e.g., app was killed)
                     val restoredTimerState = restoreTimerStateUseCase(sessionId).getOrNull()
-                    if (restoredTimerState != null) {
-                        restoredTimerState.copy(teaName = tea?.name ?: "")
-                    } else {
-                        TimerState(
+                    restoredTimerState?.copy(teaName = tea?.name ?: "")
+                        ?: TimerState(
                             sessionId = session.id,
                             teaId = session.teaId,
                             teaName = tea?.name ?: "",
@@ -188,7 +186,6 @@ class TimerViewModel(
                             totalDuration = session.brewingTime,
                             remainingDuration = session.brewingTime,
                         )
-                    }
                 }
 
                 // Update timer service with restored/initial state
@@ -207,6 +204,11 @@ class TimerViewModel(
                         timerState = initialTimerState,
                         isLoading = false,
                     )
+                }
+
+                // Auto-start timer if it's a brand new session (not restored)
+                if (initialTimerState.status == TimerStatus.NOT_STARTED) {
+                    startTimer()
                 }
             } catch (e: Exception) {
                 _state.update {

@@ -147,6 +147,8 @@ class QuickTimerViewModel(
                 status = TimerStatus.NOT_STARTED,
             )
         }
+        // Auto-start timer immediately
+        startTimer()
     }
 
     private fun startTimer() {

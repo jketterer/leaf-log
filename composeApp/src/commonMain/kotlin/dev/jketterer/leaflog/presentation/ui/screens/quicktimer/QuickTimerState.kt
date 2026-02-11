@@ -73,17 +73,25 @@ data class QuickTimerState(
 
     /**
      * Formatted remaining time as MM:SS.
+     * Uses ceiling division to round up fractional seconds.
      */
     val formattedTime: String
         get() {
             val remaining = when (status) {
-                TimerStatus.RUNNING, TimerStatus.PAUSED ->
-                    remainingDuration.plus(1.seconds)
-
+                TimerStatus.RUNNING, TimerStatus.PAUSED -> remainingDuration
                 else -> totalDuration
             }
-            val minutes = remaining.inWholeMinutes
-            val seconds = remaining.inWholeSeconds % 60
+
+            // Round up to nearest second for display (ceiling division)
+            val milliseconds = remaining.inWholeMilliseconds
+            val totalSeconds = if (milliseconds > 0) {
+                (milliseconds + 999) / 1000  // Ceiling: round up if any fractional ms
+            } else {
+                0L
+            }
+
+            val minutes = totalSeconds / 60
+            val seconds = totalSeconds % 60
             return "${minutes}:${seconds.toString().padStart(2, '0')}"
         }
 

@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,19 +46,13 @@ class HomeViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     init {
-        loadPreferences()
+        loadPreferences(
+            preferencesRepository = preferencesRepository,
+            stateFlow = _state,
+            updateState = { state, prefs -> state.copy(userPreferences = prefs) },
+        )
         collectTimerState()
         onIntent(HomeIntent.LoadData)
-    }
-
-    private fun loadPreferences() {
-        viewModelScope.launch {
-            preferencesRepository.getPreferencesFlow()
-                .catch { println("Failed to load preferences") }
-                .collect { preferences ->
-                    _state.update { it.copy(userPreferences = preferences) }
-                }
-        }
     }
 
     private fun collectTimerState() {
@@ -76,7 +71,27 @@ class HomeViewModel(
             is HomeIntent.Refresh -> refresh()
             is HomeIntent.ClearError -> clearError()
 
-            is HomeIntent.LogTeaClicked -> _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+            is HomeIntent.LogTeaClicked -> {
+                _state.update { it.copy(isFabExpanded = false) }
+                _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+            }
+
+            is HomeIntent.QuickTimerClicked -> {
+                _state.update { it.copy(isFabExpanded = false, showDurationSheet = true) }
+            }
+
+            is HomeIntent.StartQuickTimer -> {
+                _state.update { it.copy(showDurationSheet = false) }
+                _navEvents.trySend(HomeNavEvent.NavigateToQuickTimer(intent.durationSeconds))
+            }
+
+            is HomeIntent.DismissDurationSheet -> {
+                _state.update { it.copy(showDurationSheet = false) }
+            }
+
+            is HomeIntent.FabExpandedChanged -> {
+                _state.update { it.copy(isFabExpanded = intent.expanded) }
+            }
             is HomeIntent.BrewAgainClicked -> _navEvents.trySend(
                 HomeNavEvent.NavigateToLogTea(
                     intent.teaId,
@@ -294,6 +309,7 @@ sealed interface HomeNavEvent {
     data object NavigateToSettings : HomeNavEvent
     data class ResumeTimer(val sessionId: String) : HomeNavEvent
     data class CompleteSession(val sessionId: String) : HomeNavEvent
+    data class NavigateToQuickTimer(val durationSeconds: Int) : HomeNavEvent
 }
 
 private data class HomeSessionData(

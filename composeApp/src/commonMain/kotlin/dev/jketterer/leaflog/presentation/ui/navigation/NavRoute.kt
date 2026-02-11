@@ -52,4 +52,7 @@ sealed interface NavRoute : NavKey {
 
     @Serializable
     data class EditVesselRoute(val vesselId: String? = null) : NavRoute
+
+    @Serializable
+    data class QuickTimerRoute(val durationSeconds: Int) : NavRoute
 }

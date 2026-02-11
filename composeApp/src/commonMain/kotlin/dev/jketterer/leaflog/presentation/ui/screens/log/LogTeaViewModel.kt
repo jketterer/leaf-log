@@ -191,7 +191,7 @@ class LogTeaViewModel(
             // Only prefill if user hasn't manually edited brewing parameters yet
             if (!_state.value.hasEditedBrewingParameters) {
                 // Use the smart pre-fill use case
-                val prefill = getBrewingParametersPrefillUseCase(tea, vessel.id)
+                val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
 
                 val currentState = _state.value
 
@@ -205,11 +205,6 @@ class LogTeaViewModel(
 
                 // Convert prefill water quantity from mL (storage) to user's display unit
                 val displayWaterQuantity = prefill.waterQuantityMl?.let { ml ->
-                    UnitConverter.millilitersToDisplayVolume(
-                        ml,
-                        currentState.userPreferences.volumeUnit
-                    ).toString()
-                } ?: vessel.capacityMl?.let { ml ->
                     UnitConverter.millilitersToDisplayVolume(
                         ml,
                         currentState.userPreferences.volumeUnit

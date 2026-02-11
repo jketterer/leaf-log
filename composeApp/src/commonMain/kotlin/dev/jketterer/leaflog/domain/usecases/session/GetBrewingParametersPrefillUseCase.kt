@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
@@ -14,8 +15,9 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
  * 1. Saved brewing configuration (Phase 2)
  * 2. This tea + this vessel session (rated >= 3 stars)
  * 3. Same tea TYPE + this vessel session (rated >= 3 stars)
- * 4. Tea defaults
- * 5. Empty (no pre-fill)
+ * 4. Tea defaults (with vessel capacity fallback for water quantity)
+ * 5. Vessel capacity only (when no tea defaults exist)
+ * 6. Empty (no pre-fill)
  */
 class GetBrewingParametersPrefillUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
@@ -27,10 +29,11 @@ class GetBrewingParametersPrefillUseCase(
      * Get pre-fill parameters for a tea + vessel combination
      *
      * @param tea The selected tea
-     * @param vesselId The selected vessel ID
+     * @param vessel The selected vessel
      * @return Pre-fill parameters with source information
      */
-    suspend operator fun invoke(tea: Tea, vesselId: String): BrewingParametersPrefill {
+    suspend operator fun invoke(tea: Tea, vessel: BrewingVessel): BrewingParametersPrefill {
+        val vesselId = vessel.id
         // 1. Try: Saved brewing configuration (Phase 2)
         val savedConfig = brewingConfigurationRepository.getBestByTeaAndVessel(tea.id, vesselId)
         if (savedConfig != null) {
@@ -119,7 +122,7 @@ class GetBrewingParametersPrefillUseCase(
 
             return BrewingParametersPrefill(
                 teaQuantityGrams = null,
-                waterQuantityMl = tea.defaultQuantity,
+                waterQuantityMl = tea.defaultQuantity ?: vessel.capacityMl,
                 temperatureCelsius = tea.defaultTemperatureCelsius
                     ?: teaTypeDefaults?.first,
                 brewingTime = tea.defaultBrewingTime
@@ -129,7 +132,19 @@ class GetBrewingParametersPrefillUseCase(
             )
         }
 
-        // 5. No pre-fill available
+        // 5. Fallback: Vessel capacity only (when no other defaults exist)
+        if (vessel.capacityMl != null) {
+            return BrewingParametersPrefill(
+                teaQuantityGrams = null,
+                waterQuantityMl = vessel.capacityMl,
+                temperatureCelsius = null,
+                brewingTime = null,
+                waterType = null,
+                source = PrefillSource.None,
+            )
+        }
+
+        // 6. No pre-fill available
         return BrewingParametersPrefill(
             teaQuantityGrams = null,
             waterQuantityMl = null,

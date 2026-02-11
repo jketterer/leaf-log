@@ -22,11 +22,12 @@ import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
+import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -58,8 +59,22 @@ class TimerViewModel(
     private val _navigationEvents = Channel<TimerNavEvent>()
     val navigationEvents = _navigationEvents.receiveAsFlow()
 
+    private val configSaveDelegate = createConfigurationSaveDelegate(
+        saveBrewingConfigurationUseCase = saveBrewingConfigurationUseCase,
+        stateFlow = _state,
+        getSavedSession = { it.savedSession },
+        dismissDialog = { it.copy(showSaveConfigurationDialog = false) },
+        setError = { state, error -> state.copy(error = error) },
+        createSuccessNavEvent = { session -> TimerNavEvent.NavigateToComplete(session.id) },
+        sendNavEvent = { _navigationEvents.trySend(it) },
+    )
+
     init {
-        loadPreferences()
+        loadPreferences(
+            preferencesRepository = preferencesRepository,
+            stateFlow = _state,
+            updateState = { state, prefs -> state.copy(userPreferences = prefs) },
+        )
         collectTimerState()
     }
 
@@ -73,16 +88,6 @@ class TimerViewModel(
             kotlinx.coroutines.runBlocking {
                 saveTimerStateUseCase(currentState)
             }
-        }
-    }
-
-    private fun loadPreferences() {
-        viewModelScope.launch {
-            preferencesRepository.getPreferencesFlow()
-                .catch { e -> println("Failed to load preferences: ${e.message}") }
-                .collect { preferences ->
-                    _state.update { it.copy(userPreferences = preferences) }
-                }
         }
     }
 
@@ -117,8 +122,11 @@ class TimerViewModel(
             is TimerIntent.RestartTimer -> restartTimer()
             is TimerIntent.BackClicked -> _navigationEvents.trySend(TimerNavEvent.NavigateBack)
 
-            is TimerIntent.SaveConfigurationClicked -> saveConfiguration(intent.customLabel)
-            is TimerIntent.SkipSaveConfiguration -> skipSaveConfiguration()
+            is TimerIntent.SaveConfigurationClicked ->
+                configSaveDelegate.saveConfiguration(intent.customLabel)
+
+            is TimerIntent.SkipSaveConfiguration ->
+                configSaveDelegate.skipSaveConfiguration()
 
             is TimerIntent.DiscardSession -> showDiscardConfirmation()
             is TimerIntent.ConfirmDiscardSession -> confirmDiscardSession()
@@ -525,35 +533,6 @@ class TimerViewModel(
             }
         } else {
             _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
-        }
-    }
-
-    private fun saveConfiguration(customLabel: String?) {
-        val session = _state.value.savedSession ?: return
-
-        viewModelScope.launch {
-            saveBrewingConfigurationUseCase(session, customLabel)
-                .onSuccess {
-                    _state.update { it.copy(showSaveConfigurationDialog = false) }
-                    _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
-                }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            error = "Failed to save configuration: ${e.message}",
-                            showSaveConfigurationDialog = false
-                        )
-                    }
-                    _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
-                }
-        }
-    }
-
-    private fun skipSaveConfiguration() {
-        val session = _state.value.savedSession
-        _state.update { it.copy(showSaveConfigurationDialog = false) }
-        if (session != null) {
-            _navigationEvents.trySend(TimerNavEvent.NavigateToComplete(session.id))
         }
     }
 

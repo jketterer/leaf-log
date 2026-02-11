@@ -30,6 +30,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
+import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
@@ -85,6 +86,9 @@ fun AppNavigation() {
                         onNavigateToSettings = { backStack.add(NavRoute.SettingsRoute) },
                         onNavigateToTimer = { sessionId ->
                             backStack.add(NavRoute.TimerRoute(sessionId))
+                        },
+                        onNavigateToQuickTimer = { durationSeconds ->
+                            backStack.add(NavRoute.QuickTimerRoute(durationSeconds))
                         },
                     )
                 }
@@ -255,6 +259,20 @@ fun AppNavigation() {
                             backStack.clear()
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                             backStack.add(0, NavRoute.HomeRoute)
+                        },
+                    )
+                }
+
+                entry<NavRoute.QuickTimerRoute> { entry ->
+                    QuickTimerScreen(
+                        durationSeconds = entry.durationSeconds,
+                        onNavigateBack = {
+                            backStack.removeLast()
+                        },
+                        onNavigateToSession = { sessionId ->
+                            // Clear quick timer from stack and navigate to session details
+                            backStack.removeLast()
+                            backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
                     )
                 }

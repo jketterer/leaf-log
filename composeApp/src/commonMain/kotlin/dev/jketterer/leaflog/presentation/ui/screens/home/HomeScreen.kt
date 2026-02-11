@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Settings
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.SessionStatus
@@ -43,7 +41,9 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.DraftSessionsBanner
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
+import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
+import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -64,6 +64,7 @@ fun HomeScreen(
     onNavigateToHistory: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
+    onNavigateToQuickTimer: (Int) -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -98,6 +99,10 @@ fun HomeScreen(
                 is HomeNavEvent.CompleteSession -> {
                     // Navigate to timer screen which will show completion UI
                     onNavigateToTimer(event.sessionId)
+                }
+
+                is HomeNavEvent.NavigateToQuickTimer -> {
+                    onNavigateToQuickTimer(event.durationSeconds)
                 }
             }
         }
@@ -280,19 +285,25 @@ private fun HomeContent(
             }
         }
 
-        FloatingActionButton(
-            onClick = {
-                onIntent(HomeIntent.LogTeaClicked)
-            },
+        ExpandableFAB(
+            expanded = state.isFabExpanded,
+            onExpandedChange = { onIntent(HomeIntent.FabExpandedChanged(it)) },
+            onLogSessionClick = { onIntent(HomeIntent.LogTeaClicked) },
+            onQuickTimerClick = { onIntent(HomeIntent.QuickTimerClicked) },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
-        ) {
-            Icon(
-                imageVector = FeatherIcons.Plus,
-                contentDescription = "Log tea session",
-            )
-        }
+        )
+    }
+
+    // Quick Timer Duration Sheet
+    if (state.showDurationSheet) {
+        QuickTimerDurationSheet(
+            onDismiss = { onIntent(HomeIntent.DismissDurationSheet) },
+            onStartTimer = { durationSeconds ->
+                onIntent(HomeIntent.StartQuickTimer(durationSeconds))
+            },
+        )
     }
 }
 

@@ -30,6 +30,7 @@ fun DurationPicker(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
+    syncKey: Any? = null,
 ) {
     // Track whether we've synced from the initial duration prop
     // This prevents re-syncing after user edits while allowing initial async load
@@ -50,6 +51,14 @@ fun DurationPicker(
             minutesFieldValue = TextFieldValue(duration.inWholeMinutes.toString())
             secondsFieldValue = TextFieldValue((duration.inWholeSeconds % 60).toString())
             initialDurationSynced = true
+        }
+    }
+
+    // Force sync when syncKey changes (e.g., preset button clicked)
+    LaunchedEffect(syncKey) {
+        if (syncKey != null && duration != null) {
+            minutesFieldValue = TextFieldValue(duration.inWholeMinutes.toString())
+            secondsFieldValue = TextFieldValue((duration.inWholeSeconds % 60).toString())
         }
     }
 

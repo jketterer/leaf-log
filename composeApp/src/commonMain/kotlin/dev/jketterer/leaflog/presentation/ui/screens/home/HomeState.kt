@@ -27,6 +27,9 @@ data class HomeState(
     val error: String? = null,
     val isEmpty: Boolean = true,
     val userPreferences: UserPreferences = UserPreferences(),
+    // FAB menu state
+    val isFabExpanded: Boolean = false,
+    val showDurationSheet: Boolean = false,
 ) {
     /**
      * Whether to show the empty state (no sessions at all).

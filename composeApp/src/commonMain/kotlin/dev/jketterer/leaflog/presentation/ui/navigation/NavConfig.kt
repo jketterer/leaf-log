@@ -20,6 +20,7 @@ val navSerializationConfig = SavedStateConfiguration {
             subclass(NavRoute.EditTeaRoute::class, NavRoute.EditTeaRoute.serializer())
             subclass(NavRoute.SessionDetailsRoute::class, NavRoute.SessionDetailsRoute.serializer())
             subclass(NavRoute.TimerRoute::class, NavRoute.TimerRoute.serializer())
+            subclass(NavRoute.QuickTimerRoute::class, NavRoute.QuickTimerRoute.serializer())
         }
     }
 }

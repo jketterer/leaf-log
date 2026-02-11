@@ -10,6 +10,8 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
+import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,19 +37,23 @@ class EditSessionViewModel(
     private val _navEvents = Channel<EditSessionNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
-    init {
-        loadPreferences()
-        loadVessels()
-    }
+    private val configSaveDelegate = createConfigurationSaveDelegate(
+        saveBrewingConfigurationUseCase = saveBrewingConfigurationUseCase,
+        stateFlow = _state,
+        getSavedSession = { it.savedSession },
+        dismissDialog = { it.copy(showSaveConfigurationDialog = false) },
+        setError = { state, error -> state.copy(error = error) },
+        createSuccessNavEvent = { EditSessionNavEvent.NavigateBack },
+        sendNavEvent = { _navEvents.trySend(it) },
+    )
 
-    private fun loadPreferences() {
-        viewModelScope.launch {
-            preferencesRepository.getPreferencesFlow()
-                .catch { println("Failed to load preferences") }
-                .collect { preferences ->
-                    _state.update { it.copy(userPreferences = preferences) }
-                }
-        }
+    init {
+        loadPreferences(
+            preferencesRepository = preferencesRepository,
+            stateFlow = _state,
+            updateState = { state, prefs -> state.copy(userPreferences = prefs) },
+        )
+        loadVessels()
     }
 
     fun onIntent(intent: EditSessionIntent) {
@@ -76,8 +82,11 @@ class EditSessionViewModel(
             is EditSessionIntent.BackClicked -> handleBack()
             is EditSessionIntent.ConfirmDiscard -> confirmDiscard()
             is EditSessionIntent.CancelDiscard -> cancelDiscard()
-            is EditSessionIntent.SaveConfigurationClicked -> saveConfiguration(intent.customLabel)
-            is EditSessionIntent.SkipSaveConfiguration -> skipSaveConfiguration()
+            is EditSessionIntent.SaveConfigurationClicked ->
+                configSaveDelegate.saveConfiguration(intent.customLabel)
+
+            is EditSessionIntent.SkipSaveConfiguration ->
+                configSaveDelegate.skipSaveConfiguration()
         }
     }
 
@@ -320,32 +329,6 @@ class EditSessionViewModel(
                     }
                 }
         }
-    }
-
-    private fun saveConfiguration(customLabel: String?) {
-        val session = _state.value.savedSession ?: return
-
-        viewModelScope.launch {
-            saveBrewingConfigurationUseCase(session, customLabel)
-                .onSuccess {
-                    _state.update { it.copy(showSaveConfigurationDialog = false) }
-                    _navEvents.send(EditSessionNavEvent.NavigateBack)
-                }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            error = "Failed to save configuration: ${e.message}",
-                            showSaveConfigurationDialog = false
-                        )
-                    }
-                    _navEvents.send(EditSessionNavEvent.NavigateBack)
-                }
-        }
-    }
-
-    private fun skipSaveConfiguration() {
-        _state.update { it.copy(showSaveConfigurationDialog = false) }
-        _navEvents.trySend(EditSessionNavEvent.NavigateBack)
     }
 
     private fun handleBack() {

@@ -48,6 +48,7 @@ import compose.icons.feathericons.Filter
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import kotlinx.datetime.LocalDate
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
@@ -67,6 +68,9 @@ import kotlin.time.toDuration
 @Composable
 fun HistoryScreen(
     showDraftsOnly: Boolean = false,
+    filterTeaTypeId: String? = null,
+    filterDateStart: String? = null,
+    filterDateEnd: String? = null,
     onNavigateToSession: (String) -> Unit,
     onNavigateToEditSession: (String) -> Unit = {},
     onNavigateToTimer: (String) -> Unit,
@@ -77,6 +81,20 @@ fun HistoryScreen(
     LaunchedEffect(showDraftsOnly) {
         if (showDraftsOnly) {
             viewModel.onIntent(HistoryIntent.ToggleShowDraftsOnly(true))
+        }
+    }
+
+    LaunchedEffect(filterTeaTypeId) {
+        if (filterTeaTypeId != null) {
+            viewModel.onIntent(HistoryIntent.FilterByTeaType(filterTeaTypeId))
+        }
+    }
+
+    LaunchedEffect(filterDateStart, filterDateEnd) {
+        if (filterDateStart != null || filterDateEnd != null) {
+            val start = filterDateStart?.let { LocalDate.parse(it) }
+            val end = filterDateEnd?.let { LocalDate.parse(it) }
+            viewModel.onIntent(HistoryIntent.FilterByDateRange(start, end))
         }
     }
 

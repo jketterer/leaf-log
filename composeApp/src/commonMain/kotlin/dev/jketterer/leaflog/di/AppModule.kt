@@ -10,6 +10,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailViewMo
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselViewModel
@@ -53,4 +54,6 @@ val appModule = module {
     viewModelOf(::QuickTimerViewModel)
 
     viewModelOf(::SettingsViewModel)
+
+    viewModelOf(::AnalyticsViewModel)
 }

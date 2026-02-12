@@ -16,6 +16,12 @@ import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.domain.usecases.session.ExportAnalyticsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
@@ -56,6 +62,14 @@ val useCaseModule = module {
 
     // Home screen use cases
     factoryOf(::GetDailyStatsUseCase)
+
+    // Analytics use cases
+    factoryOf(::GetAnalyticsUseCase)
+    factoryOf(::GenerateInsightsUseCase)
+    factoryOf(::GetBrewingTrendsUseCase)
+    factoryOf(::GetTeaTypeDistributionUseCase)
+    factoryOf(::GetTopTeasUseCase)
+    factoryOf(::ExportAnalyticsUseCase)
 
     // Timer use cases
     factoryOf(::StartTimerUseCase)

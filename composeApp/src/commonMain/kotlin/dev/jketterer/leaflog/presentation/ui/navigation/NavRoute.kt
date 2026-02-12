@@ -21,7 +21,12 @@ sealed interface NavRoute : NavKey {
     data class EditTeaRoute(val teaId: String? = null) : NavRoute
 
     @Serializable
-    data class HistoryRoute(val showDraftsOnly: Boolean = false) : NavRoute
+    data class HistoryRoute(
+        val showDraftsOnly: Boolean = false,
+        val filterTeaTypeId: String? = null,
+        val filterDateStart: String? = null,
+        val filterDateEnd: String? = null,
+    ) : NavRoute
 
     @Serializable
     data object MoreRoute : NavRoute

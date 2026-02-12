@@ -15,11 +15,12 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.BarChart2
 import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Home
 import compose.icons.feathericons.MoreHorizontal
-import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailScreen
@@ -50,6 +51,7 @@ fun AppNavigation() {
             if (currentRoute is NavRoute.HomeRoute ||
                 currentRoute is NavRoute.CollectionRoute ||
                 currentRoute is NavRoute.HistoryRoute ||
+                currentRoute is NavRoute.AnalyticsRoute ||
                 currentRoute is NavRoute.SettingsRoute
             ) {
                 BottomNavigationBar(
@@ -110,6 +112,9 @@ fun AppNavigation() {
                 entry<NavRoute.HistoryRoute> { route ->
                     HistoryScreen(
                         showDraftsOnly = route.showDraftsOnly,
+                        filterTeaTypeId = route.filterTeaTypeId,
+                        filterDateStart = route.filterDateStart,
+                        filterDateEnd = route.filterDateEnd,
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
@@ -123,9 +128,22 @@ fun AppNavigation() {
                 }
 
                 entry<NavRoute.AnalyticsRoute> {
-                    EmptyState(
-                        message = "Analytics screen will be implemented in Phase 7",
-                        onActionClick = { backStack.removeLast() },
+                    AnalyticsScreen(
+                        onNavigateToLogTea = {
+                            backStack.add(NavRoute.LogTeaRoute())
+                        },
+                        onNavigateToHistory = { filterTeaTypeId, filterDateStart, filterDateEnd ->
+                            backStack.add(
+                                NavRoute.HistoryRoute(
+                                    filterTeaTypeId = filterTeaTypeId,
+                                    filterDateStart = filterDateStart,
+                                    filterDateEnd = filterDateEnd,
+                                )
+                            )
+                        },
+                        onNavigateToTeaDetail = { teaId ->
+                            backStack.add(NavRoute.TeaDetailsRoute(teaId))
+                        },
                     )
                 }
 
@@ -322,6 +340,18 @@ private fun BottomNavigationBar(
             label = { Text("History") },
             selected = currentRoute is NavRoute.HistoryRoute,
             onClick = { onNavigate(NavRoute.HistoryRoute()) }
+        )
+
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    imageVector = FeatherIcons.BarChart2,
+                    contentDescription = ""
+                )
+            },
+            label = { Text("Analytics") },
+            selected = currentRoute is NavRoute.AnalyticsRoute,
+            onClick = { onNavigate(NavRoute.AnalyticsRoute) }
         )
 
         NavigationBarItem(

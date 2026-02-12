@@ -26,6 +26,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -96,7 +100,18 @@ private fun SettingsContent(
     // File operation effects
     ExportFileEffect(
         jsonContent = state.exportJson,
-        fileName = "leaf-log-export.json",
+        fileName = remember {
+            val now = Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+            val date = now.date
+            val time = now.time
+            val month = (date.month.ordinal + 1).toString().padStart(2, '0')
+            val day = date.day.toString().padStart(2, '0')
+            val hour = time.hour.toString().padStart(2, '0')
+            val minute = time.minute.toString().padStart(2, '0')
+            val second = time.second.toString().padStart(2, '0')
+            "leaf-log-export-${date.year}${month}${day}-${hour}${minute}${second}.json"
+        },
         onExported = { onIntent(SettingsIntent.ExportCompleted) },
         onError = { error ->
             onIntent(SettingsIntent.ExportCompleted)

@@ -19,7 +19,6 @@ import compose.icons.feathericons.BarChart2
 import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Home
-import compose.icons.feathericons.MoreHorizontal
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
@@ -51,8 +50,7 @@ fun AppNavigation() {
             if (currentRoute is NavRoute.HomeRoute ||
                 currentRoute is NavRoute.CollectionRoute ||
                 currentRoute is NavRoute.HistoryRoute ||
-                currentRoute is NavRoute.AnalyticsRoute ||
-                currentRoute is NavRoute.SettingsRoute
+                currentRoute is NavRoute.AnalyticsRoute
             ) {
                 BottomNavigationBar(
                     currentRoute = currentRoute,
@@ -354,16 +352,5 @@ private fun BottomNavigationBar(
             onClick = { onNavigate(NavRoute.AnalyticsRoute) }
         )
 
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = FeatherIcons.MoreHorizontal,
-                    contentDescription = ""
-                )
-            },
-            label = { Text("More") },
-            selected = currentRoute is NavRoute.SettingsRoute,
-            onClick = { onNavigate(NavRoute.SettingsRoute) }
-        )
     }
 }

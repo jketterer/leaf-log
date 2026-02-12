@@ -20,6 +20,10 @@ class TeaSessionRepositoryImpl(
         }
     }
 
+    override suspend fun getAll(): List<TeaSession> {
+        return teaSessionDao.getAll().map { it.toTeaSession() }
+    }
+
     override fun getRecentFlow(limit: Int): Flow<List<TeaSession>> {
         return teaSessionDao.getRecentFlow(limit).map { entities ->
             entities.map { it.toTeaSession() }

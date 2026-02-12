@@ -7,4 +7,10 @@ sealed interface SettingsIntent {
     data class UpdateTemperatureUnit(val unit: TemperatureUnit) : SettingsIntent
     data class UpdateVolumeUnit(val unit: VolumeUnit) : SettingsIntent
     data object ClearError : SettingsIntent
+    data object ExportData : SettingsIntent
+    data object ExportCompleted : SettingsIntent
+    data object ImportData : SettingsIntent
+    data class ImportFileSelected(val jsonContent: String) : SettingsIntent
+    data object ImportCancelled : SettingsIntent
+    data object DismissImportResult : SettingsIntent
 }

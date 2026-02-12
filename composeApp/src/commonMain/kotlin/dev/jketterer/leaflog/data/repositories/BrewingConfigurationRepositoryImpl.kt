@@ -13,6 +13,10 @@ class BrewingConfigurationRepositoryImpl(
     private val brewingConfigurationDao: BrewingConfigurationDao,
 ) : BrewingConfigurationRepository {
 
+    override suspend fun getAll(): List<BrewingConfiguration> {
+        return brewingConfigurationDao.getAll().map { it.toBrewingConfiguration() }
+    }
+
     override suspend fun getByTeaAndVessel(
         teaId: String,
         vesselId: String

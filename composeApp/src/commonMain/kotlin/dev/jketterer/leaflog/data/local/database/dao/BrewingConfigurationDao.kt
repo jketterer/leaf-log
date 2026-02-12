@@ -29,6 +29,12 @@ interface BrewingConfigurationDao {
     @Upsert
     suspend fun upsert(configuration: BrewingConfigurationEntity)
 
+    @Query("SELECT * FROM brewing_configurations")
+    suspend fun getAll(): List<BrewingConfigurationEntity>
+
+    @Upsert
+    suspend fun upsertAll(configurations: List<BrewingConfigurationEntity>)
+
     @Query("DELETE FROM brewing_configurations WHERE id = :id")
     suspend fun delete(id: String)
 

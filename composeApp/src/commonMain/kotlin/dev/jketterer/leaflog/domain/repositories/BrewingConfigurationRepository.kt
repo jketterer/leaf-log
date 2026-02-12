@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 
 interface BrewingConfigurationRepository {
+    suspend fun getAll(): List<BrewingConfiguration>
+
     /**
      * Get all configurations for a tea + vessel combination
      * Sorted by rating, times used, and last used

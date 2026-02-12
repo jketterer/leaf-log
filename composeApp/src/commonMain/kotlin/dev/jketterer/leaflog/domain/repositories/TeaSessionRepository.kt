@@ -6,6 +6,7 @@ import kotlin.time.Instant
 
 interface TeaSessionRepository {
     fun getAllFlow(): Flow<List<TeaSession>>
+    suspend fun getAll(): List<TeaSession>
     fun getRecentFlow(limit: Int): Flow<List<TeaSession>>
     suspend fun getRecent(limit: Int): List<TeaSession>
     suspend fun getById(id: String): TeaSession?

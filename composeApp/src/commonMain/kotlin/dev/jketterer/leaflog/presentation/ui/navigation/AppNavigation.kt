@@ -101,8 +101,11 @@ fun AppNavigation() {
                         onNavigateToAddTea = {
                             backStack.add(NavRoute.EditTeaRoute())
                         },
-                        onNavigateToManageVessels = {
-                            backStack.add(NavRoute.VesselListRoute)
+                        onNavigateToVesselDetail = { vesselId ->
+                            backStack.add(NavRoute.VesselDetailRoute(vesselId))
+                        },
+                        onNavigateToAddVessel = {
+                            backStack.add(NavRoute.EditVesselRoute())
                         },
                     )
                 }

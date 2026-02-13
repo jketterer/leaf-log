@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.di
 
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
@@ -32,6 +33,9 @@ actual fun platformModule() = module {
     single {
         TimerNotificationService()
     }
+
+    // Image storage
+    single { ImageStorage() }
 
     // Preferences
     single {

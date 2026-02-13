@@ -10,6 +10,7 @@ data class EditVesselState(
     val existingVessel: BrewingVessel? = null,
     val name: String = "",
     val selectedIconName: String? = null,
+    val imagePath: String? = null,
     val capacity: String = "",
     val userPreferences: UserPreferences = UserPreferences(),
     val nameError: String? = null,
@@ -32,9 +33,10 @@ data class EditVesselState(
             } ?: ""
             name != existingVessel.name ||
                     selectedIconName != existingVessel.iconName ||
+                    imagePath != existingVessel.imagePath ||
                     capacity != (vesselCapacity)
         } else {
-            name.isNotBlank() || selectedIconName != null || capacity.isNotBlank()
+            name.isNotBlank() || selectedIconName != null || imagePath != null || capacity.isNotBlank()
         }
 
     val isValid: Boolean

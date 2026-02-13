@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "f2e5451951b55aa1b8efd0d56d12443c",
+    "identityHash": "08aca393c614a203e15f1b5fcd7f8300",
     "entities": [
       {
         "tableName": "tea",
@@ -588,7 +588,7 @@
       },
       {
         "tableName": "brewing_vessel",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `iconName` TEXT, `capacityMl` INTEGER, `isSystemDefault` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `iconName` TEXT, `imagePath` TEXT, `capacityMl` INTEGER, `isSystemDefault` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `userId` TEXT, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `syncStatus` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -605,6 +605,11 @@
           {
             "fieldPath": "iconName",
             "columnName": "iconName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "imagePath",
+            "columnName": "imagePath",
             "affinity": "TEXT"
           },
           {
@@ -878,7 +883,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f2e5451951b55aa1b8efd0d56d12443c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '08aca393c614a203e15f1b5fcd7f8300')"
     ]
   }
 }

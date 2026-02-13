@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,13 +38,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -174,13 +179,24 @@ fun VesselDetailScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                // Large icon
-                                Icon(
-                                    imageVector = VesselIconHelper.getIconForVessel(state.vessel!!.iconName),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(80.dp),
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
+                                // Large image or icon
+                                if (state.vessel!!.imagePath != null) {
+                                    AsyncImage(
+                                        model = state.vessel!!.imagePath,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(80.dp)
+                                            .clip(RoundedCornerShape(12.dp)),
+                                        contentScale = ContentScale.Crop,
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = VesselIconHelper.getIconForVessel(state.vessel!!.iconName),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(80.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
 
                                 // Vessel name
                                 Text(
@@ -189,14 +205,6 @@ fun VesselDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 )
 
-                                // System default badge
-                                if (state.vessel!!.isSystemDefault) {
-                                    Text(
-                                        text = "System Default",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
                             }
                         }
 
@@ -230,7 +238,10 @@ fun VesselDetailScreen(
                                             style = MaterialTheme.typography.bodyMedium
                                         )
                                         Text(
-                                            text = "${state.vessel!!.capacityMl} ml",
+                                            text = VolumeFormatter.format(
+                                                milliliters = state.vessel!!.capacityMl!!,
+                                                unit = state.volumeUnit,
+                                            ),
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Medium
                                         )

@@ -17,6 +17,7 @@ class CreateBrewingVesselUseCase(
     suspend operator fun invoke(
         name: String,
         iconName: String? = null,
+        imagePath: String? = null,
         capacityMl: Int? = null,
     ): Result<BrewingVessel> {
         // Validation
@@ -38,6 +39,7 @@ class CreateBrewingVesselUseCase(
             id = Uuid.random().toString(),
             name = name.trim(),
             iconName = iconName,
+            imagePath = imagePath,
             capacityMl = capacityMl,
             isSystemDefault = false,
             displayOrder = maxOrder + 1,

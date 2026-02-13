@@ -41,6 +41,7 @@ class TeaCollectionViewModel(
 
             is TeaCollectionIntent.SearchQueryChanged -> updateSearchQuery(intent.query)
             is TeaCollectionIntent.ToggleFavorite -> toggleFavorite(intent.tea)
+            is TeaCollectionIntent.TabSelected -> selectTab(intent.tab)
             is TeaCollectionIntent.TeaClicked -> {
                 // navigation handled by UI
             }
@@ -145,6 +146,10 @@ class TeaCollectionViewModel(
                     _state.update { it.copy(error = "Failed to toggle favorite: ${e.message}") }
                 }
         }
+    }
+
+    private fun selectTab(tab: CollectionTab) {
+        _state.update { it.copy(selectedTab = tab) }
     }
 
     private fun clearError() {

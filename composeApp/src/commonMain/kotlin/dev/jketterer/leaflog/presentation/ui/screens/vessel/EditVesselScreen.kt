@@ -6,14 +6,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -35,15 +40,23 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
+import compose.icons.feathericons.X
 import dev.jketterer.leaflog.presentation.ui.components.common.EditCapacityField
+import dev.jketterer.leaflog.presentation.ui.components.common.PhotoPickerButton
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
+import io.github.vinceglb.filekit.readBytes
+import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -151,11 +164,29 @@ fun EditVesselScreen(
                         volumeUnit = state.userPreferences.volumeUnit,
                     )
 
+                    // Photo section
+                    Text(
+                        text = "Photo",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    VesselPhotoSection(
+                        imagePath = state.imagePath,
+                        onPhotoPicked = { bytes ->
+                            viewModel.onIntent(EditVesselIntent.PhotoSelected(bytes))
+                        },
+                        onRemovePhoto = {
+                            viewModel.onIntent(EditVesselIntent.RemovePhoto)
+                        },
+                        enabled = !state.isSaving,
+                    )
+
                     // Icon selector section
                     Text(
                         text = "Select Icon",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
 
                     LazyVerticalGrid(
@@ -251,6 +282,61 @@ private fun VesselIconCard(
                     MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+@Composable
+private fun VesselPhotoSection(
+    imagePath: String?,
+    onPhotoPicked: (ByteArray) -> Unit,
+    onRemovePhoto: () -> Unit,
+    enabled: Boolean,
+) {
+    val scope = rememberCoroutineScope()
+
+    if (imagePath != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            AsyncImage(
+                model = imagePath,
+                contentDescription = "Vessel photo",
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop,
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                PhotoPickerButton(
+                    onPhotoPicked = { file ->
+                        scope.launch { onPhotoPicked(file.readBytes()) }
+                    },
+                    text = "Change Photo",
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                TextButton(
+                    onClick = onRemovePhoto,
+                    enabled = enabled,
+                ) {
+                    Icon(
+                        imageVector = FeatherIcons.X,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Remove")
+                }
+            }
+        }
+    } else {
+        PhotoPickerButton(
+            onPhotoPicked = { file ->
+                scope.launch { onPhotoPicked(file.readBytes()) }
+            },
+            text = "Add Photo",
+        )
     }
 }
 

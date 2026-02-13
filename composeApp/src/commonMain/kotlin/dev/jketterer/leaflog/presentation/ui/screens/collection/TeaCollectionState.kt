@@ -8,11 +8,17 @@ data class TeaCollectionState(
     val teaTypes: List<TeaType> = emptyList(),
     val selectedFilter: FilterType = FilterType.ALL,
     val selectedTypeId: String? = null,
+    val selectedTab: CollectionTab = CollectionTab.TEAS,
     val searchQuery: String = "",
     val isLoading: Boolean = false,
     val error: String? = null,
     val isEmpty: Boolean = false,
 )
+
+enum class CollectionTab {
+    TEAS,
+    VESSELS,
+}
 
 enum class FilterType {
     ALL,

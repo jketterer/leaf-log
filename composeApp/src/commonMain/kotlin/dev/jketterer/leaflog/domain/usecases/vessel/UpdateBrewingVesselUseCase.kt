@@ -14,6 +14,8 @@ class UpdateBrewingVesselUseCase(
         existingVessel: BrewingVessel,
         name: String? = null,
         iconName: String? = null,
+        imagePath: String? = null,
+        clearImage: Boolean = false,
         capacityMl: Int? = null,
     ): Result<BrewingVessel> {
         val newName = name ?: existingVessel.name
@@ -32,9 +34,16 @@ class UpdateBrewingVesselUseCase(
             else -> existingVessel.capacityMl
         }
 
+        val newImagePath = when {
+            clearImage -> null
+            imagePath != null -> imagePath
+            else -> existingVessel.imagePath
+        }
+
         val updatedVessel = existingVessel.copy(
             name = newName.trim(),
             iconName = iconName ?: existingVessel.iconName,
+            imagePath = newImagePath,
             capacityMl = newCapacity,
             updatedAt = Clock.System.now(),
         )

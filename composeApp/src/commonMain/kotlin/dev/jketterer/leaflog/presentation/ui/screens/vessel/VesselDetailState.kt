@@ -1,9 +1,11 @@
 package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 
 data class VesselDetailState(
     val vessel: BrewingVessel? = null,
+    val volumeUnit: VolumeUnit = VolumeUnit.MILLILITERS,
     val sessionCount: Int = 0,
     val totalVesselCount: Int = 0,
     val isLoading: Boolean = false,

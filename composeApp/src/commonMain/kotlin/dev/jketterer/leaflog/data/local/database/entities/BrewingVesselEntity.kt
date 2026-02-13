@@ -20,6 +20,7 @@ data class BrewingVesselEntity(
     @PrimaryKey val id: String,
     val name: String,
     val iconName: String? = null,
+    val imagePath: String? = null,
     val capacityMl: Int? = null,
     val isSystemDefault: Boolean,
     val displayOrder: Int,

@@ -10,6 +10,7 @@ sealed interface TeaCollectionIntent {
     data class SearchQueryChanged(val query: String) : TeaCollectionIntent
     data class TeaClicked(val teaId: String) : TeaCollectionIntent
     data class ToggleFavorite(val tea: Tea) : TeaCollectionIntent
+    data class TabSelected(val tab: CollectionTab) : TeaCollectionIntent
     data object AddTeaClicked : TeaCollectionIntent
     data object ClearError : TeaCollectionIntent
 }

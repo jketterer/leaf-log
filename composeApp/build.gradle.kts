@@ -54,6 +54,7 @@ kotlin {
             implementation(libs.koin.composeViewmodel)
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
+            implementation(libs.filekit.dialogs.compose)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

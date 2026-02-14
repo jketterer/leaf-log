@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 
 @Composable
 expect fun ExportFileEffect(
-    jsonContent: String?,
+    exportFilePath: String?,
     fileName: String,
     onExported: () -> Unit,
     onError: (String) -> Unit,
@@ -13,7 +13,7 @@ expect fun ExportFileEffect(
 @Composable
 expect fun ImportFileLauncher(
     shouldLaunch: Boolean,
-    onFileContent: (String) -> Unit,
+    onFilePath: (String) -> Unit,
     onCancelled: () -> Unit,
     onError: (String) -> Unit,
 )

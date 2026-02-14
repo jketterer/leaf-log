@@ -24,9 +24,8 @@ sealed interface EditSessionIntent {
 
     // Field changes - Notes & Photos
     data class NotesChanged(val notes: String) : EditSessionIntent
-    data object AddPhotoClicked : EditSessionIntent
-    data class PhotoSelected(val photoUri: String) : EditSessionIntent
-    data class PhotoRemoved(val photoUri: String) : EditSessionIntent
+    data class PhotoSelected(val imageBytes: ByteArray) : EditSessionIntent
+    data class PhotoRemoved(val path: String) : EditSessionIntent
 
     // Actions
     data object SaveClicked : EditSessionIntent

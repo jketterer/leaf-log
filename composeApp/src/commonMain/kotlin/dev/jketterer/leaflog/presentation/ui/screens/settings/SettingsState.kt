@@ -9,7 +9,7 @@ data class SettingsState(
     val error: String? = null,
     val isExporting: Boolean = false,
     val isImporting: Boolean = false,
-    val exportJson: String? = null,
+    val exportFilePath: String? = null,
     val showImportPicker: Boolean = false,
     val importResult: ImportResult? = null,
 )

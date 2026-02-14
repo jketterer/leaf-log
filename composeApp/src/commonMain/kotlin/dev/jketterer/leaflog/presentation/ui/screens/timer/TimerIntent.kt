@@ -20,9 +20,8 @@ sealed interface TimerIntent {
     data object CancelStop : TimerIntent
     data class RatingChanged(val rating: Float) : TimerIntent
     data class NotesChanged(val notes: String) : TimerIntent
-    data object AddPhotoClicked : TimerIntent
-    data class PhotoSelected(val photoUri: String) : TimerIntent
-    data class PhotoRemoved(val photoUri: String) : TimerIntent
+    data class PhotoSelected(val imageBytes: ByteArray) : TimerIntent
+    data class PhotoRemoved(val path: String) : TimerIntent
     data object ShowNextSteepDialog : TimerIntent
     data object CancelNextSteepDialog : TimerIntent
     data class UpdateNextSteepDuration(val duration: Duration?) : TimerIntent

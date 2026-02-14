@@ -38,7 +38,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Camera
 import compose.icons.feathericons.RotateCw
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -51,6 +50,7 @@ import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
+import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
@@ -496,19 +496,13 @@ private fun CompletionContent(
         }
 
         item {
-            // Photo button
-            OutlinedButton(
-                onClick = { onIntent(TimerIntent.AddPhotoClicked) },
+            // Photos
+            PhotoGrid(
+                photos = state.photos,
+                onAddPhoto = { onIntent(TimerIntent.PhotoSelected(it)) },
+                onRemovePhoto = { onIntent(TimerIntent.PhotoRemoved(it)) },
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(
-                    imageVector = FeatherIcons.Camera,
-                    contentDescription = "Photo",
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Add Photos (${state.photos.size})")
-            }
+            )
         }
 
         item {

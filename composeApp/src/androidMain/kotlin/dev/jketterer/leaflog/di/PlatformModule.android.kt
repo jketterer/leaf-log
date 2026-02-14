@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
@@ -40,6 +41,9 @@ actual fun platformModule(): Module = module {
 
     // Image storage
     single { ImageStorage(context = get()) }
+
+    // Zip archiver
+    single { ZipArchiver() }
 
     // Preferences
     single {

@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerState
@@ -33,12 +34,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class TimerViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val imageStorage: ImageStorage,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
@@ -106,12 +110,8 @@ class TimerViewModel(
             is TimerIntent.CancelStop -> cancelStop()
             is TimerIntent.RatingChanged -> updateRating(intent.rating)
             is TimerIntent.NotesChanged -> updateNotes(intent.notes)
-            is TimerIntent.AddPhotoClicked -> {
-                // Photo picker handled by UI
-            }
-
-            is TimerIntent.PhotoSelected -> addPhoto(intent.photoUri)
-            is TimerIntent.PhotoRemoved -> removePhoto(intent.photoUri)
+            is TimerIntent.PhotoSelected -> addPhoto(intent.imageBytes)
+            is TimerIntent.PhotoRemoved -> removePhoto(intent.path)
             is TimerIntent.ShowNextSteepDialog -> showNextSteepDialog()
             is TimerIntent.CancelNextSteepDialog -> cancelNextSteepDialog()
             is TimerIntent.UpdateNextSteepDuration -> updateNextSteepDuration(intent.duration)
@@ -552,6 +552,14 @@ class TimerViewModel(
 
         viewModelScope.launch {
             try {
+                // Clean up any photos saved during this session
+                for (photo in _state.value.photos) {
+                    try {
+                        imageStorage.deleteImage(photo)
+                    } catch (_: Exception) {
+                    }
+                }
+
                 // Delete the session from the database
                 teaSessionRepository.delete(session.id)
 
@@ -601,15 +609,30 @@ class TimerViewModel(
         _state.update { it.copy(notes = notes) }
     }
 
-    private fun addPhoto(photoUri: String) {
-        _state.update {
-            it.copy(photos = it.photos + photoUri)
+    @OptIn(ExperimentalUuidApi::class)
+    private fun addPhoto(imageBytes: ByteArray) {
+        viewModelScope.launch {
+            try {
+                val fileName = "${Uuid.random()}.jpg"
+                val persistedPath = imageStorage.saveImage(imageBytes, fileName, "session_images")
+                _state.update {
+                    it.copy(photos = it.photos + persistedPath)
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = "Failed to save photo: ${e.message}") }
+            }
         }
     }
 
-    private fun removePhoto(photoUri: String) {
-        _state.update {
-            it.copy(photos = it.photos - photoUri)
+    private fun removePhoto(path: String) {
+        viewModelScope.launch {
+            try {
+                imageStorage.deleteImage(path)
+            } catch (_: Exception) {
+            }
+            _state.update {
+                it.copy(photos = it.photos - path)
+            }
         }
     }
 }

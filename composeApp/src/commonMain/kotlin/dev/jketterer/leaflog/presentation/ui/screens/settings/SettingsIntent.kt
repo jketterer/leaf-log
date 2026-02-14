@@ -10,7 +10,7 @@ sealed interface SettingsIntent {
     data object ExportData : SettingsIntent
     data object ExportCompleted : SettingsIntent
     data object ImportData : SettingsIntent
-    data class ImportFileSelected(val jsonContent: String) : SettingsIntent
+    data class ImportFileSelected(val filePath: String) : SettingsIntent
     data object ImportCancelled : SettingsIntent
     data object DismissImportResult : SettingsIntent
 }

@@ -22,7 +22,7 @@ fun TeaSessionEntity.toTeaSession(): TeaSession {
         temperatureCelsius = temperatureCelsius,
         waterQuantityMl = waterQuantityMl,
         notes = notes,
-        photos = emptyList(), // TODO: how do we handle photos?
+        photos = photos,
         userId = userId,
         syncStatus = syncStatus,
         createdAt = createdAt,
@@ -54,7 +54,7 @@ fun TeaSession.toEntity(): TeaSessionEntity {
         temperatureCelsius = temperatureCelsius,
         waterQuantityMl = waterQuantityMl,
         notes = notes,
-        photos = emptyList(), // TODO: how do we handle photos?
+        photos = photos,
         userId = userId,
         syncStatus = syncStatus,
         createdAt = createdAt,

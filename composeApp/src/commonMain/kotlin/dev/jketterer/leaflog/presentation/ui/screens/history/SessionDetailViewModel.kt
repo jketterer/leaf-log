@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -26,6 +27,7 @@ class SessionDetailViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val imageStorage: ImageStorage,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
@@ -193,6 +195,17 @@ class SessionDetailViewModel(
         viewModelScope.launch {
             _state.update { it.copy(showDeleteConfirmation = false, isLoading = true) }
 
+            // Clean up photo files for all steeps
+            val allSteeps = _state.value.allSteeps
+            for (steep in allSteeps) {
+                for (photo in steep.photos) {
+                    try {
+                        imageStorage.deleteImage(photo)
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+
             deleteSessionUseCase(session.id)
                 .onSuccess {
                     _navEvents.send(SessionDetailNavEvent.NavigateBack)
@@ -236,6 +249,15 @@ class SessionDetailViewModel(
                     showDeleteSteepConfirmation = false,
                     isLoading = true
                 )
+            }
+
+            // Clean up photos for the steep being deleted
+            val steepToDelete = _state.value.allSteeps.find { it.id == steepId }
+            steepToDelete?.photos?.forEach { photo ->
+                try {
+                    imageStorage.deleteImage(photo)
+                } catch (_: Exception) {
+                }
             }
 
             // Delete the steep

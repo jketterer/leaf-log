@@ -16,7 +16,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -37,6 +36,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
+import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
@@ -306,12 +306,12 @@ private fun EditSessionContent(
                 }
 
                 item(key = "photos") {
-                    OutlinedButton(
-                        onClick = { onIntent(EditSessionIntent.AddPhotoClicked) },
+                    PhotoGrid(
+                        photos = state.photos,
+                        onAddPhoto = { onIntent(EditSessionIntent.PhotoSelected(it)) },
+                        onRemovePhoto = { onIntent(EditSessionIntent.PhotoRemoved(it)) },
                         modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("📷 Add Photos (${state.photos.size})")
-                    }
+                    )
                 }
             }
         }

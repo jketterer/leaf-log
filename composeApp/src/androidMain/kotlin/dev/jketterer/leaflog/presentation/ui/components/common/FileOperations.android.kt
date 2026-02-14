@@ -10,24 +10,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import java.io.File
+import java.io.FileInputStream
 
 @Composable
 actual fun ExportFileEffect(
-    jsonContent: String?,
+    exportFilePath: String?,
     fileName: String,
     onExported: () -> Unit,
     onError: (String) -> Unit,
 ) {
     val context = LocalContext.current
-    var pendingContent by remember { mutableStateOf<String?>(null) }
+    var pendingFilePath by remember { mutableStateOf<String?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/json"),
+        contract = ActivityResultContracts.CreateDocument("application/zip"),
     ) { uri: Uri? ->
-        if (uri != null && pendingContent != null) {
+        if (uri != null && pendingFilePath != null) {
             try {
                 context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    outputStream.write(pendingContent!!.toByteArray(Charsets.UTF_8))
+                    FileInputStream(File(pendingFilePath!!)).use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
                 }
                 onExported()
             } catch (e: Exception) {
@@ -36,12 +40,12 @@ actual fun ExportFileEffect(
         } else {
             onExported()
         }
-        pendingContent = null
+        pendingFilePath = null
     }
 
-    LaunchedEffect(jsonContent) {
-        if (jsonContent != null) {
-            pendingContent = jsonContent
+    LaunchedEffect(exportFilePath) {
+        if (exportFilePath != null) {
+            pendingFilePath = exportFilePath
             launcher.launch(fileName)
         }
     }
@@ -50,7 +54,7 @@ actual fun ExportFileEffect(
 @Composable
 actual fun ImportFileLauncher(
     shouldLaunch: Boolean,
-    onFileContent: (String) -> Unit,
+    onFilePath: (String) -> Unit,
     onCancelled: () -> Unit,
     onError: (String) -> Unit,
 ) {
@@ -61,14 +65,14 @@ actual fun ImportFileLauncher(
     ) { uri: Uri? ->
         if (uri != null) {
             try {
-                val content = context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    inputStream.bufferedReader(Charsets.UTF_8).readText()
+                // Copy the selected file to a temp location so the use case can read it by path
+                val tempFile = File(context.cacheDir, "leaflog_import_temp")
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    tempFile.outputStream().use { outputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
                 }
-                if (content != null) {
-                    onFileContent(content)
-                } else {
-                    onError("Failed to read file")
-                }
+                onFilePath(tempFile.absolutePath)
             } catch (e: Exception) {
                 onError(e.message ?: "Failed to read file")
             }
@@ -79,7 +83,7 @@ actual fun ImportFileLauncher(
 
     LaunchedEffect(shouldLaunch) {
         if (shouldLaunch) {
-            launcher.launch(arrayOf("application/json", "*/*"))
+            launcher.launch(arrayOf("application/zip", "application/json", "*/*"))
         }
     }
 }

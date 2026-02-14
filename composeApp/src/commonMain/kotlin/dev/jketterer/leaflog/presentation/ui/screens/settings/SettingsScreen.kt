@@ -99,7 +99,7 @@ private fun SettingsContent(
 
     // File operation effects
     ExportFileEffect(
-        jsonContent = state.exportJson,
+        exportFilePath = state.exportFilePath,
         fileName = remember {
             val now = Clock.System.now()
                 .toLocalDateTime(TimeZone.currentSystemDefault())
@@ -110,7 +110,7 @@ private fun SettingsContent(
             val hour = time.hour.toString().padStart(2, '0')
             val minute = time.minute.toString().padStart(2, '0')
             val second = time.second.toString().padStart(2, '0')
-            "leaf-log-export-${date.year}${month}${day}-${hour}${minute}${second}.json"
+            "leaf-log-export-${date.year}${month}${day}-${hour}${minute}${second}.zip"
         },
         onExported = { onIntent(SettingsIntent.ExportCompleted) },
         onError = { error ->
@@ -121,7 +121,7 @@ private fun SettingsContent(
 
     ImportFileLauncher(
         shouldLaunch = state.showImportPicker,
-        onFileContent = { content -> onIntent(SettingsIntent.ImportFileSelected(content)) },
+        onFilePath = { path -> onIntent(SettingsIntent.ImportFileSelected(path)) },
         onCancelled = { onIntent(SettingsIntent.ImportCancelled) },
         onError = { onIntent(SettingsIntent.ImportCancelled) },
     )
@@ -168,7 +168,7 @@ private fun DataSection(
 
         SettingRow(
             title = "Export Data",
-            subtitle = "Save all data as a JSON file",
+            subtitle = "Save all data including photos",
         ) {
             OutlinedButton(
                 onClick = { onIntent(SettingsIntent.ExportData) },
@@ -189,7 +189,7 @@ private fun DataSection(
 
         SettingRow(
             title = "Import Data",
-            subtitle = "Merge data from a Leaf Log export file",
+            subtitle = "Merge data from a Leaf Log export",
         ) {
             OutlinedButton(
                 onClick = { onIntent(SettingsIntent.ImportData) },

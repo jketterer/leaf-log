@@ -32,10 +32,10 @@ class SettingsViewModel(
             is SettingsIntent.ClearError -> clearError()
             is SettingsIntent.ExportData -> exportData()
             is SettingsIntent.ExportCompleted -> _state.update {
-                it.copy(exportJson = null, isExporting = false)
+                it.copy(exportFilePath = null, isExporting = false)
             }
             is SettingsIntent.ImportData -> _state.update { it.copy(showImportPicker = true) }
-            is SettingsIntent.ImportFileSelected -> importData(intent.jsonContent)
+            is SettingsIntent.ImportFileSelected -> importData(intent.filePath)
             is SettingsIntent.ImportCancelled -> _state.update { it.copy(showImportPicker = false) }
             is SettingsIntent.DismissImportResult -> _state.update { it.copy(importResult = null) }
         }
@@ -77,8 +77,8 @@ class SettingsViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isExporting = true) }
             exportDataUseCase()
-                .onSuccess { json ->
-                    _state.update { it.copy(exportJson = json, isExporting = false) }
+                .onSuccess { filePath ->
+                    _state.update { it.copy(exportFilePath = filePath, isExporting = false) }
                 }
                 .onFailure { error ->
                     _state.update {
@@ -91,10 +91,10 @@ class SettingsViewModel(
         }
     }
 
-    private fun importData(jsonContent: String) {
+    private fun importData(filePath: String) {
         viewModelScope.launch {
             _state.update { it.copy(showImportPicker = false, isImporting = true) }
-            importDataUseCase(jsonContent)
+            importDataUseCase(filePath)
                 .onSuccess { result ->
                     _state.update { it.copy(isImporting = false, importResult = result) }
                 }

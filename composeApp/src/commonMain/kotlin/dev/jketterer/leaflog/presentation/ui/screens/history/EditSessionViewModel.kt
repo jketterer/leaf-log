@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -21,15 +22,21 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class EditSessionViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val imageStorage: ImageStorage,
     private val updateSessionUseCase: UpdateSessionUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
 ) : ViewModel() {
+
+    /** Tracks photos added during this edit session for cleanup on discard. */
+    private val newlyAddedPhotos = mutableListOf<String>()
 
     private val _state = MutableStateFlow(EditSessionState())
     val state: StateFlow<EditSessionState> = _state.asStateFlow()
@@ -72,12 +79,8 @@ class EditSessionViewModel(
             is EditSessionIntent.LocationChanged -> updateLocation(intent.location)
             is EditSessionIntent.RatingChanged -> updateRating(intent.rating)
             is EditSessionIntent.NotesChanged -> updateNotes(intent.notes)
-            is EditSessionIntent.AddPhotoClicked -> {
-                // Photo picker handled by UI
-            }
-
-            is EditSessionIntent.PhotoSelected -> addPhoto(intent.photoUri)
-            is EditSessionIntent.PhotoRemoved -> removePhoto(intent.photoUri)
+            is EditSessionIntent.PhotoSelected -> addPhoto(intent.imageBytes)
+            is EditSessionIntent.PhotoRemoved -> removePhoto(intent.path)
             is EditSessionIntent.SaveClicked -> save()
             is EditSessionIntent.BackClicked -> handleBack()
             is EditSessionIntent.ConfirmDiscard -> confirmDiscard()
@@ -259,15 +262,35 @@ class EditSessionViewModel(
         _state.update { it.copy(notes = notes) }
     }
 
-    private fun addPhoto(photoUri: String) {
-        _state.update {
-            it.copy(photos = it.photos + photoUri)
+    @OptIn(ExperimentalUuidApi::class)
+    private fun addPhoto(imageBytes: ByteArray) {
+        viewModelScope.launch {
+            try {
+                val fileName = "${Uuid.random()}.jpg"
+                val persistedPath = imageStorage.saveImage(imageBytes, fileName, "session_images")
+                newlyAddedPhotos.add(persistedPath)
+                _state.update {
+                    it.copy(photos = it.photos + persistedPath)
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = "Failed to save photo: ${e.message}") }
+            }
         }
     }
 
-    private fun removePhoto(photoUri: String) {
-        _state.update {
-            it.copy(photos = it.photos - photoUri)
+    private fun removePhoto(path: String) {
+        viewModelScope.launch {
+            // Only delete the file if it was newly added (not an existing photo)
+            if (path in newlyAddedPhotos) {
+                try {
+                    imageStorage.deleteImage(path)
+                } catch (_: Exception) {
+                }
+                newlyAddedPhotos.remove(path)
+            }
+            _state.update {
+                it.copy(photos = it.photos - path)
+            }
         }
     }
 
@@ -307,6 +330,17 @@ class EditSessionViewModel(
 
             result
                 .onSuccess { updatedSession ->
+                    // Clean up photo files that were removed from the original session
+                    val originalPhotos = session.photos
+                    val removedPhotos = originalPhotos - currentState.photos.toSet()
+                    for (photo in removedPhotos) {
+                        try {
+                            imageStorage.deleteImage(photo)
+                        } catch (_: Exception) {
+                        }
+                    }
+                    newlyAddedPhotos.clear()
+
                     _state.update { it.copy(isSaving = false, savedSession = updatedSession) }
 
                     // Check if we should show the save configuration dialog
@@ -340,6 +374,16 @@ class EditSessionViewModel(
     }
 
     private fun confirmDiscard() {
+        // Clean up any newly added photos that won't be saved
+        viewModelScope.launch {
+            for (photo in newlyAddedPhotos) {
+                try {
+                    imageStorage.deleteImage(photo)
+                } catch (_: Exception) {
+                }
+            }
+            newlyAddedPhotos.clear()
+        }
         _state.update { it.copy(showDiscardDialog = false) }
         _navEvents.trySend(EditSessionNavEvent.NavigateBack)
     }

@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,6 +43,7 @@ import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.DurationUnit
@@ -66,6 +68,7 @@ fun SessionCard(
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    var showPhotoViewer by remember { mutableStateOf(false) }
 
     Card(
         modifier = modifier
@@ -86,7 +89,8 @@ fun SessionCard(
                     contentDescription = teaName,
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(MaterialTheme.shapes.medium),
+                        .clip(MaterialTheme.shapes.medium)
+                        .clickable { showPhotoViewer = true },
                     contentScale = ContentScale.Crop
                 )
             } else if (teaPhotoUrl != null) {
@@ -213,6 +217,14 @@ fun SessionCard(
                 }
             }
         }
+    }
+
+    if (showPhotoViewer && session.photos.isNotEmpty()) {
+        FullscreenImageViewer(
+            photos = session.photos,
+            initialIndex = 0,
+            onDismiss = { showPhotoViewer = false },
+        )
     }
 }
 

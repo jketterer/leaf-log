@@ -60,4 +60,10 @@ sealed interface NavRoute : NavKey {
 
     @Serializable
     data class QuickTimerRoute(val durationSeconds: Int) : NavRoute
+
+    @Serializable
+    data object TeaTypeListRoute : NavRoute
+
+    @Serializable
+    data class EditTeaTypeRoute(val teaTypeId: String? = null) : NavRoute
 }

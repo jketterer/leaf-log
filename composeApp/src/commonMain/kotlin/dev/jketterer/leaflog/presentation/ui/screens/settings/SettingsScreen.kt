@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Snackbar
@@ -38,6 +40,10 @@ import dev.jketterer.leaflog.domain.models.ImportResult
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import androidx.compose.material3.IconButton
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.ChevronRight
 import dev.jketterer.leaflog.presentation.ui.components.common.ExportFileEffect
 import dev.jketterer.leaflog.presentation.ui.components.common.ImportFileLauncher
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -45,13 +51,17 @@ import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = koinViewModel()
+    onNavigateBack: () -> Unit = {},
+    onNavigateToTeaTypes: () -> Unit = {},
+    viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
     SettingsContent(
         state = state,
-        onIntent = viewModel::onIntent
+        onIntent = viewModel::onIntent,
+        onNavigateBack = onNavigateBack,
+        onNavigateToTeaTypes = onNavigateToTeaTypes,
     )
 }
 
@@ -59,11 +69,18 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     state: SettingsState,
-    onIntent: (SettingsIntent) -> Unit
+    onIntent: (SettingsIntent) -> Unit,
+    onNavigateBack: () -> Unit = {},
+    onNavigateToTeaTypes: () -> Unit = {},
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Settings") }
+            title = { Text("Settings") },
+            navigationIcon = {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                }
+            },
         )
 
         Column(
@@ -74,6 +91,10 @@ private fun SettingsContent(
             PreferencesSection(
                 state = state,
                 onIntent = onIntent
+            )
+
+            ManagementSection(
+                onNavigateToTeaTypes = onNavigateToTeaTypes,
             )
 
             DataSection(
@@ -154,6 +175,45 @@ private fun PreferencesSection(
             currentUnit = state.preferences.volumeUnit,
             onUnitChange = { onIntent(SettingsIntent.UpdateVolumeUnit(it)) }
         )
+    }
+}
+
+@Composable
+private fun ManagementSection(
+    onNavigateToTeaTypes: () -> Unit,
+) {
+    Column {
+        Spacer(modifier = Modifier.height(8.dp))
+        SectionHeader(title = "Management")
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onNavigateToTeaTypes)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "Tea Types",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Text(
+                    text = "Manage tea categories and defaults",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                imageVector = FeatherIcons.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

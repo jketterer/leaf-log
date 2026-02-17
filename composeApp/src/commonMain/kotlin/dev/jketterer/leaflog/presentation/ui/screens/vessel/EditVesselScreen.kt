@@ -154,14 +154,22 @@ fun EditVesselScreen(
                     )
 
                     // Capacity field
+                    // Convert from storage (mL) to display unit for showing
+                    val displayCapacity = state.capacity.toIntOrNull()?.let { ml ->
+                        state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                    } ?: state.capacity
+
                     EditCapacityField(
-                        value = state.capacity,
+                        value = displayCapacity,
                         onValueChange = { viewModel.onIntent(EditVesselIntent.CapacityChanged(it)) },
                         isError = state.capacityError != null,
                         supportingText = state.capacityError
                             ?: "Optional - auto-fills water quantity when selected",
                         enabled = !state.isSaving,
                         volumeUnit = state.userPreferences.volumeUnit,
+                        onToggleUnit = {
+                            viewModel.onIntent(EditVesselIntent.ToggleVolumeUnit)
+                        },
                     )
 
                     // Photo section

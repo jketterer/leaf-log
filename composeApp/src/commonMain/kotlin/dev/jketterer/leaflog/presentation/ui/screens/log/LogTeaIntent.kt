@@ -24,6 +24,8 @@ sealed interface LogTeaIntent {
     data class WaterTypeSelected(val waterType: WaterType) : LogTeaIntent
     data class LocationChanged(val location: String) : LogTeaIntent
     data class NotesChanged(val notes: String) : LogTeaIntent
+    data object ToggleTemperatureUnit : LogTeaIntent
+    data object ToggleVolumeUnit : LogTeaIntent
 
     // Photo management
     data object AddPhotoClicked : LogTeaIntent

@@ -32,6 +32,8 @@ import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
+import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeScreen
+import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListScreen
@@ -149,7 +151,35 @@ fun AppNavigation() {
                 }
 
                 entry<NavRoute.SettingsRoute> {
-                    SettingsScreen()
+                    SettingsScreen(
+                        onNavigateBack = { backStack.removeLast() },
+                        onNavigateToTeaTypes = {
+                            backStack.add(NavRoute.TeaTypeListRoute)
+                        },
+                    )
+                }
+
+                // =========================================================
+                // Tea Type Management Destinations
+                // =========================================================
+
+                entry<NavRoute.TeaTypeListRoute> {
+                    TeaTypeListScreen(
+                        onNavigateBack = { backStack.removeLast() },
+                        onNavigateToEditTeaType = { teaTypeId ->
+                            backStack.add(NavRoute.EditTeaTypeRoute(teaTypeId))
+                        },
+                        onNavigateToAddTeaType = {
+                            backStack.add(NavRoute.EditTeaTypeRoute())
+                        },
+                    )
+                }
+
+                entry<NavRoute.EditTeaTypeRoute> { route ->
+                    EditTeaTypeScreen(
+                        teaTypeId = route.teaTypeId,
+                        onNavigateBack = { backStack.removeLast() },
+                    )
                 }
 
                 // =========================================================

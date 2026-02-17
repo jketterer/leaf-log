@@ -15,9 +15,6 @@ Multiplatform for UI, Room for local storage, and follows Clean Architecture wit
 ```bash
 # Build debug APK
 ./gradlew :composeApp:assembleDebug
-
-# Run on connected device/emulator
-./gradlew :composeApp:installDebug
 ```
 
 ## Architecture
@@ -78,7 +75,7 @@ di/ (Dependency Injection)
 - Return `Result<T>` for error handling
 - Complex business logic (calculations, validations, multi-step operations) belongs in use cases,
   NOT ViewModels
-- Should NEVER be simple wrappers for repository functions
+- Should NEVER be simple wrappers for a lone single repository function
     - ViewModels can use repository calls directly instead
 - Example: `UpdateAverageRatingUseCase` handles rating calculations across steeps
 

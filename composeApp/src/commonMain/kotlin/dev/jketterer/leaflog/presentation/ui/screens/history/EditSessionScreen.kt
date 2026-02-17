@@ -37,7 +37,9 @@ import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
+import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
@@ -149,15 +151,22 @@ private fun EditSessionContent(
 
                 // Temperature
                 item(key = "temperature") {
-                    OutlinedTextField(
-                        value = state.temperatureCelsius,
+                    // Convert from storage (Celsius) to display unit for showing
+                    val displayValue = state.temperatureCelsius.toIntOrNull()?.let { celsius ->
+                        state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
+                    } ?: state.temperatureCelsius
+
+                    TemperatureInputField(
+                        value = displayValue,
                         onValueChange = { onIntent(EditSessionIntent.TemperatureChanged(it)) },
-                        label = { Text("${TemperatureFormatter.getInputLabel(state.userPreferences.temperatureUnit)} *") },
+                        currentUnit = state.userPreferences.temperatureUnit,
+                        onToggleUnit = {
+                            onIntent(EditSessionIntent.ToggleTemperatureUnit)
+                        },
+                        label = { Text("Temperature *") },
                         isError = state.temperatureError != null,
                         supportingText = state.temperatureError?.let { { Text(it) } },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        suffix = { Text(TemperatureFormatter.getUnitSymbol(state.userPreferences.temperatureUnit)) },
                     )
                 }
             }
@@ -203,14 +212,22 @@ private fun EditSessionContent(
 
                 // Water Quantity
                 item(key = "water_quantity") {
-                    OutlinedTextField(
-                        value = state.waterQuantityMl,
+                    // Convert from storage (mL) to display unit for showing
+                    val displayValue = state.waterQuantityMl.toIntOrNull()?.let { ml ->
+                        state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                    } ?: state.waterQuantityMl
+
+                    VolumeInputField(
+                        value = displayValue,
                         onValueChange = { onIntent(EditSessionIntent.WaterQuantityChanged(it)) },
-                        label = { Text("${VolumeFormatter.getInputLabel(state.userPreferences.volumeUnit)} *") },
+                        currentUnit = state.userPreferences.volumeUnit,
+                        onToggleUnit = {
+                            onIntent(EditSessionIntent.ToggleVolumeUnit)
+                        },
+                        label = { Text("Water Quantity *") },
                         isError = state.waterQuantityError != null,
                         supportingText = state.waterQuantityError?.let { { Text(it) } },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
                     )
                 }
 

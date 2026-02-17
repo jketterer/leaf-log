@@ -116,6 +116,7 @@ class TimerViewModel(
             is TimerIntent.CancelNextSteepDialog -> cancelNextSteepDialog()
             is TimerIntent.UpdateNextSteepDuration -> updateNextSteepDuration(intent.duration)
             is TimerIntent.UpdateNextSteepTemperature -> updateNextSteepTemperature(intent.temperature)
+            is TimerIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is TimerIntent.ConfirmNextSteep -> confirmNextSteep(intent.session)
             is TimerIntent.SaveAndFinish -> saveAndFinish(intent.session)
 
@@ -415,6 +416,19 @@ class TimerViewModel(
 
     private fun updateNextSteepTemperature(temperature: Int) {
         _state.update { it.copy(nextSteepTemperature = temperature) }
+    }
+
+    private fun toggleTemperatureUnit() {
+        viewModelScope.launch {
+            val currentUnit = _state.value.userPreferences.temperatureUnit
+            val newUnit = when (currentUnit) {
+                dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS -> dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT
+                dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT -> dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS
+            }
+
+            // Just update the preference - nextSteepTemperature is stored in Celsius so no conversion needed
+            preferencesRepository.updateTemperatureUnit(newUnit)
+        }
     }
 
     private fun confirmNextSteep(session: TeaSession) = viewModelScope.launch {

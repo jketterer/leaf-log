@@ -51,6 +51,7 @@ import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
+import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
@@ -230,6 +231,9 @@ private fun TimerContent(
             temperatureUnit = state.userPreferences.temperatureUnit,
             onDurationChange = { onIntent(TimerIntent.UpdateNextSteepDuration(it)) },
             onTemperatureChange = { onIntent(TimerIntent.UpdateNextSteepTemperature(it)) },
+            onToggleUnit = {
+                onIntent(TimerIntent.ToggleTemperatureUnit)
+            },
             onConfirm = { onIntent(TimerIntent.ConfirmNextSteep(currentSession)) },
             onDismiss = { onIntent(TimerIntent.CancelNextSteepDialog) },
         )
@@ -577,6 +581,7 @@ private fun NextSteepParameterDialog(
     temperatureUnit: TemperatureUnit,
     onDurationChange: (Duration?) -> Unit,
     onTemperatureChange: (Int) -> Unit,
+    onToggleUnit: () -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -627,13 +632,21 @@ private fun NextSteepParameterDialog(
                         fontWeight = FontWeight.Bold,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = TemperatureFormatter.format(temperature, temperatureUnit),
+                    // Convert from storage (Celsius) to display unit for showing
+                    val displayValue = temperatureUnit.fromCelsius(temperature).toString()
+
+                    TemperatureInputField(
+                        value = displayValue,
                         onValueChange = { value ->
-                            value.toIntOrNull()?.let { onTemperatureChange(it) }
+                            // Convert from display unit back to storage (Celsius)
+                            value.toIntOrNull()?.let { displayTemp ->
+                                val celsiusTemp = temperatureUnit.toCelsius(displayTemp)
+                                onTemperatureChange(celsiusTemp)
+                            }
                         },
-                        suffix = { Text(temperatureUnit.symbol) },
-                        singleLine = true,
+                        currentUnit = temperatureUnit,
+                        onToggleUnit = onToggleUnit,
+                        label = { Text("Temperature") },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

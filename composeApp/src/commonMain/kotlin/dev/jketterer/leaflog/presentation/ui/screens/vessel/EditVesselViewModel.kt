@@ -45,6 +45,7 @@ class EditVesselViewModel(
             is EditVesselIntent.NameChanged -> onNameChanged(intent.name)
             is EditVesselIntent.IconSelected -> onIconSelected(intent.iconName)
             is EditVesselIntent.CapacityChanged -> onCapacityChanged(intent.capacity)
+            is EditVesselIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is EditVesselIntent.PhotoSelected -> onPhotoSelected(intent.imageBytes)
             is EditVesselIntent.RemovePhoto -> onRemovePhoto()
             is EditVesselIntent.SaveClicked -> saveVessel()
@@ -70,11 +71,8 @@ class EditVesselViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
-                val prefs = preferencesRepository.getPreferences()
                 val vessel = brewingVesselRepository.getById(vesselId)
-                val capacity = vessel?.capacityMl?.let {
-                    UnitConverter.millilitersToDisplayVolume(it, prefs.volumeUnit)
-                }
+                // Capacity is already in mL (storage unit), store it directly
                 if (vessel != null) {
                     _state.update {
                         it.copy(
@@ -83,7 +81,7 @@ class EditVesselViewModel(
                             name = vessel.name,
                             selectedIconName = vessel.iconName ?: "generic",
                             imagePath = vessel.imagePath,
-                            capacity = capacity?.toString() ?: "",
+                            capacity = vessel.capacityMl?.toString() ?: "",
                             isLoading = false,
                         )
                     }
@@ -154,9 +152,14 @@ class EditVesselViewModel(
     }
 
     private fun onCapacityChanged(capacity: String) {
+        // Convert from display unit to storage unit (mL)
+        val storageValue = capacity.toIntOrNull()?.let { displayValue ->
+            _state.value.userPreferences.volumeUnit.toMilliliters(displayValue).toString()
+        } ?: capacity
+
         _state.update {
             it.copy(
-                capacity = capacity,
+                capacity = storageValue,
                 capacityError = validateCapacity(capacity),
             )
         }
@@ -171,6 +174,19 @@ class EditVesselViewModel(
             value == null -> "Must be a valid number"
             value <= 0 -> "Capacity must be greater than 0"
             else -> null
+        }
+    }
+
+    private fun toggleVolumeUnit() {
+        viewModelScope.launch {
+            val currentUnit = _state.value.userPreferences.volumeUnit
+            val newUnit = when (currentUnit) {
+                dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS -> dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES
+                dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES -> dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS
+            }
+
+            // Just update the preference - capacity is stored in mL so no conversion needed
+            preferencesRepository.updateVolumeUnit(newUnit)
         }
     }
 
@@ -194,10 +210,8 @@ class EditVesselViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, error = null) }
 
-            val volumeUnit = state.value.userPreferences.volumeUnit
-            val capacityValue = currentState.capacity.toIntOrNull()?.let {
-                UnitConverter.inputVolumeToMilliliters(it, volumeUnit)
-            }
+            // Capacity is already in mL (storage unit), use directly
+            val capacityValue = currentState.capacity.toIntOrNull()
 
             // Image is already persisted to internal storage by onPhotoSelected
             val existingImagePath = currentState.existingVessel?.imagePath

@@ -66,6 +66,8 @@ class LogTeaViewModel(
             is LogTeaIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
             is LogTeaIntent.LocationChanged -> updateLocation(intent.location)
             is LogTeaIntent.NotesChanged -> updateNotes(intent.notes)
+            is LogTeaIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
+            is LogTeaIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is LogTeaIntent.AddPhotoClicked -> {
                 // Photo picker handled by UI
             }
@@ -193,29 +195,12 @@ class LogTeaViewModel(
                 // Use the smart pre-fill use case
                 val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
 
-                val currentState = _state.value
-
-                // Convert prefill temperature from Celsius (storage) to user's display unit
-                val displayTemperature = prefill.temperatureCelsius?.let { celsius ->
-                    UnitConverter.celsiusToDisplayTemperature(
-                        celsius,
-                        currentState.userPreferences.temperatureUnit
-                    ).toString()
-                } ?: ""
-
-                // Convert prefill water quantity from mL (storage) to user's display unit
-                val displayWaterQuantity = prefill.waterQuantityMl?.let { ml ->
-                    UnitConverter.millilitersToDisplayVolume(
-                        ml,
-                        currentState.userPreferences.volumeUnit
-                    ).toString()
-                } ?: ""
-
+                // Prefill values are already in storage units (Celsius/mL), store them directly
                 _state.update { state ->
                     state.copy(
                         teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
-                        waterQuantityMl = displayWaterQuantity,
-                        temperatureCelsius = displayTemperature,
+                        waterQuantityMl = prefill.waterQuantityMl?.toString() ?: "",
+                        temperatureCelsius = prefill.temperatureCelsius?.toString() ?: "",
                         brewingTime = prefill.brewingTime,
                         selectedWaterType = prefill.waterType ?: state.selectedWaterType,
                         prefillSource = prefill.source,
@@ -269,23 +254,11 @@ class LogTeaViewModel(
                 val config = brewingConfigurationRepository.getById(configurationId)
                 if (config != null) {
                     _state.update { currentState ->
-                        // Convert configuration values from storage (Celsius/mL) to user's display unit
-                        val displayTemperature =
-                            UnitConverter.celsiusToDisplayTemperature(
-                                config.temperatureCelsius,
-                                currentState.userPreferences.temperatureUnit
-                            ).toString()
-
-                        val displayWaterQuantity =
-                            UnitConverter.millilitersToDisplayVolume(
-                                config.waterQuantityMl,
-                                currentState.userPreferences.volumeUnit
-                            ).toString()
-
+                        // Configuration values are already in storage units (Celsius/mL), store directly
                         currentState.copy(
                             teaQuantityGrams = config.teaQuantityGrams?.toString() ?: "",
-                            waterQuantityMl = displayWaterQuantity,
-                            temperatureCelsius = displayTemperature,
+                            waterQuantityMl = config.waterQuantityMl.toString(),
+                            temperatureCelsius = config.temperatureCelsius.toString(),
                             brewingTime = config.brewingTime,
                             selectedWaterType = config.waterType,
                             usedConfigurationId = configurationId,
@@ -332,16 +305,24 @@ class LogTeaViewModel(
     }
 
     private fun updateWaterQuantity(quantity: String) {
+        val currentState = _state.value
+        val volumeUnit = currentState.userPreferences.volumeUnit
+
+        // Convert from display unit to storage unit (mL)
+        val storageValue = quantity.toIntOrNull()?.let { displayValue ->
+            volumeUnit.toMilliliters(displayValue).toString()
+        } ?: quantity
+
         val error = when {
             quantity.isBlank() -> "Water quantity is required"
             quantity.toIntOrNull() == null -> "Invalid quantity"
-            quantity.toInt() <= 0 -> "Quantity must be greater than 0"
+            storageValue.toIntOrNull()?.let { it <= 0 } == true -> "Quantity must be greater than 0"
             else -> null
         }
 
         _state.update {
             it.copy(
-                waterQuantityMl = quantity,
+                waterQuantityMl = storageValue,
                 waterQuantityError = error,
                 hasUnsavedChanges = true,
                 hasEditedBrewingParameters = true,
@@ -356,6 +337,12 @@ class LogTeaViewModel(
         val currentState = _state.value
         val tempUnit = currentState.userPreferences.temperatureUnit
 
+        // Convert from display unit to storage unit (Celsius)
+        val storageValue = temperature.toIntOrNull()?.let { displayValue ->
+            tempUnit.toCelsius(displayValue).toString()
+        } ?: temperature
+
+        // Validate in display unit for user-friendly error messages
         val error = when {
             temperature.isBlank() -> "Temperature is required"
             temperature.toIntOrNull() == null -> "Invalid temperature"
@@ -365,7 +352,6 @@ class LogTeaViewModel(
                     TemperatureUnit.CELSIUS -> {
                         if (value !in 0..100) "Temperature must be 0-100°C" else null
                     }
-
                     TemperatureUnit.FAHRENHEIT -> {
                         if (value !in 32..212) "Temperature must be 32-212°F" else null
                     }
@@ -375,7 +361,7 @@ class LogTeaViewModel(
 
         _state.update {
             it.copy(
-                temperatureCelsius = temperature,
+                temperatureCelsius = storageValue,
                 temperatureError = error,
                 hasUnsavedChanges = true,
                 hasEditedBrewingParameters = true,
@@ -474,6 +460,32 @@ class LogTeaViewModel(
         }
     }
 
+    private fun toggleTemperatureUnit() {
+        viewModelScope.launch {
+            val currentUnit = _state.value.userPreferences.temperatureUnit
+            val newUnit = when (currentUnit) {
+                TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
+                TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
+            }
+
+            // Just update the preference - values are stored in Celsius so no conversion needed
+            preferencesRepository.updateTemperatureUnit(newUnit)
+        }
+    }
+
+    private fun toggleVolumeUnit() {
+        viewModelScope.launch {
+            val currentUnit = _state.value.userPreferences.volumeUnit
+            val newUnit = when (currentUnit) {
+                dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS -> dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES
+                dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES -> dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS
+            }
+
+            // Just update the preference - values are stored in mL so no conversion needed
+            preferencesRepository.updateVolumeUnit(newUnit)
+        }
+    }
+
     private fun addPhoto(photoUri: String) {
         _state.update {
             it.copy(
@@ -511,19 +523,9 @@ class LogTeaViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
 
-            // Convert temperature from user's input unit to Celsius for storage
-            val temperatureCelsius =
-                UnitConverter.inputTemperatureToCelsius(
-                    currentState.temperatureCelsius.toInt(),
-                    currentState.userPreferences.temperatureUnit
-                )
-
-            // Convert water quantity from user's input unit to mL for storage
-            val waterQuantityMl =
-                UnitConverter.inputVolumeToMilliliters(
-                    currentState.waterQuantityMl.toInt(),
-                    currentState.userPreferences.volumeUnit
-                )
+            // Values are already in storage units (Celsius/mL), use directly
+            val temperatureCelsius = currentState.temperatureCelsius.toInt()
+            val waterQuantityMl = currentState.waterQuantityMl.toInt()
 
             // Use the use case - it has business logic (validation, ID generation, timestamps)
             createSessionUseCase(

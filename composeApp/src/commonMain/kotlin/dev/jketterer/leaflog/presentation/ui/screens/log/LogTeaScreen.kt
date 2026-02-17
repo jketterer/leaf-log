@@ -38,7 +38,9 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
+import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -249,29 +251,43 @@ private fun LogTeaContent(
 
             // Temperature
             item(key = "temperature") {
-                OutlinedTextField(
-                    value = state.temperatureCelsius,
+                // Convert from storage (Celsius) to display unit for showing
+                val displayValue = state.temperatureCelsius.toIntOrNull()?.let { celsius ->
+                    state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
+                } ?: state.temperatureCelsius
+
+                TemperatureInputField(
+                    value = displayValue,
                     onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
+                    currentUnit = state.userPreferences.temperatureUnit,
+                    onToggleUnit = {
+                        onIntent(LogTeaIntent.ToggleTemperatureUnit)
+                    },
                     label = { Text("Temperature *") },
                     isError = state.temperatureError != null,
                     supportingText = state.temperatureError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    suffix = { Text(TemperatureFormatter.getUnitSymbol(state.userPreferences.temperatureUnit)) },
                 )
             }
 
             // Water Quantity
             item(key = "water_quantity") {
-                OutlinedTextField(
-                    value = state.waterQuantityMl,
+                // Convert from storage (mL) to display unit for showing
+                val displayValue = state.waterQuantityMl.toIntOrNull()?.let { ml ->
+                    state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                } ?: state.waterQuantityMl
+
+                VolumeInputField(
+                    value = displayValue,
                     onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
+                    currentUnit = state.userPreferences.volumeUnit,
+                    onToggleUnit = {
+                        onIntent(LogTeaIntent.ToggleVolumeUnit)
+                    },
                     label = { Text("Water Quantity *") },
                     isError = state.waterQuantityError != null,
                     supportingText = state.waterQuantityError?.let { { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    suffix = { Text(state.userPreferences.volumeUnit.symbol) }
                 )
             }
 
@@ -309,16 +325,6 @@ private fun LogTeaContent(
                 )
             }
 
-            // Photos
-            item(key = "photos") {
-                OutlinedButton(
-                    onClick = { onIntent(LogTeaIntent.AddPhotoClicked) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("📷 Add Photos (${state.photos.size})")
-                }
-            }
-
             // Action Buttons
             item(key = "actions") {
                 Column(
@@ -326,13 +332,12 @@ private fun LogTeaContent(
                 ) {
                     Button(
                         onClick = {
-                            // TODO: Create session first, then navigate to timer with session ID
                             onIntent(LogTeaIntent.StartTimerClicked)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         enabled = state.canSave && !state.isSaving,
                     ) {
-                        Text("⏱️ Start Timer & Brew")
+                        Text("Brew")
                     }
 
                     OutlinedButton(
@@ -368,18 +373,6 @@ private fun LogTeaContent(
             },
             onQuickAddClicked = { onIntent(LogTeaIntent.QuickAddTeaClicked) },
             onDismiss = { onIntent(LogTeaIntent.HideTeaSearchDialog) },
-        )
-    }
-
-    // Quick Add Tea Dialog
-    if (state.showQuickAddTeaDialog) {
-        QuickAddTeaDialog(
-            onTeaSaved = { tea ->
-                onIntent(LogTeaIntent.QuickAddTeaSaved(tea))
-            },
-            onDismiss = {
-                // TODO: Close dialog
-            },
         )
     }
 
@@ -450,25 +443,6 @@ private fun TeaSearchDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
-            }
-        },
-    )
-}
-
-@Composable
-private fun QuickAddTeaDialog(
-    onTeaSaved: (Tea) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    // TODO: Implement quick add tea dialog
-    // For now, just a placeholder
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Quick Add Tea") },
-        text = { Text("Quick add tea dialog - to be implemented") },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
             }
         },
     )

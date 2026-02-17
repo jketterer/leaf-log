@@ -79,6 +79,8 @@ class EditSessionViewModel(
             is EditSessionIntent.LocationChanged -> updateLocation(intent.location)
             is EditSessionIntent.RatingChanged -> updateRating(intent.rating)
             is EditSessionIntent.NotesChanged -> updateNotes(intent.notes)
+            is EditSessionIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
+            is EditSessionIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is EditSessionIntent.PhotoSelected -> addPhoto(intent.imageBytes)
             is EditSessionIntent.PhotoRemoved -> removePhoto(intent.path)
             is EditSessionIntent.SaveClicked -> save()
@@ -180,16 +182,34 @@ class EditSessionViewModel(
     }
 
     private fun updateTemperature(temperature: String) {
+        val currentState = _state.value
+        val tempUnit = currentState.userPreferences.temperatureUnit
+
+        // Convert from display unit to storage unit (Celsius)
+        val storageValue = temperature.toIntOrNull()?.let { displayValue ->
+            tempUnit.toCelsius(displayValue).toString()
+        } ?: temperature
+
+        // Validate in display unit for user-friendly error messages
         val error = when {
             temperature.isBlank() -> "Temperature is required"
             temperature.toIntOrNull() == null -> "Invalid temperature"
-            temperature.toInt() !in 0..100 -> "Temperature must be 0-100°C"
-            else -> null
+            else -> {
+                val value = temperature.toInt()
+                when (tempUnit) {
+                    dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS -> {
+                        if (value !in 0..100) "Temperature must be 0-100°C" else null
+                    }
+                    dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT -> {
+                        if (value !in 32..212) "Temperature must be 32-212°F" else null
+                    }
+                }
+            }
         }
 
         _state.update {
             it.copy(
-                temperatureCelsius = temperature,
+                temperatureCelsius = storageValue,
                 temperatureError = error
             )
         }
@@ -209,16 +229,24 @@ class EditSessionViewModel(
     }
 
     private fun updateWaterQuantity(quantity: String) {
+        val currentState = _state.value
+        val volumeUnit = currentState.userPreferences.volumeUnit
+
+        // Convert from display unit to storage unit (mL)
+        val storageValue = quantity.toIntOrNull()?.let { displayValue ->
+            volumeUnit.toMilliliters(displayValue).toString()
+        } ?: quantity
+
         val error = when {
             quantity.isBlank() -> "Water quantity is required"
             quantity.toIntOrNull() == null -> "Invalid quantity"
-            quantity.toInt() <= 0 -> "Quantity must be greater than 0"
+            storageValue.toIntOrNull()?.let { it <= 0 } == true -> "Quantity must be greater than 0"
             else -> null
         }
 
         _state.update {
             it.copy(
-                waterQuantityMl = quantity,
+                waterQuantityMl = storageValue,
                 waterQuantityError = error
             )
         }
@@ -260,6 +288,32 @@ class EditSessionViewModel(
 
     private fun updateNotes(notes: String) {
         _state.update { it.copy(notes = notes) }
+    }
+
+    private fun toggleTemperatureUnit() {
+        viewModelScope.launch {
+            val currentUnit = _state.value.userPreferences.temperatureUnit
+            val newUnit = when (currentUnit) {
+                dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS -> dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT
+                dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT -> dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS
+            }
+
+            // Just update the preference - values are stored in Celsius so no conversion needed
+            preferencesRepository.updateTemperatureUnit(newUnit)
+        }
+    }
+
+    private fun toggleVolumeUnit() {
+        viewModelScope.launch {
+            val currentUnit = _state.value.userPreferences.volumeUnit
+            val newUnit = when (currentUnit) {
+                dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS -> dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES
+                dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES -> dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS
+            }
+
+            // Just update the preference - values are stored in mL so no conversion needed
+            preferencesRepository.updateVolumeUnit(newUnit)
+        }
     }
 
     @OptIn(ExperimentalUuidApi::class)

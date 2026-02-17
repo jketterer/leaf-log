@@ -10,7 +10,7 @@ import kotlin.time.Duration
 
 /**
  * Use case to start a brewing timer.
- * Creates a draft session if one doesn't exist.
+ * Creates an in-progress session if one doesn't exist.
  */
 class StartTimerUseCase(
     private val teaSessionRepository: TeaSessionRepository,
@@ -28,7 +28,7 @@ class StartTimerUseCase(
                 return Result.failure(IllegalStateException("Cannot start timer for completed session"))
             }
 
-            teaSessionRepository.upsert(session.copy(status = SessionStatus.DRAFT))
+            teaSessionRepository.upsert(session.copy(status = SessionStatus.IN_PROGRESS))
 
             val now = Clock.System.now()
             val timerState = TimerState(

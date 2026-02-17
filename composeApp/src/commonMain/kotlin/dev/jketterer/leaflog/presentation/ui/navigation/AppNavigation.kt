@@ -29,11 +29,11 @@ import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
-import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerScreen
-import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
+import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListScreen
+import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListScreen
@@ -82,9 +82,11 @@ fun AppNavigation() {
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
                         onNavigateToEditSession = { sessionId ->
-                            backStack.add(NavRoute.EditSessionRoute(sessionId, false))
+                            backStack.add(NavRoute.EditSessionRoute(sessionId, true))
                         },
-                        onNavigateToHistory = { backStack.add(NavRoute.HistoryRoute()) },
+                        onNavigateToHistory = { showInProgressOnly ->
+                            backStack.add(NavRoute.HistoryRoute(showInProgressOnly = showInProgressOnly))
+                        },
                         onNavigateToSettings = { backStack.add(NavRoute.SettingsRoute) },
                         onNavigateToTimer = { sessionId ->
                             backStack.add(NavRoute.TimerRoute(sessionId))
@@ -114,7 +116,7 @@ fun AppNavigation() {
 
                 entry<NavRoute.HistoryRoute> { route ->
                     HistoryScreen(
-                        showDraftsOnly = route.showDraftsOnly,
+                        showInProgressOnly = route.showInProgressOnly,
                         filterTeaTypeId = route.filterTeaTypeId,
                         filterDateStart = route.filterDateStart,
                         filterDateEnd = route.filterDateEnd,

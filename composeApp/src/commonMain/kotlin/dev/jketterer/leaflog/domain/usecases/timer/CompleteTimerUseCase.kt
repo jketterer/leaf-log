@@ -23,9 +23,9 @@ class CompleteTimerUseCase(
         }
 
         return try {
-            // Update session with completion (still draft - user needs to rate/finish)
+            // Update session with completion (still in progress - user needs to rate/finish)
             val updatedSession = session.copy(
-                status = SessionStatus.DRAFT,  // Keep as draft until user rates
+                status = SessionStatus.IN_PROGRESS,
             )
             teaSessionRepository.upsert(updatedSession)
 

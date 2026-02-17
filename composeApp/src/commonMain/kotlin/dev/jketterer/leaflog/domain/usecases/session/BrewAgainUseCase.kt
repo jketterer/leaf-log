@@ -23,7 +23,7 @@ class BrewAgainUseCase(
             teaId = sourceSession.teaId,
             parentSessionId = null,
             steepNumber = 1,
-            status = SessionStatus.DRAFT,  // Start as draft
+            status = SessionStatus.IN_PROGRESS,
             teaQuantityGrams = sourceSession.teaQuantityGrams,
             vesselId = sourceSession.vesselId,
             waterType = sourceSession.waterType,
@@ -33,8 +33,8 @@ class BrewAgainUseCase(
             brewingTime = sourceSession.brewingTime,
             temperatureCelsius = sourceSession.temperatureCelsius,
             waterQuantityMl = sourceSession.waterQuantityMl,
-            notes = null,  // Don't copy notes
-            photos = emptyList(),  // Don't copy photos
+            notes = null,
+            photos = emptyList(),
             userId = null,
             syncStatus = SyncStatus.LOCAL_ONLY,
             createdAt = now,

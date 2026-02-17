@@ -71,14 +71,14 @@ class TeaSessionRepositoryImpl(
         return teaSessionDao.getChildSteeps(parentId).map { it.toTeaSession() }
     }
 
-    override fun getDraftsFlow(): Flow<List<TeaSession>> {
-        return teaSessionDao.getByStatusFlow(status = SessionStatus.DRAFT.name).map { entities ->
+    override fun getInProgressFlow(): Flow<List<TeaSession>> {
+        return teaSessionDao.getByStatusFlow(status = SessionStatus.IN_PROGRESS.name).map { entities ->
             entities.map { it.toTeaSession() }
         }
     }
 
-    override fun getDraftsCountFlow(): Flow<Int> {
-        return teaSessionDao.getCountByStatusFlow(SessionStatus.DRAFT.name)
+    override fun getInProgressCountFlow(): Flow<Int> {
+        return teaSessionDao.getCountByStatusFlow(SessionStatus.IN_PROGRESS.name)
     }
 
     override suspend fun getByDateRange(start: Instant, end: Instant): List<TeaSession> {

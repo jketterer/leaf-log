@@ -6,7 +6,7 @@ import kotlin.time.Duration
 
 /**
  * Use case to cancel a timer.
- * Session remains as draft for user to complete later.
+ * Session remains as in progress for user to complete later.
  */
 class CancelTimerUseCase {
     operator fun invoke(currentState: TimerState): Result<TimerState> {

@@ -31,24 +31,24 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.presentation.ui.screens.home.DraftSessionInfo
+import dev.jketterer.leaflog.presentation.ui.screens.home.InProgressSessionInfo
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Enhanced banner for draft sessions showing the most recent draft with details.
+ * Enhanced banner for in-progress sessions showing the most recent one with details.
  */
 @Composable
-fun DraftSessionsBanner(
-    draftInfo: DraftSessionInfo?,
-    totalDraftCount: Int,
+fun InProgressSessionsBanner(
+    inProgressInfo: InProgressSessionInfo?,
+    totalInProgressCount: Int,
     timerProgress: Float? = null,
     onResumeClick: () -> Unit,
     onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (draftInfo == null && totalDraftCount == 0) return
+    if (inProgressInfo == null && totalInProgressCount == 0) return
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -61,10 +61,10 @@ fun DraftSessionsBanner(
                 .fillMaxWidth()
                 .padding(12.dp),
         ) {
-            if (draftInfo != null) {
-                val timerStatus = draftInfo.session.timerStatus
-                val timerRemainingMs = draftInfo.session.timerRemainingMs
-                val totalDurationMs = draftInfo.session.brewingTime.inWholeMilliseconds
+            if (inProgressInfo != null) {
+                val timerStatus = inProgressInfo.session.timerStatus
+                val timerRemainingMs = inProgressInfo.session.timerRemainingMs
+                val totalDurationMs = inProgressInfo.session.brewingTime.inWholeMilliseconds
 
                 // Determine if timer is complete (either from status or from progress)
                 val isTimerComplete = timerStatus == TimerStatus.COMPLETE ||
@@ -83,12 +83,12 @@ fun DraftSessionsBanner(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = draftInfo.teaName,
+                            text = inProgressInfo.teaName,
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
                         Text(
-                            text = "Steep ${draftInfo.session.steepNumber}",
+                            text = "Steep ${inProgressInfo.session.steepNumber}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                         )
@@ -134,20 +134,20 @@ fun DraftSessionsBanner(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                         )
-                        if (totalDraftCount > 1) {
+                        if (totalInProgressCount > 1) {
                             TextButton(onClick = onViewAllClick) {
-                                Text("View all ($totalDraftCount)")
+                                Text("View all ($totalInProgressCount)")
                             }
                         }
                     }
-                } else if (totalDraftCount > 1) {
+                } else if (totalInProgressCount > 1) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End,
                     ) {
                         TextButton(onClick = onViewAllClick) {
-                            Text("View all ($totalDraftCount)")
+                            Text("View all ($totalInProgressCount)")
                         }
                     }
                 }
@@ -159,7 +159,7 @@ fun DraftSessionsBanner(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = "You have $totalDraftCount incomplete ${if (totalDraftCount == 1) "session" else "sessions"}",
+                        text = "You have $totalInProgressCount incomplete ${if (totalInProgressCount == 1) "session" else "sessions"}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -174,16 +174,16 @@ fun DraftSessionsBanner(
 
 @Preview(showBackground = true)
 @Composable
-private fun DraftSessionsBannerPreview() {
+private fun InProgressSessionsBannerPreview() {
     val now = Clock.System.now()
     LeafLogTheme {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // With draft info - timer paused
-            DraftSessionsBanner(
-                draftInfo = DraftSessionInfo(
+            // With info - timer paused
+            InProgressSessionsBanner(
+                inProgressInfo = InProgressSessionInfo(
                     session = TeaSession(
                         id = "1",
                         teaId = "tea1",
@@ -197,21 +197,21 @@ private fun DraftSessionsBannerPreview() {
                         createdAt = now,
                         updatedAt = now,
                         steepNumber = 2,
-                        status = SessionStatus.DRAFT,
+                        status = SessionStatus.IN_PROGRESS,
                         timerStatus = TimerStatus.PAUSED,
                         timerRemainingMs = 90_000L,
                     ),
                     teaName = "Dragon Well Green Tea",
                     vesselName = "Gaiwan",
                 ),
-                totalDraftCount = 3,
+                totalInProgressCount = 3,
                 onResumeClick = {},
                 onViewAllClick = {},
             )
 
-            // With draft info - timer complete
-            DraftSessionsBanner(
-                draftInfo = DraftSessionInfo(
+            // With info - timer complete
+            InProgressSessionsBanner(
+                inProgressInfo = InProgressSessionInfo(
                     session = TeaSession(
                         id = "2",
                         teaId = "tea2",
@@ -225,21 +225,21 @@ private fun DraftSessionsBannerPreview() {
                         createdAt = now,
                         updatedAt = now,
                         steepNumber = 1,
-                        status = SessionStatus.DRAFT,
+                        status = SessionStatus.IN_PROGRESS,
                         timerStatus = TimerStatus.COMPLETE,
                         timerRemainingMs = 0L,
                     ),
                     teaName = "High Mountain Oolong",
                     vesselName = "Yixing Teapot",
                 ),
-                totalDraftCount = 1,
+                totalInProgressCount = 1,
                 onResumeClick = {},
                 onViewAllClick = {},
             )
 
             // Without timer state
-            DraftSessionsBanner(
-                draftInfo = DraftSessionInfo(
+            InProgressSessionsBanner(
+                inProgressInfo = InProgressSessionInfo(
                     session = TeaSession(
                         id = "3",
                         teaId = "tea3",
@@ -253,12 +253,12 @@ private fun DraftSessionsBannerPreview() {
                         createdAt = now,
                         updatedAt = now,
                         steepNumber = 1,
-                        status = SessionStatus.DRAFT,
+                        status = SessionStatus.IN_PROGRESS,
                     ),
                     teaName = "Aged Pu-erh",
                     vesselName = "Gaiwan",
                 ),
-                totalDraftCount = 2,
+                totalInProgressCount = 2,
                 onResumeClick = {},
                 onViewAllClick = {},
             )

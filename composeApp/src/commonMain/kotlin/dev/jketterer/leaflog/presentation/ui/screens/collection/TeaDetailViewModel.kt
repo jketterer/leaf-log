@@ -264,7 +264,7 @@ class TeaDetailViewModel(
     private fun handleSessionClick(sessionId: String) {
         viewModelScope.launch {
             val session = teaSessionRepository.getById(sessionId)
-            if (session?.status == SessionStatus.DRAFT) {
+            if (session?.status == SessionStatus.IN_PROGRESS) {
                 _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(sessionId))
             } else {
                 _navEvents.trySend(NavigateToSession(sessionId))

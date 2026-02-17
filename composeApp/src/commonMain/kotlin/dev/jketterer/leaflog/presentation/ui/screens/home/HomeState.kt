@@ -6,9 +6,9 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.UserPreferences
 
 /**
- * Information about a draft session for display on the home banner.
+ * Information about an in-progress session for display on the home banner.
  */
-data class DraftSessionInfo(
+data class InProgressSessionInfo(
     val session: TeaSession,
     val teaName: String,
     val vesselName: String,
@@ -19,8 +19,8 @@ data class HomeState(
     val dailyStats: DailyStats = DailyStats(),
     val recentSessions: List<TeaSession> = emptyList(),
     val recentSessionsWithTea: List<SessionWithTeaData> = emptyList(),
-    val draftSessionsCount: Int = 0,
-    val mostRecentDraft: DraftSessionInfo? = null,
+    val inProgressSessionsCount: Int = 0,
+    val mostRecentInProgress: InProgressSessionInfo? = null,
     val liveTimerState: TimerState? = null, // Live timer progress from TimerService
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -38,8 +38,8 @@ data class HomeState(
         get() = isEmpty && !isLoading
 
     /**
-     * Whether to show the draft sessions banner.
+     * Whether to show the in-progress sessions banner.
      */
-    val shouldShowDraftBanner: Boolean
-        get() = draftSessionsCount > 0
+    val shouldShowInProgressBanner: Boolean
+        get() = inProgressSessionsCount > 0
 }

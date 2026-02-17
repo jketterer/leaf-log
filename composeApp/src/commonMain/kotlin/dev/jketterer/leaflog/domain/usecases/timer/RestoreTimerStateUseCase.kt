@@ -7,7 +7,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Restores timer state from a draft session.
+ * Restores timer state from an in-progress session.
  * Recalculates remaining time based on when the timer was last saved.
  */
 class RestoreTimerStateUseCase(

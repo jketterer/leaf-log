@@ -27,7 +27,7 @@ class CreateSessionUseCase(
         notes: String? = null,
         rating: Float? = null,
         photos: List<String> = emptyList(),
-        status: SessionStatus = SessionStatus.DRAFT,
+        status: SessionStatus = SessionStatus.IN_PROGRESS,
         usedConfigurationId: String? = null,
     ): Result<TeaSession> {
         if (teaId.isBlank()) {

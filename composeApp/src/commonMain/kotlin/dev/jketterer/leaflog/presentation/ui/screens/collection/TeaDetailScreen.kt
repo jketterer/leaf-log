@@ -471,6 +471,7 @@ private fun TeaDetailContent(
         if (state.showEditConfigDialog && state.editingConfig != null) {
             EditConfigurationDialog(
                 configuration = state.editingConfig,
+                userPreferences = state.userPreferences,
                 onSave = { label, teaQty, waterQty, temp, time, waterType, isActive ->
                     onIntent(
                         TeaDetailIntent.SaveConfigurationChanges(

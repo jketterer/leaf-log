@@ -81,6 +81,7 @@ class Converters {
 
     @TypeConverter
     fun toSessionStatus(value: String?): SessionStatus? {
+        if (value == "DRAFT") return SessionStatus.IN_PROGRESS
         return SessionStatus.entries.firstOrNull { it.name == value }
     }
 

@@ -67,7 +67,7 @@ import kotlin.time.toDuration
  */
 @Composable
 fun HistoryScreen(
-    showDraftsOnly: Boolean = false,
+    showInProgressOnly: Boolean = false,
     filterTeaTypeId: String? = null,
     filterDateStart: String? = null,
     filterDateEnd: String? = null,
@@ -78,9 +78,9 @@ fun HistoryScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(showDraftsOnly) {
-        if (showDraftsOnly) {
-            viewModel.onIntent(HistoryIntent.ToggleShowDraftsOnly(true))
+    LaunchedEffect(showInProgressOnly) {
+        if (showInProgressOnly) {
+            viewModel.onIntent(HistoryIntent.ToggleShowInProgressOnly(true))
         }
     }
 
@@ -240,8 +240,8 @@ private fun HistoryContent(
                             { onIntent(HistoryIntent.ClearFilters) },
                         )
 
-                        state.showDraftsOnly -> Triple(
-                            "No draft sessions",
+                        state.showInProgressOnly -> Triple(
+                            "No in progress sessions",
                             null,
                             null,
                         )
@@ -294,8 +294,8 @@ private fun HistoryContent(
                                     teaPhotoUrl = tea?.photos?.firstOrNull(),
                                     userPrefs = state.userPreferences,
                                     onSessionClick = {
-                                        if (session.status == SessionStatus.DRAFT) {
-                                            onIntent(HistoryIntent.CompleteDraft(session.id))
+                                        if (session.status == SessionStatus.IN_PROGRESS) {
+                                            onIntent(HistoryIntent.CompleteInProgress(session.id))
                                         } else {
                                             onIntent(HistoryIntent.SessionClicked(session.id))
                                         }

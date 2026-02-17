@@ -499,15 +499,7 @@ private fun LogTeaContent(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = state.canSave && !state.isSaving,
                     ) {
-                        Text("Save Session")
-                    }
-
-                    OutlinedButton(
-                        onClick = { onIntent(LogTeaIntent.SaveAsDraft) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = state.canSave && !state.isSaving,
-                    ) {
-                        Text("Save as Draft")
+                        Text("Complete Session")
                     }
                 }
             }

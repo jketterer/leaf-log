@@ -9,7 +9,7 @@ data class TeaSession(
 
     val parentSessionId: String? = null,
     val steepNumber: Int = 1,
-    val status: SessionStatus = SessionStatus.DRAFT,
+    val status: SessionStatus = SessionStatus.IN_PROGRESS,
 
     val teaQuantityGrams: Float? = null,
     val vesselId: String,

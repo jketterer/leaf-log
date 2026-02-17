@@ -39,7 +39,7 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
-import dev.jketterer.leaflog.presentation.ui.components.home.DraftSessionsBanner
+import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
 import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
@@ -61,7 +61,7 @@ fun HomeScreen(
     onNavigateToLogTea: (String?, String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToEditSession: (String) -> Unit,
-    onNavigateToHistory: () -> Unit,
+    onNavigateToHistory: (showInProgressOnly: Boolean) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToQuickTimer: (Int) -> Unit,
@@ -85,7 +85,7 @@ fun HomeScreen(
                 }
 
                 is HomeNavEvent.NavigateToHistory -> {
-                    onNavigateToHistory()
+                    onNavigateToHistory(event.showInProgressOnly)
                 }
 
                 is HomeNavEvent.NavigateToSettings -> {
@@ -180,18 +180,18 @@ private fun HomeContent(
                             )
                         }
 
-                        // Draft sessions banner
-                        if (state.shouldShowDraftBanner) {
-                            item(key = "draft_banner") {
-                                DraftSessionsBanner(
-                                    draftInfo = state.mostRecentDraft,
-                                    totalDraftCount = state.draftSessionsCount,
+                        // In-progress sessions banner
+                        if (state.shouldShowInProgressBanner) {
+                            item(key = "in_progress_banner") {
+                                InProgressSessionsBanner(
+                                    inProgressInfo = state.mostRecentInProgress,
+                                    totalInProgressCount = state.inProgressSessionsCount,
                                     timerProgress = state.liveTimerState?.progress,
                                     onResumeClick = {
-                                        onIntent(HomeIntent.ResumeDraftClicked)
+                                        onIntent(HomeIntent.ResumeInProgressClicked)
                                     },
                                     onViewAllClick = {
-                                        onIntent(HomeIntent.DraftBannerClicked)
+                                        onIntent(HomeIntent.InProgressBannerClicked)
                                     },
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                 )
@@ -358,10 +358,10 @@ private fun HomeScreenPreview() {
                             )
                     ),
                 ),
-                draftSessionsCount = 2,
-                mostRecentDraft = DraftSessionInfo(
+                inProgressSessionsCount = 2,
+                mostRecentInProgress = InProgressSessionInfo(
                     session = TeaSession(
-                        id = "draft-1",
+                        id = "in-progress-1",
                         teaId = "tea-3",
                         vesselId = "gaiwan",
                         waterType = WaterType.FILTERED,
@@ -369,7 +369,7 @@ private fun HomeScreenPreview() {
                         brewingTime = 3.minutes,
                         temperatureCelsius = 85,
                         waterQuantityMl = 150,
-                        status = SessionStatus.DRAFT,
+                        status = SessionStatus.IN_PROGRESS,
                         syncStatus = SyncStatus.LOCAL_ONLY,
                         createdAt = now,
                         updatedAt = now,

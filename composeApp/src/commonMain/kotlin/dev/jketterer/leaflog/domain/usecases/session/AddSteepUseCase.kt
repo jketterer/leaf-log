@@ -47,11 +47,11 @@ class AddSteepUseCase(
             teaId = parentSession.teaId,
             parentSessionId = parentSession.id,
             steepNumber = nextSteepNumber,
-            status = SessionStatus.DRAFT,  // New steeps always start as drafts
-            teaQuantityGrams = parentSession.teaQuantityGrams,  // Inherit (same tea leaves)
-            vesselId = parentSession.vesselId,  // Inherit
-            waterType = parentSession.waterType,  // Inherit
-            location = parentSession.location,  // Inherit
+            status = SessionStatus.IN_PROGRESS,
+            teaQuantityGrams = parentSession.teaQuantityGrams,
+            vesselId = parentSession.vesselId,
+            waterType = parentSession.waterType,
+            location = parentSession.location,
             timestamp = now,
             brewingTime = brewingTime,
             temperatureCelsius = temperatureCelsius,

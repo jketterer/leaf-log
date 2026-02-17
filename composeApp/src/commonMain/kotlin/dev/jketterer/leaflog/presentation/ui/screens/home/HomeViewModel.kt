@@ -109,28 +109,28 @@ class HomeViewModel(
             is HomeIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
-            is HomeIntent.DraftBannerClicked -> _navEvents.trySend(
+            is HomeIntent.InProgressBannerClicked -> _navEvents.trySend(
                 HomeNavEvent.NavigateToHistory(
                     true
                 )
             )
 
-            is HomeIntent.ResumeDraftClicked -> handleResumeDraft()
+            is HomeIntent.ResumeInProgressClicked -> handleResumeInProgress()
         }
     }
 
-    private fun handleResumeDraft() {
-        val draft = _state.value.mostRecentDraft?.session ?: return
-        when (draft.timerStatus) {
-            TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(draft.id))
-            else -> _navEvents.trySend(HomeNavEvent.ResumeTimer(draft.id))
+    private fun handleResumeInProgress() {
+        val inProgress = _state.value.mostRecentInProgress?.session ?: return
+        when (inProgress.timerStatus) {
+            TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(inProgress.id))
+            else -> _navEvents.trySend(HomeNavEvent.ResumeTimer(inProgress.id))
         }
     }
 
     private fun handleSessionClick(sessionId: String) {
         viewModelScope.launch {
             val session = teaSessionRepository.getById(sessionId)
-            if (session?.status == SessionStatus.DRAFT) {
+            if (session?.status == SessionStatus.IN_PROGRESS) {
                 _navEvents.trySend(HomeNavEvent.ResumeTimer(sessionId))
             } else {
                 _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))
@@ -149,8 +149,8 @@ class HomeViewModel(
 
                 collectDailyStats()
                 collectRecentSessions()
-                collectDraftCount()
-                collectMostRecentDraft()
+                collectInProgressCount()
+                collectMostRecentInProgress()
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -222,30 +222,30 @@ class HomeViewModel(
             }
     }
 
-    private fun collectDraftCount() = viewModelScope.launch {
-        teaSessionRepository.getDraftsCountFlow()
-            .catch { e -> println("Failed to load draft count: ${e.message}") }
-            .collect { count -> _state.update { it.copy(draftSessionsCount = count) } }
+    private fun collectInProgressCount() = viewModelScope.launch {
+        teaSessionRepository.getInProgressCountFlow()
+            .catch { e -> println("Failed to load in-progress count: ${e.message}") }
+            .collect { count -> _state.update { it.copy(inProgressSessionsCount = count) } }
     }
 
-    private fun collectMostRecentDraft() = viewModelScope.launch {
+    private fun collectMostRecentInProgress() = viewModelScope.launch {
         combine(
-            teaSessionRepository.getDraftsFlow(),
+            teaSessionRepository.getInProgressFlow(),
             teaRepository.getAllFlow(),
             vesselRepository.getAllFlow(),
-        ) { drafts, teas, vessels ->
-            val mostRecent = drafts.firstOrNull() ?: return@combine null
+        ) { inProgressSessions, teas, vessels ->
+            val mostRecent = inProgressSessions.firstOrNull() ?: return@combine null
             val tea = teas.find { it.id == mostRecent.teaId }
             val vessel = vessels.find { it.id == mostRecent.vesselId }
-            DraftSessionInfo(
+            InProgressSessionInfo(
                 session = mostRecent,
                 teaName = tea?.name ?: "Unknown Tea",
                 vesselName = vessel?.name ?: "Unknown Vessel",
             )
         }
-            .catch { e -> println("Failed to load most recent draft: ${e.message}") }
-            .collect { draftInfo ->
-                _state.update { it.copy(mostRecentDraft = draftInfo) }
+            .catch { e -> println("Failed to load most recent in-progress session: ${e.message}") }
+            .collect { inProgressInfo ->
+                _state.update { it.copy(mostRecentInProgress = inProgressInfo) }
             }
     }
 
@@ -300,7 +300,7 @@ data class SessionWithTeaData(
 )
 
 sealed interface HomeNavEvent {
-    data class NavigateToHistory(val showDraftsOnly: Boolean = false) : HomeNavEvent
+    data class NavigateToHistory(val showInProgressOnly: Boolean = false) : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
     data class NavigateToEditSession(val sessionId: String) : HomeNavEvent
     data class NavigateToLogTea(val teaId: String? = null, val vesselId: String? = null) :

@@ -1,6 +1,6 @@
 package dev.jketterer.leaflog.domain.models
 
 enum class SessionStatus {
-    DRAFT,
+    IN_PROGRESS,
     COMPLETED,
 }

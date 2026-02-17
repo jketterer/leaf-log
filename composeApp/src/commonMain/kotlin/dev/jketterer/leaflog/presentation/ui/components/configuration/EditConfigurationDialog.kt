@@ -20,8 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
+import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
+import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import kotlin.time.Duration
 
@@ -31,6 +36,7 @@ import kotlin.time.Duration
 @Composable
 fun EditConfigurationDialog(
     configuration: BrewingConfiguration,
+    userPreferences: UserPreferences,
     onSave: (
         label: String,
         teaQuantityGrams: Float?,
@@ -44,8 +50,18 @@ fun EditConfigurationDialog(
 ) {
     var label by remember { mutableStateOf(configuration.label ?: "") }
     var teaQuantity by remember { mutableStateOf(configuration.teaQuantityGrams?.toString() ?: "") }
-    var waterQuantity by remember { mutableStateOf(configuration.waterQuantityMl.toString()) }
-    var temperature by remember { mutableStateOf(configuration.temperatureCelsius.toString()) }
+    var temperatureUnit by remember { mutableStateOf(userPreferences.temperatureUnit) }
+    var volumeUnit by remember { mutableStateOf(userPreferences.volumeUnit) }
+    var waterQuantity by remember {
+        mutableStateOf(
+            volumeUnit.fromMilliliters(configuration.waterQuantityMl).toString()
+        )
+    }
+    var temperature by remember {
+        mutableStateOf(
+            temperatureUnit.fromCelsius(configuration.temperatureCelsius).toString()
+        )
+    }
     var brewingTime by remember { mutableStateOf(configuration.brewingTime) }
     var waterType by remember { mutableStateOf(configuration.waterType) }
     var isActive by remember { mutableStateOf(configuration.isActive) }
@@ -79,21 +95,58 @@ fun EditConfigurationDialog(
                     singleLine = true
                 )
 
-                OutlinedTextField(
+                VolumeInputField(
                     value = waterQuantity,
                     onValueChange = { waterQuantity = it },
-                    label = { Text("Water Quantity (ml)") },
+                    currentUnit = volumeUnit,
+                    onToggleUnit = {
+                        val currentValue = waterQuantity.toDoubleOrNull()
+                        val newUnit = when (volumeUnit) {
+                            VolumeUnit.MILLILITERS -> VolumeUnit.FLUID_OUNCES
+                            VolumeUnit.FLUID_OUNCES -> VolumeUnit.MILLILITERS
+                        }
+                        if (currentValue != null) {
+                            // Direct conversion via floating point, rounding only once
+                            val converted = when {
+                                volumeUnit == VolumeUnit.MILLILITERS && newUnit == VolumeUnit.FLUID_OUNCES ->
+                                    (currentValue / 29.5735).roundToInt()
+                                volumeUnit == VolumeUnit.FLUID_OUNCES && newUnit == VolumeUnit.MILLILITERS ->
+                                    (currentValue * 29.5735).roundToInt()
+                                else -> currentValue.roundToInt()
+                            }
+                            waterQuantity = converted.toString()
+                        }
+                        volumeUnit = newUnit
+                    },
+                    label = { Text("Water Quantity") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
                 )
 
-                OutlinedTextField(
+                TemperatureInputField(
                     value = temperature,
                     onValueChange = { temperature = it },
-                    label = { Text("Temperature (°C)") },
+                    currentUnit = temperatureUnit,
+                    onToggleUnit = {
+                        val currentValue = temperature.toDoubleOrNull()
+                        val newUnit = when (temperatureUnit) {
+                            TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
+                            TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
+                        }
+                        if (currentValue != null) {
+                            // Direct conversion via floating point, rounding only once
+                            val converted = when {
+                                temperatureUnit == TemperatureUnit.CELSIUS && newUnit == TemperatureUnit.FAHRENHEIT ->
+                                    (currentValue * 9.0 / 5.0 + 32).roundToInt()
+                                temperatureUnit == TemperatureUnit.FAHRENHEIT && newUnit == TemperatureUnit.CELSIUS ->
+                                    ((currentValue - 32) * 5.0 / 9.0).roundToInt()
+                                else -> currentValue.roundToInt()
+                            }
+                            temperature = converted.toString()
+                        }
+                        temperatureUnit = newUnit
+                    },
+                    label = { Text("Temperature") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    suffix = { Text("°C") }
                 )
 
                 DurationPicker(
@@ -136,8 +189,10 @@ fun EditConfigurationDialog(
                     onSave(
                         label,
                         teaQuantity.toFloatOrNull(),
-                        waterQuantity.toIntOrNull() ?: configuration.waterQuantityMl,
-                        temperature.toIntOrNull() ?: configuration.temperatureCelsius,
+                        waterQuantity.toIntOrNull()?.let { volumeUnit.toMilliliters(it) }
+                            ?: configuration.waterQuantityMl,
+                        temperature.toIntOrNull()?.let { temperatureUnit.toCelsius(it) }
+                            ?: configuration.temperatureCelsius,
                         brewingTime,
                         waterType,
                         isActive

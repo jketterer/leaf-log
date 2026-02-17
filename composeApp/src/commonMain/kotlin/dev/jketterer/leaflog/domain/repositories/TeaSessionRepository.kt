@@ -16,8 +16,8 @@ interface TeaSessionRepository {
     suspend fun getByVesselId(vesselId: String): List<TeaSession>
     fun getByVesselIdFlow(vesselId: String): Flow<List<TeaSession>>
     suspend fun getChildSteeps(parentId: String): List<TeaSession>
-    fun getDraftsFlow(): Flow<List<TeaSession>>
-    fun getDraftsCountFlow(): Flow<Int>
+    fun getInProgressFlow(): Flow<List<TeaSession>>
+    fun getInProgressCountFlow(): Flow<Int>
     suspend fun getByDateRange(start: Instant, end: Instant): List<TeaSession>
     suspend fun upsert(session: TeaSession)
     suspend fun delete(id: String)

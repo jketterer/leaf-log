@@ -74,10 +74,9 @@ class LogTeaViewModel(
 
             is LogTeaIntent.PhotoSelected -> addPhoto(intent.photoUri)
             is LogTeaIntent.PhotoRemoved -> removePhoto(intent.photoUri)
-            is LogTeaIntent.SaveAsDraft -> saveSession(isDraft = true, startTimer = false)
-            is LogTeaIntent.SaveAsCompleted -> saveSession(isDraft = false, startTimer = false)
+            is LogTeaIntent.SaveAsCompleted -> saveSession(status = SessionStatus.COMPLETED, startTimer = false)
 
-            is LogTeaIntent.StartTimerClicked -> saveSession(isDraft = true, startTimer = true)
+            is LogTeaIntent.StartTimerClicked -> saveSession(status = SessionStatus.IN_PROGRESS, startTimer = true)
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
 
             is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
@@ -504,7 +503,7 @@ class LogTeaViewModel(
         }
     }
 
-    private fun saveSession(isDraft: Boolean, startTimer: Boolean) {
+    private fun saveSession(status: SessionStatus, startTimer: Boolean) {
         val currentState = _state.value
 
         if (!currentState.isValid) {
@@ -539,7 +538,7 @@ class LogTeaViewModel(
                 waterQuantityMl = waterQuantityMl,
                 notes = currentState.notes.takeIf { it.isNotBlank() },
                 photos = currentState.photos,
-                status = if (isDraft) SessionStatus.DRAFT else SessionStatus.COMPLETED,
+                status = status,
                 usedConfigurationId = currentState.usedConfigurationId,
             )
                 .onSuccess {

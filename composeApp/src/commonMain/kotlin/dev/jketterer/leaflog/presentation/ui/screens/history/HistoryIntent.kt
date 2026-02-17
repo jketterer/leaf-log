@@ -13,7 +13,7 @@ sealed interface HistoryIntent {
     data class FilterByTea(val teaId: String?) : HistoryIntent
     data class FilterByDateRange(val start: LocalDate?, val end: LocalDate?) : HistoryIntent
     data class FilterByMinRating(val minRating: Float?) : HistoryIntent
-    data class ToggleShowDraftsOnly(val draftsOnly: Boolean) : HistoryIntent
+    data class ToggleShowInProgressOnly(val inProgressOnly: Boolean) : HistoryIntent
     data object ClearFilters : HistoryIntent
 
     // Actions
@@ -23,6 +23,6 @@ sealed interface HistoryIntent {
     data class BrewAgain(val sessionId: String) : HistoryIntent
     data object ClearError : HistoryIntent
 
-    // Draft completion - navigates to timer screen
-    data class CompleteDraft(val sessionId: String) : HistoryIntent
+    // In-progress completion - navigates to timer screen
+    data class CompleteInProgress(val sessionId: String) : HistoryIntent
 }

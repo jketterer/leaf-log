@@ -112,11 +112,11 @@ fun SessionCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                // Draft badge
-                if (session.status == SessionStatus.DRAFT) {
+                // In Progress badge
+                if (session.status == SessionStatus.IN_PROGRESS) {
                     AssistChip(
                         onClick = {},
-                        label = { Text("DRAFT") },
+                        label = { Text("IN PROGRESS") },
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = MaterialTheme.colorScheme.errorContainer
                         )
@@ -267,7 +267,7 @@ private fun SessionCardCompletedPreview() {
 
 @Preview
 @Composable
-private fun SessionCardDraftPreview() {
+private fun SessionCardInProgressPreview() {
     LeafLogTheme {
         SessionCard(
             session = TeaSession(
@@ -277,7 +277,7 @@ private fun SessionCardDraftPreview() {
                 vesselId = "vessel-2",
                 waterType = WaterType.SPRING,
                 timestamp = Instant.fromEpochMilliseconds(1735833600000), // 2025-01-02 12:00
-                status = SessionStatus.DRAFT,
+                status = SessionStatus.IN_PROGRESS,
                 brewingTime = 240.toDuration(DurationUnit.SECONDS),
                 updatedAt = Instant.fromEpochMilliseconds(1735833600000),
                 deletedAt = null,

@@ -205,11 +205,11 @@ fun HistoryFilterSheetContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             FilterChip(
-                selected = state.showDraftsOnly,
+                selected = state.showInProgressOnly,
                 onClick = {
-                    onIntent(HistoryIntent.ToggleShowDraftsOnly(!state.showDraftsOnly))
+                    onIntent(HistoryIntent.ToggleShowInProgressOnly(!state.showInProgressOnly))
                 },
-                label = { Text("Drafts Only") },
+                label = { Text("In Progress Only") },
             )
         }
     }
@@ -333,7 +333,7 @@ private fun HistoryFilterSheetContentActiveFiltersPreview() {
             state = HistoryState(
                 selectedTeaTypeId = "1",
                 minRating = 3f,
-                showDraftsOnly = true,
+                showInProgressOnly = true,
                 teaTypes = mapOf(
                     "1" to TeaType(
                         id = "1",

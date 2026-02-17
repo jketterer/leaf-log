@@ -186,7 +186,7 @@ private fun TimerContent(
         AlertDialog(
             onDismissRequest = { onIntent(TimerIntent.CancelStop) },
             title = { Text("Stop Timer?") },
-            text = { Text("The session will be saved as a draft. You can complete it later from the History screen.") },
+            text = { Text("The session will be saved as in progress. You can complete it later from the History screen.") },
             confirmButton = {
                 TextButton(onClick = {
                     onIntent(TimerIntent.ConfirmStop)
@@ -693,7 +693,7 @@ private fun TimerScreenRunningPreview() {
                     brewingTime = 2.minutes,
                     temperatureCelsius = 80,
                     waterQuantityMl = 200,
-                    status = SessionStatus.DRAFT,
+                    status = SessionStatus.IN_PROGRESS,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now(),
@@ -738,7 +738,7 @@ private fun TimerScreenPausedPreview() {
                     brewingTime = 2.minutes,
                     temperatureCelsius = 80,
                     waterQuantityMl = 200,
-                    status = SessionStatus.DRAFT,
+                    status = SessionStatus.IN_PROGRESS,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now(),
@@ -781,7 +781,7 @@ private fun TimerScreenCompletePreview() {
                     brewingTime = 2.minutes,
                     temperatureCelsius = 80,
                     waterQuantityMl = 200,
-                    status = SessionStatus.DRAFT,
+                    status = SessionStatus.IN_PROGRESS,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now(),

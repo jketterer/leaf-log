@@ -43,11 +43,11 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Dialog for completing a draft session.
+ * Dialog for completing an in-progress session.
  * Allows user to add rating and notes to finish the session.
  */
 @Composable
-fun CompleteDraftDialog(
+fun CompleteInProgressDialog(
     session: TeaSession,
     teaName: String,
     onComplete: (rating: Float?, notes: String?) -> Unit,
@@ -141,9 +141,9 @@ fun CompleteDraftDialog(
 
 @Preview(showBackground = true)
 @Composable
-private fun CompleteDraftDialogPreview() {
+private fun CompleteInProgressDialogPreview() {
     LeafLogTheme {
-        CompleteDraftDialog(
+        CompleteInProgressDialog(
             session = TeaSession(
                 id = "session-1",
                 teaId = "tea-1",
@@ -154,7 +154,7 @@ private fun CompleteDraftDialogPreview() {
                 temperatureCelsius = 80,
                 waterQuantityMl = 200,
                 notes = "Initial notes from brewing",
-                status = SessionStatus.DRAFT,
+                status = SessionStatus.IN_PROGRESS,
                 syncStatus = SyncStatus.LOCAL_ONLY,
                 createdAt = Clock.System.now(),
                 updatedAt = Clock.System.now(),
@@ -168,9 +168,9 @@ private fun CompleteDraftDialogPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun CompleteDraftDialogWithRatingPreview() {
+private fun CompleteInProgressDialogWithRatingPreview() {
     LeafLogTheme {
-        CompleteDraftDialog(
+        CompleteInProgressDialog(
             session = TeaSession(
                 id = "session-1",
                 teaId = "tea-1",
@@ -180,7 +180,7 @@ private fun CompleteDraftDialogWithRatingPreview() {
                 brewingTime = 2.minutes,
                 temperatureCelsius = 75,
                 waterQuantityMl = 150,
-                status = SessionStatus.DRAFT,
+                status = SessionStatus.IN_PROGRESS,
                 syncStatus = SyncStatus.LOCAL_ONLY,
                 rating = 4f,
                 createdAt = Clock.System.now(),

@@ -207,10 +207,6 @@ class TimerViewModel(
                     )
                 }
 
-                // Auto-start timer if it's a brand new session (not restored)
-                if (initialTimerState.status == TimerStatus.NOT_STARTED) {
-                    startTimer()
-                }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(

@@ -33,7 +33,6 @@ sealed interface LogTeaIntent {
     data class PhotoRemoved(val photoUri: String) : LogTeaIntent
 
     // Actions
-    data object SaveAsDraft : LogTeaIntent
     data object SaveAsCompleted : LogTeaIntent
     data object StartTimerClicked : LogTeaIntent
     data object BackClicked : LogTeaIntent

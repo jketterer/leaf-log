@@ -1,5 +1,11 @@
 package dev.jketterer.leaflog.presentation.ui.screens.log
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,6 +20,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -26,17 +33,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.ChevronDown
+import compose.icons.feathericons.ChevronUp
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
+import dev.jketterer.leaflog.presentation.ui.components.common.Preset
+import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
@@ -92,6 +109,27 @@ private fun LogTeaContent(
     state: LogTeaState,
     onIntent: (LogTeaIntent) -> Unit,
 ) {
+    var showOptionalFields by remember { mutableStateOf(false) }
+
+    val hasOptionalData = state.teaQuantityGrams.isNotEmpty() ||
+            state.selectedWaterType != WaterType.FILTERED ||
+            state.location.isNotEmpty() ||
+            state.notes.isNotEmpty()
+
+    LaunchedEffect(hasOptionalData) {
+        if (hasOptionalData) {
+            showOptionalFields = true
+        }
+    }
+
+    val optionalSummaryParts = buildList {
+        if (state.teaQuantityGrams.isNotEmpty()) add("${state.teaQuantityGrams}g tea")
+        if (state.selectedWaterType != WaterType.FILTERED) add(state.selectedWaterType.displayName)
+        if (state.location.isNotEmpty()) add(state.location)
+        if (state.notes.isNotEmpty()) add("has notes")
+    }
+    val optionalSummary = optionalSummaryParts.joinToString(" · ")
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -184,11 +222,18 @@ private fun LogTeaContent(
 
             // Brewing Parameters Section
             item(key = "parameters_header") {
-                Text(
-                    text = "BREWING PARAMETERS",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "BREWING PARAMETERS",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "* Required",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             // Pre-fill Banner
@@ -222,107 +267,216 @@ private fun LogTeaContent(
                 }
             }
 
-            // Tea Quantity
-            item(key = "tea_quantity") {
-                OutlinedTextField(
-                    value = state.teaQuantityGrams,
-                    onValueChange = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
-                    label = { Text("Tea Quantity (g)") },
-                    supportingText = { Text("Optional - leave empty for tea bags") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-            }
-
-
             // Brewing Time
             item(key = "brewing_time") {
-                DurationPicker(
-                    duration = state.brewingTime,
-                    onDurationChange = { duration ->
-                        duration?.let { onIntent(LogTeaIntent.BrewingTimeChanged(it)) }
-                    },
-                    label = "Brewing Time *",
-                    isError = state.brewingTimeError != null,
-                    errorMessage = state.brewingTimeError,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                val brewingTimePresets = remember {
+                    listOf(
+                        Preset("0:30", 30.seconds),
+                        Preset("0:45", 45.seconds),
+                        Preset("1:00", 1.minutes),
+                        Preset("1:30", 1.minutes + 30.seconds),
+                        Preset("2:00", 2.minutes),
+                        Preset("3:00", 3.minutes),
+                        Preset("4:00", 4.minutes),
+                        Preset("5:00", 5.minutes),
+                    )
+                }
+
+                Column {
+                    DurationPicker(
+                        duration = state.brewingTime,
+                        onDurationChange = { duration ->
+                            duration?.let { onIntent(LogTeaIntent.BrewingTimeChanged(it)) }
+                        },
+                        label = "Brewing Time *",
+                        isError = state.brewingTimeError != null,
+                        errorMessage = state.brewingTimeError,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    PresetChips(
+                        presets = brewingTimePresets,
+                        currentValue = state.brewingTime,
+                        onSelect = { onIntent(LogTeaIntent.BrewingTimeChanged(it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
             // Temperature
             item(key = "temperature") {
-                // Convert from storage (Celsius) to display unit for showing
                 val displayValue = state.temperatureCelsius.toIntOrNull()?.let { celsius ->
                     state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
                 } ?: state.temperatureCelsius
 
-                TemperatureInputField(
-                    value = displayValue,
-                    onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
-                    currentUnit = state.userPreferences.temperatureUnit,
-                    onToggleUnit = {
-                        onIntent(LogTeaIntent.ToggleTemperatureUnit)
-                    },
-                    label = { Text("Temperature *") },
-                    isError = state.temperatureError != null,
-                    supportingText = state.temperatureError?.let { { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                val tempUnit = state.userPreferences.temperatureUnit
+
+                val tempPresets = remember(tempUnit) {
+                    when (tempUnit) {
+                        TemperatureUnit.CELSIUS -> listOf(60, 70, 75, 80, 85, 90, 95, 100)
+                        TemperatureUnit.FAHRENHEIT -> listOf(140, 160, 170, 175, 185, 195, 200, 212)
+                    }.map { Preset("$it${tempUnit.symbol}", it.toString()) }
+                }
+
+                Column {
+                    TemperatureInputField(
+                        value = displayValue,
+                        onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
+                        currentUnit = tempUnit,
+                        onToggleUnit = {
+                            onIntent(LogTeaIntent.ToggleTemperatureUnit)
+                        },
+                        label = { Text("Temperature *") },
+                        isError = state.temperatureError != null,
+                        supportingText = state.temperatureError?.let { { Text(it) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    PresetChips(
+                        presets = tempPresets,
+                        currentValue = displayValue,
+                        isSelected = { preset, current ->
+                            preset.toFloatOrNull() == current?.toFloatOrNull()
+                        },
+                        onSelect = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
             // Water Quantity
             item(key = "water_quantity") {
-                // Convert from storage (mL) to display unit for showing
                 val displayValue = state.waterQuantityMl.toIntOrNull()?.let { ml ->
                     state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
                 } ?: state.waterQuantityMl
 
-                VolumeInputField(
-                    value = displayValue,
-                    onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
-                    currentUnit = state.userPreferences.volumeUnit,
-                    onToggleUnit = {
-                        onIntent(LogTeaIntent.ToggleVolumeUnit)
-                    },
-                    label = { Text("Water Quantity *") },
-                    isError = state.waterQuantityError != null,
-                    supportingText = state.waterQuantityError?.let { { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                val volUnit = state.userPreferences.volumeUnit
+
+                val waterPresets = remember(volUnit) {
+                    when (volUnit) {
+                        VolumeUnit.MILLILITERS -> listOf(100, 150, 200, 250, 300, 400, 500)
+                        VolumeUnit.FLUID_OUNCES -> listOf(4, 6, 8, 10, 12, 16)
+                    }.map { Preset("$it ${volUnit.symbol}", it.toString()) }
+                }
+
+                Column {
+                    VolumeInputField(
+                        value = displayValue,
+                        onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
+                        currentUnit = volUnit,
+                        onToggleUnit = {
+                            onIntent(LogTeaIntent.ToggleVolumeUnit)
+                        },
+                        label = { Text("Water Quantity *") },
+                        isError = state.waterQuantityError != null,
+                        supportingText = state.waterQuantityError?.let { { Text(it) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    PresetChips(
+                        presets = waterPresets,
+                        currentValue = displayValue,
+                        isSelected = { preset, current ->
+                            preset.toFloatOrNull() == current?.toFloatOrNull()
+                        },
+                        onSelect = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
-            // Water Type Selector
-            item(key = "water_type") {
-                WaterTypeSelector(
-                    selectedWaterType = state.selectedWaterType,
-                    onWaterTypeSelected = { waterType ->
-                        onIntent(LogTeaIntent.WaterTypeSelected(waterType))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            // Optional Details Section
+            item(key = "optional_section") {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showOptionalFields = !showOptionalFields }
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "OPTIONAL DETAILS",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            if (!showOptionalFields && optionalSummary.isNotEmpty()) {
+                                Text(
+                                    text = optionalSummary,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = if (showOptionalFields) FeatherIcons.ChevronUp else FeatherIcons.ChevronDown,
+                            contentDescription = if (showOptionalFields) "Collapse optional fields" else "Expand optional fields",
+                        )
+                    }
 
-            // Location
-            item(key = "location") {
-                OutlinedTextField(
-                    value = state.location,
-                    onValueChange = { onIntent(LogTeaIntent.LocationChanged(it)) },
-                    label = { Text("Location (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-            }
+                    AnimatedVisibility(
+                        visible = showOptionalFields,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut(),
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Spacer(modifier = Modifier.height(0.dp))
 
-            // Notes
-            item(key = "notes") {
-                OutlinedTextField(
-                    value = state.notes,
-                    onValueChange = { onIntent(LogTeaIntent.NotesChanged(it)) },
-                    label = { Text("Notes (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 3,
-                    maxLines = 5,
-                )
+                            // Tea Quantity
+                            val teaQtyPresets = remember {
+                                listOf("1", "2", "3", "4", "5", "7", "10").map {
+                                    Preset("${it}g", it)
+                                }
+                            }
+                            Column {
+                                OutlinedTextField(
+                                    value = state.teaQuantityGrams,
+                                    onValueChange = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
+                                    label = { Text("Tea Quantity (g)") },
+                                    supportingText = { Text("Optional - leave empty for tea bags") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                )
+                                PresetChips(
+                                    presets = teaQtyPresets,
+                                    currentValue = state.teaQuantityGrams,
+                                    isSelected = { preset, current ->
+                                        preset.toFloatOrNull() == current?.toFloatOrNull()
+                                    },
+                                    onSelect = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+
+                            // Water Type Selector
+                            WaterTypeSelector(
+                                selectedWaterType = state.selectedWaterType,
+                                onWaterTypeSelected = { waterType ->
+                                    onIntent(LogTeaIntent.WaterTypeSelected(waterType))
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+
+                            // Location
+                            OutlinedTextField(
+                                value = state.location,
+                                onValueChange = { onIntent(LogTeaIntent.LocationChanged(it)) },
+                                label = { Text("Location (optional)") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                            )
+
+                            // Notes
+                            OutlinedTextField(
+                                value = state.notes,
+                                onValueChange = { onIntent(LogTeaIntent.NotesChanged(it)) },
+                                label = { Text("Notes (optional)") },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 3,
+                                maxLines = 5,
+                            )
+                        }
+                    }
+                }
             }
 
             // Action Buttons
@@ -503,3 +657,38 @@ private fun LogTeaScreenEmptyPreview() {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun LogTeaScreenOptionalFilledPreview() {
+    LeafLogTheme {
+        LogTeaContent(
+            state = LogTeaState(
+                selectedTea = Tea(
+                    id = "tea-1",
+                    name = "Dragon Well",
+                    teaTypeId = "green",
+                    createdAt = Clock.System.now(),
+                    updatedAt = Clock.System.now(),
+                    syncStatus = SyncStatus.LOCAL_ONLY,
+                ),
+                waterQuantityMl = "200",
+                temperatureCelsius = "80",
+                brewingTime = 2.minutes + 30.seconds,
+                teaQuantityGrams = "5",
+                location = "Kitchen",
+                notes = "Lovely session",
+                selectedWaterType = WaterType.SPRING,
+                selectedVessel = BrewingVessel(
+                    id = "gaiwan",
+                    name = "Gaiwan",
+                    iconName = "gaiwan",
+                    isSystemDefault = true,
+                    displayOrder = 0,
+                    createdAt = Clock.System.now(),
+                    updatedAt = Clock.System.now(),
+                ),
+            ),
+            onIntent = {},
+        )
+    }
+}

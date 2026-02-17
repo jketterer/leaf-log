@@ -45,11 +45,20 @@ fun DurationPicker(
         mutableStateOf(TextFieldValue((duration?.inWholeSeconds?.rem(60))?.toString() ?: ""))
     }
 
-    // Sync from prop when duration becomes available for the first time (async load case)
+    // Sync from prop when duration changes externally (async load or slider)
     LaunchedEffect(duration) {
-        if (duration != null && !initialDurationSynced) {
-            minutesFieldValue = TextFieldValue(duration.inWholeMinutes.toString())
-            secondsFieldValue = TextFieldValue((duration.inWholeSeconds % 60).toString())
+        if (duration != null) {
+            val currentMin = if (minutesFieldValue.text.isEmpty()) 0
+                else minutesFieldValue.text.toIntOrNull()
+            val currentSec = if (secondsFieldValue.text.isEmpty()) 0
+                else secondsFieldValue.text.toIntOrNull()?.coerceIn(0, 59)
+            val currentDuration = if (currentMin != null && currentSec != null) {
+                currentMin.minutes + currentSec.seconds
+            } else null
+            if (currentDuration != duration) {
+                minutesFieldValue = TextFieldValue(duration.inWholeMinutes.toString())
+                secondsFieldValue = TextFieldValue((duration.inWholeSeconds % 60).toString())
+            }
             initialDurationSynced = true
         }
     }

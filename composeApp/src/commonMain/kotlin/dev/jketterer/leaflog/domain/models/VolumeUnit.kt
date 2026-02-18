@@ -6,6 +6,12 @@ enum class VolumeUnit {
     MILLILITERS,
     FLUID_OUNCES;
 
+
+    fun toggle(): VolumeUnit = when (this) {
+        MILLILITERS -> FLUID_OUNCES
+        FLUID_OUNCES -> MILLILITERS
+    }
+
     fun toMilliliters(value: Int): Int = when (this) {
         MILLILITERS -> value
         FLUID_OUNCES -> (value * 29.5735).roundToInt()

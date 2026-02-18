@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -31,6 +32,11 @@ data class TimerScreenState(
     val showSaveConfigurationDialog: Boolean = false,
     val savedSession: TeaSession? = null, // Session that was just saved
     val showDiscardConfirmation: Boolean = false,
+    val showEditSheet: Boolean = false,
+    val editTemperatureCelsius: String = "",
+    val editWaterQuantityMl: String = "",
+    val editTeaQuantityGrams: String = "",
+    val editWaterType: WaterType? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
     val userPreferences: UserPreferences = UserPreferences(),

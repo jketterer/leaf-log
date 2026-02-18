@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.timer
 
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 /**
@@ -27,6 +28,7 @@ sealed interface TimerIntent {
     data class UpdateNextSteepDuration(val duration: Duration?) : TimerIntent
     data class UpdateNextSteepTemperature(val temperature: Int) : TimerIntent
     data object ToggleTemperatureUnit : TimerIntent
+    data object ToggleVolumeUnit : TimerIntent
     data class ConfirmNextSteep(val session: TeaSession) : TimerIntent
     data class SaveAndFinish(val session: TeaSession) : TimerIntent
     data object RestartTimer : TimerIntent
@@ -40,4 +42,13 @@ sealed interface TimerIntent {
     data object DiscardSession : TimerIntent
     data object ConfirmDiscardSession : TimerIntent
     data object CancelDiscardSession : TimerIntent
+
+    // Edit session parameters
+    data object EditSession : TimerIntent
+    data class EditTemperatureChanged(val value: String) : TimerIntent
+    data class EditWaterQuantityChanged(val value: String) : TimerIntent
+    data class EditTeaQuantityChanged(val value: String) : TimerIntent
+    data class EditWaterTypeChanged(val waterType: WaterType) : TimerIntent
+    data object ConfirmEditSession : TimerIntent
+    data object CancelEditSession : TimerIntent
 }

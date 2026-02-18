@@ -461,27 +461,13 @@ class LogTeaViewModel(
 
     private fun toggleTemperatureUnit() {
         viewModelScope.launch {
-            val currentUnit = _state.value.userPreferences.temperatureUnit
-            val newUnit = when (currentUnit) {
-                TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
-                TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
-            }
-
-            // Just update the preference - values are stored in Celsius so no conversion needed
-            preferencesRepository.updateTemperatureUnit(newUnit)
+            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
         }
     }
 
     private fun toggleVolumeUnit() {
         viewModelScope.launch {
-            val currentUnit = _state.value.userPreferences.volumeUnit
-            val newUnit = when (currentUnit) {
-                dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS -> dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES
-                dev.jketterer.leaflog.domain.models.VolumeUnit.FLUID_OUNCES -> dev.jketterer.leaflog.domain.models.VolumeUnit.MILLILITERS
-            }
-
-            // Just update the preference - values are stored in mL so no conversion needed
-            preferencesRepository.updateVolumeUnit(newUnit)
+            preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
         }
     }
 

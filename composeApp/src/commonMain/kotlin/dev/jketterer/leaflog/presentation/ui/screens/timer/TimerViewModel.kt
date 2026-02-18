@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.uuid.ExperimentalUuidApi
@@ -89,7 +90,7 @@ class TimerViewModel(
         if (currentState.status == TimerStatus.RUNNING || currentState.status == TimerStatus.PAUSED) {
             // Use runBlocking since we need to complete this before ViewModel is destroyed
             // This is acceptable in onCleared as it's called during cleanup
-            kotlinx.coroutines.runBlocking {
+            runBlocking {
                 saveTimerStateUseCase(currentState)
             }
         }
@@ -117,6 +118,7 @@ class TimerViewModel(
             is TimerIntent.UpdateNextSteepDuration -> updateNextSteepDuration(intent.duration)
             is TimerIntent.UpdateNextSteepTemperature -> updateNextSteepTemperature(intent.temperature)
             is TimerIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
+            is TimerIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is TimerIntent.ConfirmNextSteep -> confirmNextSteep(intent.session)
             is TimerIntent.SaveAndFinish -> saveAndFinish(intent.session)
 
@@ -132,6 +134,14 @@ class TimerViewModel(
             is TimerIntent.DiscardSession -> showDiscardConfirmation()
             is TimerIntent.ConfirmDiscardSession -> confirmDiscardSession()
             is TimerIntent.CancelDiscardSession -> cancelDiscardConfirmation()
+
+            is TimerIntent.EditSession -> openEditSheet()
+            is TimerIntent.EditTemperatureChanged -> _state.update { it.copy(editTemperatureCelsius = intent.value) }
+            is TimerIntent.EditWaterQuantityChanged -> _state.update { it.copy(editWaterQuantityMl = intent.value) }
+            is TimerIntent.EditTeaQuantityChanged -> _state.update { it.copy(editTeaQuantityGrams = intent.value) }
+            is TimerIntent.EditWaterTypeChanged -> _state.update { it.copy(editWaterType = intent.waterType) }
+            is TimerIntent.ConfirmEditSession -> confirmEditSession()
+            is TimerIntent.CancelEditSession -> _state.update { it.copy(showEditSheet = false) }
         }
     }
 
@@ -418,13 +428,38 @@ class TimerViewModel(
     private fun toggleTemperatureUnit() {
         viewModelScope.launch {
             val currentUnit = _state.value.userPreferences.temperatureUnit
-            val newUnit = when (currentUnit) {
-                dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS -> dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT
-                dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT -> dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS
+            val newUnit = currentUnit.toggle()
+
+            // Reconvert the edit field value if the edit sheet is open
+            if (_state.value.showEditSheet) {
+                val currentDisplayValue = _state.value.editTemperatureCelsius.toIntOrNull()
+                if (currentDisplayValue != null) {
+                    val celsius = currentUnit.toCelsius(currentDisplayValue)
+                    val newDisplayValue = newUnit.fromCelsius(celsius)
+                    _state.update { it.copy(editTemperatureCelsius = newDisplayValue.toString()) }
+                }
             }
 
-            // Just update the preference - nextSteepTemperature is stored in Celsius so no conversion needed
             preferencesRepository.updateTemperatureUnit(newUnit)
+        }
+    }
+
+    private fun toggleVolumeUnit() {
+        viewModelScope.launch {
+            val currentUnit = _state.value.userPreferences.volumeUnit
+            val newUnit = currentUnit.toggle()
+
+            // Reconvert the edit field value if the edit sheet is open
+            if (_state.value.showEditSheet) {
+                val currentDisplayValue = _state.value.editWaterQuantityMl.toIntOrNull()
+                if (currentDisplayValue != null) {
+                    val ml = currentUnit.toMilliliters(currentDisplayValue)
+                    val newDisplayValue = newUnit.fromMilliliters(ml)
+                    _state.update { it.copy(editWaterQuantityMl = newDisplayValue.toString()) }
+                }
+            }
+
+            preferencesRepository.updateVolumeUnit(newUnit)
         }
     }
 
@@ -592,6 +627,60 @@ class TimerViewModel(
                     )
                 }
             }
+        }
+    }
+
+    private fun openEditSheet() {
+        val session = _state.value.session ?: return
+        val tempUnit = _state.value.userPreferences.temperatureUnit
+        val volUnit = _state.value.userPreferences.volumeUnit
+        _state.update {
+            it.copy(
+                showEditSheet = true,
+                editTemperatureCelsius = tempUnit.fromCelsius(session.temperatureCelsius)
+                    .toString(),
+                editWaterQuantityMl = volUnit.fromMilliliters(session.waterQuantityMl).toString(),
+                editTeaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
+                editWaterType = session.waterType,
+            )
+        }
+    }
+
+    private fun confirmEditSession() {
+        val session = _state.value.session ?: return
+        val currentState = _state.value
+        val tempUnit = currentState.userPreferences.temperatureUnit
+        val volUnit = currentState.userPreferences.volumeUnit
+
+        val temperatureCelsius = currentState.editTemperatureCelsius.toIntOrNull()?.let {
+            tempUnit.toCelsius(it)
+        } ?: session.temperatureCelsius
+
+        val waterQuantityMl = currentState.editWaterQuantityMl.toIntOrNull()?.let {
+            volUnit.toMilliliters(it)
+        } ?: session.waterQuantityMl
+
+        val teaQuantityGrams = currentState.editTeaQuantityGrams.toFloatOrNull()
+
+        val waterType = currentState.editWaterType ?: session.waterType
+
+        val updatedSession = session.copy(
+            temperatureCelsius = temperatureCelsius,
+            waterQuantityMl = waterQuantityMl,
+            teaQuantityGrams = teaQuantityGrams,
+            waterType = waterType,
+            updatedAt = Clock.System.now(),
+        )
+
+        _state.update {
+            it.copy(
+                showEditSheet = false,
+                session = updatedSession,
+            )
+        }
+
+        viewModelScope.launch {
+            teaSessionRepository.upsert(updatedSession)
         }
     }
 

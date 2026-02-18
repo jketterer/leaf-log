@@ -16,6 +16,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,6 +33,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -38,7 +43,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Edit
+import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.RotateCw
+import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -48,6 +56,7 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
@@ -109,6 +118,8 @@ private fun TimerContent(
     state: TimerScreenState,
     onIntent: (TimerIntent) -> Unit,
 ) {
+    var showOverflowMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -131,11 +142,35 @@ private fun TimerContent(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { onIntent(TimerIntent.EditSession) }) {
+                        Icon(FeatherIcons.Edit, contentDescription = "Edit parameters")
+                    }
                     if (state.timerState.status != TimerStatus.COMPLETE) {
-                        IconButton(onClick = { /* Show menu */ }) {
-                            Text(
-                                text = "⋮",
-                                style = MaterialTheme.typography.titleLarge,
+                        IconButton(onClick = { showOverflowMenu = true }) {
+                            Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
+                        }
+                        DropdownMenu(
+                            expanded = showOverflowMenu,
+                            onDismissRequest = { showOverflowMenu = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Cancel Session",
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    onIntent(TimerIntent.DiscardSession)
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        FeatherIcons.Trash2,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                },
                             )
                         }
                     }
@@ -280,6 +315,26 @@ private fun TimerContent(
                 onDismiss = { onIntent(TimerIntent.SkipSaveConfiguration) }
             )
         }
+    }
+
+    // Edit session parameters sheet
+    if (state.showEditSheet && state.editWaterType != null) {
+        EditSessionParametersSheet(
+            temperatureValue = state.editTemperatureCelsius,
+            waterQuantityValue = state.editWaterQuantityMl,
+            teaQuantityValue = state.editTeaQuantityGrams,
+            waterType = state.editWaterType,
+            temperatureUnit = state.userPreferences.temperatureUnit,
+            volumeUnit = state.userPreferences.volumeUnit,
+            onTemperatureChanged = { onIntent(TimerIntent.EditTemperatureChanged(it)) },
+            onWaterQuantityChanged = { onIntent(TimerIntent.EditWaterQuantityChanged(it)) },
+            onTeaQuantityChanged = { onIntent(TimerIntent.EditTeaQuantityChanged(it)) },
+            onWaterTypeSelected = { onIntent(TimerIntent.EditWaterTypeChanged(it)) },
+            onToggleTemperatureUnit = { onIntent(TimerIntent.ToggleTemperatureUnit) },
+            onToggleVolumeUnit = { onIntent(TimerIntent.ToggleVolumeUnit) },
+            onSave = { onIntent(TimerIntent.ConfirmEditSession) },
+            onDismiss = { onIntent(TimerIntent.CancelEditSession) },
+        )
     }
 }
 

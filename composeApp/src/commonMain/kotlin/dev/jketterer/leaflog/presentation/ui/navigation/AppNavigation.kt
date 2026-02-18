@@ -260,7 +260,9 @@ fun AppNavigation() {
                         vesselId = route.vesselId,
                         onNavigateBack = { backStack.removeLast() },
                         onNavigateToTimer = { sessionId ->
+                            backStack.clear()
                             backStack.add(NavRoute.TimerRoute(sessionId))
+                            backStack.add(0, NavRoute.HomeRoute)
                         },
                         viewModel = koinViewModel<LogTeaViewModel>()
                     )

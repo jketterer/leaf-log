@@ -14,8 +14,13 @@ class AdjustTimeUseCase {
         currentState: TimerState,
         adjustment: Duration,
     ): Result<TimerState> {
-        if (currentState.status != TimerStatus.RUNNING) {
-            return Result.failure(IllegalStateException("Can only adjust running timer"))
+        if (currentState.status == TimerStatus.NOT_STARTED) {
+            val adjustedDuration = currentState.totalDuration + adjustment
+            val adjustedState = currentState.copy(
+                totalDuration = adjustedDuration,
+                remainingDuration = adjustedDuration,
+            )
+            return Result.success(adjustedState)
         }
 
         if (currentState.startedAt == null) {

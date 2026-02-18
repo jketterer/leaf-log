@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +27,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 
 /**
@@ -52,16 +52,30 @@ fun EditConfigurationDialog(
     var teaQuantity by remember { mutableStateOf(configuration.teaQuantityGrams?.toString() ?: "") }
     var temperatureUnit by remember { mutableStateOf(userPreferences.temperatureUnit) }
     var volumeUnit by remember { mutableStateOf(userPreferences.volumeUnit) }
-    var waterQuantity by remember {
+
+    // Track the source-of-truth value and the unit it was entered in.
+    // When toggling units, we always convert from this original value to avoid
+    // chained rounding errors (e.g. 175°F → 79°C → 174°F).
+    var temperatureSourceValue by remember {
         mutableStateOf(
-            volumeUnit.fromMilliliters(configuration.waterQuantityMl).toString()
+            temperatureUnit.fromCelsius(configuration.temperatureCelsius).toDouble()
         )
     }
+    var temperatureSourceUnit by remember { mutableStateOf(temperatureUnit) }
     var temperature by remember {
+        mutableStateOf(temperatureSourceValue.roundToInt().toString())
+    }
+
+    var waterQuantitySourceValue by remember {
         mutableStateOf(
-            temperatureUnit.fromCelsius(configuration.temperatureCelsius).toString()
+            volumeUnit.fromMilliliters(configuration.waterQuantityMl).toDouble()
         )
     }
+    var waterQuantitySourceUnit by remember { mutableStateOf(volumeUnit) }
+    var waterQuantity by remember {
+        mutableStateOf(waterQuantitySourceValue.roundToInt().toString())
+    }
+
     var brewingTime by remember { mutableStateOf(configuration.brewingTime) }
     var waterType by remember { mutableStateOf(configuration.waterType) }
     var isActive by remember { mutableStateOf(configuration.isActive) }
@@ -97,25 +111,30 @@ fun EditConfigurationDialog(
 
                 VolumeInputField(
                     value = waterQuantity,
-                    onValueChange = { waterQuantity = it },
+                    onValueChange = { newValue ->
+                        waterQuantity = newValue
+                        // User typed a new value — this becomes the new source of truth
+                        newValue.toDoubleOrNull()?.let {
+                            waterQuantitySourceValue = it
+                            waterQuantitySourceUnit = volumeUnit
+                        }
+                    },
                     currentUnit = volumeUnit,
                     onToggleUnit = {
-                        val currentValue = waterQuantity.toDoubleOrNull()
                         val newUnit = when (volumeUnit) {
                             VolumeUnit.MILLILITERS -> VolumeUnit.FLUID_OUNCES
                             VolumeUnit.FLUID_OUNCES -> VolumeUnit.MILLILITERS
                         }
-                        if (currentValue != null) {
-                            // Direct conversion via floating point, rounding only once
-                            val converted = when {
-                                volumeUnit == VolumeUnit.MILLILITERS && newUnit == VolumeUnit.FLUID_OUNCES ->
-                                    (currentValue / 29.5735).roundToInt()
-                                volumeUnit == VolumeUnit.FLUID_OUNCES && newUnit == VolumeUnit.MILLILITERS ->
-                                    (currentValue * 29.5735).roundToInt()
-                                else -> currentValue.roundToInt()
-                            }
-                            waterQuantity = converted.toString()
+                        // Convert from original source value to new unit via floating point
+                        val sourceMl = when (waterQuantitySourceUnit) {
+                            VolumeUnit.MILLILITERS -> waterQuantitySourceValue
+                            VolumeUnit.FLUID_OUNCES -> waterQuantitySourceValue * 29.5735
                         }
+                        val converted = when (newUnit) {
+                            VolumeUnit.MILLILITERS -> sourceMl
+                            VolumeUnit.FLUID_OUNCES -> sourceMl / 29.5735
+                        }
+                        waterQuantity = converted.roundToInt().toString()
                         volumeUnit = newUnit
                     },
                     label = { Text("Water Quantity") },
@@ -124,25 +143,30 @@ fun EditConfigurationDialog(
 
                 TemperatureInputField(
                     value = temperature,
-                    onValueChange = { temperature = it },
+                    onValueChange = { newValue ->
+                        temperature = newValue
+                        // User typed a new value — this becomes the new source of truth
+                        newValue.toDoubleOrNull()?.let {
+                            temperatureSourceValue = it
+                            temperatureSourceUnit = temperatureUnit
+                        }
+                    },
                     currentUnit = temperatureUnit,
                     onToggleUnit = {
-                        val currentValue = temperature.toDoubleOrNull()
                         val newUnit = when (temperatureUnit) {
                             TemperatureUnit.CELSIUS -> TemperatureUnit.FAHRENHEIT
                             TemperatureUnit.FAHRENHEIT -> TemperatureUnit.CELSIUS
                         }
-                        if (currentValue != null) {
-                            // Direct conversion via floating point, rounding only once
-                            val converted = when {
-                                temperatureUnit == TemperatureUnit.CELSIUS && newUnit == TemperatureUnit.FAHRENHEIT ->
-                                    (currentValue * 9.0 / 5.0 + 32).roundToInt()
-                                temperatureUnit == TemperatureUnit.FAHRENHEIT && newUnit == TemperatureUnit.CELSIUS ->
-                                    ((currentValue - 32) * 5.0 / 9.0).roundToInt()
-                                else -> currentValue.roundToInt()
-                            }
-                            temperature = converted.toString()
+                        // Convert from original source value to new unit via floating point
+                        val sourceCelsius = when (temperatureSourceUnit) {
+                            TemperatureUnit.CELSIUS -> temperatureSourceValue
+                            TemperatureUnit.FAHRENHEIT -> (temperatureSourceValue - 32) * 5.0 / 9.0
                         }
+                        val converted = when (newUnit) {
+                            TemperatureUnit.CELSIUS -> sourceCelsius
+                            TemperatureUnit.FAHRENHEIT -> sourceCelsius * 9.0 / 5.0 + 32
+                        }
+                        temperature = converted.roundToInt().toString()
                         temperatureUnit = newUnit
                     },
                     label = { Text("Temperature") },

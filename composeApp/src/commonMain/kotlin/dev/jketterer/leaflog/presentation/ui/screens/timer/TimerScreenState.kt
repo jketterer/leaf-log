@@ -64,10 +64,4 @@ data class TimerScreenState(
      */
     val showCompletionScreen: Boolean
         get() = timerState.isComplete
-
-    /**
-     * Whether controls are enabled.
-     */
-    val controlsEnabled: Boolean
-        get() = !isLoading && timerState.status != TimerStatus.NOT_STARTED
 }

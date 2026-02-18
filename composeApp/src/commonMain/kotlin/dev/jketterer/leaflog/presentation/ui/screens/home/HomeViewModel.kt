@@ -14,6 +14,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
@@ -36,6 +37,7 @@ class HomeViewModel(
     private val vesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
+    private val brewAgainUseCase: BrewAgainUseCase,
     private val timerService: TimerService,
 ) : ViewModel() {
 
@@ -92,19 +94,18 @@ class HomeViewModel(
             is HomeIntent.FabExpandedChanged -> {
                 _state.update { it.copy(isFabExpanded = intent.expanded) }
             }
-            is HomeIntent.BrewAgainClicked -> _navEvents.trySend(
-                HomeNavEvent.NavigateToLogTea(
-                    intent.teaId,
-                    intent.vesselId
-                )
-            )
+
+            is HomeIntent.BrewAgainClicked -> brewAgain(intent.session)
 
             is HomeIntent.DeleteSessionClicked -> deleteSession(intent.sessionId)
-            is HomeIntent.EditSessionClicked -> _navEvents.trySend(
-                HomeNavEvent.NavigateToEditSession(
-                    intent.sessionId
+            is HomeIntent.EditSessionClicked -> {
+                _state.update { it.copy(isFabExpanded = false) }
+                _navEvents.trySend(
+                    HomeNavEvent.NavigateToEditSession(
+                        intent.sessionId
+                    )
                 )
-            )
+            }
 
             is HomeIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
@@ -123,7 +124,7 @@ class HomeViewModel(
         val inProgress = _state.value.mostRecentInProgress?.session ?: return
         when (inProgress.timerStatus) {
             TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(inProgress.id))
-            else -> _navEvents.trySend(HomeNavEvent.ResumeTimer(inProgress.id))
+            else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(inProgress.id))
         }
     }
 
@@ -131,7 +132,7 @@ class HomeViewModel(
         viewModelScope.launch {
             val session = teaSessionRepository.getById(sessionId)
             if (session?.status == SessionStatus.IN_PROGRESS) {
-                _navEvents.trySend(HomeNavEvent.ResumeTimer(sessionId))
+                _navEvents.trySend(HomeNavEvent.NavigateToTimer(sessionId))
             } else {
                 _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))
             }
@@ -282,6 +283,17 @@ class HomeViewModel(
         }
     }
 
+    private fun brewAgain(session: TeaSession) = viewModelScope.launch {
+        brewAgainUseCase(session)
+            .onSuccess {
+                _state.update { state -> state.copy(isFabExpanded = false) }
+                _navEvents.send(HomeNavEvent.NavigateToTimer(it.id))
+            }
+            .onFailure { e ->
+                _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
+            }
+    }
+
     private fun deleteSession(sessionId: String?) = viewModelScope.launch {
         sessionId?.let { teaSessionRepository.delete(it) }
     }
@@ -303,12 +315,16 @@ sealed interface HomeNavEvent {
     data class NavigateToHistory(val showInProgressOnly: Boolean = false) : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
     data class NavigateToEditSession(val sessionId: String) : HomeNavEvent
-    data class NavigateToLogTea(val teaId: String? = null, val vesselId: String? = null) :
+    data class NavigateToLogTea(
+        val teaId: String? = null,
+        val vesselId: String? = null,
+        val configurationId: String? = null,
+    ) :
         HomeNavEvent
 
     data object NavigateToSettings : HomeNavEvent
-    data class ResumeTimer(val sessionId: String) : HomeNavEvent
     data class CompleteSession(val sessionId: String) : HomeNavEvent
+    data class NavigateToTimer(val sessionId: String) : HomeNavEvent
     data class NavigateToQuickTimer(val durationSeconds: Int) : HomeNavEvent
 }
 

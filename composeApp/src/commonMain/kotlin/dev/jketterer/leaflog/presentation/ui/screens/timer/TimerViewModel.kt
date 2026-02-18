@@ -220,11 +220,12 @@ class TimerViewModel(
 
     private fun startTimer() {
         val session = _state.value.session ?: return
+        val brewingTime = _state.value.timerState.totalDuration
 
         viewModelScope.launch {
             startTimerUseCase(
                 session = session,
-                duration = session.brewingTime,
+                duration = brewingTime,
             )
                 .onSuccess { timerState ->
                     val updatedState = timerState.copy(

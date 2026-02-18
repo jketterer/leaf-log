@@ -39,10 +39,10 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
-import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
 import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
+import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -92,7 +92,7 @@ fun HomeScreen(
                     onNavigateToSettings()
                 }
 
-                is HomeNavEvent.ResumeTimer -> {
+                is HomeNavEvent.NavigateToTimer -> {
                     onNavigateToTimer(event.sessionId)
                 }
 
@@ -247,8 +247,7 @@ private fun HomeContent(
                                 onBrewAgainClick = {
                                     onIntent(
                                         HomeIntent.BrewAgainClicked(
-                                            sessionData.session.teaId,
-                                            sessionData.session.vesselId,
+                                            session = sessionData.session,
                                         )
                                     )
                                 },

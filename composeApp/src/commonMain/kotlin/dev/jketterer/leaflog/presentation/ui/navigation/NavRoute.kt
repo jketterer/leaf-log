@@ -9,7 +9,11 @@ sealed interface NavRoute : NavKey {
     data object HomeRoute : NavRoute
 
     @Serializable
-    data class LogTeaRoute(val teaId: String? = null, val vesselId: String? = null) : NavRoute
+    data class LogTeaRoute(
+        val teaId: String? = null,
+        val vesselId: String? = null,
+        val configurationId: String? = null,
+    ) : NavRoute
 
     @Serializable
     data object CollectionRoute : NavRoute

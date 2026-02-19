@@ -12,13 +12,15 @@ enum class VolumeUnit {
         FLUID_OUNCES -> MILLILITERS
     }
 
-    fun toMilliliters(value: Int): Int = when (this) {
-        MILLILITERS -> value
-        FLUID_OUNCES -> (value * 29.5735).roundToInt()
+    /** Converts a display-unit value to milliliters without rounding (preserves precision). */
+    fun toMilliliters(value: Int): Double = when (this) {
+        MILLILITERS -> value.toDouble()
+        FLUID_OUNCES -> value * 29.5735
     }
 
-    fun fromMilliliters(ml: Int): Int = when (this) {
-        MILLILITERS -> ml
+    /** Converts a milliliter value to the display unit, rounded to Int for display. */
+    fun fromMilliliters(ml: Double): Int = when (this) {
+        MILLILITERS -> ml.roundToInt()
         FLUID_OUNCES -> (ml / 29.5735).roundToInt()
     }
 

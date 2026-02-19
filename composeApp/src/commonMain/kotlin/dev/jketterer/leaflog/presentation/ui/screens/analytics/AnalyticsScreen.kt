@@ -348,7 +348,7 @@ private fun AnalyticsDataContentPreview() {
                 analytics = AnalyticsData(
                     totalSessions = 42,
                     totalBrewingTime = 2.hours + 30.minutes,
-                    totalWaterMl = 5200,
+                    totalWaterMl = 5200.0,
                     uniqueTeasCount = 8,
                     averageRating = 4.2f,
                     ratedSessionsCount = 35,

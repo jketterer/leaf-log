@@ -11,7 +11,7 @@ object VolumeFormatter {
      * @param unit User's preferred volume unit
      * @return Formatted string with unit symbol (e.g., "200mL" or "6fl oz")
      */
-    fun format(milliliters: Int, unit: VolumeUnit): String {
+    fun format(milliliters: Double, unit: VolumeUnit): String {
         val value = unit.fromMilliliters(milliliters)
         return "$value ${unit.symbol}"
     }

@@ -26,7 +26,7 @@ data class EditVesselState(
                 when (userPreferences.volumeUnit) {
                     VolumeUnit.MILLILITERS -> existingVessel.capacityMl
                     else -> UnitConverter.millilitersToDisplayVolume(
-                        existingVessel.capacityMl,
+                        existingVessel.capacityMl.toDouble(),
                         userPreferences.volumeUnit,
                     )
                 }.toString()

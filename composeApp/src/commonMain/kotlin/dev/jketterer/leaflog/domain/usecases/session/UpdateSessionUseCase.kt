@@ -17,13 +17,13 @@ class UpdateSessionUseCase(
         location: String? = null,
         rating: Float? = null,
         brewingTime: Duration? = null,
-        temperatureCelsius: Int? = null,
-        waterQuantityMl: Int? = null,
+        temperatureCelsius: Double? = null,
+        waterQuantityMl: Double? = null,
         notes: String? = null,
         photos: List<String>? = null,
     ): Result<TeaSession> {
         val newTemp = temperatureCelsius ?: existingSession.temperatureCelsius
-        if (newTemp !in 0..100) {
+        if (newTemp !in 0.0..100.0) {
             return validationFailure("Temperature must be between 0°C and 100°C")
         }
 

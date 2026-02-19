@@ -6,7 +6,7 @@ import kotlin.time.Duration
 data class AnalyticsData(
     val totalSessions: Int,
     val totalBrewingTime: Duration,
-    val totalWaterMl: Int,
+    val totalWaterMl: Double,
     val uniqueTeasCount: Int,
     val averageRating: Float?,
     val ratedSessionsCount: Int,

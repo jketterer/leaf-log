@@ -40,8 +40,8 @@ fun EditConfigurationDialog(
     onSave: (
         label: String,
         teaQuantityGrams: Float?,
-        waterQuantityMl: Int,
-        temperatureCelsius: Int,
+        waterQuantityMl: Double,
+        temperatureCelsius: Double,
         brewingTime: Duration,
         waterType: WaterType,
         isActive: Boolean

@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.settings.teatype
 
 import androidx.lifecycle.ViewModel
+import kotlin.math.roundToInt
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UnitConverter
@@ -68,7 +69,7 @@ class EditTeaTypeViewModel(
                 val prefs = preferencesRepository.getPreferences()
                 if (teaType != null) {
                     val displayTemp = teaType.defaultTemperatureCelsius?.let {
-                        UnitConverter.celsiusToDisplayTemperature(it, prefs.temperatureUnit)
+                        UnitConverter.celsiusToDisplayTemperature(it.toDouble(), prefs.temperatureUnit)
                     }
                     val teaCount = teaRepository.getByTypeFlow(teaTypeId).first().size
                     _state.update {
@@ -151,7 +152,7 @@ class EditTeaTypeViewModel(
             try {
                 val tempUnit = currentState.userPreferences.temperatureUnit
                 val temperatureCelsius = currentState.temperature.toIntOrNull()?.let {
-                    UnitConverter.inputTemperatureToCelsius(it, tempUnit)
+                    UnitConverter.inputTemperatureToCelsius(it, tempUnit).roundToInt()
                 }
 
                 val now = Instant.fromEpochMilliseconds(

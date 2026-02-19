@@ -8,8 +8,8 @@ import kotlin.time.Duration
  */
 data class BrewingParametersPrefill(
     val teaQuantityGrams: Float?,
-    val waterQuantityMl: Int?,
-    val temperatureCelsius: Int?,
+    val waterQuantityMl: Double?,
+    val temperatureCelsius: Double?,
     val brewingTime: Duration?,
     val waterType: WaterType?,
     val source: PrefillSource,

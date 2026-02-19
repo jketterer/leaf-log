@@ -151,10 +151,12 @@ private fun EditSessionContent(
 
                 // Temperature
                 item(key = "temperature") {
-                    // Convert from storage (Celsius) to display unit for showing
-                    val displayValue = state.temperatureCelsius.toIntOrNull()?.let { celsius ->
-                        state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
-                    } ?: state.temperatureCelsius
+                    // Use display value if set (preserves user input), otherwise convert from storage
+                    val displayValue = state.temperatureDisplay.ifEmpty {
+                        state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
+                            state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
+                        } ?: state.temperatureCelsius
+                    }
 
                     TemperatureInputField(
                         value = displayValue,
@@ -212,10 +214,12 @@ private fun EditSessionContent(
 
                 // Water Quantity
                 item(key = "water_quantity") {
-                    // Convert from storage (mL) to display unit for showing
-                    val displayValue = state.waterQuantityMl.toIntOrNull()?.let { ml ->
-                        state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
-                    } ?: state.waterQuantityMl
+                    // Use display value if set (preserves user input), otherwise convert from storage
+                    val displayValue = state.waterQuantityDisplay.ifEmpty {
+                        state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
+                            state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                        } ?: state.waterQuantityMl
+                    }
 
                     VolumeInputField(
                         value = displayValue,

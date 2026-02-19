@@ -284,7 +284,7 @@ private fun TeaDetailContent(
                                         DetailRow(
                                             label = "Temperature",
                                             value = TemperatureFormatter.format(
-                                                state.tea.defaultTemperatureCelsius,
+                                                state.tea.defaultTemperatureCelsius.toDouble(),
                                                 state.userPreferences.temperatureUnit
                                             ),
                                         )
@@ -571,8 +571,8 @@ private fun TeaDetailScreenPreview() {
                         waterType = WaterType.FILTERED,
                         timestamp = Clock.System.now(),
                         brewingTime = 2.minutes + 30.seconds,
-                        temperatureCelsius = 80,
-                        waterQuantityMl = 200,
+                        temperatureCelsius = 80.0,
+                        waterQuantityMl = 200.0,
                         rating = 5f,
                         status = SessionStatus.COMPLETED,
                         syncStatus = SyncStatus.LOCAL_ONLY,

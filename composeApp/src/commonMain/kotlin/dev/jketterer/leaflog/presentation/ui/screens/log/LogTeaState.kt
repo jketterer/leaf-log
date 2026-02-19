@@ -18,7 +18,9 @@ data class LogTeaState(
     // Brewing parameters
     val teaQuantityGrams: String = "",
     val waterQuantityMl: String = "",
+    val waterQuantityDisplay: String = "", // User's input in display unit (preserves exact value)
     val temperatureCelsius: String = "",
+    val temperatureDisplay: String = "", // User's input in display unit (preserves exact value)
     val brewingTime: Duration? = null,
     val selectedVessel: BrewingVessel? = null,
     val selectedWaterType: WaterType = WaterType.FILTERED,

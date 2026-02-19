@@ -49,10 +49,10 @@ data class BrewingConfigurationEntity(
     val teaQuantityGrams: Float?,
 
     @ColumnInfo(name = "water_quantity_ml")
-    val waterQuantityMl: Int,
+    val waterQuantityMl: Double,
 
     @ColumnInfo(name = "temperature_celsius")
-    val temperatureCelsius: Int,
+    val temperatureCelsius: Double,
 
     @ColumnInfo(name = "brewing_time")
     val brewingTime: Duration, // TypeConverter: Duration ↔ Long

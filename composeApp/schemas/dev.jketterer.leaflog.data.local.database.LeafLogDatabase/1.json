@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "08aca393c614a203e15f1b5fcd7f8300",
+    "identityHash": "ea42468a529962bed34db7a02b222bbd",
     "entities": [
       {
         "tableName": "tea",
@@ -206,7 +206,7 @@
       },
       {
         "tableName": "tea_session",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `teaId` TEXT NOT NULL, `parentSessionId` TEXT, `steepNumber` INTEGER NOT NULL, `status` TEXT NOT NULL, `teaQuantityGrams` REAL, `vesselId` TEXT NOT NULL, `waterType` TEXT NOT NULL, `location` TEXT, `rating` REAL, `averageRating` REAL, `usedConfigurationId` TEXT, `timestamp` INTEGER NOT NULL, `brewingTime` INTEGER NOT NULL, `temperatureCelsius` INTEGER NOT NULL, `waterQuantityMl` INTEGER NOT NULL, `notes` TEXT, `photos` TEXT NOT NULL, `userId` TEXT, `syncStatus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `timerStatus` TEXT, `timerStartedAt` INTEGER, `timerPausedAt` INTEGER, `timerRemainingMs` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teaId`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vesselId`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`parentSessionId`) REFERENCES `tea_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `teaId` TEXT NOT NULL, `parentSessionId` TEXT, `steepNumber` INTEGER NOT NULL, `status` TEXT NOT NULL, `teaQuantityGrams` REAL, `vesselId` TEXT NOT NULL, `waterType` TEXT NOT NULL, `location` TEXT, `rating` REAL, `averageRating` REAL, `usedConfigurationId` TEXT, `timestamp` INTEGER NOT NULL, `brewingTime` INTEGER NOT NULL, `temperatureCelsius` REAL NOT NULL, `waterQuantityMl` REAL NOT NULL, `notes` TEXT, `photos` TEXT NOT NULL, `userId` TEXT, `syncStatus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `timerStatus` TEXT, `timerStartedAt` INTEGER, `timerPausedAt` INTEGER, `timerRemainingMs` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`teaId`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vesselId`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`parentSessionId`) REFERENCES `tea_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -289,13 +289,13 @@
           {
             "fieldPath": "temperatureCelsius",
             "columnName": "temperatureCelsius",
-            "affinity": "INTEGER",
+            "affinity": "REAL",
             "notNull": true
           },
           {
             "fieldPath": "waterQuantityMl",
             "columnName": "waterQuantityMl",
-            "affinity": "INTEGER",
+            "affinity": "REAL",
             "notNull": true
           },
           {
@@ -696,7 +696,7 @@
       },
       {
         "tableName": "brewing_configurations",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `tea_id` TEXT NOT NULL, `vessel_id` TEXT NOT NULL, `tea_quantity_grams` REAL, `water_quantity_ml` INTEGER NOT NULL, `temperature_celsius` INTEGER NOT NULL, `brewing_time` INTEGER NOT NULL, `water_type` TEXT NOT NULL, `source_session_id` TEXT NOT NULL, `rating` REAL NOT NULL, `times_used` INTEGER NOT NULL, `last_used_at` INTEGER, `label` TEXT, `is_active` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tea_id`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vessel_id`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `tea_id` TEXT NOT NULL, `vessel_id` TEXT NOT NULL, `tea_quantity_grams` REAL, `water_quantity_ml` REAL NOT NULL, `temperature_celsius` REAL NOT NULL, `brewing_time` INTEGER NOT NULL, `water_type` TEXT NOT NULL, `source_session_id` TEXT NOT NULL, `rating` REAL NOT NULL, `times_used` INTEGER NOT NULL, `last_used_at` INTEGER, `label` TEXT, `is_active` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tea_id`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vessel_id`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -724,13 +724,13 @@
           {
             "fieldPath": "waterQuantityMl",
             "columnName": "water_quantity_ml",
-            "affinity": "INTEGER",
+            "affinity": "REAL",
             "notNull": true
           },
           {
             "fieldPath": "temperatureCelsius",
             "columnName": "temperature_celsius",
-            "affinity": "INTEGER",
+            "affinity": "REAL",
             "notNull": true
           },
           {
@@ -883,7 +883,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '08aca393c614a203e15f1b5fcd7f8300')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ea42468a529962bed34db7a02b222bbd')"
     ]
   }
 }

@@ -16,8 +16,8 @@ class AddSteepUseCase(
     suspend operator fun invoke(
         parentSession: TeaSession,
         brewingTime: Duration,
-        temperatureCelsius: Int,
-        waterQuantityMl: Int,
+        temperatureCelsius: Double,
+        waterQuantityMl: Double,
         notes: String? = null,
         photos: List<String> = emptyList()
     ): Result<TeaSession> {
@@ -25,7 +25,7 @@ class AddSteepUseCase(
             return validationFailure("Cannot add steep to a child session")
         }
 
-        if (temperatureCelsius !in 0..100) {
+        if (temperatureCelsius !in 0.0..100.0) {
             return validationFailure("Temperature must be between 0°C and 100°C")
         }
 

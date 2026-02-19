@@ -199,7 +199,9 @@ class LogTeaViewModel(
                     state.copy(
                         teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
                         waterQuantityMl = prefill.waterQuantityMl?.toString() ?: "",
+                        waterQuantityDisplay = "", // Clear so screen derives from storage via conversion
                         temperatureCelsius = prefill.temperatureCelsius?.toString() ?: "",
+                        temperatureDisplay = "", // Clear so screen derives from storage via conversion
                         brewingTime = prefill.brewingTime,
                         selectedWaterType = prefill.waterType ?: state.selectedWaterType,
                         prefillSource = prefill.source,
@@ -239,7 +241,9 @@ class LogTeaViewModel(
                 it.copy(
                     teaQuantityGrams = "",
                     waterQuantityMl = "",
+                    waterQuantityDisplay = "",
                     temperatureCelsius = "",
+                    temperatureDisplay = "",
                     brewingTime = null,
                     usedConfigurationId = null,
                     prefillSource = PrefillSource.None,
@@ -257,7 +261,9 @@ class LogTeaViewModel(
                         currentState.copy(
                             teaQuantityGrams = config.teaQuantityGrams?.toString() ?: "",
                             waterQuantityMl = config.waterQuantityMl.toString(),
+                            waterQuantityDisplay = "", // Clear so screen derives from storage via conversion
                             temperatureCelsius = config.temperatureCelsius.toString(),
+                            temperatureDisplay = "", // Clear so screen derives from storage via conversion
                             brewingTime = config.brewingTime,
                             selectedWaterType = config.waterType,
                             usedConfigurationId = configurationId,
@@ -322,6 +328,7 @@ class LogTeaViewModel(
         _state.update {
             it.copy(
                 waterQuantityMl = storageValue,
+                waterQuantityDisplay = quantity,
                 waterQuantityError = error,
                 hasUnsavedChanges = true,
                 hasEditedBrewingParameters = true,
@@ -361,6 +368,7 @@ class LogTeaViewModel(
         _state.update {
             it.copy(
                 temperatureCelsius = storageValue,
+                temperatureDisplay = temperature,
                 temperatureError = error,
                 hasUnsavedChanges = true,
                 hasEditedBrewingParameters = true,
@@ -428,6 +436,7 @@ class LogTeaViewModel(
 
             currentState.copy(
                 waterQuantityMl = newWaterQuantity,
+                waterQuantityDisplay = "", // Clear so screen derives from storage via conversion
                 waterQuantityError = if (shouldAutoPopulate) null else currentState.waterQuantityError,
             )
         }
@@ -462,12 +471,14 @@ class LogTeaViewModel(
     private fun toggleTemperatureUnit() {
         viewModelScope.launch {
             preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
+            _state.update { it.copy(temperatureDisplay = "") } // Clear so screen reconverts from storage
         }
     }
 
     private fun toggleVolumeUnit() {
         viewModelScope.launch {
             preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
+            _state.update { it.copy(waterQuantityDisplay = "") } // Clear so screen reconverts from storage
         }
     }
 
@@ -497,8 +508,8 @@ class LogTeaViewModel(
                 it.copy(
                     teaError = if (it.selectedTea == null) "Tea is required" else null,
                     vesselError = if (it.selectedVessel == null) "Brewing vessel is required" else null,
-                    waterQuantityError = if (it.waterQuantityMl.toIntOrNull() == null) "Water quantity is required" else it.waterQuantityError,
-                    temperatureError = if (it.temperatureCelsius.toIntOrNull() == null) "Temperature is required" else it.temperatureError,
+                    waterQuantityError = if (it.waterQuantityMl.toDoubleOrNull() == null) "Water quantity is required" else it.waterQuantityError,
+                    temperatureError = if (it.temperatureCelsius.toDoubleOrNull() == null) "Temperature is required" else it.temperatureError,
                     brewingTimeError = if (it.brewingTime == null) "Brewing time is required" else it.brewingTimeError
                 )
             }
@@ -509,8 +520,8 @@ class LogTeaViewModel(
             _state.update { it.copy(isSaving = true) }
 
             // Values are already in storage units (Celsius/mL), use directly
-            val temperatureCelsius = currentState.temperatureCelsius.toInt()
-            val waterQuantityMl = currentState.waterQuantityMl.toInt()
+            val temperatureCelsius = currentState.temperatureCelsius.toDouble()
+            val waterQuantityMl = currentState.waterQuantityMl.toDouble()
 
             // Use the use case - it has business logic (validation, ID generation, timestamps)
             createSessionUseCase(

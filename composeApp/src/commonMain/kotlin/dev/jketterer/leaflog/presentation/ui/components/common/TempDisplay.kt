@@ -10,7 +10,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 
 @Composable
 fun TempDisplay(
-    tempCelsius: Int,
+    tempCelsius: Double,
     tempUnit: TemperatureUnit,
     style: TextStyle = TextStyle.Default,
     color: Color = Color.Unspecified,

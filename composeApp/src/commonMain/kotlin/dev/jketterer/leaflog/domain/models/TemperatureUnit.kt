@@ -12,14 +12,16 @@ enum class TemperatureUnit {
         FAHRENHEIT -> CELSIUS
     }
 
-    fun toCelsius(value: Int): Int = when (this) {
-        CELSIUS -> value
-        FAHRENHEIT -> ((value - 32) * 5.0 / 9.0).roundToInt()
+    /** Converts a display-unit value to Celsius without rounding (preserves precision). */
+    fun toCelsius(value: Int): Double = when (this) {
+        CELSIUS -> value.toDouble()
+        FAHRENHEIT -> (value - 32) * 5.0 / 9.0
     }
 
-    fun fromCelsius(celsius: Int): Int = when (this) {
-        CELSIUS -> celsius
-        FAHRENHEIT -> ((celsius * 9.0 / 5.0) + 32).roundToInt()
+    /** Converts a Celsius value to the display unit, rounded to Int for display. */
+    fun fromCelsius(celsius: Double): Int = when (this) {
+        CELSIUS -> celsius.roundToInt()
+        FAHRENHEIT -> (celsius * 9.0 / 5.0 + 32).roundToInt()
     }
 
     val symbol: String

@@ -106,7 +106,7 @@ fun VesselSelector(
                                     if (vessel.capacityMl != null) {
                                         Text(
                                             text = VolumeFormatter.format(
-                                                milliliters = vessel.capacityMl,
+                                                milliliters = vessel.capacityMl.toDouble(),
                                                 unit = volumeUnit,
                                             ),
                                             style = MaterialTheme.typography.bodySmall,

@@ -24,17 +24,17 @@ import kotlin.time.Duration
 fun NextSteepParameterDialog(
     currentSession: TeaSession,
     duration: Duration?,
-    temperature: Int,
+    temperature: Double,
     temperatureUnit: TemperatureUnit,
     onDurationChange: (Duration?) -> Unit,
-    onTemperatureChange: (Int) -> Unit,
+    onTemperatureChange: (Double) -> Unit,
     onToggleUnit: () -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     // Check if all fields are valid
     val isValid =
-        duration != null && duration > Duration.ZERO && temperature > 0
+        duration != null && duration > Duration.ZERO && temperature > 0.0
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -79,13 +79,13 @@ fun NextSteepParameterDialog(
                         fontWeight = FontWeight.Bold,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Convert from storage (Celsius) to display unit for showing
+                    // Convert from storage (Celsius Double) to display unit (Int) for showing
                     val displayValue = temperatureUnit.fromCelsius(temperature).toString()
 
                     TemperatureInputField(
                         value = displayValue,
                         onValueChange = { value ->
-                            // Convert from display unit back to storage (Celsius)
+                            // Convert from display unit (Int) back to storage (Celsius Double)
                             value.toIntOrNull()?.let { displayTemp ->
                                 val celsiusTemp = temperatureUnit.toCelsius(displayTemp)
                                 onTemperatureChange(celsiusTemp)

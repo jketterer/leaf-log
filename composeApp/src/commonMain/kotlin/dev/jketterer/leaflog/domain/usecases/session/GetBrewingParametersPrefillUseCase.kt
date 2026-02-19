@@ -100,8 +100,8 @@ class GetBrewingParametersPrefillUseCase(
                 return BrewingParametersPrefill(
                     teaQuantityGrams = null, // Don't pre-fill tea quantity from different tea
                     waterQuantityMl = typeSession.waterQuantityMl,
-                    temperatureCelsius = tea.defaultTemperatureCelsius
-                        ?: teaType.defaultTemperatureCelsius,
+                    temperatureCelsius = (tea.defaultTemperatureCelsius
+                        ?: teaType.defaultTemperatureCelsius)?.toDouble(),
                     brewingTime = typeSession.brewingTime,
                     waterType = typeSession.waterType,
                     source = PrefillSource.TeaTypeFallback(
@@ -122,9 +122,9 @@ class GetBrewingParametersPrefillUseCase(
 
             return BrewingParametersPrefill(
                 teaQuantityGrams = null,
-                waterQuantityMl = tea.defaultQuantity ?: vessel.capacityMl,
-                temperatureCelsius = tea.defaultTemperatureCelsius
-                    ?: teaTypeDefaults?.first,
+                waterQuantityMl = (tea.defaultQuantity ?: vessel.capacityMl)?.toDouble(),
+                temperatureCelsius = (tea.defaultTemperatureCelsius
+                    ?: teaTypeDefaults?.first)?.toDouble(),
                 brewingTime = tea.defaultBrewingTime
                     ?: teaTypeDefaults?.second,
                 waterType = null,
@@ -136,7 +136,7 @@ class GetBrewingParametersPrefillUseCase(
         if (vessel.capacityMl != null) {
             return BrewingParametersPrefill(
                 teaQuantityGrams = null,
-                waterQuantityMl = vessel.capacityMl,
+                waterQuantityMl = vessel.capacityMl?.toDouble(),
                 temperatureCelsius = null,
                 brewingTime = null,
                 waterType = null,

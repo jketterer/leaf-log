@@ -22,8 +22,8 @@ class CreateSessionUseCase(
         waterType: WaterType,
         location: String? = null,
         brewingTime: Duration,
-        temperatureCelsius: Int,
-        waterQuantityMl: Int,
+        temperatureCelsius: Double,
+        waterQuantityMl: Double,
         notes: String? = null,
         rating: Float? = null,
         photos: List<String> = emptyList(),
@@ -38,7 +38,7 @@ class CreateSessionUseCase(
             return validationFailure("Brewing vessel must be selected")
         }
 
-        if (temperatureCelsius !in 0..100) {
+        if (temperatureCelsius !in 0.0..100.0) {
             return validationFailure("Temperature must be between 0°C and 100°C")
         }
 

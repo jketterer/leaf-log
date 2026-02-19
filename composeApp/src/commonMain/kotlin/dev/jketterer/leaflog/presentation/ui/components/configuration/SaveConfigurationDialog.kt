@@ -29,8 +29,8 @@ fun SaveConfigurationDialog(
     teaName: String,
     vesselName: String,
     teaQuantityGrams: Float?,
-    waterQuantityMl: Int,
-    temperatureCelsius: Int,
+    waterQuantityMl: Double,
+    temperatureCelsius: Double,
     brewingTimeSeconds: Int,
     rating: Float,
     suggestedLabel: String,
@@ -66,8 +66,8 @@ fun SaveConfigurationDialog(
                 ) {
                     val params = buildList {
                         teaQuantityGrams?.let { add("${it}g") }
-                        add("${waterQuantityMl}ml")
-                        add("${temperatureCelsius}°C")
+                        add("${waterQuantityMl.toInt()}ml")
+                        add("${temperatureCelsius.toInt()}°C")
                         add(formatBrewingTime(brewingTimeSeconds))
                     }
                     Text(

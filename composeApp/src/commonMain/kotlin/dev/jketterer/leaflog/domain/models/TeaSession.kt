@@ -21,8 +21,8 @@ data class TeaSession(
 
     val timestamp: Instant,
     val brewingTime: Duration,
-    val temperatureCelsius: Int,
-    val waterQuantityMl: Int,
+    val temperatureCelsius: Double,
+    val waterQuantityMl: Double,
     val notes: String? = null,
     val photos: List<String> = emptyList(),
 

@@ -156,7 +156,7 @@ fun EditVesselScreen(
                     // Capacity field
                     // Convert from storage (mL) to display unit for showing
                     val displayCapacity = state.capacity.toIntOrNull()?.let { ml ->
-                        state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                        state.userPreferences.volumeUnit.fromMilliliters(ml.toDouble()).toString()
                     } ?: state.capacity
 
                     EditCapacityField(

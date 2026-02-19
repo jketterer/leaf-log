@@ -421,7 +421,7 @@ class TimerViewModel(
         _state.update { it.copy(nextSteepDuration = duration) }
     }
 
-    private fun updateNextSteepTemperature(temperature: Int) {
+    private fun updateNextSteepTemperature(temperature: Double) {
         _state.update { it.copy(nextSteepTemperature = temperature) }
     }
 

@@ -304,9 +304,11 @@ private fun LogTeaContent(
 
             // Temperature
             item(key = "temperature") {
-                val displayValue = state.temperatureCelsius.toIntOrNull()?.let { celsius ->
-                    state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
-                } ?: state.temperatureCelsius
+                val displayValue = state.temperatureDisplay.ifEmpty {
+                    state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
+                        state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
+                    } ?: state.temperatureCelsius
+                }
 
                 val tempUnit = state.userPreferences.temperatureUnit
 
@@ -344,9 +346,11 @@ private fun LogTeaContent(
 
             // Water Quantity
             item(key = "water_quantity") {
-                val displayValue = state.waterQuantityMl.toIntOrNull()?.let { ml ->
-                    state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
-                } ?: state.waterQuantityMl
+                val displayValue = state.waterQuantityDisplay.ifEmpty {
+                    state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
+                        state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                    } ?: state.waterQuantityMl
+                }
 
                 val volUnit = state.userPreferences.volumeUnit
 

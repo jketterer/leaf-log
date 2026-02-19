@@ -21,8 +21,8 @@ sealed interface TeaDetailIntent {
     data class SaveConfigurationChanges(
         val label: String,
         val teaQuantityGrams: Float?,
-        val waterQuantityMl: Int,
-        val temperatureCelsius: Int,
+        val waterQuantityMl: Double,
+        val temperatureCelsius: Double,
         val brewingTime: Duration,
         val waterType: WaterType,
         val isActive: Boolean

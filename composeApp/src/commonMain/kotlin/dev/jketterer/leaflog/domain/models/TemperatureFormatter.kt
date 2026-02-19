@@ -11,7 +11,7 @@ object TemperatureFormatter {
      * @param unit User's preferred temperature unit
      * @return Formatted string with unit symbol (e.g., "80°C" or "176°F")
      */
-    fun format(celsius: Int, unit: TemperatureUnit): String {
+    fun format(celsius: Double, unit: TemperatureUnit): String {
         val value = unit.fromCelsius(celsius)
         return "$value${unit.symbol}"
     }

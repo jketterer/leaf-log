@@ -239,7 +239,7 @@ fun VesselDetailScreen(
                                         )
                                         Text(
                                             text = VolumeFormatter.format(
-                                                milliliters = state.vessel!!.capacityMl!!,
+                                                milliliters = state.vessel!!.capacityMl!!.toDouble(),
                                                 unit = state.volumeUnit,
                                             ),
                                             style = MaterialTheme.typography.bodyMedium,

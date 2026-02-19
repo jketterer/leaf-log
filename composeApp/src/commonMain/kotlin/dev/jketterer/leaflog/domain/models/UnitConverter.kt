@@ -12,7 +12,7 @@ object UnitConverter {
      * @param inputUnit Unit the user is using
      * @return Temperature in Celsius for storage
      */
-    fun inputTemperatureToCelsius(inputValue: Int, inputUnit: TemperatureUnit): Int {
+    fun inputTemperatureToCelsius(inputValue: Int, inputUnit: TemperatureUnit): Double {
         return inputUnit.toCelsius(inputValue)
     }
 
@@ -23,7 +23,7 @@ object UnitConverter {
      * @param displayUnit Unit to display to user
      * @return Temperature in user's preferred unit
      */
-    fun celsiusToDisplayTemperature(celsius: Int, displayUnit: TemperatureUnit): Int {
+    fun celsiusToDisplayTemperature(celsius: Double, displayUnit: TemperatureUnit): Int {
         return displayUnit.fromCelsius(celsius)
     }
 
@@ -34,7 +34,7 @@ object UnitConverter {
      * @param inputUnit Unit the user is using
      * @return Volume in milliliters for storage
      */
-    fun inputVolumeToMilliliters(inputValue: Int, inputUnit: VolumeUnit): Int {
+    fun inputVolumeToMilliliters(inputValue: Int, inputUnit: VolumeUnit): Double {
         return inputUnit.toMilliliters(inputValue)
     }
 
@@ -45,7 +45,7 @@ object UnitConverter {
      * @param displayUnit Unit to display to user
      * @return Volume in user's preferred unit
      */
-    fun millilitersToDisplayVolume(milliliters: Int, displayUnit: VolumeUnit): Int {
+    fun millilitersToDisplayVolume(milliliters: Double, displayUnit: VolumeUnit): Int {
         return displayUnit.fromMilliliters(milliliters)
     }
 }

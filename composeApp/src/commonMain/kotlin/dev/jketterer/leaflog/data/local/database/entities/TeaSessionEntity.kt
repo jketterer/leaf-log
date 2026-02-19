@@ -65,8 +65,8 @@ data class TeaSessionEntity(
 
     val timestamp: Instant,
     val brewingTime: Duration,
-    val temperatureCelsius: Int,
-    val waterQuantityMl: Int,
+    val temperatureCelsius: Double,
+    val waterQuantityMl: Double,
     val notes: String?,
     val photos: List<String>,
 

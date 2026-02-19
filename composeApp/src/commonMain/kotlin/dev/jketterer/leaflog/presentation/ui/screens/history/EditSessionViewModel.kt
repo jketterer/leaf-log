@@ -211,6 +211,7 @@ class EditSessionViewModel(
         _state.update {
             it.copy(
                 temperatureCelsius = storageValue,
+                temperatureDisplay = temperature,
                 temperatureError = error
             )
         }
@@ -248,6 +249,7 @@ class EditSessionViewModel(
         _state.update {
             it.copy(
                 waterQuantityMl = storageValue,
+                waterQuantityDisplay = quantity,
                 waterQuantityError = error
             )
         }
@@ -294,12 +296,14 @@ class EditSessionViewModel(
     private fun toggleTemperatureUnit() {
         viewModelScope.launch {
             preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
+            _state.update { it.copy(temperatureDisplay = "") } // Clear so screen reconverts from storage
         }
     }
 
     private fun toggleVolumeUnit() {
         viewModelScope.launch {
             preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
+            _state.update { it.copy(waterQuantityDisplay = "") } // Clear so screen reconverts from storage
         }
     }
 
@@ -353,7 +357,7 @@ class EditSessionViewModel(
                     existingSession = session,
                     vesselId = currentState.selectedVessel?.id,
                     waterType = currentState.selectedWaterType,
-                    waterQuantityMl = currentState.waterQuantityMl.toIntOrNull(),
+                    waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull(),
                     teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
                     location = currentState.location.takeIf { it.isNotBlank() },
                 )
@@ -362,7 +366,7 @@ class EditSessionViewModel(
                 updateSessionUseCase(
                     existingSession = session,
                     brewingTime = currentState.brewingTime,
-                    temperatureCelsius = currentState.temperatureCelsius.toIntOrNull(),
+                    temperatureCelsius = currentState.temperatureCelsius.toDoubleOrNull(),
                     rating = if (currentState.rating > 0f) currentState.rating else null,
                     notes = currentState.notes.takeIf { it.isNotBlank() },
                     photos = currentState.photos,

@@ -16,11 +16,13 @@ data class EditSessionState(
     // Form fields - Brewing Parameters (all sessions)
     val brewingTime: Duration? = null,
     val temperatureCelsius: String = "",
+    val temperatureDisplay: String = "", // User's input in display unit (preserves exact value)
 
     // Form fields - Session Details (parent only)
     val selectedVessel: BrewingVessel? = null,
     val selectedWaterType: WaterType = WaterType.FILTERED,
     val waterQuantityMl: String = "",
+    val waterQuantityDisplay: String = "", // User's input in display unit (preserves exact value)
     val teaQuantityGrams: String = "",
     val location: String = "",
     val rating: Float = 0f,
@@ -57,13 +59,13 @@ data class EditSessionState(
                 // When editing full parent session, only check parent-specific fields
                 selectedVessel?.id != session.vesselId ||
                 selectedWaterType != session.waterType ||
-                waterQuantityMl.toIntOrNull() != session.waterQuantityMl ||
+                waterQuantityMl.toDoubleOrNull() != session.waterQuantityMl ||
                 teaQuantityGrams.toFloatOrNull() != session.teaQuantityGrams ||
                 location != (session.location ?: "")
             } else {
                 // When editing steep, check steep-specific fields
                 brewingTime != session.brewingTime ||
-                temperatureCelsius.toIntOrNull() != session.temperatureCelsius ||
+                temperatureCelsius.toDoubleOrNull() != session.temperatureCelsius ||
                 rating != (session.rating ?: 0f) ||
                 notes != (session.notes ?: "") ||
                 photos != session.photos
@@ -75,8 +77,8 @@ data class EditSessionState(
             return if (isParentSession) {
                 // When editing full parent session, only validate parent fields
                 val parentFieldsValid = selectedVessel != null &&
-                    waterQuantityMl.toIntOrNull() != null &&
-                    waterQuantityMl.toInt() > 0
+                    waterQuantityMl.toDoubleOrNull() != null &&
+                    waterQuantityMl.toDouble() > 0
 
                 val noErrors = vesselError == null &&
                     waterQuantityError == null &&
@@ -87,7 +89,7 @@ data class EditSessionState(
                 // When editing steep, validate steep-specific fields
                 val hasRequiredFields = brewingTime != null &&
                     brewingTime > Duration.ZERO &&
-                    temperatureCelsius.toIntOrNull() != null
+                    temperatureCelsius.toDoubleOrNull() != null
 
                 val noErrors = brewingTimeError == null &&
                     temperatureError == null &&

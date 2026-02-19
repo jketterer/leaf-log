@@ -27,8 +27,8 @@ data class TimerScreenState(
     val showResetConfirmation: Boolean = false,
     val showNextSteepDialog: Boolean = false,
     val nextSteepDuration: Duration? = null,
-    val nextSteepTemperature: Int? = null,
-    val nextSteepWaterQuantity: Int? = null,
+    val nextSteepTemperature: Double? = null,
+    val nextSteepWaterQuantity: Double? = null,
     val showSaveConfigurationDialog: Boolean = false,
     val savedSession: TeaSession? = null, // Session that was just saved
     val showDiscardConfirmation: Boolean = false,

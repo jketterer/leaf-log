@@ -327,6 +327,11 @@ fun AppNavigation() {
                             backStack.removeLast()
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
+                        onNavigateToTimer = { sessionId ->
+                            // Replace quick timer with the full timer for the next steep
+                            backStack.removeLast()
+                            backStack.add(NavRoute.TimerRoute(sessionId))
+                        },
                     )
                 }
             }

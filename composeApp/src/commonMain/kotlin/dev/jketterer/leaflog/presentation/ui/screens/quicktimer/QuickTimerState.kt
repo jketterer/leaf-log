@@ -8,7 +8,6 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * UI State for the Quick Timer screen.
@@ -42,10 +41,16 @@ data class QuickTimerState(
     val detailsSheetStep: Int = 1, // 1 = Tea + Vessel, 2 = Params
 
     // Confirmation dialogs
+    val showNextSteepDialog: Boolean = false,
     val showStopConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
     val showCompletionDialog: Boolean = false,
     val showSaveConfigurationDialog: Boolean = false,
+
+    // Next session details
+    val nextSteepDuration: Duration? = null,
+    val nextSteepTemperature: Int? = null,
+    val nextSteepWaterQuantity: Int? = null,
 
     // Saved session (for configuration saving)
     val savedSession: TeaSession? = null,

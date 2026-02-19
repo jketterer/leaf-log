@@ -12,6 +12,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -30,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.ArrowLeft
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDetailsSheet
@@ -37,6 +40,7 @@ import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
+import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
@@ -50,6 +54,7 @@ fun QuickTimerScreen(
     durationSeconds: Int,
     onNavigateBack: () -> Unit,
     onNavigateToSession: (String) -> Unit,
+    onNavigateToTimer: (String) -> Unit,
     viewModel: QuickTimerViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -63,6 +68,7 @@ fun QuickTimerScreen(
             when (event) {
                 is QuickTimerNavEvent.NavigateBack -> onNavigateBack()
                 is QuickTimerNavEvent.NavigateToSession -> onNavigateToSession(event.sessionId)
+                is QuickTimerNavEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId)
             }
         }
     }
@@ -94,10 +100,7 @@ private fun QuickTimerContent(
                 },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(QuickTimerIntent.BackClicked) }) {
-                        Text(
-                            text = "\u2190",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                     }
                 },
             )
@@ -137,41 +140,12 @@ private fun QuickTimerContent(
         }
     }
 
-    // Stop confirmation dialog
-    if (state.showStopConfirmation) {
-        AlertDialog(
-            onDismissRequest = { onIntent(QuickTimerIntent.CancelStop) },
-            title = { Text("Stop Timer?") },
-            text = { Text("Are you sure you want to stop the timer?") },
-            confirmButton = {
-                TextButton(onClick = { onIntent(QuickTimerIntent.ConfirmStop) }) {
-                    Text("Stop")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(QuickTimerIntent.CancelStop) }) {
-                    Text("Cancel")
-                }
-            },
-        )
-    }
-
     // Reset confirmation dialog
     if (state.showResetConfirmation) {
-        AlertDialog(
-            onDismissRequest = { onIntent(QuickTimerIntent.CancelReset) },
-            title = { Text("Reset Timer?") },
-            text = { Text("This will reset the timer to ${state.totalDuration}.") },
-            confirmButton = {
-                TextButton(onClick = { onIntent(QuickTimerIntent.ConfirmReset) }) {
-                    Text("Reset")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(QuickTimerIntent.CancelReset) }) {
-                    Text("Cancel")
-                }
-            },
+        TimerResetConfirmationDialog(
+            durationText = "${state.totalDuration}",
+            onConfirm = { onIntent(QuickTimerIntent.ConfirmReset) },
+            onDismiss = { onIntent(QuickTimerIntent.CancelReset) },
         )
     }
 
@@ -347,7 +321,6 @@ private fun QuickTimerRunningContent(
             onPauseClick = { onIntent(QuickTimerIntent.PauseTimer) },
             onResumeClick = { onIntent(QuickTimerIntent.ResumeTimer) },
             onResetClick = { onIntent(QuickTimerIntent.ResetTimer) },
-            onStopClick = { onIntent(QuickTimerIntent.StopTimer) },
         )
     }
 }
@@ -450,6 +423,15 @@ private fun QuickTimerCompleteContent(
                     enabled = !state.isLoading,
                 ) {
                     Text(if (state.isLoading) "Saving..." else "Save Session")
+                }
+
+                // Continue to next steep
+                OutlinedButton(
+                    onClick = { onIntent(QuickTimerIntent.ContinueToNextSteep) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading,
+                ) {
+                    Text("Continue to Steep 2")
                 }
 
                 // Edit details option

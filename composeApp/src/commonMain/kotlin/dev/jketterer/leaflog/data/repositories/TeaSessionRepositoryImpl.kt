@@ -73,12 +73,19 @@ class TeaSessionRepositoryImpl(
 
     override fun getInProgressFlow(): Flow<List<TeaSession>> {
         return teaSessionDao.getByStatusFlow(status = SessionStatus.IN_PROGRESS.name).map { entities ->
-            entities.map { it.toTeaSession() }
+            val sessions = entities.map { it.toTeaSession() }
+            // Find parent IDs that have an active child steep
+            val parentIdsWithActiveChildren = sessions
+                .mapNotNull { it.parentSessionId }
+                .toSet()
+            // Exclude parent sessions that have an active child steep,
+            // since only the child represents the actual active timer session
+            sessions.filter { it.id !in parentIdsWithActiveChildren }
         }
     }
 
     override fun getInProgressCountFlow(): Flow<Int> {
-        return teaSessionDao.getCountByStatusFlow(SessionStatus.IN_PROGRESS.name)
+        return getInProgressFlow().map { it.size }
     }
 
     override suspend fun getByDateRange(start: Instant, end: Instant): List<TeaSession> {

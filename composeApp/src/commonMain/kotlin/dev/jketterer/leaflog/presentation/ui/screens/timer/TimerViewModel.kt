@@ -475,9 +475,12 @@ class TimerViewModel(
             )
         }
 
-        // Save current session as completed with rating and notes, clear timer state
+        // Save current session with rating and notes, clear timer state
+        // If this is the parent session, keep it IN_PROGRESS since the overall
+        // session is still active (a new steep is being started)
+        val isParent = session.parentSessionId == null
         val updatedSession = session.copy(
-            status = SessionStatus.COMPLETED,
+            status = if (isParent) SessionStatus.IN_PROGRESS else SessionStatus.COMPLETED,
             rating = _state.value.rating.takeIf { it > 0f },
             notes = _state.value.notes?.takeIf { it.isNotBlank() },
             photos = _state.value.photos,
@@ -560,9 +563,17 @@ class TimerViewModel(
         )
         teaSessionRepository.upsert(updatedSession)
 
-        // Update parent session's average rating if this is a child session
+        // Update parent session's average rating and mark it as completed
         session.parentSessionId?.let { parentId ->
             updateAverageRatingUseCase(parentId)
+            // Mark parent session as completed since the user is finishing the session
+            val parentSession = teaSessionRepository.getById(parentId)
+            parentSession?.let {
+                teaSessionRepository.upsert(it.copy(
+                    status = SessionStatus.COMPLETED,
+                    updatedAt = Clock.System.now(),
+                ))
+            }
         }
 
         // Check if we should show the save configuration dialog
@@ -610,8 +621,16 @@ class TimerViewModel(
                 teaSessionRepository.delete(session.id)
 
                 // If this was a child steep, update the parent's average rating
+                // and mark parent as completed since the active steep was discarded
                 session.parentSessionId?.let { parentId ->
                     updateAverageRatingUseCase(parentId)
+                    val parentSession = teaSessionRepository.getById(parentId)
+                    parentSession?.let {
+                        teaSessionRepository.upsert(it.copy(
+                            status = SessionStatus.COMPLETED,
+                            updatedAt = Clock.System.now(),
+                        ))
+                    }
                 }
 
                 // Clear timer state

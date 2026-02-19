@@ -9,10 +9,9 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
-import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
-import dev.jketterer.leaflog.presentation.ui.viewmodel.ConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
@@ -37,6 +36,7 @@ class QuickTimerViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
+    private val addSteepUseCase: AddSteepUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
 ) : ViewModel() {
 
@@ -128,11 +128,13 @@ class QuickTimerViewModel(
             is QuickTimerIntent.ShowCompletionDialog -> showCompletionDialog()
             is QuickTimerIntent.DismissCompletionDialog -> dismissCompletionDialog()
             is QuickTimerIntent.SaveSession -> saveSession()
+            is QuickTimerIntent.ContinueToNextSteep -> continueToNextSteep()
             is QuickTimerIntent.DiscardSession -> discardSession()
 
             // Configuration saving
             is QuickTimerIntent.SaveConfigurationClicked ->
                 configSaveDelegate.saveConfiguration(intent.customLabel)
+
             is QuickTimerIntent.SkipSaveConfiguration ->
                 configSaveDelegate.skipSaveConfiguration()
         }
@@ -483,6 +485,88 @@ class QuickTimerViewModel(
         }
     }
 
+    private fun continueToNextSteep() {
+        val current = _state.value
+
+        val tea = current.selectedTea ?: return
+        val vessel = current.selectedVessel ?: return
+        val temperatureStr = current.temperatureCelsius.takeIf { it.isNotBlank() } ?: return
+        val waterQuantityStr = current.waterQuantityMl.takeIf { it.isNotBlank() } ?: return
+
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true, error = null) }
+
+            try {
+                val temperatureInUserUnit = temperatureStr.toIntOrNull() ?: return@launch
+                val temperatureCelsius = current.userPreferences.temperatureUnit
+                    .toCelsius(temperatureInUserUnit)
+
+                val waterQuantityInUserUnit = waterQuantityStr.toIntOrNull() ?: return@launch
+                val waterQuantityMl = current.userPreferences.volumeUnit
+                    .toMilliliters(waterQuantityInUserUnit)
+
+                val teaQuantityGrams = current.teaQuantityGrams.toFloatOrNull()
+
+                // Keep parent session IN_PROGRESS since we're continuing to the next steep
+                val saveResult = createSessionUseCase(
+                    teaId = tea.id,
+                    teaQuantityGrams = teaQuantityGrams,
+                    vesselId = vessel.id,
+                    waterType = current.waterType,
+                    brewingTime = current.totalDuration,
+                    temperatureCelsius = temperatureCelsius,
+                    waterQuantityMl = waterQuantityMl,
+                    notes = current.notes.takeIf { it.isNotBlank() },
+                    rating = current.rating,
+                    status = SessionStatus.IN_PROGRESS,
+                )
+
+                saveResult.fold(
+                    onSuccess = { parentSession ->
+                        addSteepUseCase(
+                            parentSession = parentSession,
+                            brewingTime = parentSession.brewingTime,
+                            temperatureCelsius = parentSession.temperatureCelsius,
+                            waterQuantityMl = parentSession.waterQuantityMl,
+                        ).fold(
+                            onSuccess = { nextSteep ->
+                                _state.update { it.copy(isLoading = false) }
+                                _navigationEvents.trySend(
+                                    QuickTimerNavEvent.NavigateToTimer(
+                                        nextSteep.id
+                                    )
+                                )
+                            },
+                            onFailure = { error ->
+                                _state.update {
+                                    it.copy(
+                                        isLoading = false,
+                                        error = error.message ?: "Failed to create next steep",
+                                    )
+                                }
+                            },
+                        )
+                    },
+                    onFailure = { error ->
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                error = error.message ?: "Failed to save session",
+                            )
+                        }
+                    },
+                )
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Failed to save session",
+                    )
+                }
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
@@ -492,4 +576,5 @@ class QuickTimerViewModel(
 sealed interface QuickTimerNavEvent {
     data object NavigateBack : QuickTimerNavEvent
     data class NavigateToSession(val sessionId: String) : QuickTimerNavEvent
+    data class NavigateToTimer(val sessionId: String) : QuickTimerNavEvent
 }

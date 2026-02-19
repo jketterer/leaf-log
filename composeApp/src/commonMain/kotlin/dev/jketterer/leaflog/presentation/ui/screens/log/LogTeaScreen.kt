@@ -491,7 +491,7 @@ private fun LogTeaContent(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = state.canSave && !state.isSaving,
                     ) {
-                        Text("Brew")
+                        Text("Start Session")
                     }
 
                     OutlinedButton(

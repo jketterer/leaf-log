@@ -21,7 +21,6 @@ fun TimerControlButtons(
     onPauseClick: () -> Unit,
     onResumeClick: () -> Unit,
     onResetClick: () -> Unit,
-    onStopClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -30,9 +29,6 @@ fun TimerControlButtons(
     ) {
         when {
             isRunning -> {
-                OutlinedButton(onClick = onStopClick) {
-                    Text("Stop")
-                }
                 Button(onClick = onPauseClick) {
                     Text("Pause")
                 }
@@ -41,9 +37,6 @@ fun TimerControlButtons(
             isPaused -> {
                 OutlinedButton(onClick = onResetClick) {
                     Text("Reset")
-                }
-                OutlinedButton(onClick = onStopClick) {
-                    Text("Stop")
                 }
                 Button(onClick = onResumeClick) {
                     Text("Resume")
@@ -73,7 +66,6 @@ private fun TimerControlButtonsRunningPreview() {
             onPauseClick = {},
             onResumeClick = {},
             onResetClick = {},
-            onStopClick = {},
         )
     }
 }
@@ -89,7 +81,6 @@ private fun TimerControlButtonsPausedPreview() {
             onPauseClick = {},
             onResumeClick = {},
             onResetClick = {},
-            onStopClick = {},
         )
     }
 }
@@ -105,7 +96,6 @@ private fun TimerControlButtonsNotStartedPreview() {
             onPauseClick = {},
             onResumeClick = {},
             onResetClick = {},
-            onStopClick = {},
         )
     }
 }

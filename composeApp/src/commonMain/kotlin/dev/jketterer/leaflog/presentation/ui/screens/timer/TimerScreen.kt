@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.RotateCw
@@ -64,6 +65,8 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
+import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
+import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
@@ -135,10 +138,7 @@ private fun TimerContent(
                 },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(TimerIntent.BackClicked) }) {
-                        Text(
-                            text = "←",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -214,41 +214,19 @@ private fun TimerContent(
 
     // Stop confirmation dialog
     if (state.showStopConfirmation) {
-        AlertDialog(
-            onDismissRequest = { onIntent(TimerIntent.CancelStop) },
-            title = { Text("Stop Timer?") },
-            text = { Text("The session will be saved as in progress. You can complete it later from the History screen.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    onIntent(TimerIntent.ConfirmStop)
-                }) {
-                    Text("Stop")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(TimerIntent.CancelStop) }) {
-                    Text("Cancel")
-                }
-            },
+        TimerStopConfirmationDialog(
+            text = "The session will be saved as in progress. You can complete it later from the History screen.",
+            onConfirm = { onIntent(TimerIntent.ConfirmStop) },
+            onDismiss = { onIntent(TimerIntent.CancelStop) },
         )
     }
 
     // Reset confirmation dialog
     if (state.showResetConfirmation) {
-        AlertDialog(
-            onDismissRequest = { onIntent(TimerIntent.CancelReset) },
-            title = { Text("Reset Timer?") },
-            text = { Text("This will reset the timer to ${state.session?.brewingTime}.") },
-            confirmButton = {
-                TextButton(onClick = { onIntent(TimerIntent.ConfirmReset) }) {
-                    Text("Reset")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(TimerIntent.CancelReset) }) {
-                    Text("Cancel")
-                }
-            },
+        TimerResetConfirmationDialog(
+            durationText = "${state.session?.brewingTime}",
+            onConfirm = { onIntent(TimerIntent.ConfirmReset) },
+            onDismiss = { onIntent(TimerIntent.CancelReset) },
         )
     }
 
@@ -421,7 +399,6 @@ private fun TimerRunningContent(
             onPauseClick = { onIntent(TimerIntent.PauseTimer) },
             onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
             onResetClick = { onIntent(TimerIntent.ResetTimer) },
-            onStopClick = { onIntent(TimerIntent.StopTimer) },
         )
     }
 }

@@ -48,6 +48,7 @@ sealed interface QuickTimerIntent {
     data object ShowCompletionDialog : QuickTimerIntent
     data object DismissCompletionDialog : QuickTimerIntent
     data object SaveSession : QuickTimerIntent
+    data object ContinueToNextSteep : QuickTimerIntent
     data object DiscardSession : QuickTimerIntent
 
     // Configuration saving

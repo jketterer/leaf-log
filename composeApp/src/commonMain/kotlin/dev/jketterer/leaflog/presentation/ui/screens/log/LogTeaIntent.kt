@@ -37,6 +37,12 @@ sealed interface LogTeaIntent {
     data object StartTimerClicked : LogTeaIntent
     data object BackClicked : LogTeaIntent
 
+    // Complete session dialog
+    data class CompletionDialogNotesChanged(val notes: String) : LogTeaIntent
+    data class CompletionRatingChanged(val rating: Float) : LogTeaIntent
+    data object ConfirmCompleteSession : LogTeaIntent
+    data object DismissCompleteSessionDialog : LogTeaIntent
+
     // Configuration selection
     data object ChooseDifferentMethodClicked : LogTeaIntent
     data class MethodSelected(val configurationId: String?) : LogTeaIntent

@@ -6,7 +6,6 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -74,9 +73,34 @@ class LogTeaViewModel(
 
             is LogTeaIntent.PhotoSelected -> addPhoto(intent.photoUri)
             is LogTeaIntent.PhotoRemoved -> removePhoto(intent.photoUri)
-            is LogTeaIntent.SaveAsCompleted -> saveSession(status = SessionStatus.COMPLETED, startTimer = false)
+            is LogTeaIntent.SaveAsCompleted -> showCompleteSessionDialog()
+            is LogTeaIntent.CompletionDialogNotesChanged -> _state.update {
+                it.copy(completionDialogNotes = intent.notes)
+            }
 
-            is LogTeaIntent.StartTimerClicked -> saveSession(status = SessionStatus.IN_PROGRESS, startTimer = true)
+            is LogTeaIntent.CompletionRatingChanged -> _state.update {
+                it.copy(completionRating = intent.rating)
+            }
+
+            is LogTeaIntent.ConfirmCompleteSession -> {
+                val current = _state.value
+                saveSession(
+                    status = SessionStatus.COMPLETED,
+                    startTimer = false,
+                    overrideNotes = current.completionDialogNotes.takeIf { it.isNotBlank() },
+                    rating = current.completionRating.takeIf { it > 0f },
+                )
+            }
+
+            is LogTeaIntent.DismissCompleteSessionDialog -> _state.update {
+                it.copy(showCompleteSessionDialog = false)
+            }
+
+            is LogTeaIntent.StartTimerClicked -> saveSession(
+                status = SessionStatus.IN_PROGRESS,
+                startTimer = true
+            )
+
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
 
             is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
@@ -358,6 +382,7 @@ class LogTeaViewModel(
                     TemperatureUnit.CELSIUS -> {
                         if (value !in 0..100) "Temperature must be 0-100°C" else null
                     }
+
                     TemperatureUnit.FAHRENHEIT -> {
                         if (value !in 32..212) "Temperature must be 32-212°F" else null
                     }
@@ -500,7 +525,22 @@ class LogTeaViewModel(
         }
     }
 
-    private fun saveSession(status: SessionStatus, startTimer: Boolean) {
+    private fun showCompleteSessionDialog() {
+        _state.update {
+            it.copy(
+                showCompleteSessionDialog = true,
+                completionDialogNotes = it.notes,
+                completionRating = 0f,
+            )
+        }
+    }
+
+    private fun saveSession(
+        status: SessionStatus,
+        startTimer: Boolean,
+        overrideNotes: String? = null,
+        rating: Float? = null,
+    ) {
         val currentState = _state.value
 
         if (!currentState.isValid) {
@@ -533,16 +573,25 @@ class LogTeaViewModel(
                 brewingTime = currentState.brewingTime!!,
                 temperatureCelsius = temperatureCelsius,
                 waterQuantityMl = waterQuantityMl,
-                notes = currentState.notes.takeIf { it.isNotBlank() },
+                notes = (overrideNotes ?: currentState.notes).takeIf { it.isNotBlank() },
+                rating = rating,
                 photos = currentState.photos,
                 status = status,
                 usedConfigurationId = currentState.usedConfigurationId,
             )
                 .onSuccess {
-                    _state.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            hasUnsavedChanges = false,
+                            showCompleteSessionDialog = false,
+                        )
+                    }
 
                     if (startTimer) {
                         _navEvents.send(LogTeaNavigationEvent.NavigateToTimer(it.id))
+                    } else {
+                        _navEvents.send(LogTeaNavigationEvent.NavigateBack)
                     }
                 }
                 .onFailure { e ->

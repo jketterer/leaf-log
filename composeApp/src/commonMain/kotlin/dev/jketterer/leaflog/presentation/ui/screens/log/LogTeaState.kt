@@ -54,6 +54,11 @@ data class LogTeaState(
     val showQuickAddTeaDialog: Boolean = false,
     val hasUnsavedChanges: Boolean = false,
 
+    // Complete session dialog
+    val showCompleteSessionDialog: Boolean = false,
+    val completionDialogNotes: String = "",
+    val completionRating: Float = 0f,
+
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),
 ) {

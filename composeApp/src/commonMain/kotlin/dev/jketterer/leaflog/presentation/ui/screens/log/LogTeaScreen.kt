@@ -60,6 +60,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
+import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -539,6 +540,19 @@ private fun LogTeaContent(
             }
         )
     }
+
+    // Complete Session Dialog
+    if (state.showCompleteSessionDialog) {
+        CompleteSessionDialog(
+            notes = state.completionDialogNotes,
+            rating = state.completionRating,
+            isSaving = state.isSaving,
+            onNotesChanged = { onIntent(LogTeaIntent.CompletionDialogNotesChanged(it)) },
+            onRatingChanged = { onIntent(LogTeaIntent.CompletionRatingChanged(it)) },
+            onConfirm = { onIntent(LogTeaIntent.ConfirmCompleteSession) },
+            onDismiss = { onIntent(LogTeaIntent.DismissCompleteSessionDialog) },
+        )
+    }
 }
 
 @Composable
@@ -596,6 +610,79 @@ private fun TeaSearchDialog(
             }
         },
     )
+}
+
+@Composable
+private fun CompleteSessionDialog(
+    notes: String,
+    rating: Float,
+    isSaving: Boolean,
+    onNotesChanged: (String) -> Unit,
+    onRatingChanged: (Float) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Complete Session") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "How was this brew?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "Rating",
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                RatingSelector(
+                    rating = rating,
+                    onRatingChange = onRatingChanged,
+                )
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = onNotesChanged,
+                    label = { Text("Notes (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 5,
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isSaving,
+            ) {
+                Text("Complete")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isSaving,
+            ) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CompleteSessionDialogPreview() {
+    LeafLogTheme {
+        CompleteSessionDialog(
+            notes = "",
+            rating = 3f,
+            isSaving = false,
+            onNotesChanged = {},
+            onRatingChanged = {},
+            onConfirm = {},
+            onDismiss = {},
+        )
+    }
 }
 
 @Preview(showBackground = true)

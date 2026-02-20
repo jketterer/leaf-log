@@ -13,6 +13,7 @@ import kotlin.uuid.Uuid
 
 class CreateSessionUseCase(
     private val teaSessionRepository: TeaSessionRepository,
+    private val updateTeaStatsUseCase: UpdateTeaStatsUseCase,
 ) {
     @OptIn(ExperimentalUuidApi::class)
     suspend operator fun invoke(
@@ -79,6 +80,9 @@ class CreateSessionUseCase(
 
         return try {
             teaSessionRepository.upsert(session)
+            if (status == SessionStatus.COMPLETED) {
+                updateTeaStatsUseCase(teaId)
+            }
             Result.success(session)
         } catch (e: Exception) {
             Result.failure(e)

@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
@@ -38,6 +39,7 @@ class HomeViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
+    private val deleteSessionUseCase: DeleteSessionUseCase,
     private val timerService: TimerService,
 ) : ViewModel() {
 
@@ -299,7 +301,7 @@ class HomeViewModel(
     }
 
     private fun deleteSession(sessionId: String?) = viewModelScope.launch {
-        sessionId?.let { teaSessionRepository.delete(it) }
+        sessionId?.let { deleteSessionUseCase(it) }
     }
 
     private fun clearError() {

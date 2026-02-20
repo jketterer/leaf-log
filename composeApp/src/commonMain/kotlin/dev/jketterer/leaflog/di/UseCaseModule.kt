@@ -26,6 +26,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCa
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
+import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
@@ -56,6 +57,7 @@ val useCaseModule = module {
     factoryOf(::CreateSessionUseCase)
     factoryOf(::UpdateSessionUseCase)
     factoryOf(::UpdateAverageRatingUseCase)
+    factoryOf(::UpdateTeaStatsUseCase)
     factoryOf(::DeleteSessionUseCase)
     factoryOf(::CompleteSessionUseCase)
     factoryOf(::AddSteepUseCase)

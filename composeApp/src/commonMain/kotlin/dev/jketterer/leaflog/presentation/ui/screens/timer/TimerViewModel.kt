@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
+import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
@@ -54,6 +55,7 @@ class TimerViewModel(
     private val completeTimerUseCase: CompleteTimerUseCase,
     private val cancelTimerUseCase: CancelTimerUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val updateTeaStatsUseCase: UpdateTeaStatsUseCase,
     private val saveTimerStateUseCase: SaveTimerStateUseCase,
     private val restoreTimerStateUseCase: RestoreTimerStateUseCase,
 ) : ViewModel() {
@@ -576,6 +578,9 @@ class TimerViewModel(
             }
         }
 
+        // Update tea stats (totalSessions, averageRating, lastBrewedAt)
+        updateTeaStatsUseCase(session.teaId)
+
         // Check if we should show the save configuration dialog
         // Show for first steep (steepNumber == 1) with rating >= 3 stars
         // Skip if session already used a saved configuration
@@ -632,6 +637,9 @@ class TimerViewModel(
                         ))
                     }
                 }
+
+                // Update tea stats (totalSessions, averageRating, lastBrewedAt)
+                updateTeaStatsUseCase(session.teaId)
 
                 // Clear timer state
                 timerService.stop()

@@ -113,10 +113,18 @@ class HomeViewModel(
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
             is HomeIntent.InProgressBannerClicked -> _navEvents.trySend(
-                HomeNavEvent.NavigateToHistory(
-                    true
-                )
+                HomeNavEvent.NavigateToHistory(showInProgressOnly = true)
             )
+
+            is HomeIntent.DailyStatsTodaySessionsClicked -> {
+                val today = Clock.System.now()
+                    .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+                _navEvents.trySend(HomeNavEvent.NavigateToHistory(filterDateStart = today, filterDateEnd = today))
+            }
+
+            is HomeIntent.DailyStatsWaterCardClicked -> toggleVolumeUnit()
+
+            is HomeIntent.DailyStatsTeasCardClicked -> _navEvents.trySend(HomeNavEvent.NavigateToCollection)
 
             is HomeIntent.ResumeInProgressClicked -> handleResumeInProgress()
         }
@@ -304,6 +312,11 @@ class HomeViewModel(
         sessionId?.let { deleteSessionUseCase(it) }
     }
 
+    private fun toggleVolumeUnit() = viewModelScope.launch {
+        val toggled = _state.value.userPreferences.volumeUnit.toggle()
+        preferencesRepository.updateVolumeUnit(toggled)
+    }
+
     private fun clearError() {
         _state.update { it.copy(error = null) }
     }
@@ -318,7 +331,12 @@ data class SessionWithTeaData(
 )
 
 sealed interface HomeNavEvent {
-    data class NavigateToHistory(val showInProgressOnly: Boolean = false) : HomeNavEvent
+    data class NavigateToHistory(
+        val showInProgressOnly: Boolean = false,
+        val filterDateStart: String? = null,
+        val filterDateEnd: String? = null,
+    ) : HomeNavEvent
+    data object NavigateToCollection : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
     data class NavigateToEditSession(val sessionId: String) : HomeNavEvent
     data class NavigateToLogTea(

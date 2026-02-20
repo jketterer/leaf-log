@@ -17,6 +17,9 @@ sealed interface HomeIntent {
     data class SessionClicked(val sessionId: String) : HomeIntent
     data object ViewAllSessionsClicked : HomeIntent
     data object InProgressBannerClicked : HomeIntent
+    data object DailyStatsTodaySessionsClicked : HomeIntent
+    data object DailyStatsWaterCardClicked : HomeIntent
+    data object DailyStatsTeasCardClicked : HomeIntent
     data object ResumeInProgressClicked : HomeIntent
     data object SettingsClicked : HomeIntent
     data object ClearError : HomeIntent

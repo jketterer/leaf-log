@@ -61,7 +61,8 @@ fun HomeScreen(
     onNavigateToLogTea: (String?, String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToEditSession: (String) -> Unit,
-    onNavigateToHistory: (showInProgressOnly: Boolean) -> Unit,
+    onNavigateToHistory: (showInProgressOnly: Boolean, filterDateStart: String?, filterDateEnd: String?) -> Unit,
+    onNavigateToCollection: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToQuickTimer: (Int) -> Unit,
@@ -85,7 +86,11 @@ fun HomeScreen(
                 }
 
                 is HomeNavEvent.NavigateToHistory -> {
-                    onNavigateToHistory(event.showInProgressOnly)
+                    onNavigateToHistory(event.showInProgressOnly, event.filterDateStart, event.filterDateEnd)
+                }
+
+                is HomeNavEvent.NavigateToCollection -> {
+                    onNavigateToCollection()
                 }
 
                 is HomeNavEvent.NavigateToSettings -> {
@@ -202,6 +207,9 @@ private fun HomeContent(
                         item(key = "daily_stats") {
                             DailyStatsSection(
                                 stats = state.dailyStats,
+                                onSessionsCardClick = { onIntent(HomeIntent.DailyStatsTodaySessionsClicked) },
+                                onWaterCardClick = { onIntent(HomeIntent.DailyStatsWaterCardClicked) },
+                                onTeasCardClick = { onIntent(HomeIntent.DailyStatsTeasCardClicked) },
                             )
                         }
 

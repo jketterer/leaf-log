@@ -84,9 +84,16 @@ fun AppNavigation() {
                         onNavigateToEditSession = { sessionId ->
                             backStack.add(NavRoute.EditSessionRoute(sessionId, true))
                         },
-                        onNavigateToHistory = { showInProgressOnly ->
-                            backStack.add(NavRoute.HistoryRoute(showInProgressOnly = showInProgressOnly))
+                        onNavigateToHistory = { showInProgressOnly, filterDateStart, filterDateEnd ->
+                            backStack.add(
+                                NavRoute.HistoryRoute(
+                                    showInProgressOnly = showInProgressOnly,
+                                    filterDateStart = filterDateStart,
+                                    filterDateEnd = filterDateEnd,
+                                )
+                            )
                         },
+                        onNavigateToCollection = { backStack.add(NavRoute.CollectionRoute) },
                         onNavigateToSettings = { backStack.add(NavRoute.SettingsRoute) },
                         onNavigateToTimer = { sessionId ->
                             backStack.add(NavRoute.TimerRoute(sessionId))

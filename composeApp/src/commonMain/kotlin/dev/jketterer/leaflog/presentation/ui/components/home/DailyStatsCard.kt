@@ -25,9 +25,11 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 fun DailyStatsCard(
     value: String,
     label: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -75,16 +77,19 @@ private fun DailyStatsCardPreview() {
             DailyStatsCard(
                 value = "3",
                 label = "Sessions",
+                onClick = {},
                 modifier = Modifier.weight(1f),
             )
             DailyStatsCard(
                 value = "450ml",
                 label = "Water",
+                onClick = {},
                 modifier = Modifier.weight(1f),
             )
             DailyStatsCard(
                 value = "2",
                 label = "Teas",
+                onClick = {},
                 modifier = Modifier.weight(1f),
             )
         }

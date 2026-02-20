@@ -21,6 +21,9 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 @Composable
 fun DailyStatsSection(
     stats: DailyStats,
+    onSessionsCardClick: () -> Unit,
+    onWaterCardClick: () -> Unit,
+    onTeasCardClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -42,16 +45,19 @@ fun DailyStatsSection(
             DailyStatsCard(
                 value = stats.sessionCount.toString(),
                 label = if (stats.sessionCount == 1) "Session" else "Sessions",
+                onClick = onSessionsCardClick,
                 modifier = Modifier.weight(1f),
             )
             DailyStatsCard(
                 value = stats.formattedWaterQuantity,
                 label = "Water",
+                onClick = onWaterCardClick,
                 modifier = Modifier.weight(1f),
             )
             DailyStatsCard(
                 value = stats.differentTeasCount.toString(),
                 label = if (stats.differentTeasCount == 1) "Tea" else "Teas",
+                onClick = onTeasCardClick,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -72,11 +78,17 @@ private fun DailyStatsSectionPreview() {
                     formattedWaterQuantity = "32 fl oz",
                     differentTeasCount = 2,
                 ),
+                onSessionsCardClick = {},
+                onWaterCardClick = {},
+                onTeasCardClick = {},
             )
 
             // Empty state
             DailyStatsSection(
                 stats = DailyStats(),
+                onSessionsCardClick = {},
+                onWaterCardClick = {},
+                onTeasCardClick = {},
             )
         }
     }

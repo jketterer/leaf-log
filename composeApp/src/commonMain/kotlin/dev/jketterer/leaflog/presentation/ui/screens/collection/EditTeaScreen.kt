@@ -1,17 +1,19 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,7 +23,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,17 +36,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.ChevronDown
+import compose.icons.feathericons.ChevronUp
 import compose.icons.feathericons.Save
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
+import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
@@ -183,93 +184,51 @@ private fun EditTeaContent(
                     )
                 }
 
-                // Producer
+                // Producer (combobox with suggestions)
                 item(key = "producer") {
-                    OutlinedTextField(
-                        value = state.producer,
-                        onValueChange = { onIntent(EditTeaIntent.ProducerChanged(it)) },
-                        label = { Text("Producer/Brand") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                    )
-                }
+                    var showProducerMenu by remember { mutableStateOf(false) }
+                    val filteredProducers = remember(state.producer, state.availableProducers) {
+                        if (state.producer.isBlank()) {
+                            state.availableProducers
+                        } else {
+                            state.availableProducers.filter {
+                                it.contains(state.producer, ignoreCase = true)
+                            }
+                        }
+                    }
 
-                // Stock Amount
-                item(key = "stock") {
-                    OutlinedTextField(
-                        value = state.stockAmount,
-                        onValueChange = { onIntent(EditTeaIntent.StockAmountChanged(it)) },
-                        label = { Text("Stock Amount (g)") },
-                        isError = state.stockAmountError != null,
-                        supportingText = state.stockAmountError?.let { { Text(it) } },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                    )
-                }
+                    ExposedDropdownMenuBox(
+                        expanded = showProducerMenu && filteredProducers.isNotEmpty(),
+                        onExpandedChange = { showProducerMenu = it },
+                    ) {
+                        OutlinedTextField(
+                            value = state.producer,
+                            onValueChange = {
+                                onIntent(EditTeaIntent.ProducerChanged(it))
+                                showProducerMenu = true
+                            },
+                            label = { Text("Producer/Brand") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+                            singleLine = true,
+                        )
 
-                // Brewing Parameters Header
-                item(key = "brewing_params_header") {
-                    Text(
-                        text = "Default Brewing Parameters",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                // Default Brewing Time
-                item(key = "brewing_time") {
-                    DurationPicker(
-                        duration = state.defaultBrewingTime,
-                        onDurationChange = { duration ->
-                            onIntent(EditTeaIntent.BrewingTimeChanged(duration))
-                        },
-                        label = "Default Brewing Time",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                // Default Temperature
-                item(key = "temperature") {
-                    OutlinedTextField(
-                        value = state.defaultTemperatureCelsius,
-                        onValueChange = { onIntent(EditTeaIntent.TemperatureChanged(it)) },
-                        label = { Text("Default Temperature (°C)") },
-                        isError = state.temperatureError != null,
-                        supportingText = state.temperatureError?.let { { Text(it) } }
-                            ?: { Text("Temperature for brewing this tea") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        suffix = { Text("°C") }
-                    )
-                }
-
-                // Default Tea Quantity
-                item(key = "quantity") {
-                    OutlinedTextField(
-                        value = state.defaultQuantity,
-                        onValueChange = { onIntent(EditTeaIntent.QuantityChanged(it)) },
-                        label = { Text("Default Tea Quantity (g)") },
-                        isError = state.quantityError != null,
-                        supportingText = state.quantityError?.let { { Text(it) } }
-                            ?: { Text("Grams of tea per session") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        suffix = { Text("g") }
-                    )
-                }
-
-                // Purchase Price
-                item(key = "price") {
-                    OutlinedTextField(
-                        value = state.purchasePrice,
-                        onValueChange = { onIntent(EditTeaIntent.PurchasePriceChanged(it)) },
-                        label = { Text("Purchase Price") },
-                        isError = state.purchasePriceError != null,
-                        supportingText = state.purchasePriceError?.let { { Text(it) } },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        prefix = { Text("$") },
-                    )
+                        ExposedDropdownMenu(
+                            expanded = showProducerMenu && filteredProducers.isNotEmpty(),
+                            onDismissRequest = { showProducerMenu = false },
+                        ) {
+                            filteredProducers.forEach { producer ->
+                                DropdownMenuItem(
+                                    text = { Text(producer) },
+                                    onClick = {
+                                        onIntent(EditTeaIntent.ProducerChanged(producer))
+                                        showProducerMenu = false
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Description
@@ -284,57 +243,91 @@ private fun EditTeaContent(
                     )
                 }
 
-                // Photos
-                item(key = "photos_header") {
-                    Text(
-                        text = "Photos",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-
-                if (state.photos.isNotEmpty()) {
-                    item(key = "photos") {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                // Collapsible Brewing Parameters
+                item(key = "brewing_params") {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onIntent(EditTeaIntent.ToggleBrewingParams) }
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            items(
-                                items = state.photos,
-                                key = { it },
-                            ) { photoUri ->
-                                Box {
-                                    AsyncImage(
-                                        model = photoUri,
-                                        contentDescription = "Tea photo",
-                                        modifier = Modifier
-                                            .size(100.dp)
-                                            .clip(MaterialTheme.shapes.medium),
-                                        contentScale = ContentScale.Crop,
-                                    )
+                            Text(
+                                text = "Default Brewing Parameters",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Icon(
+                                imageVector = if (state.showBrewingParams) FeatherIcons.ChevronUp else FeatherIcons.ChevronDown,
+                                contentDescription = if (state.showBrewingParams) "Collapse" else "Expand",
+                            )
+                        }
 
-                                    // Remove button
-                                    IconButton(
-                                        onClick = { onIntent(EditTeaIntent.PhotoRemoved(photoUri)) },
-                                        modifier = Modifier.align(Alignment.TopEnd),
-                                    ) {
-                                        Text(
-                                            text = "×",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            color = MaterialTheme.colorScheme.error,
-                                        )
-                                    }
-                                }
+                        AnimatedVisibility(
+                            visible = state.showBrewingParams,
+                            enter = expandVertically(),
+                            exit = shrinkVertically(),
+                        ) {
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                DurationPicker(
+                                    duration = state.defaultBrewingTime,
+                                    onDurationChange = { duration ->
+                                        onIntent(EditTeaIntent.BrewingTimeChanged(duration))
+                                    },
+                                    label = "Default Brewing Time",
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+
+                                OutlinedTextField(
+                                    value = state.defaultTemperatureCelsius,
+                                    onValueChange = { onIntent(EditTeaIntent.TemperatureChanged(it)) },
+                                    label = { Text("Default Temperature (°C)") },
+                                    isError = state.temperatureError != null,
+                                    supportingText = state.temperatureError?.let { { Text(it) } }
+                                        ?: { Text("Temperature for brewing this tea") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    suffix = { Text("°C") },
+                                )
+
+                                OutlinedTextField(
+                                    value = state.defaultQuantity,
+                                    onValueChange = { onIntent(EditTeaIntent.QuantityChanged(it)) },
+                                    label = { Text("Default Tea Quantity (g)") },
+                                    isError = state.quantityError != null,
+                                    supportingText = state.quantityError?.let { { Text(it) } }
+                                        ?: { Text("Grams of tea per session") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    suffix = { Text("g") },
+                                )
                             }
                         }
                     }
                 }
 
-                item(key = "add_photo") {
-                    OutlinedButton(
-                        onClick = { onIntent(EditTeaIntent.AddPhotoClicked) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Add Photo")
+                // Photos
+                item(key = "photos") {
+                    Column {
+                        Text(
+                            text = "Photos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        PhotoGrid(
+                            photos = state.photos,
+                            onAddPhoto = { imageBytes ->
+                                onIntent(EditTeaIntent.PhotoSelected(imageBytes))
+                            },
+                            onRemovePhoto = { photoPath ->
+                                onIntent(EditTeaIntent.PhotoRemoved(photoPath))
+                            },
+                        )
                     }
                 }
             }
@@ -363,20 +356,6 @@ private fun EditTeaContent(
             },
         )
     }
-}
-
-/**
- * Modifier for clickable without ripple effect.
- */
-@Composable
-private fun Modifier.clickableWithoutRipple(onClick: () -> Unit): Modifier {
-    return this.then(
-        clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() },
-            onClick = onClick,
-        ),
-    )
 }
 
 @Preview(showBackground = true)
@@ -428,9 +407,9 @@ private fun EditTeaScreenEditModePreview() {
                 selectedTeaTypeId = "green",
                 origin = "Hangzhou, China",
                 producer = "West Lake Tea Company",
-                stockAmount = "50",
                 defaultTemperatureCelsius = "80",
                 description = "Premium Dragon Well green tea",
+                showBrewingParams = true,
                 availableTeaTypes = listOf(
                     TeaType(
                         id = "green",

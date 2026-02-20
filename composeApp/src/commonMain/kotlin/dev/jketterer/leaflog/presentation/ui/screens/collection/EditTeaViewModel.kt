@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -18,12 +19,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlin.time.Duration
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 class EditTeaViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val createTeaUseCase: CreateTeaUseCase,
     private val editTeaUseCase: EditTeaUseCase,
+    private val imageStorage: ImageStorage,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditTeaState())
@@ -32,8 +36,11 @@ class EditTeaViewModel(
     private val _navEvents = Channel<EditTeaNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
+    private val newlyAddedPhotos = mutableListOf<String>()
+
     init {
         loadTeaTypes()
+        loadProducers()
     }
 
     fun onIntent(intent: EditTeaIntent) {
@@ -44,21 +51,16 @@ class EditTeaViewModel(
             is EditTeaIntent.OriginChanged -> updateOrigin(intent.origin)
             is EditTeaIntent.ProducerChanged -> updateProducer(intent.producer)
             is EditTeaIntent.PurchaseDateChanged -> updatePurchaseDate(intent.date)
-            is EditTeaIntent.PurchasePriceChanged -> updatePurchasePrice(intent.price)
-            is EditTeaIntent.StockAmountChanged -> updateStockAmount(intent.amount)
             is EditTeaIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
             is EditTeaIntent.TemperatureChanged -> updateTemperature(intent.temperature)
             is EditTeaIntent.QuantityChanged -> updateQuantity(intent.quantity)
             is EditTeaIntent.DescriptionChanged -> updateDescription(intent.description)
-            is EditTeaIntent.AddPhotoClicked -> {
-                // navigation handled by UI
-            }
-
-            is EditTeaIntent.PhotoSelected -> addPhoto(intent.photoUri)
-            is EditTeaIntent.PhotoRemoved -> removePhoto(intent.photoUri)
+            is EditTeaIntent.PhotoSelected -> addPhoto(intent.imageBytes)
+            is EditTeaIntent.PhotoRemoved -> removePhoto(intent.photoPath)
+            is EditTeaIntent.ToggleBrewingParams -> toggleBrewingParams()
             is EditTeaIntent.SaveClicked -> save()
             is EditTeaIntent.BackClicked -> handleBack()
-            is EditTeaIntent.ConfirmDiscard -> _navEvents.trySend(EditTeaNavEvent.NavigateBack)
+            is EditTeaIntent.ConfirmDiscard -> confirmDiscard()
             is EditTeaIntent.CancelDiscard -> cancelDiscard()
         }
     }
@@ -71,6 +73,16 @@ class EditTeaViewModel(
                     _state.update { it.copy(availableTeaTypes = teaTypes) }
                 }
 
+        }
+    }
+
+    private fun loadProducers() {
+        viewModelScope.launch {
+            teaRepository.getDistinctProducersFlow()
+                .catchError("Failed to load producers")
+                .collect { producers ->
+                    _state.update { it.copy(availableProducers = producers) }
+                }
         }
     }
 
@@ -103,8 +115,6 @@ class EditTeaViewModel(
                                 origin = tea.origin ?: "",
                                 producer = tea.producer ?: "",
                                 purchaseDate = tea.purchaseDate,
-                                purchasePrice = tea.purchasePrice?.toString() ?: "",
-                                stockAmount = tea.stockAmount?.toString() ?: "",
                                 defaultBrewingTime = tea.defaultBrewingTime,
                                 defaultTemperatureCelsius = tea.defaultTemperatureCelsius?.toString()
                                     ?: "",
@@ -145,30 +155,6 @@ class EditTeaViewModel(
         _state.update { it.copy(purchaseDate = date) }
     }
 
-    private fun updatePurchasePrice(price: String) {
-        val error = when {
-            price.isBlank() -> null
-            price.toDoubleOrNull() == null -> "Invalid price"
-            price.toDouble() < 0 -> "Price cannot be negative"
-            else -> null
-        }
-        _state.update {
-            it.copy(purchasePrice = price, purchasePriceError = error)
-        }
-    }
-
-    private fun updateStockAmount(amount: String) {
-        val error = when {
-            amount.isBlank() -> null
-            amount.toIntOrNull() == null -> "Invalid amount"
-            amount.toInt() < 0 -> "Amount cannot be negative"
-            else -> null
-        }
-        _state.update {
-            it.copy(stockAmount = amount, stockAmountError = error)
-        }
-    }
-
     private fun updateBrewingTime(duration: Duration?) {
         _state.update { it.copy(defaultBrewingTime = duration) }
     }
@@ -204,16 +190,28 @@ class EditTeaViewModel(
         _state.update { it.copy(description = description) }
     }
 
-    private fun addPhoto(photoUri: String) {
-        _state.update {
-            it.copy(photos = it.photos + photoUri)
+    @OptIn(ExperimentalUuidApi::class)
+    private fun addPhoto(imageBytes: ByteArray) {
+        viewModelScope.launch {
+            val fileName = "${Uuid.random()}.jpg"
+            val path = imageStorage.saveImage(imageBytes, fileName, "tea_images")
+            newlyAddedPhotos.add(path)
+            _state.update { it.copy(photos = it.photos + path) }
         }
     }
 
-    private fun removePhoto(photoUri: String) {
-        _state.update {
-            it.copy(photos = it.photos - photoUri)
+    private fun removePhoto(photoPath: String) {
+        viewModelScope.launch {
+            if (photoPath in newlyAddedPhotos) {
+                imageStorage.deleteImage(photoPath)
+                newlyAddedPhotos.remove(photoPath)
+            }
+            _state.update { it.copy(photos = it.photos - photoPath) }
         }
+    }
+
+    private fun toggleBrewingParams() {
+        _state.update { it.copy(showBrewingParams = !it.showBrewingParams) }
     }
 
     private fun save() {
@@ -233,21 +231,24 @@ class EditTeaViewModel(
             _state.update { it.copy(isSaving = true) }
 
             val result = if (currentState.isEditMode && currentState.existingTea != null) {
-                editTeaUseCase(
+                val removedPhotos = currentState.existingTea.photos - currentState.photos.toSet()
+                val editResult = editTeaUseCase(
                     existingTea = currentState.existingTea,
                     name = currentState.name,
                     teaTypeId = currentState.selectedTeaTypeId,
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    purchasePrice = currentState.purchasePrice.toDoubleOrNull(),
-                    stockAmount = currentState.stockAmount.toIntOrNull(),
                     defaultBrewingTime = currentState.defaultBrewingTime,
                     defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toIntOrNull(),
                     defaultQuantity = currentState.defaultQuantity.toIntOrNull(),
                     description = currentState.description.takeIf { it.isNotBlank() },
                     photos = currentState.photos,
                 )
+                editResult.onSuccess {
+                    removedPhotos.forEach { imageStorage.deleteImage(it) }
+                }
+                editResult
             } else {
                 createTeaUseCase(
                     name = currentState.name,
@@ -255,8 +256,6 @@ class EditTeaViewModel(
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    purchasePrice = currentState.purchasePrice.toDoubleOrNull(),
-                    stockAmount = currentState.stockAmount.toIntOrNull(),
                     defaultBrewingTime = currentState.defaultBrewingTime,
                     defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toIntOrNull(),
                     defaultQuantity = currentState.defaultQuantity.toIntOrNull(),
@@ -266,6 +265,7 @@ class EditTeaViewModel(
             }
 
             result.onSuccess {
+                newlyAddedPhotos.clear()
                 _state.update { it.copy(isSaving = false) }
                 _navEvents.trySend(EditTeaNavEvent.NavigateBack)
             }
@@ -284,6 +284,14 @@ class EditTeaViewModel(
         if (_state.value.hasChanges) {
             _state.update { it.copy(showDiscardDialog = true) }
         } else {
+            _navEvents.trySend(EditTeaNavEvent.NavigateBack)
+        }
+    }
+
+    private fun confirmDiscard() {
+        viewModelScope.launch {
+            newlyAddedPhotos.forEach { imageStorage.deleteImage(it) }
+            newlyAddedPhotos.clear()
             _navEvents.trySend(EditTeaNavEvent.NavigateBack)
         }
     }

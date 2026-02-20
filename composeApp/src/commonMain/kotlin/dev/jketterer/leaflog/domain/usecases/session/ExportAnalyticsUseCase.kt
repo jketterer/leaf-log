@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.domain.models.TrendPoint
+import kotlin.math.roundToInt
 
 class ExportAnalyticsUseCase {
     operator fun invoke(
@@ -22,7 +23,7 @@ class ExportAnalyticsUseCase {
         appendLine("Total Brewing Time (min),${analytics.totalBrewingTime.inWholeMinutes}")
         appendLine("Total Water (mL),${analytics.totalWaterMl}")
         appendLine("Unique Teas,${analytics.uniqueTeasCount}")
-        val avgRating = analytics.averageRating?.let { "%.1f".format(it) } ?: "N/A"
+        val avgRating = analytics.averageRating?.let { (it * 10).roundToInt() / 10f } ?: "N/A"
         appendLine("Average Rating,$avgRating")
         appendLine("Rated Sessions,${analytics.ratedSessionsCount}")
         appendLine()
@@ -42,7 +43,7 @@ class ExportAnalyticsUseCase {
             appendLine("Tea Type Distribution")
             appendLine("Tea Type,Sessions,Percentage")
             teaTypeDistribution.forEach { dist ->
-                appendLine("${dist.teaType.name},${dist.sessionCount},${"%.1f".format(dist.percentage)}%")
+                appendLine("${dist.teaType.name},${dist.sessionCount},${(dist.percentage * 10).roundToInt() / 10f}%")
             }
             appendLine()
         }

@@ -2,25 +2,28 @@ package dev.jketterer.leaflog.data.local
 
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.refTo
+import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.Foundation.writeToFile
+import platform.posix.memcpy
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual class ZipArchiver actual constructor() {
 
-    actual suspend fun createZip(zipPath: String, entries: List<ZipEntry>) = withContext(Dispatchers.IO) {
+    actual suspend fun createZip(zipPath: String, entries: List<ZipEntry>): Unit = withContext(Dispatchers.IO) {
         val zipBytes = buildZipBytes(entries)
         val nsData = memScoped {
             NSData.create(bytes = allocArrayOf(zipBytes), length = zipBytes.size.toULong())
         }
         nsData.writeToFile(zipPath, atomically = true)
+        Unit
     }
 
     actual suspend fun extractZip(zipPath: String): List<ZipEntry> = withContext(Dispatchers.IO) {
@@ -28,8 +31,8 @@ actual class ZipArchiver actual constructor() {
             ?: throw IllegalStateException("Cannot read zip file: $zipPath")
         val length = nsData.length.toInt()
         val bytes = ByteArray(length)
-        memScoped {
-            nsData.getBytes(bytes.refTo(0), length.toULong())
+        bytes.usePinned { pinned ->
+            memcpy(pinned.addressOf(0), nsData.bytes, length.toULong())
         }
         parseZipBytes(bytes)
     }
@@ -39,8 +42,8 @@ actual class ZipArchiver actual constructor() {
         val length = minOf(nsData.length.toInt(), byteCount)
         if (length == 0) return@withContext null
         val bytes = ByteArray(length)
-        memScoped {
-            nsData.getBytes(bytes.refTo(0), length.toULong())
+        bytes.usePinned { pinned ->
+            memcpy(pinned.addressOf(0), nsData.bytes, length.toULong())
         }
         bytes
     }
@@ -50,8 +53,8 @@ actual class ZipArchiver actual constructor() {
         val length = nsData.length.toInt()
         if (length == 0) return@withContext null
         val bytes = ByteArray(length)
-        memScoped {
-            nsData.getBytes(bytes.refTo(0), length.toULong())
+        bytes.usePinned { pinned ->
+            memcpy(pinned.addressOf(0), nsData.bytes, length.toULong())
         }
         bytes
     }

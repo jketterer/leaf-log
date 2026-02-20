@@ -55,4 +55,8 @@ class TeaRepositoryImpl(
         val timestamp = Clock.System.now().toEpochMilliseconds()
         teaDao.softDelete(id, timestamp)
     }
+
+    override fun getDistinctProducersFlow(): Flow<List<String>> {
+        return teaDao.getDistinctProducersFlow()
+    }
 }

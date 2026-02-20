@@ -14,8 +14,6 @@ class EditTeaUseCase(
         origin: String? = null,
         producer: String? = null,
         purchaseDate: kotlinx.datetime.LocalDate? = null,
-        purchasePrice: Double? = null,
-        stockAmount: Int? = null,
         defaultBrewingTime: kotlin.time.Duration? = null,
         defaultTemperatureCelsius: Int? = null,
         defaultQuantity: Int? = null,
@@ -34,16 +32,6 @@ class EditTeaUseCase(
             return Result.failure(IllegalArgumentException("Tea type must be selected"))
         }
 
-        val newPurchasePrice = purchasePrice ?: existingTea.purchasePrice
-        if (newPurchasePrice != null && newPurchasePrice < 0) {
-            return Result.failure(IllegalArgumentException("Purchase price cannot be negative"))
-        }
-
-        val newStockAmount = stockAmount ?: existingTea.stockAmount
-        if (newStockAmount != null && newStockAmount < 0) {
-            return Result.failure(IllegalArgumentException("Stock amount cannot be negative"))
-        }
-
         val newTemp = defaultTemperatureCelsius ?: existingTea.defaultTemperatureCelsius
         if (newTemp != null && (newTemp !in 0..100)) {
             return Result.failure(IllegalArgumentException("Temperature must be between 0°C and 100°C"))
@@ -55,8 +43,6 @@ class EditTeaUseCase(
             origin = origin ?: existingTea.origin,
             producer = producer ?: existingTea.producer,
             purchaseDate = purchaseDate ?: existingTea.purchaseDate,
-            purchasePrice = newPurchasePrice,
-            stockAmount = newStockAmount,
             defaultBrewingTime = defaultBrewingTime ?: existingTea.defaultBrewingTime,
             defaultTemperatureCelsius = newTemp,
             defaultQuantity = defaultQuantity ?: existingTea.defaultQuantity,

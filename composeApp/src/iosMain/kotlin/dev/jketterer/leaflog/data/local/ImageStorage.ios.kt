@@ -2,9 +2,10 @@ package dev.jketterer.leaflog.data.local
 
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.allocArrayOf
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.refTo
+import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
@@ -14,6 +15,7 @@ import platform.Foundation.NSHomeDirectory
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.create
 import platform.Foundation.writeToFile
+import platform.posix.memcpy
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual class ImageStorage {
@@ -28,7 +30,11 @@ actual class ImageStorage {
         return dir
     }
 
-    actual suspend fun saveImage(imageBytes: ByteArray, fileName: String, subdirectory: String): String =
+    actual suspend fun saveImage(
+        imageBytes: ByteArray,
+        fileName: String,
+        subdirectory: String
+    ): String =
         withContext(Dispatchers.IO) {
             val destPath = "${getImagesDir(subdirectory)}/$fileName"
             val data = memScoped {
@@ -48,8 +54,8 @@ actual class ImageStorage {
         val length = data.length.toInt()
         if (length == 0) return@withContext null
         ByteArray(length).also { bytes ->
-            memScoped {
-                data.getBytes(bytes.refTo(0), length.toULong())
+            bytes.usePinned { pinned ->
+                memcpy(pinned.addressOf(0), data.bytes, length.toULong())
             }
         }
     }

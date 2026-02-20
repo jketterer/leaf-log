@@ -13,4 +13,5 @@ interface TeaRepository {
     suspend fun search(query: String): List<Tea>
     suspend fun upsert(tea: Tea)
     suspend fun delete(id: String)
+    fun getDistinctProducersFlow(): Flow<List<String>>
 }

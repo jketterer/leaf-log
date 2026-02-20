@@ -88,4 +88,13 @@ interface TeaDao {
 
     @Query("SELECT COUNT(*) FROM tea WHERE deletedAt IS NULL")
     suspend fun count(): Int
+
+    @Query(
+        """
+        SELECT DISTINCT producer FROM tea
+        WHERE producer IS NOT NULL AND deletedAt IS NULL
+        ORDER BY producer
+    """
+    )
+    fun getDistinctProducersFlow(): Flow<List<String>>
 }

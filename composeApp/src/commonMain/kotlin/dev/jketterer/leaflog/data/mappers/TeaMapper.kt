@@ -17,7 +17,7 @@ fun TeaEntity.toTea(): Tea {
         defaultTemperatureCelsius = defaultTemperatureCelsius,
         defaultQuantity = defaultQuantity,
         description = description,
-        photos = emptyList(), // TODO: how do we handle photos?
+        photos = photos,
         isFavorite = isFavorite,
         totalSessions = totalSessions,
         averageRating = averageRating,
@@ -44,7 +44,7 @@ fun Tea.toEntity(): TeaEntity {
         defaultTemperatureCelsius = defaultTemperatureCelsius,
         defaultQuantity = defaultQuantity,
         description = description,
-        photos = emptyList(), // TODO: how do we handle photos?
+        photos = photos,
         isFavorite = isFavorite,
         totalSessions = totalSessions,
         averageRating = averageRating,

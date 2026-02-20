@@ -90,17 +90,6 @@ fun TeaCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                if (tea.stockAmount != null) {
-                    Text(
-                        text = "${tea.stockAmount}g remaining",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (tea.stockAmount < 20) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
             }
 
             // Favorite button

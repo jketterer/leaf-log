@@ -19,8 +19,6 @@ class CreateTeaUseCase(
         origin: String? = null,
         producer: String? = null,
         purchaseDate: LocalDate? = null,
-        purchasePrice: Double? = null,
-        stockAmount: Int? = null,
         defaultBrewingTime: Duration? = null,
         defaultTemperatureCelsius: Int? = null,
         defaultQuantity: Int? = null,
@@ -36,14 +34,6 @@ class CreateTeaUseCase(
             return Result.failure(IllegalArgumentException("Tea type must be selected"))
         }
 
-        if (purchasePrice != null && purchasePrice < 0) {
-            return Result.failure(IllegalArgumentException("Purchase price cannot be negative"))
-        }
-
-        if (stockAmount != null && stockAmount < 0) {
-            return Result.failure(IllegalArgumentException("Stock amount cannot be negative"))
-        }
-
         if (defaultTemperatureCelsius != null && (defaultTemperatureCelsius !in 0..100)) {
             return Result.failure(IllegalArgumentException("Temperature must be between 0°C and 100°C"))
         }
@@ -56,8 +46,8 @@ class CreateTeaUseCase(
             origin = origin?.takeIf { it.isNotBlank() }?.trim(),
             producer = producer?.takeIf { it.isNotBlank() }?.trim(),
             purchaseDate = purchaseDate,
-            purchasePrice = purchasePrice,
-            stockAmount = stockAmount,
+            purchasePrice = null,
+            stockAmount = null,
             defaultBrewingTime = defaultBrewingTime,
             defaultTemperatureCelsius = defaultTemperatureCelsius,
             defaultQuantity = defaultQuantity,

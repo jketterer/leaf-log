@@ -12,17 +12,17 @@ sealed interface EditTeaIntent {
     data class OriginChanged(val origin: String) : EditTeaIntent
     data class ProducerChanged(val producer: String) : EditTeaIntent
     data class PurchaseDateChanged(val date: LocalDate?) : EditTeaIntent
-    data class PurchasePriceChanged(val price: String) : EditTeaIntent
-    data class StockAmountChanged(val amount: String) : EditTeaIntent
     data class BrewingTimeChanged(val duration: Duration?) : EditTeaIntent
     data class TemperatureChanged(val temperature: String) : EditTeaIntent
     data class QuantityChanged(val quantity: String) : EditTeaIntent
     data class DescriptionChanged(val description: String) : EditTeaIntent
 
     // Photo management
-    data object AddPhotoClicked : EditTeaIntent
-    data class PhotoSelected(val photoUri: String) : EditTeaIntent
-    data class PhotoRemoved(val photoUri: String) : EditTeaIntent
+    data class PhotoSelected(val imageBytes: ByteArray) : EditTeaIntent
+    data class PhotoRemoved(val photoPath: String) : EditTeaIntent
+
+    // UI toggles
+    data object ToggleBrewingParams : EditTeaIntent
 
     // Actions
     data object SaveClicked : EditTeaIntent

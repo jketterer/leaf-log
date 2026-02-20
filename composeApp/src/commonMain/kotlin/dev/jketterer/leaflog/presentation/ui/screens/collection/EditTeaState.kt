@@ -15,8 +15,6 @@ data class EditTeaState(
     val origin: String = "",
     val producer: String = "",
     val purchaseDate: LocalDate? = null,
-    val purchasePrice: String = "",
-    val stockAmount: String = "",
     val defaultBrewingTime: Duration? = null,
     val defaultTemperatureCelsius: String = "",
     val defaultQuantity: String = "",
@@ -25,12 +23,11 @@ data class EditTeaState(
 
     // Available options
     val availableTeaTypes: List<TeaType> = emptyList(),
+    val availableProducers: List<String> = emptyList(),
 
     // Validation errors
     val nameError: String? = null,
     val teaTypeError: String? = null,
-    val purchasePriceError: String? = null,
-    val stockAmountError: String? = null,
     val temperatureError: String? = null,
     val quantityError: String? = null,
 
@@ -38,7 +35,8 @@ data class EditTeaState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val error: String? = null,
-    val showDiscardDialog: Boolean = false
+    val showDiscardDialog: Boolean = false,
+    val showBrewingParams: Boolean = false,
 ) {
     val hasChanges: Boolean
         get() = if (isEditMode && existingTea != null) {
@@ -47,8 +45,6 @@ data class EditTeaState(
                     origin != (existingTea.origin ?: "") ||
                     producer != (existingTea.producer ?: "") ||
                     purchaseDate != existingTea.purchaseDate ||
-                    purchasePrice != (existingTea.purchasePrice?.toString() ?: "") ||
-                    stockAmount != (existingTea.stockAmount?.toString() ?: "") ||
                     defaultTemperatureCelsius != (existingTea.defaultTemperatureCelsius?.toString()
                 ?: "") ||
                     defaultQuantity != (existingTea.defaultQuantity?.toString() ?: "") ||
@@ -60,8 +56,6 @@ data class EditTeaState(
                     origin.isNotBlank() ||
                     producer.isNotBlank() ||
                     purchaseDate != null ||
-                    purchasePrice.isNotBlank() ||
-                    stockAmount.isNotBlank() ||
                     defaultTemperatureCelsius.isNotBlank() ||
                     defaultQuantity.isNotBlank() ||
                     description.isNotBlank() ||
@@ -71,8 +65,6 @@ data class EditTeaState(
     val isValid: Boolean
         get() = nameError == null &&
                 teaTypeError == null &&
-                purchasePriceError == null &&
-                stockAmountError == null &&
                 temperatureError == null &&
                 quantityError == null &&
                 name.isNotBlank() &&

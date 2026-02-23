@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
+import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -33,6 +34,10 @@ actual fun platformModule() = module {
     // Platform-specific services
     single {
         TimerNotificationService()
+    }
+
+    single {
+        TimerLifecycleHandler()
     }
 
     // Image storage

@@ -8,6 +8,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
@@ -45,6 +48,21 @@ fun AppNavigation() {
         configuration = navSerializationConfig,
         elements = arrayOf(NavRoute.HomeRoute)
     )
+
+    // Handle deep links from notification taps
+    val pendingRoute by DeepLinkHandler.pendingRoute.collectAsState()
+    LaunchedEffect(pendingRoute) {
+        val route = pendingRoute ?: return@LaunchedEffect
+        // Ensure HomeRoute is at the bottom, then push the target route
+        if (backStack.none { it is NavRoute.HomeRoute }) {
+            backStack.add(0, NavRoute.HomeRoute)
+        }
+        // We don't need to push the route if it's already at the top of the stack
+        if (backStack.last() != route) {
+            backStack.add(route)
+        }
+        DeepLinkHandler.consume()
+    }
 
     Scaffold(
         bottomBar = {
@@ -316,7 +334,7 @@ fun AppNavigation() {
                             // Timer keeps running in background via TimerService
                             backStack.removeLast()
                         },
-                        onNavigateToNextSteep = { parentSessionId ->
+                        onNavigateToNextSteep = { _ ->
                             // do nothing?
                         },
                         onNavigateToComplete = { sessionId ->

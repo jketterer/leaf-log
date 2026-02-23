@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
+import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
@@ -37,6 +38,10 @@ actual fun platformModule(): Module = module {
     // Platform-specific services
     single {
         TimerNotificationService(context = get())
+    }
+
+    single {
+        TimerLifecycleHandler(context = get())
     }
 
     // Image storage

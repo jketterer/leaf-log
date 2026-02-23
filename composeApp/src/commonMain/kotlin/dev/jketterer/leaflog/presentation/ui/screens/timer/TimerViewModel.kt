@@ -307,7 +307,10 @@ class TimerViewModel(
                     // 2. Update TimerService with adjusted state
                     timerService.updateState(newState)
 
-                    // 3. Persist adjusted state so it survives process death
+                    // 3. Reschedule completion alarm for new duration
+                    timerService.onTimeAdjusted(newState)
+
+                    // 4. Persist adjusted state so it survives process death
                     saveTimerStateUseCase(newState)
                 }
                 .onFailure { e ->

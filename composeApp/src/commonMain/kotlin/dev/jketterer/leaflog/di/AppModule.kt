@@ -34,6 +34,7 @@ val appModule = module {
             coroutineScope = get(),
             notificationService = get(),
             saveTimerStateUseCase = get(),
+            lifecycleHandler = get(),
         )
     }
 

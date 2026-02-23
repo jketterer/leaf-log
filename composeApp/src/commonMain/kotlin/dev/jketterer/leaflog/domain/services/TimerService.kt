@@ -21,11 +21,13 @@ import kotlin.time.Duration
  * @param coroutineScope Application-level scope (survives ViewModels)
  * @param notificationService Platform-specific notification service
  * @param saveTimerStateUseCase Persists timer state to database (for completion while backgrounded)
+ * @param lifecycleHandler Platform bridge for foreground service / scheduled notifications
  */
 class TimerService(
     private val coroutineScope: CoroutineScope,
     private val notificationService: TimerNotificationService,
     private val saveTimerStateUseCase: SaveTimerStateUseCase,
+    private val lifecycleHandler: TimerLifecycleHandler,
 ) {
     private val _timerState = MutableStateFlow(TimerState())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
@@ -44,38 +46,48 @@ class TimerService(
      * Call this after use case has prepared the state.
      */
     fun startCountdown() {
+        val current = _timerState.value
+        lifecycleHandler.onTimerStarted()
+        notificationService.scheduleCompletionAlarm(
+            teaName = current.teaName,
+            remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
+            sessionId = current.sessionId,
+        )
+
+        timerJob?.cancel()
         var lastNotificationSecond = -1L
         timerJob = coroutineScope.launch {
             while (isActive) {
                 delay(100)  // Update every 100ms for smooth UI
 
-                val current = _timerState.value
-                if (current.status != TimerStatus.RUNNING || current.startedAt == null) {
+                val state = _timerState.value
+                if (state.status != TimerStatus.RUNNING || state.startedAt == null) {
                     break
                 }
 
                 // Calculate remaining time (simple coordination logic)
                 val now = Clock.System.now()
-                val elapsed = now - current.startedAt
-                val remaining = (current.totalDuration - elapsed).coerceAtLeast(Duration.ZERO)
+                val elapsed = now - state.startedAt
+                val remaining = (state.totalDuration - elapsed).coerceAtLeast(Duration.ZERO)
 
                 _timerState.update { it.copy(remainingDuration = remaining) }
 
                 // Trigger notification update every second
                 val currentSecond = elapsed.inWholeSeconds
                 if (currentSecond > lastNotificationSecond) {
-                    notificationService.showTimerRunning(current)
+                    notificationService.showTimerRunning(state)
                     lastNotificationSecond = currentSecond
                 }
 
                 // Check if timer completed
                 if (remaining == Duration.ZERO) {
-                    val completedState = current.copy(
+                    val completedState = state.copy(
                         status = TimerStatus.COMPLETE,
                         remainingDuration = Duration.ZERO,
                     )
                     _timerState.update { completedState }
-                    notificationService.showTimerComplete(current.teaName)
+                    lifecycleHandler.onTimerStopped()
+                    notificationService.showTimerComplete(state.teaName, state.sessionId)
                     // Persist completion so HomeScreen banner reflects correct state
                     // even if no ViewModel is active (e.g., app backgrounded)
                     saveTimerStateUseCase(completedState)
@@ -88,14 +100,29 @@ class TimerService(
     fun cancelCountdown() {
         timerJob?.cancel()
         timerJob = null
+        notificationService.cancelCompletionAlarm()
     }
 
     fun stop() {
         timerJob?.cancel()
         timerJob = null
+        lifecycleHandler.onTimerStopped()
+        notificationService.cancelCompletionAlarm()
         _timerState.value = TimerState()
+    }
+
+    /**
+     * Called after time adjustments to reschedule the completion alarm.
+     */
+    fun onTimeAdjusted(state: TimerState) {
+        if (state.status == TimerStatus.RUNNING) {
+            notificationService.scheduleCompletionAlarm(
+                teaName = state.teaName,
+                remainingSeconds = state.remainingDuration.inWholeMilliseconds / 1000.0,
+                sessionId = state.sessionId,
+            )
+        }
     }
 
     fun getCurrentState(): TimerState = _timerState.value
 }
-

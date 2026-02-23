@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.TimerState
 
 expect class TimerNotificationService {
     fun showTimerRunning(state: TimerState)
-    fun showTimerComplete(teaName: String)
-    fun cancelNotifications()
+    fun showTimerComplete(teaName: String, sessionId: String?)
+    fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?)
+    fun cancelCompletionAlarm()
 }

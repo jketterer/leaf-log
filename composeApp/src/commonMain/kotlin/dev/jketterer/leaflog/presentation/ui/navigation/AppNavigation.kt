@@ -125,6 +125,7 @@ fun AppNavigation() {
                     HistoryScreen(
                         showInProgressOnly = route.showInProgressOnly,
                         filterTeaTypeId = route.filterTeaTypeId,
+                        filterTeaId = route.filterTeaId,
                         filterDateStart = route.filterDateStart,
                         filterDateEnd = route.filterDateEnd,
                         onNavigateToSession = { sessionId ->
@@ -213,6 +214,9 @@ fun AppNavigation() {
                         },
                         onNavigateToTimer = { sessionId ->
                             backStack.add(NavRoute.TimerRoute(sessionId))
+                        },
+                        onNavigateToHistory = { teaId ->
+                            backStack.add(NavRoute.HistoryRoute(filterTeaId = teaId))
                         },
                     )
                 }

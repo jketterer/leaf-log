@@ -83,6 +83,7 @@ fun TeaDetailScreen(
     onNavigateToEditSession: (String) -> Unit = {},
     onNavigateToLogTea: (String, String?) -> Unit,
     onNavigateToTimer: (String) -> Unit,
+    onNavigateToHistory: (String) -> Unit,
     viewModel: TeaDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -116,6 +117,10 @@ fun TeaDetailScreen(
 
                 is TeaDetailNavigationEvent.NavigateToTimer -> {
                     onNavigateToTimer(event.sessionId)
+                }
+
+                is TeaDetailNavigationEvent.NavigateToHistory -> {
+                    onNavigateToHistory(event.teaId)
                 }
             }
         }
@@ -365,7 +370,7 @@ private fun TeaDetailContent(
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.Bold,
                                     )
-                                    TextButton(onClick = { /* TODO: View all sessions */ }) {
+                                    TextButton(onClick = { onIntent(TeaDetailIntent.ViewAllSessionsClicked) }) {
                                         Text("View All")
                                     }
                                 }

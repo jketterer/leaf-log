@@ -1,12 +1,15 @@
 package dev.jketterer.leaflog.presentation.ui.components.quicktimer
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -122,14 +124,28 @@ private fun QuickTimerDurationSheetContent(
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
         ) {
+            PresetButton(
+                text = "10s",
+                onClick = {
+                    onDurationChange(10.seconds)
+                    presetSyncKey++
+                },
+            )
+            PresetButton(
+                text = "15s",
+                onClick = {
+                    onDurationChange(15.seconds)
+                    presetSyncKey++
+                },
+            )
             PresetButton(
                 text = "30s",
                 onClick = {
                     onDurationChange(30.seconds)
                     presetSyncKey++
                 },
-                modifier = Modifier.weight(1f),
             )
             PresetButton(
                 text = "1m",
@@ -137,7 +153,6 @@ private fun QuickTimerDurationSheetContent(
                     onDurationChange(1.minutes)
                     presetSyncKey++
                 },
-                modifier = Modifier.weight(1f),
             )
             PresetButton(
                 text = "2m",
@@ -145,7 +160,6 @@ private fun QuickTimerDurationSheetContent(
                     onDurationChange(2.minutes)
                     presetSyncKey++
                 },
-                modifier = Modifier.weight(1f),
             )
             PresetButton(
                 text = "3m",
@@ -153,7 +167,6 @@ private fun QuickTimerDurationSheetContent(
                     onDurationChange(3.minutes)
                     presetSyncKey++
                 },
-                modifier = Modifier.weight(1f),
             )
             PresetButton(
                 text = "5m",
@@ -161,7 +174,6 @@ private fun QuickTimerDurationSheetContent(
                     onDurationChange(5.minutes)
                     presetSyncKey++
                 },
-                modifier = Modifier.weight(1f),
             )
         }
 
@@ -199,8 +211,9 @@ private fun PresetButton(
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
     ) {
-        Text(text)
+        Text(text, maxLines = 1, softWrap = false)
     }
 }
 

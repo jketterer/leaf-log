@@ -69,6 +69,7 @@ import kotlin.time.toDuration
 fun HistoryScreen(
     showInProgressOnly: Boolean = false,
     filterTeaTypeId: String? = null,
+    filterTeaId: String? = null,
     filterDateStart: String? = null,
     filterDateEnd: String? = null,
     onNavigateToSession: (String) -> Unit,
@@ -87,6 +88,12 @@ fun HistoryScreen(
     LaunchedEffect(filterTeaTypeId) {
         if (filterTeaTypeId != null) {
             viewModel.onIntent(HistoryIntent.FilterByTeaType(filterTeaTypeId))
+        }
+    }
+
+    LaunchedEffect(filterTeaId) {
+        if (filterTeaId != null) {
+            viewModel.onIntent(HistoryIntent.FilterByTea(filterTeaId))
         }
     }
 

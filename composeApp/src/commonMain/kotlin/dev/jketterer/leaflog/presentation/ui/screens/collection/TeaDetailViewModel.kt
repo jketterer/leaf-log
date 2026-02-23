@@ -73,6 +73,10 @@ class TeaDetailViewModel(
             is TeaDetailIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is TeaDetailIntent.EditSessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
             is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea(intent.vesselId))
+            is TeaDetailIntent.ViewAllSessionsClicked -> {
+                val teaId = _state.value.tea?.id ?: return
+                _navEvents.trySend(TeaDetailNavigationEvent.NavigateToHistory(teaId))
+            }
             is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
 
             is TeaDetailIntent.EditConfigurationClicked -> showEditConfigDialog(intent.configId)
@@ -280,4 +284,5 @@ sealed interface TeaDetailNavigationEvent {
     data class NavigateToLogTea(val vesselId: String? = null) : TeaDetailNavigationEvent
     data class NavigateToTimer(val sessionId: String) : TeaDetailNavigationEvent
     data object NavigateToEditTea : TeaDetailNavigationEvent
+    data class NavigateToHistory(val teaId: String) : TeaDetailNavigationEvent
 }

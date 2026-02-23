@@ -189,7 +189,11 @@ private fun SessionDetailContent(
                                 ) {
                                     Text(
                                         text = state.tea?.name ?: "Unknown Tea",
-                                        style = MaterialTheme.typography.headlineSmall
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = if (state.tea != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.clickable(enabled = state.tea != null) {
+                                            onIntent(SessionDetailIntent.ViewTeaClicked(state.tea!!.id))
+                                        },
                                     )
                                     Text(
                                         text = state.teaType?.name ?: "Unknown Type",

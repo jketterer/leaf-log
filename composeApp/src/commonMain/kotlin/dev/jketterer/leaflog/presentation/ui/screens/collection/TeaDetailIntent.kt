@@ -13,6 +13,7 @@ sealed interface TeaDetailIntent {
     data class SessionClicked(val sessionId: String) : TeaDetailIntent
     data class EditSessionClicked(val sessionId: String) : TeaDetailIntent
     data class BrewThisTeaClicked(val vesselId: String?) : TeaDetailIntent
+    data object ViewAllSessionsClicked : TeaDetailIntent
     data object BackClicked : TeaDetailIntent
 
     // Configuration management

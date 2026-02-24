@@ -442,6 +442,7 @@ private fun QuickTimerCompleteContent(
                 ) {
                     Text("Edit Brewing Details")
                 }
+
             } else {
                 // Add details button (primary action when no details)
                 Button(
@@ -450,14 +451,6 @@ private fun QuickTimerCompleteContent(
                 ) {
                     Text("Add Details to Save")
                 }
-            }
-
-            OutlinedButton(
-                onClick = { onIntent(QuickTimerIntent.ConfirmReset) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading,
-            ) {
-                Text("Start New Timer")
             }
 
             TextButton(

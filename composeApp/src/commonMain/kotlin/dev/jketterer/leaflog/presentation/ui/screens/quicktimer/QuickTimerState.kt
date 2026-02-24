@@ -52,6 +52,9 @@ data class QuickTimerState(
     val nextSteepTemperature: Int? = null,
     val nextSteepWaterQuantity: Int? = null,
 
+    // Auto-saved in-progress session (persisted when timer completes with required details)
+    val inProgressSession: TeaSession? = null,
+
     // Saved session (for configuration saving)
     val savedSession: TeaSession? = null,
 

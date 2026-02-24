@@ -10,7 +10,9 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
@@ -36,6 +38,8 @@ class QuickTimerViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
+    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val deleteSessionUseCase: DeleteSessionUseCase,
     private val addSteepUseCase: AddSteepUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
 ) : ViewModel() {
@@ -210,6 +214,7 @@ class QuickTimerViewModel(
     }
 
     private fun confirmReset() {
+        val sessionToDelete = _state.value.inProgressSession
         timerJob?.cancel()
         timerJob = null
         startedAt = null
@@ -219,7 +224,11 @@ class QuickTimerViewModel(
                 remainingDuration = total,
                 status = TimerStatus.NOT_STARTED,
                 showResetConfirmation = false,
+                inProgressSession = null,
             )
+        }
+        if (sessionToDelete != null) {
+            viewModelScope.launch { deleteSessionUseCase(sessionToDelete.id) }
         }
     }
 
@@ -244,6 +253,9 @@ class QuickTimerViewModel(
         // If timer is running or paused, show stop confirmation
         if (current.status == TimerStatus.RUNNING || current.status == TimerStatus.PAUSED) {
             showStopConfirmation()
+        } else if (current.status == TimerStatus.COMPLETE && current.inProgressSession != null) {
+            // Navigate to the persisted session so the user can complete it later
+            _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSession(current.inProgressSession.id))
         } else {
             _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
         }
@@ -274,9 +286,9 @@ class QuickTimerViewModel(
                             remainingDuration = Duration.ZERO,
                         )
                     }
-                    // If no details, show completion dialog
-                    if (!_state.value.hasRequiredDetails) {
-                        _state.update { it.copy(showCompletionDialog = true) }
+                    // Auto-save as IN_PROGRESS if we have the required details
+                    if (_state.value.hasRequiredDetails) {
+                        autoSaveCompleted()
                     }
                     break
                 }
@@ -300,6 +312,11 @@ class QuickTimerViewModel(
                 showDetailsSheet = false,
                 teaSearchQuery = "",
             )
+        }
+        // If the timer already completed and we now have details, auto-save
+        val current = _state.value
+        if (current.status == TimerStatus.COMPLETE && current.inProgressSession == null) {
+            autoSaveCompleted()
         }
     }
 
@@ -398,6 +415,46 @@ class QuickTimerViewModel(
     }
 
     // Completion methods
+    private fun autoSaveCompleted() {
+        val current = _state.value
+        if (current.inProgressSession != null) return
+        if (!current.hasRequiredDetails) return
+
+        val tea = current.selectedTea ?: return
+        val vessel = current.selectedVessel ?: return
+        val temperatureStr = current.temperatureCelsius.takeIf { it.isNotBlank() } ?: return
+        val waterQuantityStr = current.waterQuantityMl.takeIf { it.isNotBlank() } ?: return
+
+        viewModelScope.launch {
+            try {
+                val temperatureInUserUnit = temperatureStr.toIntOrNull() ?: return@launch
+                val temperatureCelsius = current.userPreferences.temperatureUnit
+                    .toCelsius(temperatureInUserUnit)
+
+                val waterQuantityInUserUnit = waterQuantityStr.toIntOrNull() ?: return@launch
+                val waterQuantityMl = current.userPreferences.volumeUnit
+                    .toMilliliters(waterQuantityInUserUnit)
+
+                val teaQuantityGrams = current.teaQuantityGrams.toFloatOrNull()
+
+                createSessionUseCase(
+                    teaId = tea.id,
+                    teaQuantityGrams = teaQuantityGrams,
+                    vesselId = vessel.id,
+                    waterType = current.waterType,
+                    brewingTime = current.totalDuration,
+                    temperatureCelsius = temperatureCelsius,
+                    waterQuantityMl = waterQuantityMl,
+                    status = SessionStatus.COMPLETED,
+                ).onSuccess { session ->
+                    _state.update { it.copy(inProgressSession = session) }
+                }
+            } catch (_: Exception) {
+                // Silent failure — user can still save manually from the complete screen
+            }
+        }
+    }
+
     private fun showCompletionDialog() {
         _state.update { it.copy(showCompletionDialog = true) }
     }
@@ -407,17 +464,57 @@ class QuickTimerViewModel(
     }
 
     private fun discardSession() {
+        val sessionToDelete = _state.value.inProgressSession
         timerJob?.cancel()
         timerJob = null
         startedAt = null
         _state.update { it.copy(showCompletionDialog = false) }
-        _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
+        if (sessionToDelete != null) {
+            viewModelScope.launch {
+                deleteSessionUseCase(sessionToDelete.id)
+                _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
+            }
+        } else {
+            _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
+        }
     }
 
     private fun saveSession() {
         val current = _state.value
+        val inProgressSession = current.inProgressSession
 
-        // Validate required fields
+        if (inProgressSession != null) {
+            // Session already saved as COMPLETED — add rating/notes and refresh stats
+            viewModelScope.launch {
+                _state.update { it.copy(isLoading = true, error = null) }
+
+                completeSessionUseCase(
+                    session = inProgressSession,
+                    rating = current.rating,
+                    finalNotes = current.notes.takeIf { it.isNotBlank() },
+                ).fold(
+                    onSuccess = { session ->
+                        _state.update { it.copy(isLoading = false, savedSession = session) }
+                        if (session.rating != null && session.rating >= 5f) {
+                            _state.update { it.copy(showSaveConfigurationDialog = true) }
+                        } else {
+                            _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSession(session.id))
+                        }
+                    },
+                    onFailure = { error ->
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                error = error.message ?: "Failed to save session",
+                            )
+                        }
+                    },
+                )
+            }
+            return
+        }
+
+        // Validate required fields for new session creation
         val tea = current.selectedTea ?: return
         val vessel = current.selectedVessel ?: return
         val temperatureStr = current.temperatureCelsius.takeIf { it.isNotBlank() } ?: return
@@ -487,6 +584,34 @@ class QuickTimerViewModel(
 
     private fun continueToNextSteep() {
         val current = _state.value
+        val inProgressSession = current.inProgressSession
+
+        if (inProgressSession != null) {
+            // Reuse the already-persisted session as the parent
+            viewModelScope.launch {
+                _state.update { it.copy(isLoading = true, error = null) }
+                addSteepUseCase(
+                    parentSession = inProgressSession,
+                    brewingTime = inProgressSession.brewingTime,
+                    temperatureCelsius = inProgressSession.temperatureCelsius,
+                    waterQuantityMl = inProgressSession.waterQuantityMl,
+                ).fold(
+                    onSuccess = { nextSteep ->
+                        _state.update { it.copy(isLoading = false) }
+                        _navigationEvents.trySend(QuickTimerNavEvent.NavigateToTimer(nextSteep.id))
+                    },
+                    onFailure = { error ->
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                error = error.message ?: "Failed to create next steep",
+                            )
+                        }
+                    },
+                )
+            }
+            return
+        }
 
         val tea = current.selectedTea ?: return
         val vessel = current.selectedVessel ?: return

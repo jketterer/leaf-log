@@ -14,10 +14,6 @@ class CompleteSessionUseCase(
         rating: Float? = null,
         finalNotes: String? = null
     ): Result<TeaSession> {
-        if (session.status == SessionStatus.COMPLETED) {
-            return Result.failure(IllegalStateException("Session is already completed"))
-        }
-
         if (rating != null && (rating !in 0f..5f)) {
             return Result.failure(IllegalArgumentException("Rating must be between 0 and 5"))
         }

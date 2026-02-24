@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
@@ -19,6 +20,7 @@ actual class PreferencesDataStore(private val context: Context) {
     companion object {
         val TEMPERATURE_UNIT_KEY = stringPreferencesKey("temperature_unit")
         val VOLUME_UNIT_KEY = stringPreferencesKey("volume_unit")
+        val TEA_SORT_OPTION_KEY = stringPreferencesKey("tea_sort_option")
     }
 
     actual fun getPreferencesFlow(): Flow<UserPreferences> {
@@ -37,7 +39,14 @@ actual class PreferencesDataStore(private val context: Context) {
                     } catch (e: IllegalArgumentException) {
                         VolumeUnit.MILLILITERS
                     }
-                } ?: VolumeUnit.MILLILITERS
+                } ?: VolumeUnit.MILLILITERS,
+                teaSortOption = prefs[TEA_SORT_OPTION_KEY]?.let {
+                    try {
+                        TeaSortOption.valueOf(it)
+                    } catch (e: IllegalArgumentException) {
+                        TeaSortOption.NAME_ASC
+                    }
+                } ?: TeaSortOption.NAME_ASC,
             )
         }
     }
@@ -51,6 +60,12 @@ actual class PreferencesDataStore(private val context: Context) {
     actual suspend fun updateVolumeUnit(unit: VolumeUnit) {
         context.dataStore.edit { prefs ->
             prefs[VOLUME_UNIT_KEY] = unit.name
+        }
+    }
+
+    actual suspend fun updateTeaSortOption(option: TeaSortOption) {
+        context.dataStore.edit { prefs ->
+            prefs[TEA_SORT_OPTION_KEY] = option.name
         }
     }
 }

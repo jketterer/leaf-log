@@ -10,13 +10,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,8 +34,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Check
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Search
+import compose.icons.feathericons.Sliders
+import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaFilterChips
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
@@ -77,6 +82,7 @@ private fun TeaCollectionContent(
     onNavigateToAddVessel: () -> Unit,
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -104,10 +110,40 @@ private fun TeaCollectionContent(
                     title = { Text("Collection") },
                     actions = {
                         if (state.selectedTab == CollectionTab.TEAS) {
+                            Box {
+                                IconButton(onClick = { showSortMenu = true }) {
+                                    Icon(
+                                        imageVector = FeatherIcons.Sliders,
+                                        contentDescription = "Sort teas",
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = showSortMenu,
+                                    onDismissRequest = { showSortMenu = false },
+                                ) {
+                                    TeaSortOption.entries.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option.label) },
+                                            onClick = {
+                                                onIntent(TeaCollectionIntent.SortSelected(option))
+                                                showSortMenu = false
+                                            },
+                                            trailingIcon = if (state.selectedSortOption == option) {
+                                                {
+                                                    Icon(
+                                                        imageVector = FeatherIcons.Check,
+                                                        contentDescription = null,
+                                                    )
+                                                }
+                                            } else null,
+                                        )
+                                    }
+                                }
+                            }
                             IconButton(onClick = { showSearchBar = true }) {
                                 Icon(
                                     imageVector = FeatherIcons.Search,
-                                    contentDescription = "Search teas"
+                                    contentDescription = "Search teas",
                                 )
                             }
                         }

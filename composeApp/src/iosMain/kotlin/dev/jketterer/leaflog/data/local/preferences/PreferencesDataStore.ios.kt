@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.local.preferences
 
+import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
@@ -16,6 +17,7 @@ actual class PreferencesDataStore {
     companion object {
         private const val TEMPERATURE_UNIT_KEY = "temperature_unit"
         private const val VOLUME_UNIT_KEY = "volume_unit"
+        private const val TEA_SORT_OPTION_KEY = "tea_sort_option"
     }
 
     private val _preferencesFlow = MutableStateFlow(loadPreferences())
@@ -36,9 +38,16 @@ actual class PreferencesDataStore {
         _preferencesFlow.update { it.copy(volumeUnit = unit) }
     }
 
+    actual suspend fun updateTeaSortOption(option: TeaSortOption) {
+        userDefaults.setObject(option.name, TEA_SORT_OPTION_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(teaSortOption = option) }
+    }
+
     private fun loadPreferences(): UserPreferences {
         val temperatureUnitString = userDefaults.stringForKey(TEMPERATURE_UNIT_KEY)
         val volumeUnitString = userDefaults.stringForKey(VOLUME_UNIT_KEY)
+        val teaSortOptionString = userDefaults.stringForKey(TEA_SORT_OPTION_KEY)
 
         return UserPreferences(
             temperatureUnit = temperatureUnitString?.let {
@@ -54,7 +63,14 @@ actual class PreferencesDataStore {
                 } catch (e: IllegalArgumentException) {
                     VolumeUnit.MILLILITERS
                 }
-            } ?: VolumeUnit.MILLILITERS
+            } ?: VolumeUnit.MILLILITERS,
+            teaSortOption = teaSortOptionString?.let {
+                try {
+                    TeaSortOption.valueOf(it)
+                } catch (e: IllegalArgumentException) {
+                    TeaSortOption.NAME_ASC
+                }
+            } ?: TeaSortOption.NAME_ASC,
         )
     }
 }

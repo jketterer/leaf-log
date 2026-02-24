@@ -3,6 +3,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TeaSortOption
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
@@ -20,13 +22,18 @@ class TeaCollectionViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val searchTeaUseCase: SearchTeasUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaCollectionState())
     val state: StateFlow<TeaCollectionState> = _state.asStateFlow()
 
     init {
-        onIntent(TeaCollectionIntent.LoadData)
+        viewModelScope.launch {
+            val prefs = preferencesRepository.getPreferences()
+            _state.update { it.copy(selectedSortOption = prefs.teaSortOption) }
+            onIntent(TeaCollectionIntent.LoadData)
+        }
     }
 
     fun onIntent(intent: TeaCollectionIntent) {
@@ -50,6 +57,7 @@ class TeaCollectionViewModel(
                 // navigation handled by UI
             }
 
+            is TeaCollectionIntent.SortSelected -> selectSort(intent.option)
             is TeaCollectionIntent.ClearError -> clearError()
         }
     }
@@ -89,9 +97,10 @@ class TeaCollectionViewModel(
         teasFlow
             .catchError("Failed to load teas")
             .collect { teas ->
+                val sorted = sortTeas(teas, _state.value.selectedSortOption)
                 _state.update {
                     it.copy(
-                        teas = teas,
+                        teas = sorted,
                         isLoading = false,
                         isEmpty = teas.isEmpty(),
                     )
@@ -127,9 +136,10 @@ class TeaCollectionViewModel(
         viewModelScope.launch {
             try {
                 val results = searchTeaUseCase(query)
+                val sorted = sortTeas(results, _state.value.selectedSortOption)
                 _state.update {
                     it.copy(
-                        teas = results,
+                        teas = sorted,
                         isEmpty = results.isEmpty(),
                     )
                 }
@@ -150,6 +160,28 @@ class TeaCollectionViewModel(
 
     private fun selectTab(tab: CollectionTab) {
         _state.update { it.copy(selectedTab = tab) }
+    }
+
+    private fun selectSort(option: TeaSortOption) {
+        _state.update {
+            it.copy(
+                selectedSortOption = option,
+                teas = sortTeas(it.teas, option),
+            )
+        }
+        viewModelScope.launch {
+            preferencesRepository.updateTeaSortOption(option)
+        }
+    }
+
+    private fun sortTeas(teas: List<Tea>, option: TeaSortOption): List<Tea> {
+        return when (option) {
+            TeaSortOption.NAME_ASC -> teas.sortedBy { it.name.lowercase() }
+            TeaSortOption.RATING_DESC -> teas.sortedByDescending { it.averageRating }
+            TeaSortOption.TIMES_BREWED_DESC -> teas.sortedByDescending { it.totalSessions }
+            TeaSortOption.MOST_RECENT -> teas.sortedByDescending { it.lastBrewedAt }
+            TeaSortOption.OLDEST -> teas.sortedBy { it.createdAt }
+        }
     }
 
     private fun clearError() {

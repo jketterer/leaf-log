@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TeaSortOption
 
 sealed interface TeaCollectionIntent {
     data object LoadData : TeaCollectionIntent
@@ -12,5 +13,6 @@ sealed interface TeaCollectionIntent {
     data class ToggleFavorite(val tea: Tea) : TeaCollectionIntent
     data class TabSelected(val tab: CollectionTab) : TeaCollectionIntent
     data object AddTeaClicked : TeaCollectionIntent
+    data class SortSelected(val option: TeaSortOption) : TeaCollectionIntent
     data object ClearError : TeaCollectionIntent
 }

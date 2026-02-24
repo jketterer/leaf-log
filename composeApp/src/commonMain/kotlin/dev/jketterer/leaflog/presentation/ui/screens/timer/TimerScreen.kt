@@ -151,7 +151,7 @@ private fun TimerContent(
                         }
                         DropdownMenu(
                             expanded = showOverflowMenu,
-                            onDismissRequest = { showOverflowMenu = false },
+                            onDismissRequest = { },
                         ) {
                             DropdownMenuItem(
                                 text = {
@@ -161,7 +161,6 @@ private fun TimerContent(
                                     )
                                 },
                                 onClick = {
-                                    showOverflowMenu = false
                                     onIntent(TimerIntent.DiscardSession)
                                 },
                                 leadingIcon = {
@@ -329,7 +328,7 @@ private fun TimerRunningContent(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tea name and steep number
+        // Tea name, vessel name, and steep number
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -339,6 +338,13 @@ private fun TimerRunningContent(
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
+            if (state.vessel != null) {
+                Text(
+                    text = state.vessel.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             if (state.session != null && state.session.steepNumber > 1) {
                 Text(
                     text = "Steep ${state.session.steepNumber}",
@@ -382,7 +388,7 @@ private fun TimerRunningContent(
                             state.session.waterQuantityMl,
                             state.userPreferences.volumeUnit
                         )
-                    }",
+                    } • ${state.session.waterType.displayName}",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

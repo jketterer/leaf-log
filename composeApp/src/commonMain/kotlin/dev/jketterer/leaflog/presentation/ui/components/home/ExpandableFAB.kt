@@ -38,6 +38,7 @@ fun ExpandableFAB(
     onExpandedChange: (Boolean) -> Unit,
     onLogSessionClick: () -> Unit,
     onQuickTimerClick: () -> Unit,
+    visible: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val rotation by animateFloatAsState(
@@ -45,86 +46,90 @@ fun ExpandableFAB(
         label = "fab_rotation",
     )
 
-    Column(
+    AnimatedVisibility(
+        visible = visible,
         modifier = modifier,
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Menu items (shown when expanded)
-        AnimatedVisibility(
-            visible = expanded,
-            enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
-            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+            // Menu items (shown when expanded)
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
+                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
             ) {
-                // Quick Timer option
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = "Quick Timer",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .padding(vertical = 8.dp, horizontal = 12.dp),
-                    )
-                    SmallFloatingActionButton(
-                        onClick = {
-                            onExpandedChange(false)
-                            onQuickTimerClick()
-                        },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    // Quick Timer option
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            imageVector = FeatherIcons.Clock,
-                            contentDescription = "Quick Timer",
+                        Text(
+                            text = "Quick Timer",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .padding(vertical = 8.dp, horizontal = 12.dp),
                         )
+                        SmallFloatingActionButton(
+                            onClick = {
+                                onExpandedChange(false)
+                                onQuickTimerClick()
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ) {
+                            Icon(
+                                imageVector = FeatherIcons.Clock,
+                                contentDescription = "Quick Timer",
+                            )
+                        }
                     }
-                }
 
-                // Log Session option
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = "Log Session",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .padding(vertical = 8.dp, horizontal = 12.dp),
-                    )
-                    SmallFloatingActionButton(
-                        onClick = {
-                            onExpandedChange(false)
-                            onLogSessionClick()
-                        },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    // Log Session option
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            imageVector = FeatherIcons.Edit,
-                            contentDescription = "Log Session",
+                        Text(
+                            text = "Log Session",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .padding(vertical = 8.dp, horizontal = 12.dp),
                         )
+                        SmallFloatingActionButton(
+                            onClick = {
+                                onExpandedChange(false)
+                                onLogSessionClick()
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ) {
+                            Icon(
+                                imageVector = FeatherIcons.Edit,
+                                contentDescription = "Log Session",
+                            )
+                        }
                     }
                 }
             }
-        }
 
-        // Main FAB
-        FloatingActionButton(
-            onClick = { onExpandedChange(!expanded) },
-        ) {
-            Icon(
-                imageVector = if (expanded) FeatherIcons.X else FeatherIcons.Plus,
-                contentDescription = if (expanded) "Close menu" else "Open menu",
-                modifier = Modifier.rotate(rotation),
-            )
+            // Main FAB
+            FloatingActionButton(
+                onClick = { onExpandedChange(!expanded) },
+            ) {
+                Icon(
+                    imageVector = if (expanded) FeatherIcons.X else FeatherIcons.Plus,
+                    contentDescription = if (expanded) "Close menu" else "Open menu",
+                    modifier = Modifier.rotate(rotation),
+                )
+            }
         }
     }
 }

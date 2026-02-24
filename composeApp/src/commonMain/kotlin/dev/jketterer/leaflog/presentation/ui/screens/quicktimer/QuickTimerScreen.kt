@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.Edit
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDetailsSheet
@@ -101,6 +104,13 @@ private fun QuickTimerContent(
                 navigationIcon = {
                     IconButton(onClick = { onIntent(QuickTimerIntent.BackClicked) }) {
                         Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (state.hasRequiredDetails) {
+                        IconButton(onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) }) {
+                            Icon(FeatherIcons.Edit, contentDescription = "Edit brewing details")
+                        }
                     }
                 },
             )
@@ -281,7 +291,7 @@ private fun QuickTimerRunningContent(
         )
 
         // Quick adjustment buttons
-        if (state.isRunning) {
+        if (state.isRunning || state.isPaused) {
             QuickAdjustButtons(
                 onAdjust = { adjustment ->
                     onIntent(QuickTimerIntent.AdjustTime(adjustment))
@@ -297,17 +307,6 @@ private fun QuickTimerRunningContent(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Add Tea & Brewing Details")
-            }
-        } else if (state.hasRequiredDetails && (state.isRunning || state.isPaused)) {
-            // Show summary of selected details
-            TextButton(
-                onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
-            ) {
-                Text(
-                    text = "Edit: ${state.selectedTea?.name} \u2022 ${state.temperatureCelsius}${state.userPreferences.temperatureUnit.symbol} \u2022 ${state.waterQuantityMl}${state.userPreferences.volumeUnit.symbol}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
 
@@ -331,134 +330,151 @@ private fun QuickTimerCompleteContent(
     onIntent: (QuickTimerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    LazyColumn(
         modifier = modifier.padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Completion indicator
-        Text(
-            text = "\u2713",
-            style = MaterialTheme.typography.displayLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        item {
+            Text(
+                text = "\u2713",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
 
-        Text(
-            text = "Timer Complete!",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        item {
+            Text(
+                text = "Timer Complete!",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
 
         if (state.selectedTea != null) {
-            Text(
-                text = state.selectedTea.name,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            item {
+                Text(
+                    text = state.selectedTea.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         // Show details status
         if (!state.hasRequiredDetails) {
-            Text(
-                text = "Add details to save this session",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            item {
+                Text(
+                    text = "Add details to save this session",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         // Rating section (only show when details are filled)
         if (state.hasRequiredDetails) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "How was this session?",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                RatingSelector(
-                    rating = state.rating ?: 0f,
-                    onRatingChange = { rating ->
-                        onIntent(QuickTimerIntent.RatingChanged(rating.takeIf { it > 0f }))
-                    },
+            item {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                )
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = "How was it?",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    RatingSelector(
+                        rating = state.rating ?: 0f,
+                        onRatingChange = { rating ->
+                            onIntent(QuickTimerIntent.RatingChanged(rating.takeIf { it > 0f }))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
 
             // Notes field
-            OutlinedTextField(
-                value = state.notes,
-                onValueChange = { onIntent(QuickTimerIntent.NotesChanged(it)) },
-                label = { Text("Notes (optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                maxLines = 4,
-            )
+            item {
+                OutlinedTextField(
+                    value = state.notes,
+                    onValueChange = { onIntent(QuickTimerIntent.NotesChanged(it)) },
+                    label = { Text("Notes (optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 4,
+                )
+            }
         }
 
         // Error message
         state.error?.let { error ->
-            Text(
-                text = error,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
+            item {
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
         // Action buttons
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (state.hasRequiredDetails) {
-                // Save session button (primary action when details are filled)
-                Button(
-                    onClick = { onIntent(QuickTimerIntent.SaveSession) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
-                ) {
-                    Text(if (state.isLoading) "Saving..." else "Save Session")
-                }
-
-                // Continue to next steep
-                OutlinedButton(
-                    onClick = { onIntent(QuickTimerIntent.ContinueToNextSteep) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
-                ) {
-                    Text("Continue to Steep 2")
-                }
-
-                // Edit details option
-                TextButton(
-                    onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
-                ) {
-                    Text("Edit Brewing Details")
-                }
-
-            } else {
-                // Add details button (primary action when no details)
-                Button(
-                    onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Add Details to Save")
-                }
-            }
-
-            TextButton(
-                onClick = { onIntent(QuickTimerIntent.DiscardSession) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.isLoading,
+        item {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text("Discard & Exit")
+                if (state.hasRequiredDetails) {
+                    // Save session button (primary action when details are filled)
+                    Button(
+                        onClick = { onIntent(QuickTimerIntent.SaveSession) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.isLoading,
+                    ) {
+                        Text(if (state.isLoading) "Saving..." else "Save Session")
+                    }
+
+                    // Continue to next steep
+                    OutlinedButton(
+                        onClick = { onIntent(QuickTimerIntent.ContinueToNextSteep) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.isLoading,
+                    ) {
+                        Text("Continue to Steep 2")
+                    }
+
+                    // Edit details option
+                    TextButton(
+                        onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !state.isLoading,
+                    ) {
+                        Text("Edit Brewing Details")
+                    }
+
+                } else {
+                    // Add details button (primary action when no details)
+                    Button(
+                        onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Add Details to Save")
+                    }
+                }
+
+                TextButton(
+                    onClick = { onIntent(QuickTimerIntent.DiscardSession) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("Discard & Exit")
+                }
             }
         }
     }

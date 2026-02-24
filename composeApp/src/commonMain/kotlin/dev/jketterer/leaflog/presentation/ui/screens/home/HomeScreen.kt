@@ -297,6 +297,7 @@ private fun HomeContent(
             onExpandedChange = { onIntent(HomeIntent.FabExpandedChanged(it)) },
             onLogSessionClick = { onIntent(HomeIntent.LogTeaClicked) },
             onQuickTimerClick = { onIntent(HomeIntent.QuickTimerClicked) },
+            visible = state.inProgressSessionsCount == 0,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),

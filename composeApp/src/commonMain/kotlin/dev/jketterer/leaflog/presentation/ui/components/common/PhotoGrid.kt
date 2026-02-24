@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -94,6 +95,7 @@ fun PhotoGrid(
                     scope.launch { onAddPhoto(file.readBytes()) }
                 },
                 text = if (photos.isEmpty()) "Add Photo" else "Add Another Photo",
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

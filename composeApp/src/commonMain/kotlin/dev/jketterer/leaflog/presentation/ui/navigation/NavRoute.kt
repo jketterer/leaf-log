@@ -71,4 +71,7 @@ sealed interface NavRoute : NavKey {
 
     @Serializable
     data class EditTeaTypeRoute(val teaTypeId: String? = null) : NavRoute
+
+    @Serializable
+    data class CreateBrewingConfigurationRoute(val teaId: String) : NavRoute
 }

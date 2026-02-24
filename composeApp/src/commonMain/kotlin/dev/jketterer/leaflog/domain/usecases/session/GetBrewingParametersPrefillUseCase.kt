@@ -46,11 +46,15 @@ class GetBrewingParametersPrefillUseCase(
                 temperatureCelsius = savedConfig.temperatureCelsius,
                 brewingTime = savedConfig.brewingTime,
                 waterType = savedConfig.waterType,
-                source = PrefillSource.DirectSession(
-                    sessionId = savedConfig.sourceSessionId,
-                    rating = savedConfig.rating,
-                    timestamp = savedConfig.lastUsedAt ?: savedConfig.createdAt,
-                )
+                source = if (savedConfig.sourceSessionId != null && savedConfig.rating != null) {
+                    PrefillSource.DirectSession(
+                        sessionId = savedConfig.sourceSessionId,
+                        rating = savedConfig.rating,
+                        timestamp = savedConfig.lastUsedAt ?: savedConfig.createdAt,
+                    )
+                } else {
+                    PrefillSource.TeaDefaults
+                }
             )
         }
 

@@ -30,4 +30,6 @@ sealed interface TeaDetailIntent {
     ) : TeaDetailIntent
 
     data object DismissEditConfigDialog : TeaDetailIntent
+
+    data object AddConfigurationClicked : TeaDetailIntent
 }

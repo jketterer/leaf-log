@@ -84,6 +84,7 @@ fun TeaDetailScreen(
     onNavigateToLogTea: (String, String?) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: (String) -> Unit,
+    onNavigateToCreateConfig: (String) -> Unit,
     viewModel: TeaDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -121,6 +122,10 @@ fun TeaDetailScreen(
 
                 is TeaDetailNavigationEvent.NavigateToHistory -> {
                     onNavigateToHistory(event.teaId)
+                }
+
+                is TeaDetailNavigationEvent.NavigateToCreateConfig -> {
+                    onNavigateToCreateConfig(event.teaId)
                 }
             }
         }
@@ -335,26 +340,21 @@ private fun TeaDetailContent(
                         }
 
                         // Saved brewing methods
-                        if (state.configurations.isNotEmpty()) {
-                            item(key = "saved_methods") {
-                                SavedMethodsSection(
-                                    configurations = state.configurations,
-                                    getVesselName = { vesselId ->
-                                        state.vessels.find { it.id == vesselId }?.name ?: "Unknown"
-                                    },
-                                    userPreferences = state.userPreferences,
-                                    onEdit = { configId ->
-                                        onIntent(TeaDetailIntent.EditConfigurationClicked(configId))
-                                    },
-                                    onDelete = { configId ->
-                                        onIntent(TeaDetailIntent.DeleteConfigurationClicked(configId))
-                                    }
-                                )
-                            }
-
-                            item(key = "methods_divider") {
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
+                        item(key = "saved_methods") {
+                            SavedMethodsSection(
+                                configurations = state.configurations,
+                                getVesselName = { vesselId ->
+                                    state.vessels.find { it.id == vesselId }?.name ?: "Unknown"
+                                },
+                                userPreferences = state.userPreferences,
+                                onAdd = { onIntent(TeaDetailIntent.AddConfigurationClicked) },
+                                onEdit = { configId ->
+                                    onIntent(TeaDetailIntent.EditConfigurationClicked(configId))
+                                },
+                                onDelete = { configId ->
+                                    onIntent(TeaDetailIntent.DeleteConfigurationClicked(configId))
+                                },
+                            )
                         }
 
                         // Recent sessions

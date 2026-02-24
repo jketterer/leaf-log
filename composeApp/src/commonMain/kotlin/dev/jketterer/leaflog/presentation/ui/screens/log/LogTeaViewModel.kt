@@ -289,11 +289,15 @@ class LogTeaViewModel(
                             brewingTime = config.brewingTime,
                             selectedWaterType = config.waterType,
                             usedConfigurationId = configurationId,
-                            prefillSource = PrefillSource.DirectSession(
-                                sessionId = config.sourceSessionId,
-                                rating = config.rating,
-                                timestamp = config.lastUsedAt ?: config.createdAt
-                            )
+                            prefillSource = if (config.sourceSessionId != null && config.rating != null) {
+                                PrefillSource.DirectSession(
+                                    sessionId = config.sourceSessionId,
+                                    rating = config.rating,
+                                    timestamp = config.lastUsedAt ?: config.createdAt,
+                                )
+                            } else {
+                                PrefillSource.TeaDefaults
+                            }
                         )
                     }
 

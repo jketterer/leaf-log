@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.data.ExportDataUseCase
 import dev.jketterer.leaflog.domain.usecases.data.ImportDataUseCase
@@ -97,6 +98,7 @@ val useCaseModule = module {
     // Brewing configuration use cases
     factoryOf(::GenerateConfigurationLabelUseCase)
     factoryOf(::SaveBrewingConfigurationUseCase)
+    factoryOf(::CreateBrewingConfigurationUseCase)
     factoryOf(::UpdateBrewingConfigurationUseCase)
     factoryOf(::DeleteBrewingConfigurationUseCase)
 }

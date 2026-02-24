@@ -83,6 +83,11 @@ class TeaDetailViewModel(
             is TeaDetailIntent.DeleteConfigurationClicked -> deleteConfiguration(intent.configId)
             is TeaDetailIntent.SaveConfigurationChanges -> saveConfigurationChanges(intent)
             is TeaDetailIntent.DismissEditConfigDialog -> dismissEditConfigDialog()
+
+            is TeaDetailIntent.AddConfigurationClicked -> {
+                val teaId = _state.value.tea?.id ?: return
+                _navEvents.trySend(TeaDetailNavigationEvent.NavigateToCreateConfig(teaId))
+            }
         }
     }
 
@@ -285,4 +290,5 @@ sealed interface TeaDetailNavigationEvent {
     data class NavigateToTimer(val sessionId: String) : TeaDetailNavigationEvent
     data object NavigateToEditTea : TeaDetailNavigationEvent
     data class NavigateToHistory(val teaId: String) : TeaDetailNavigationEvent
+    data class NavigateToCreateConfig(val teaId: String) : TeaDetailNavigationEvent
 }

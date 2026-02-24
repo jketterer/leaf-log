@@ -62,9 +62,9 @@ data class BrewingConfigurationEntity(
 
     // Metadata
     @ColumnInfo(name = "source_session_id")
-    val sourceSessionId: String, // Session this was learned from
+    val sourceSessionId: String?, // Session this was learned from (null for manually created)
 
-    val rating: Float, // Rating of that session
+    val rating: Float?, // Rating of that session (null for manually created)
 
     @ColumnInfo(name = "times_used")
     val timesUsed: Int, // How often user has used this config

@@ -19,8 +19,8 @@ data class BrewingConfiguration(
     val waterType: WaterType,
 
     // Metadata
-    val sourceSessionId: String, // Session this was learned from
-    val rating: Float, // Rating of that session
+    val sourceSessionId: String?, // Session this was learned from (null for manually created)
+    val rating: Float?, // Rating of that session (null for manually created)
     val timesUsed: Int, // How often user has used this config
     val lastUsedAt: Instant?, // Last time this config was used
 

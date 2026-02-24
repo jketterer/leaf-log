@@ -11,6 +11,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.home.HomeViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.configuration.CreateBrewingConfigurationViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListViewModel
@@ -41,6 +42,7 @@ val appModule = module {
     viewModelOf(::TeaCollectionViewModel)
     viewModelOf(::TeaDetailViewModel)
     viewModelOf(::EditTeaViewModel)
+    viewModelOf(::CreateBrewingConfigurationViewModel)
 
     viewModelOf(::VesselListViewModel)
     viewModelOf(::VesselDetailViewModel)

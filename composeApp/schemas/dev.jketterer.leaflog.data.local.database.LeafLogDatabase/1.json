@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ea42468a529962bed34db7a02b222bbd",
+    "identityHash": "fc7d3a5cdae2a00efe0ccea670d318cb",
     "entities": [
       {
         "tableName": "tea",
@@ -696,7 +696,7 @@
       },
       {
         "tableName": "brewing_configurations",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `tea_id` TEXT NOT NULL, `vessel_id` TEXT NOT NULL, `tea_quantity_grams` REAL, `water_quantity_ml` REAL NOT NULL, `temperature_celsius` REAL NOT NULL, `brewing_time` INTEGER NOT NULL, `water_type` TEXT NOT NULL, `source_session_id` TEXT NOT NULL, `rating` REAL NOT NULL, `times_used` INTEGER NOT NULL, `last_used_at` INTEGER, `label` TEXT, `is_active` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tea_id`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vessel_id`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `tea_id` TEXT NOT NULL, `vessel_id` TEXT NOT NULL, `tea_quantity_grams` REAL, `water_quantity_ml` REAL NOT NULL, `temperature_celsius` REAL NOT NULL, `brewing_time` INTEGER NOT NULL, `water_type` TEXT NOT NULL, `source_session_id` TEXT, `rating` REAL, `times_used` INTEGER NOT NULL, `last_used_at` INTEGER, `label` TEXT, `is_active` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tea_id`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`vessel_id`) REFERENCES `brewing_vessel`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -748,14 +748,12 @@
           {
             "fieldPath": "sourceSessionId",
             "columnName": "source_session_id",
-            "affinity": "TEXT",
-            "notNull": true
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "rating",
             "columnName": "rating",
-            "affinity": "REAL",
-            "notNull": true
+            "affinity": "REAL"
           },
           {
             "fieldPath": "timesUsed",
@@ -883,7 +881,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ea42468a529962bed34db7a02b222bbd')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fc7d3a5cdae2a00efe0ccea670d318cb')"
     ]
   }
 }

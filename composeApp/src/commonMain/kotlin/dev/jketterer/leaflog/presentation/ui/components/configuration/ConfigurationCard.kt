@@ -75,7 +75,9 @@ fun ConfigurationCard(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                     )
-                    RatingDisplay(configuration.rating, iconsOnly = true)
+                    if (configuration.rating != null) {
+                        RatingDisplay(configuration.rating, iconsOnly = true)
+                    }
                 }
 
                 Row {

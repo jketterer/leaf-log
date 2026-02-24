@@ -24,6 +24,7 @@ import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Home
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
+import dev.jketterer.leaflog.presentation.ui.screens.configuration.CreateBrewingConfigurationScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.EditSessionScreen
@@ -236,6 +237,16 @@ fun AppNavigation() {
                         onNavigateToHistory = { teaId ->
                             backStack.add(NavRoute.HistoryRoute(filterTeaId = teaId))
                         },
+                        onNavigateToCreateConfig = { teaId ->
+                            backStack.add(NavRoute.CreateBrewingConfigurationRoute(teaId))
+                        },
+                    )
+                }
+
+                entry<NavRoute.CreateBrewingConfigurationRoute> { route ->
+                    CreateBrewingConfigurationScreen(
+                        teaId = route.teaId,
+                        onNavigateBack = { backStack.removeLast() },
                     )
                 }
 

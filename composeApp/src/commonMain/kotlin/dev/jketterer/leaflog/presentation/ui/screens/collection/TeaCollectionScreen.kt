@@ -247,13 +247,14 @@ private fun TeasTabContent(
                     TeaCard(
                         tea = tea,
                         teaTypeName = teaType?.name ?: "Unknown",
+                        teaTypeColorHex = teaType?.colorHex,
                         onTeaClick = {
                             onIntent(TeaCollectionIntent.TeaClicked(tea.id))
                             onNavigateToTeaDetail(tea.id)
                         },
                         onFavoriteClick = {
                             onIntent(TeaCollectionIntent.ToggleFavorite(tea))
-                        }
+                        },
                     )
                 }
             }

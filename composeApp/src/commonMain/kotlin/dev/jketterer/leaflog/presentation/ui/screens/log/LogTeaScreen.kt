@@ -5,16 +5,12 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,8 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,7 +47,6 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.ChevronUp
 import compose.icons.feathericons.Coffee
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -62,6 +55,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
@@ -171,67 +165,18 @@ private fun LogTeaContent(
                     )
 
                     if (state.selectedTea != null) {
-                        val accentColor = state.selectedTeaType?.colorHex?.hexToColor()
-                            ?: MaterialTheme.colorScheme.primary
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            ),
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(IntrinsicSize.Min),
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(4.dp)
-                                        .fillMaxHeight()
-                                        .background(accentColor),
-                                )
-                                Row(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = state.selectedTea.name,
-                                            style = MaterialTheme.typography.titleMedium,
-                                        )
-                                        if (state.selectedTeaType != null) {
-                                            Text(
-                                                text = state.selectedTeaType.name,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                        val brewStats = buildList {
-                                            if (state.selectedTea.totalSessions > 0) {
-                                                add("${state.selectedTea.totalSessions} brews")
-                                            }
-                                            state.selectedTea.averageRating?.let { rating ->
-                                                add("★ ${rating.formatOneDecimal()}")
-                                            }
-                                        }
-                                        if (brewStats.isNotEmpty()) {
-                                            Spacer(modifier = Modifier.height(2.dp))
-                                            Text(
-                                                text = brewStats.joinToString(" · "),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                    }
-                                    TextButton(onClick = { onIntent(LogTeaIntent.ShowTeaSearchDialog) }) {
-                                        Text("Change")
-                                    }
+                        TeaCard(
+                            tea = state.selectedTea,
+                            teaTypeName = state.selectedTeaType?.name ?: "",
+                            teaTypeColorHex = state.selectedTeaType?.colorHex,
+                            onTeaClick = {},
+                            trailingContent = {
+                                TextButton(onClick = { onIntent(LogTeaIntent.ShowTeaSearchDialog) }) {
+                                    Text("Change")
                                 }
-                            }
-                        }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     } else {
                         Button(
                             onClick = { onIntent(LogTeaIntent.ShowTeaSearchDialog) },
@@ -733,11 +678,6 @@ private fun CompleteSessionDialog(
             }
         },
     )
-}
-
-private fun Float.formatOneDecimal(): String {
-    val tenths = (this * 10).toInt()
-    return "${tenths / 10}.${tenths % 10}"
 }
 
 @Preview(showBackground = true)

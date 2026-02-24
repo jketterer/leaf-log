@@ -16,7 +16,5 @@ data class TeaDetailState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val showDeleteConfirmation: Boolean = false,
-    val showEditConfigDialog: Boolean = false,
-    val editingConfig: BrewingConfiguration? = null,
     val userPreferences: UserPreferences = UserPreferences(),
 )

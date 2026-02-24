@@ -60,7 +60,6 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.presentation.ui.components.configuration.EditConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -85,6 +84,7 @@ fun TeaDetailScreen(
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: (String) -> Unit,
     onNavigateToCreateConfig: (String) -> Unit,
+    onNavigateToEditConfig: (configId: String, teaId: String) -> Unit,
     viewModel: TeaDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -126,6 +126,10 @@ fun TeaDetailScreen(
 
                 is TeaDetailNavigationEvent.NavigateToCreateConfig -> {
                     onNavigateToCreateConfig(event.teaId)
+                }
+
+                is TeaDetailNavigationEvent.NavigateToEditConfig -> {
+                    onNavigateToEditConfig(event.configId, event.teaId)
                 }
             }
         }
@@ -464,27 +468,6 @@ private fun TeaDetailContent(
             )
         }
 
-        // Edit configuration dialog
-        if (state.showEditConfigDialog && state.editingConfig != null) {
-            EditConfigurationDialog(
-                configuration = state.editingConfig,
-                userPreferences = state.userPreferences,
-                onSave = { label, teaQty, waterQty, temp, time, waterType, isActive ->
-                    onIntent(
-                        TeaDetailIntent.SaveConfigurationChanges(
-                            label = label,
-                            teaQuantityGrams = teaQty,
-                            waterQuantityMl = waterQty,
-                            temperatureCelsius = temp,
-                            brewingTime = time,
-                            waterType = waterType,
-                            isActive = isActive
-                        )
-                    )
-                },
-                onDismiss = { onIntent(TeaDetailIntent.DismissEditConfigDialog) }
-            )
-        }
     }
 }
 

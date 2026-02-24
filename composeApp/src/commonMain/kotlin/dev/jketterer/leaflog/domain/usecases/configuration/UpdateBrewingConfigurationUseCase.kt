@@ -28,6 +28,7 @@ class UpdateBrewingConfigurationUseCase(
     suspend operator fun invoke(
         configurationId: String,
         label: String? = null,
+        vesselId: String? = null,
         teaQuantityGrams: Float? = null,
         waterQuantityMl: Double? = null,
         temperatureCelsius: Double? = null,
@@ -41,6 +42,7 @@ class UpdateBrewingConfigurationUseCase(
 
             val updated = existing.copy(
                 label = label ?: existing.label,
+                vesselId = vesselId ?: existing.vesselId,
                 teaQuantityGrams = teaQuantityGrams ?: existing.teaQuantityGrams,
                 waterQuantityMl = waterQuantityMl ?: existing.waterQuantityMl,
                 temperatureCelsius = temperatureCelsius ?: existing.temperatureCelsius,

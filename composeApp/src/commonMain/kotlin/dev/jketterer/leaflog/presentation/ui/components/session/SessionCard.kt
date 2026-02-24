@@ -1,8 +1,10 @@
 package dev.jketterer.leaflog.presentation.ui.components.session
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,7 +36,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Clock
+import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.MoreVertical
+import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
@@ -43,8 +49,10 @@ import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
@@ -131,28 +139,37 @@ fun SessionCard(
                 )
 
                 Text(
-                    text = "$teaTypeName • ${session.brewingTime} • ${
-                        TemperatureFormatter.format(
-                            session.temperatureCelsius,
-                            userPrefs.temperatureUnit,
-                        )
-                    }",
+                    text = "$teaTypeName • $vesselName",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                Text(
-                    text = "$vesselName • ${
-                        VolumeFormatter.format(session.waterQuantityMl, userPrefs.volumeUnit)
-                    }",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(top = 4.dp),
+                ) {
+                    session.teaQuantityGrams?.let {
+                        BrewingParamChip(FeatherIcons.Coffee, "${it}g")
+                    }
+                    BrewingParamChip(
+                        FeatherIcons.Thermometer,
+                        TemperatureFormatter.format(session.temperatureCelsius, userPrefs.temperatureUnit),
+                    )
+                    BrewingParamChip(
+                        FeatherIcons.Clock,
+                        formatBrewingTime(session.brewingTime.inWholeSeconds.toInt()),
+                    )
+                    BrewingParamChip(
+                        FeatherIcons.Droplet,
+                        VolumeFormatter.format(session.waterQuantityMl, userPrefs.volumeUnit),
+                    )
+                }
 
                 val timeText = TimeFormatter.formatRelativeTimestamp(session.timestamp)
 
                 Row(
-                    modifier = Modifier.padding(vertical = 2.dp),
+                    modifier = Modifier.padding(vertical = 4.dp),
                     verticalAlignment = Alignment.Bottom,
                 ) {
                     Text(

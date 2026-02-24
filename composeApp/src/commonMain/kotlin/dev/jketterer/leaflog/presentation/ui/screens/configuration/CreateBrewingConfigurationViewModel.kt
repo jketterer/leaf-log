@@ -2,10 +2,12 @@ package dev.jketterer.leaflog.presentation.ui.screens.configuration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
@@ -20,9 +22,11 @@ import kotlinx.coroutines.launch
 class CreateBrewingConfigurationViewModel(
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
     private val createBrewingConfigurationUseCase: CreateBrewingConfigurationUseCase,
+    private val updateBrewingConfigurationUseCase: UpdateBrewingConfigurationUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(CreateBrewingConfigurationState(isLoading = true))
@@ -31,7 +35,8 @@ class CreateBrewingConfigurationViewModel(
     private val _navEvents = Channel<CreateBrewingConfigurationNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
-    private var teaId: String? = null
+    private var loadedTeaId: String? = null
+    private var loadedConfigId: String? = null
 
     init {
         loadPreferences(
@@ -43,7 +48,7 @@ class CreateBrewingConfigurationViewModel(
 
     fun onIntent(intent: CreateBrewingConfigurationIntent) {
         when (intent) {
-            is CreateBrewingConfigurationIntent.LoadData -> loadData(intent.teaId)
+            is CreateBrewingConfigurationIntent.LoadData -> loadData(intent.teaId, intent.configurationId)
             is CreateBrewingConfigurationIntent.SelectVessel -> {
                 val vessel = _state.value.vessels.firstOrNull { it.id == intent.vesselId }
                 _state.update { it.copy(selectedVessel = vessel) }
@@ -76,48 +81,78 @@ class CreateBrewingConfigurationViewModel(
         }
     }
 
-    private fun loadData(teaId: String) {
-        if (this.teaId == teaId) return
-        this.teaId = teaId
+    private fun loadData(teaId: String, configurationId: String?) {
+        if (loadedTeaId == teaId && loadedConfigId == configurationId) return
+        loadedTeaId = teaId
+        loadedConfigId = configurationId
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
-            val tea = teaRepository.getByIdFlow(teaId).first()
             val vessels = brewingVesselRepository.getAllFlow().first()
-            val firstVessel = vessels.firstOrNull()
 
-            var prefillTemp = ""
-            var prefillWater = ""
-            var prefillTime = tea?.defaultBrewingTime
-            var prefillWaterType = null as dev.jketterer.leaflog.domain.models.WaterType?
-            var prefillTeaQty = ""
+            if (configurationId != null) {
+                val config = brewingConfigurationRepository.getById(configurationId)
+                if (config != null) {
+                    val selectedVessel = vessels.firstOrNull { it.id == config.vesselId }
+                    _state.update {
+                        it.copy(
+                            vessels = vessels,
+                            selectedVessel = selectedVessel,
+                            label = config.label ?: "",
+                            teaQuantityGrams = config.teaQuantityGrams?.toString() ?: "",
+                            waterQuantityMl = config.waterQuantityMl.toString(),
+                            waterQuantityDisplay = "",
+                            temperatureCelsius = config.temperatureCelsius.toString(),
+                            temperatureDisplay = "",
+                            brewingTime = config.brewingTime,
+                            waterType = config.waterType,
+                            isEditMode = true,
+                            editingConfigId = configurationId,
+                            isLoading = false,
+                        )
+                    }
+                } else {
+                    _state.update { it.copy(isLoading = false, error = "Configuration not found") }
+                }
+            } else {
+                val tea = teaRepository.getByIdFlow(teaId).first()
+                val firstVessel = vessels.firstOrNull()
 
-            if (tea != null && firstVessel != null) {
-                val prefill = getBrewingParametersPrefillUseCase(tea, firstVessel)
-                prefillTemp = prefill.temperatureCelsius?.toString() ?: ""
-                prefillWater = prefill.waterQuantityMl?.toString() ?: ""
-                prefillTime = prefill.brewingTime ?: tea.defaultBrewingTime
-                prefillWaterType = prefill.waterType
-                prefillTeaQty = prefill.teaQuantityGrams?.toString() ?: ""
-            } else if (tea != null) {
-                prefillTemp = tea.defaultTemperatureCelsius?.toDouble()?.toString() ?: ""
-            }
+                var prefillTemp = ""
+                var prefillWater = ""
+                var prefillTime = tea?.defaultBrewingTime
+                var prefillWaterType = null as dev.jketterer.leaflog.domain.models.WaterType?
+                var prefillTeaQty = ""
 
-            _state.update {
-                it.copy(
-                    vessels = vessels,
-                    selectedVessel = firstVessel,
-                    temperatureCelsius = prefillTemp,
-                    temperatureDisplay = "",
-                    waterQuantityMl = prefillWater,
-                    waterQuantityDisplay = "",
-                    brewingTime = prefillTime,
-                    waterType = prefillWaterType
-                        ?: dev.jketterer.leaflog.domain.models.WaterType.FILTERED,
-                    teaQuantityGrams = prefillTeaQty,
-                    isLoading = false,
-                )
+                if (tea != null && firstVessel != null) {
+                    val prefill = getBrewingParametersPrefillUseCase(tea, firstVessel)
+                    prefillTemp = prefill.temperatureCelsius?.toString() ?: ""
+                    prefillWater = prefill.waterQuantityMl?.toString() ?: ""
+                    prefillTime = prefill.brewingTime ?: tea.defaultBrewingTime
+                    prefillWaterType = prefill.waterType
+                    prefillTeaQty = prefill.teaQuantityGrams?.toString() ?: ""
+                } else if (tea != null) {
+                    prefillTemp = tea.defaultTemperatureCelsius?.toDouble()?.toString() ?: ""
+                }
+
+                _state.update {
+                    it.copy(
+                        vessels = vessels,
+                        selectedVessel = firstVessel,
+                        temperatureCelsius = prefillTemp,
+                        temperatureDisplay = "",
+                        waterQuantityMl = prefillWater,
+                        waterQuantityDisplay = "",
+                        brewingTime = prefillTime,
+                        waterType = prefillWaterType
+                            ?: dev.jketterer.leaflog.domain.models.WaterType.FILTERED,
+                        teaQuantityGrams = prefillTeaQty,
+                        isEditMode = false,
+                        editingConfigId = null,
+                        isLoading = false,
+                    )
+                }
             }
         }
     }
@@ -167,7 +202,7 @@ class CreateBrewingConfigurationViewModel(
     private fun save() {
         val currentState = _state.value
         val vessel = currentState.selectedVessel ?: return
-        val teaId = this.teaId ?: return
+        val teaId = loadedTeaId ?: return
         val temperatureCelsius = currentState.temperatureCelsius.toDoubleOrNull() ?: return
         val waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull() ?: return
         val brewingTime = currentState.brewingTime ?: return
@@ -175,19 +210,37 @@ class CreateBrewingConfigurationViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
 
-            createBrewingConfigurationUseCase(
-                teaId = teaId,
-                vesselId = vessel.id,
-                teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
-                waterQuantityMl = waterQuantityMl,
-                temperatureCelsius = temperatureCelsius,
-                brewingTime = brewingTime,
-                waterType = currentState.waterType,
-                customLabel = currentState.label.takeIf { it.isNotBlank() },
-            ).onSuccess {
-                _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
-            }.onFailure { e ->
-                _state.update { it.copy(isSaving = false, error = "Failed to save: ${e.message}") }
+            if (currentState.isEditMode && currentState.editingConfigId != null) {
+                updateBrewingConfigurationUseCase(
+                    configurationId = currentState.editingConfigId,
+                    label = currentState.label.takeIf { it.isNotBlank() },
+                    vesselId = vessel.id,
+                    teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
+                    waterQuantityMl = waterQuantityMl,
+                    temperatureCelsius = temperatureCelsius,
+                    brewingTime = brewingTime,
+                    waterType = currentState.waterType,
+                    isActive = null,
+                ).onSuccess {
+                    _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
+                }.onFailure { e ->
+                    _state.update { it.copy(isSaving = false, error = "Failed to save: ${e.message}") }
+                }
+            } else {
+                createBrewingConfigurationUseCase(
+                    teaId = teaId,
+                    vesselId = vessel.id,
+                    teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
+                    waterQuantityMl = waterQuantityMl,
+                    temperatureCelsius = temperatureCelsius,
+                    brewingTime = brewingTime,
+                    waterType = currentState.waterType,
+                    customLabel = currentState.label.takeIf { it.isNotBlank() },
+                ).onSuccess {
+                    _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
+                }.onFailure { e ->
+                    _state.update { it.copy(isSaving = false, error = "Failed to save: ${e.message}") }
+                }
             }
         }
     }

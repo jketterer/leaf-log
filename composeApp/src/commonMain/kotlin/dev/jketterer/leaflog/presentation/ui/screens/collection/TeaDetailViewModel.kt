@@ -12,7 +12,6 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
@@ -38,7 +37,6 @@ class TeaDetailViewModel(
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val deleteTeaUseCase: DeleteTeaUseCase,
     private val deleteBrewingConfigurationUseCase: DeleteBrewingConfigurationUseCase,
-    private val updateBrewingConfigurationUseCase: UpdateBrewingConfigurationUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaDetailState())
@@ -46,6 +44,8 @@ class TeaDetailViewModel(
 
     private val _navEvents = Channel<TeaDetailNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    private var teaId: String? = null
 
     init {
         loadPreferences()
@@ -79,10 +79,11 @@ class TeaDetailViewModel(
             }
             is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
 
-            is TeaDetailIntent.EditConfigurationClicked -> showEditConfigDialog(intent.configId)
+            is TeaDetailIntent.EditConfigurationClicked -> {
+                val teaId = _state.value.tea?.id ?: return
+                _navEvents.trySend(TeaDetailNavigationEvent.NavigateToEditConfig(intent.configId, teaId))
+            }
             is TeaDetailIntent.DeleteConfigurationClicked -> deleteConfiguration(intent.configId)
-            is TeaDetailIntent.SaveConfigurationChanges -> saveConfigurationChanges(intent)
-            is TeaDetailIntent.DismissEditConfigDialog -> dismissEditConfigDialog()
 
             is TeaDetailIntent.AddConfigurationClicked -> {
                 val teaId = _state.value.tea?.id ?: return
@@ -92,6 +93,7 @@ class TeaDetailViewModel(
     }
 
     private fun loadTea(teaId: String) {
+        this.teaId = teaId
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
@@ -210,62 +212,11 @@ class TeaDetailViewModel(
         }
     }
 
-    private fun showEditConfigDialog(configId: String) {
-        viewModelScope.launch {
-            val config = brewingConfigurationRepository.getById(configId)
-            _state.update {
-                it.copy(
-                    editingConfig = config,
-                    showEditConfigDialog = true
-                )
-            }
-        }
-    }
-
-    private fun dismissEditConfigDialog() {
-        _state.update {
-            it.copy(
-                showEditConfigDialog = false,
-                editingConfig = null
-            )
-        }
-    }
-
     private fun deleteConfiguration(configId: String) {
         viewModelScope.launch {
             deleteBrewingConfigurationUseCase(configId)
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to delete configuration: ${e.message}") }
-                }
-        }
-    }
-
-    private fun saveConfigurationChanges(intent: TeaDetailIntent.SaveConfigurationChanges) {
-        val config = _state.value.editingConfig ?: return
-
-        viewModelScope.launch {
-            updateBrewingConfigurationUseCase(
-                configurationId = config.id,
-                label = intent.label,
-                teaQuantityGrams = intent.teaQuantityGrams,
-                waterQuantityMl = intent.waterQuantityMl,
-                temperatureCelsius = intent.temperatureCelsius,
-                brewingTime = intent.brewingTime,
-                waterType = intent.waterType,
-                isActive = intent.isActive
-            )
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            showEditConfigDialog = false,
-                            editingConfig = null
-                        )
-                    }
-                }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(error = "Failed to update configuration: ${e.message}")
-                    }
                 }
         }
     }
@@ -291,4 +242,5 @@ sealed interface TeaDetailNavigationEvent {
     data object NavigateToEditTea : TeaDetailNavigationEvent
     data class NavigateToHistory(val teaId: String) : TeaDetailNavigationEvent
     data class NavigateToCreateConfig(val teaId: String) : TeaDetailNavigationEvent
+    data class NavigateToEditConfig(val configId: String, val teaId: String) : TeaDetailNavigationEvent
 }

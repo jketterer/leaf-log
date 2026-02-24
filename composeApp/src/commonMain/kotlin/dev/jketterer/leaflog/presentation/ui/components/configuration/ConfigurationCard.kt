@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -18,7 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Clock
+import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Edit2
+import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
@@ -27,7 +32,9 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -72,7 +79,7 @@ fun ConfigurationCard(
                 ) {
                     Text(
                         text = configuration.label ?: "Unnamed Method",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                     if (configuration.rating != null) {
@@ -108,22 +115,6 @@ fun ConfigurationCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Parameters
-            val params = buildList {
-                configuration.teaQuantityGrams?.let { add("${it}g") }
-                add(
-                    TemperatureFormatter.format(
-                        configuration.temperatureCelsius,
-                        userPreferences.temperatureUnit
-                    )
-                )
-                add(formatBrewingTime(configuration.brewingTime.inWholeSeconds.toInt()))
-            }
-            Text(
-                text = params.joinToString(" • "),
-                style = MaterialTheme.typography.bodyMedium
-            )
-
             // Stats row
             val stats = buildList {
                 add("Used ${configuration.timesUsed} times")
@@ -144,19 +135,44 @@ fun ConfigurationCard(
             Text(
                 text = stats.joinToString(" • "),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp),
             )
+
+            // Parameters as chips
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(top = 4.dp),
+            ) {
+                configuration.teaQuantityGrams?.let {
+                    BrewingParamChip(
+                        FeatherIcons.Coffee,
+                        "${it}g"
+                    )
+                }
+                BrewingParamChip(
+                    FeatherIcons.Thermometer,
+                    TemperatureFormatter.format(
+                        configuration.temperatureCelsius,
+                        userPreferences.temperatureUnit
+                    )
+                )
+                BrewingParamChip(
+                    FeatherIcons.Clock,
+                    formatBrewingTime(configuration.brewingTime.inWholeSeconds.toInt())
+                )
+                BrewingParamChip(
+                    FeatherIcons.Droplet,
+                    VolumeFormatter.format(
+                        configuration.waterQuantityMl,
+                        userPreferences.volumeUnit
+                    )
+                )
+            }
         }
     }
 }
 
-private fun formatBrewingTime(seconds: Int): String {
-    return when {
-        seconds < 60 -> "${seconds}s"
-        seconds % 60 == 0 -> "${seconds / 60}m"
-        else -> "${seconds / 60}m ${seconds % 60}s"
-    }
-}
 
 @Preview
 @Composable
@@ -229,7 +245,7 @@ private fun ConfigurationCardInactivePreview() {
 @Preview
 @Composable
 private fun ConfigurationCardImperialUnitsPreview() {
-    LeafLogTheme {
+    LeafLogTheme(useDarkTheme = true) {
         ConfigurationCard(
             configuration = BrewingConfiguration(
                 id = "3",
@@ -275,7 +291,7 @@ private fun ConfigurationCardUnnamedPreview() {
                 brewingTime = 1.minutes,
                 waterType = WaterType.TAP,
                 sourceSessionId = "session-4",
-                rating = 2.5f,
+                rating = null,
                 timesUsed = 1,
                 lastUsedAt = Clock.System.now() - 365.minutes,
                 label = null,

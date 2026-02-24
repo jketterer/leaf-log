@@ -4,7 +4,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 sealed interface CreateBrewingConfigurationIntent {
-    data class LoadData(val teaId: String) : CreateBrewingConfigurationIntent
+    data class LoadData(val teaId: String, val configurationId: String? = null) : CreateBrewingConfigurationIntent
     data class SelectVessel(val vesselId: String) : CreateBrewingConfigurationIntent
     data class UpdateLabel(val label: String) : CreateBrewingConfigurationIntent
     data class UpdateTeaQuantity(val quantity: String) : CreateBrewingConfigurationIntent

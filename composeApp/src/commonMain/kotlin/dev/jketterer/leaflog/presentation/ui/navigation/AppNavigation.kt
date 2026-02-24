@@ -240,12 +240,16 @@ fun AppNavigation() {
                         onNavigateToCreateConfig = { teaId ->
                             backStack.add(NavRoute.CreateBrewingConfigurationRoute(teaId))
                         },
+                        onNavigateToEditConfig = { configId, teaId ->
+                            backStack.add(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
+                        },
                     )
                 }
 
                 entry<NavRoute.CreateBrewingConfigurationRoute> { route ->
                     CreateBrewingConfigurationScreen(
                         teaId = route.teaId,
+                        configurationId = route.configurationId,
                         onNavigateBack = { backStack.removeLast() },
                     )
                 }

@@ -48,13 +48,14 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun CreateBrewingConfigurationScreen(
     teaId: String,
+    configurationId: String? = null,
     onNavigateBack: () -> Unit,
     viewModel: CreateBrewingConfigurationViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(teaId) {
-        viewModel.onIntent(CreateBrewingConfigurationIntent.LoadData(teaId))
+    LaunchedEffect(teaId, configurationId) {
+        viewModel.onIntent(CreateBrewingConfigurationIntent.LoadData(teaId, configurationId))
     }
 
     LaunchedEffect(Unit) {
@@ -80,7 +81,7 @@ private fun CreateBrewingConfigurationContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Brewing Method") },
+                title = { Text(if (state.isEditMode) "Edit Brewing Method" else "Add Brewing Method") },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(CreateBrewingConfigurationIntent.NavigateBack) }) {
                         Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")

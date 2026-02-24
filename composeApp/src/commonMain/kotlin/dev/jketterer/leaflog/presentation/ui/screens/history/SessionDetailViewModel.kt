@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
@@ -31,6 +32,7 @@ class SessionDetailViewModel(
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
+    private val addSteepUseCase: AddSteepUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionDetailState())
@@ -73,6 +75,12 @@ class SessionDetailViewModel(
             is SessionDetailIntent.ConfirmDeleteSteep -> confirmDeleteSteep()
             is SessionDetailIntent.CancelDeleteSteep -> cancelDeleteSteep()
             is SessionDetailIntent.BrewAgainClicked -> brewAgain()
+            is SessionDetailIntent.AddSteepClicked -> showAddSteepDialog()
+            is SessionDetailIntent.CancelAddSteep -> cancelAddSteep()
+            is SessionDetailIntent.UpdateNextSteepDuration -> _state.update { it.copy(nextSteepDuration = intent.duration) }
+            is SessionDetailIntent.UpdateNextSteepTemperature -> _state.update { it.copy(nextSteepTemperature = intent.temperature) }
+            is SessionDetailIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
+            is SessionDetailIntent.ConfirmAddSteep -> confirmAddSteep()
 
             // navigation intents
             is SessionDetailIntent.EditSessionClicked -> {
@@ -298,6 +306,62 @@ class SessionDetailViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    private fun showAddSteepDialog() {
+        val lastSteep = _state.value.allSteeps.lastOrNull() ?: return
+        _state.update {
+            it.copy(
+                showAddSteepDialog = true,
+                nextSteepDuration = lastSteep.brewingTime,
+                nextSteepTemperature = lastSteep.temperatureCelsius,
+            )
+        }
+    }
+
+    private fun cancelAddSteep() {
+        _state.update {
+            it.copy(
+                showAddSteepDialog = false,
+                nextSteepDuration = null,
+                nextSteepTemperature = null,
+            )
+        }
+    }
+
+    private fun confirmAddSteep() {
+        val parentSession = _state.value.parentSession ?: return
+        val duration = _state.value.nextSteepDuration ?: return
+        val temperature = _state.value.nextSteepTemperature ?: return
+
+        viewModelScope.launch {
+            _state.update { it.copy(showAddSteepDialog = false, isLoading = true) }
+
+            addSteepUseCase(
+                parentSession = parentSession,
+                brewingTime = duration,
+                temperatureCelsius = temperature,
+                waterQuantityMl = parentSession.waterQuantityMl,
+            )
+                .onSuccess { newSteep ->
+                    _navEvents.send(SessionDetailNavEvent.NavigateToTimer(newSteep.id))
+                }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "Failed to add steep: ${e.message}",
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun toggleTemperatureUnit() {
+        viewModelScope.launch {
+            val newUnit = _state.value.userPreferences.temperatureUnit.toggle()
+            preferencesRepository.updateTemperatureUnit(newUnit)
         }
     }
 

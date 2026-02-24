@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import kotlin.time.Duration
 
 data class SessionDetailState(
     val parentSession: TeaSession? = null,
@@ -19,6 +20,9 @@ data class SessionDetailState(
     val showDeleteConfirmation: Boolean = false,
     val showDeleteSteepConfirmation: Boolean = false,
     val steepToDelete: String? = null,
+    val showAddSteepDialog: Boolean = false,
+    val nextSteepDuration: Duration? = null,
+    val nextSteepTemperature: Double? = null,
 
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),

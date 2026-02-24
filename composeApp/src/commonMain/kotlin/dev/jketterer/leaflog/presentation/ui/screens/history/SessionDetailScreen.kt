@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,6 +51,7 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Edit2
+import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Trash2
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
@@ -71,6 +73,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
+import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.DurationUnit
@@ -296,6 +299,22 @@ private fun SessionDetailContent(
                                 }
                             )
                         }
+
+                        // Add Steep button
+                        item {
+                            OutlinedButton(
+                                onClick = { onIntent(SessionDetailIntent.AddSteepClicked) },
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Icon(
+                                    imageVector = FeatherIcons.Plus,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Add Steep")
+                            }
+                        }
                     }
                 }
 
@@ -350,6 +369,22 @@ private fun SessionDetailContent(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    // Add steep dialog
+    val lastSteep = state.allSteeps.lastOrNull()
+    if (state.showAddSteepDialog && lastSteep != null) {
+        NextSteepParameterDialog(
+            currentSession = lastSteep,
+            duration = state.nextSteepDuration,
+            temperature = state.nextSteepTemperature ?: lastSteep.temperatureCelsius,
+            temperatureUnit = state.userPreferences.temperatureUnit,
+            onDurationChange = { onIntent(SessionDetailIntent.UpdateNextSteepDuration(it)) },
+            onTemperatureChange = { onIntent(SessionDetailIntent.UpdateNextSteepTemperature(it)) },
+            onToggleUnit = { onIntent(SessionDetailIntent.ToggleTemperatureUnit) },
+            onConfirm = { onIntent(SessionDetailIntent.ConfirmAddSteep) },
+            onDismiss = { onIntent(SessionDetailIntent.CancelAddSteep) },
         )
     }
 

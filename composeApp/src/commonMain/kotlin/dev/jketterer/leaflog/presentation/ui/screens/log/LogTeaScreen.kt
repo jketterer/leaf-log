@@ -5,20 +5,27 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,11 +49,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.ChevronUp
+import compose.icons.feathericons.Coffee
+import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -114,8 +125,7 @@ private fun LogTeaContent(
 
     val hasOptionalData = state.teaQuantityGrams.isNotEmpty() ||
             state.selectedWaterType != WaterType.FILTERED ||
-            state.location.isNotEmpty() ||
-            state.notes.isNotEmpty()
+            state.location.isNotEmpty()
 
     LaunchedEffect(hasOptionalData) {
         if (hasOptionalData) {
@@ -127,7 +137,6 @@ private fun LogTeaContent(
         if (state.teaQuantityGrams.isNotEmpty()) add("${state.teaQuantityGrams}g tea")
         if (state.selectedWaterType != WaterType.FILTERED) add(state.selectedWaterType.displayName)
         if (state.location.isNotEmpty()) add(state.location)
-        if (state.notes.isNotEmpty()) add("has notes")
     }
     val optionalSummary = optionalSummaryParts.joinToString(" · ")
 
@@ -137,10 +146,7 @@ private fun LogTeaContent(
                 title = { Text("Log Tea Session") },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(LogTeaIntent.BackClicked) }) {
-                        Text(
-                            text = "←",
-                            style = MaterialTheme.typography.titleLarge,
-                        )
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                     }
                 },
             )
@@ -165,24 +171,64 @@ private fun LogTeaContent(
                     )
 
                     if (state.selectedTea != null) {
+                        val accentColor = state.selectedTeaType?.colorHex?.hexToColor()
+                            ?: MaterialTheme.colorScheme.primary
                         Card(
                             modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            ),
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                    .height(IntrinsicSize.Min),
                             ) {
-                                Column {
-                                    Text(
-                                        text = state.selectedTea.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                    )
-                                    // TODO: Show tea type from lookup
-                                }
-                                TextButton(onClick = { onIntent(LogTeaIntent.ShowTeaSearchDialog) }) {
-                                    Text("Change")
+                                Box(
+                                    modifier = Modifier
+                                        .width(4.dp)
+                                        .fillMaxHeight()
+                                        .background(accentColor),
+                                )
+                                Row(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = state.selectedTea.name,
+                                            style = MaterialTheme.typography.titleMedium,
+                                        )
+                                        if (state.selectedTeaType != null) {
+                                            Text(
+                                                text = state.selectedTeaType.name,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                        val brewStats = buildList {
+                                            if (state.selectedTea.totalSessions > 0) {
+                                                add("${state.selectedTea.totalSessions} brews")
+                                            }
+                                            state.selectedTea.averageRating?.let { rating ->
+                                                add("★ ${rating.formatOneDecimal()}")
+                                            }
+                                        }
+                                        if (brewStats.isNotEmpty()) {
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = brewStats.joinToString(" · "),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    TextButton(onClick = { onIntent(LogTeaIntent.ShowTeaSearchDialog) }) {
+                                        Text("Change")
+                                    }
                                 }
                             }
                         }
@@ -221,7 +267,38 @@ private fun LogTeaContent(
                 )
             }
 
-            // Brewing Parameters Section
+            // Prompt when tea or vessel not yet selected
+            if (state.selectedTea == null || state.selectedVessel == null) {
+                item(key = "parameters_hint") {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Icon(
+                            imageVector = FeatherIcons.Coffee,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                        )
+                        Text(
+                            text = "Select a tea and vessel",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = "to set up your brew parameters",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        )
+                    }
+                }
+            }
+
+            // Brewing Parameters Section (gated behind tea + vessel selection)
+            if (state.selectedTea != null && state.selectedVessel != null) {
             item(key = "parameters_header") {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
@@ -238,7 +315,7 @@ private fun LogTeaContent(
             }
 
             // Pre-fill Banner
-            if (state.prefillSource != PrefillSource.None && state.selectedTea != null) {
+            if (state.prefillSource != PrefillSource.None) {
                 item(key = "prefill_banner") {
                     PrefillBanner(
                         source = state.prefillSource,
@@ -253,10 +330,7 @@ private fun LogTeaContent(
             }
 
             // Brewing Method Selector (when configurations exist but no banner shown)
-            if (state.availableConfigurations.isNotEmpty() &&
-                state.selectedTea != null &&
-                state.selectedVessel != null &&
-                state.prefillSource == PrefillSource.None
+            if (state.availableConfigurations.isNotEmpty() && state.prefillSource == PrefillSource.None
             ) {
                 item(key = "method_selector") {
                     OutlinedButton(
@@ -470,15 +544,6 @@ private fun LogTeaContent(
                                 singleLine = true,
                             )
 
-                            // Notes
-                            OutlinedTextField(
-                                value = state.notes,
-                                onValueChange = { onIntent(LogTeaIntent.NotesChanged(it)) },
-                                label = { Text("Notes (optional)") },
-                                modifier = Modifier.fillMaxWidth(),
-                                minLines = 3,
-                                maxLines = 5,
-                            )
                         }
                     }
                 }
@@ -508,6 +573,7 @@ private fun LogTeaContent(
                     }
                 }
             }
+            } // end parameters gate
         }
     }
 
@@ -669,6 +735,11 @@ private fun CompleteSessionDialog(
     )
 }
 
+private fun Float.formatOneDecimal(): String {
+    val tenths = (this * 10).toInt()
+    return "${tenths / 10}.${tenths % 10}"
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun CompleteSessionDialogPreview() {
@@ -695,9 +766,16 @@ private fun LogTeaScreenPreview() {
                     id = "tea-1",
                     name = "Dragon Well",
                     teaTypeId = "green",
+                    totalSessions = 12,
+                    averageRating = 4.2f,
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now(),
                     syncStatus = SyncStatus.LOCAL_ONLY,
+                ),
+                selectedTeaType = TeaType(
+                    id = "green",
+                    name = "Green",
+                    colorHex = "#4CAF50",
                 ),
                 waterQuantityMl = "200",
                 temperatureCelsius = "80",
@@ -750,16 +828,21 @@ private fun LogTeaScreenOptionalFilledPreview() {
                     id = "tea-1",
                     name = "Dragon Well",
                     teaTypeId = "green",
+                    totalSessions = 5,
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now(),
                     syncStatus = SyncStatus.LOCAL_ONLY,
+                ),
+                selectedTeaType = TeaType(
+                    id = "green",
+                    name = "Green",
+                    colorHex = "#4CAF50",
                 ),
                 waterQuantityMl = "200",
                 temperatureCelsius = "80",
                 brewingTime = 2.minutes + 30.seconds,
                 teaQuantityGrams = "5",
                 location = "Kitchen",
-                notes = "Lovely session",
                 selectedWaterType = WaterType.SPRING,
                 selectedVessel = BrewingVessel(
                     id = "gaiwan",

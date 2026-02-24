@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.log
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
@@ -11,6 +12,7 @@ import kotlin.time.Duration
 data class LogTeaState(
     // Tea selection
     val selectedTea: Tea? = null,
+    val selectedTeaType: TeaType? = null,
     val availableTeas: List<Tea> = emptyList(),
     val teaSearchQuery: String = "",
     val showTeaSearchDialog: Boolean = false,
@@ -27,7 +29,6 @@ data class LogTeaState(
     val location: String = "",
 
     // Optional details
-    val notes: String = "",
     val photos: List<String> = emptyList(),
 
     // Available options
@@ -38,7 +39,7 @@ data class LogTeaState(
     val usedConfigurationId: String? = null, // Track which configuration was used
     val availableConfigurations: List<BrewingConfiguration> = emptyList(),
     val showChooseMethodDialog: Boolean = false,
-    val hasEditedBrewingParameters: Boolean = false, // Track if user has manually edited parameters
+    val parametersRevealed: Boolean = false, // True after first tea+vessel prefill; prevents re-prefill on selection changes
 
     // Validation errors
     val teaError: String? = null,

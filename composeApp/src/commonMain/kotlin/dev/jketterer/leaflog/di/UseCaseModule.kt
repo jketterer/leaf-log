@@ -18,7 +18,6 @@ import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.ExportAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
@@ -78,7 +77,6 @@ val useCaseModule = module {
     factoryOf(::GetBrewingTrendsUseCase)
     factoryOf(::GetTeaTypeDistributionUseCase)
     factoryOf(::GetTopTeasUseCase)
-    factoryOf(::ExportAnalyticsUseCase)
     factoryOf(::GetBrewingActivityUseCase)
     factoryOf(::GetSteepInsightsUseCase)
     factoryOf(::GetTopRatedTeasUseCase)

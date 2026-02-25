@@ -13,8 +13,6 @@ sealed interface AnalyticsIntent {
     data class TapTrendPoint(val date: LocalDate) : AnalyticsIntent
     data class TapTeaType(val teaTypeId: String) : AnalyticsIntent
     data class TapTopTea(val teaId: String) : AnalyticsIntent
-    data object ShowExportDialog : AnalyticsIntent
-    data object HideExportDialog : AnalyticsIntent
-    data class TapVessel(val vesselId: String) : AnalyticsIntent
+data class TapVessel(val vesselId: String) : AnalyticsIntent
     data class TapTopRatedTea(val teaId: String) : AnalyticsIntent
 }

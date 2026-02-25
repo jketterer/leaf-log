@@ -8,7 +8,6 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import dev.jketterer.leaflog.domain.usecases.session.ExportAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
@@ -45,7 +44,6 @@ class AnalyticsViewModel(
     private val getBrewingTrendsUseCase: GetBrewingTrendsUseCase,
     private val getTeaTypeDistributionUseCase: GetTeaTypeDistributionUseCase,
     private val getTopTeasUseCase: GetTopTeasUseCase,
-    private val exportAnalyticsUseCase: ExportAnalyticsUseCase,
     private val getBrewingActivityUseCase: GetBrewingActivityUseCase,
     private val getSteepInsightsUseCase: GetSteepInsightsUseCase,
     private val getTopRatedTeasUseCase: GetTopRatedTeasUseCase,
@@ -98,11 +96,6 @@ class AnalyticsViewModel(
 
             is AnalyticsIntent.TapTopTea -> {
                 _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
-            }
-
-            is AnalyticsIntent.ShowExportDialog -> generateExport()
-            is AnalyticsIntent.HideExportDialog -> {
-                _state.update { it.copy(showExportDialog = false, exportCsvContent = null) }
             }
 
             is AnalyticsIntent.TapVessel -> { /* no-op: no vessel detail screen yet */
@@ -261,26 +254,6 @@ class AnalyticsViewModel(
                     )
                 }
             }
-        }
-    }
-
-    private fun generateExport() {
-        val currentState = _state.value
-        val analytics = currentState.analytics ?: return
-
-        val csv = exportAnalyticsUseCase(
-            analytics = analytics,
-            trendPoints = currentState.trendPoints,
-            teaTypeDistribution = currentState.teaTypeDistribution,
-            topTeas = currentState.topTeas,
-            periodLabel = currentState.periodLabel,
-        )
-
-        _state.update {
-            it.copy(
-                showExportDialog = true,
-                exportCsvContent = csv,
-            )
         }
     }
 

@@ -15,15 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,7 +35,6 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.BarChart2
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
-import compose.icons.feathericons.Download
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Layers
 import compose.icons.feathericons.Search
@@ -113,16 +109,6 @@ private fun AnalyticsContent(
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text("Analytics") },
-            actions = {
-                if (state.hasMinimumData && state.analytics != null) {
-                    IconButton(onClick = { onIntent(AnalyticsIntent.ShowExportDialog) }) {
-                        Icon(
-                            imageVector = FeatherIcons.Download,
-                            contentDescription = "Export",
-                        )
-                    }
-                }
-            },
         )
 
         when {
@@ -166,21 +152,6 @@ private fun AnalyticsContent(
             }
         }
 
-        // Export dialog
-        if (state.showExportDialog) {
-            AlertDialog(
-                onDismissRequest = { onIntent(AnalyticsIntent.HideExportDialog) },
-                title = { Text("Export Analytics") },
-                text = {
-                    Text("CSV export sharing is coming in a future update. Your analytics data has been generated and will be shareable soon.")
-                },
-                confirmButton = {
-                    TextButton(onClick = { onIntent(AnalyticsIntent.HideExportDialog) }) {
-                        Text("OK")
-                    }
-                },
-            )
-        }
     }
 }
 

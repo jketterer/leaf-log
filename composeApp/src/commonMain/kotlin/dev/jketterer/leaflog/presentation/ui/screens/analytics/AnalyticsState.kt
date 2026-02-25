@@ -14,14 +14,14 @@ import dev.jketterer.leaflog.domain.models.VesselDistribution
 import kotlinx.datetime.LocalDate
 
 data class AnalyticsState(
-    val selectedPeriod: AnalyticsPeriod = AnalyticsPeriod.THIS_MONTH,
+    val selectedPeriod: AnalyticsPeriod = AnalyticsPeriod.THIS_WEEK,
     val customDateRange: Pair<LocalDate, LocalDate>? = null,
     val analytics: AnalyticsData? = null,
     val comparison: PeriodComparison? = null,
     val insights: List<Insight> = emptyList(),
     val formattedWaterQuantity: String = "",
     val formattedBrewingTime: String = "",
-    val periodLabel: String = "This Month",
+    val periodLabel: String = "This Week",
     val isLoading: Boolean = true,
     val error: String? = null,
     val hasMinimumData: Boolean = false,

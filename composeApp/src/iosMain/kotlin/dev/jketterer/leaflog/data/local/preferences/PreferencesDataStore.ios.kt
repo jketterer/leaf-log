@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.local.preferences
 
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -18,6 +19,7 @@ actual class PreferencesDataStore {
         private const val TEMPERATURE_UNIT_KEY = "temperature_unit"
         private const val VOLUME_UNIT_KEY = "volume_unit"
         private const val TEA_SORT_OPTION_KEY = "tea_sort_option"
+        private const val ANALYTICS_PERIOD_KEY = "analytics_period"
     }
 
     private val _preferencesFlow = MutableStateFlow(loadPreferences())
@@ -44,10 +46,17 @@ actual class PreferencesDataStore {
         _preferencesFlow.update { it.copy(teaSortOption = option) }
     }
 
+    actual suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod) {
+        userDefaults.setObject(period.name, ANALYTICS_PERIOD_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(analyticsPeriod = period) }
+    }
+
     private fun loadPreferences(): UserPreferences {
         val temperatureUnitString = userDefaults.stringForKey(TEMPERATURE_UNIT_KEY)
         val volumeUnitString = userDefaults.stringForKey(VOLUME_UNIT_KEY)
         val teaSortOptionString = userDefaults.stringForKey(TEA_SORT_OPTION_KEY)
+        val analyticsPeriodString = userDefaults.stringForKey(ANALYTICS_PERIOD_KEY)
 
         return UserPreferences(
             temperatureUnit = temperatureUnitString?.let {
@@ -71,6 +80,13 @@ actual class PreferencesDataStore {
                     TeaSortOption.NAME_ASC
                 }
             } ?: TeaSortOption.NAME_ASC,
+            analyticsPeriod = analyticsPeriodString?.let {
+                try {
+                    AnalyticsPeriod.valueOf(it)
+                } catch (e: IllegalArgumentException) {
+                    AnalyticsPeriod.THIS_WEEK
+                }
+            } ?: AnalyticsPeriod.THIS_WEEK,
         )
     }
 }

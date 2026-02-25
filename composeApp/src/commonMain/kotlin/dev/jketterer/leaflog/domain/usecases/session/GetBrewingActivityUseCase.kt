@@ -61,7 +61,7 @@ class GetBrewingActivityUseCase(
         tz: TimeZone,
     ): List<ActivityCell> {
         val startDate = start.toLocalDateTime(tz).date
-        val endDate = end.toLocalDateTime(tz).date
+        val endDate = end.toExclusiveLocalDate(tz)
         val sessionsByDay = sessions.groupBy { it.timestamp.toLocalDateTime(tz).date }
 
         val result = mutableListOf<ActivityCell>()
@@ -70,7 +70,13 @@ class GetBrewingActivityUseCase(
             val daySessions = sessionsByDay[current]
             val dominantColor = daySessions?.mapNotNull { teaColorMap[it.teaId] }
                 ?.let { colors -> dominantNonEmpty(colors) }
-            result.add(ActivityCell(date = current, dominantTeaTypeColorHex = dominantColor))
+            result.add(
+                ActivityCell(
+                    date = current,
+                    dominantTeaTypeColorHex = dominantColor,
+                    sessionCount = daySessions?.size ?: 0,
+                ),
+            )
             current = current.plus(1, DateTimeUnit.DAY)
         }
         return result
@@ -83,7 +89,8 @@ class GetBrewingActivityUseCase(
         end: Instant,
         tz: TimeZone,
     ): List<ActivityCell> {
-        val startMonday = start.toLocalDateTime(tz).date.toWeekMonday()
+        val startDate = start.toLocalDateTime(tz).date
+        val startMonday = startDate.toWeekMonday()
         val endMonday = end.toLocalDateTime(tz).date.toWeekMonday()
         val sessionsByWeek = sessions.groupBy { it.timestamp.toLocalDateTime(tz).date.toWeekMonday() }
 
@@ -93,7 +100,15 @@ class GetBrewingActivityUseCase(
             val weekSessions = sessionsByWeek[current]
             val dominantColor = weekSessions?.mapNotNull { teaColorMap[it.teaId] }
                 ?.let { colors -> dominantNonEmpty(colors) }
-            result.add(ActivityCell(date = current, dominantTeaTypeColorHex = dominantColor))
+            // Clamp cell date so partial weeks don't spill before the requested start
+            val cellDate = if (current < startDate) startDate else current
+            result.add(
+                ActivityCell(
+                    date = cellDate,
+                    dominantTeaTypeColorHex = dominantColor,
+                    sessionCount = weekSessions?.size ?: 0,
+                ),
+            )
             current = current.plus(7, DateTimeUnit.DAY)
         }
         return result
@@ -106,7 +121,10 @@ class GetBrewingActivityUseCase(
         tz: TimeZone,
     ): List<ActivityCell> {
         return if (useWeekly) {
-            val startMonday = start.toLocalDateTime(tz).date.toWeekMonday()
+            val startDate = start.toLocalDateTime(tz).date
+            val startMonday = startDate.toWeekMonday().let { monday ->
+                if (monday < startDate) startDate else monday
+            }
             val endMonday = end.toLocalDateTime(tz).date.toWeekMonday()
             val result = mutableListOf<ActivityCell>()
             var current = startMonday
@@ -117,7 +135,7 @@ class GetBrewingActivityUseCase(
             result
         } else {
             val startDate = start.toLocalDateTime(tz).date
-            val endDate = end.toLocalDateTime(tz).date
+            val endDate = end.toExclusiveLocalDate(tz)
             val result = mutableListOf<ActivityCell>()
             var current = startDate
             while (current <= endDate) {
@@ -137,5 +155,20 @@ class GetBrewingActivityUseCase(
     private fun LocalDate.toWeekMonday(): LocalDate {
         // dayOfWeek.ordinal: MONDAY=0, ..., SUNDAY=6
         return minus(dayOfWeek.ordinal, DateTimeUnit.DAY)
+    }
+
+    /**
+     * Converts an Instant to a LocalDate for use as an inclusive end date.
+     * When the Instant falls exactly at midnight (start of a day), the end boundary is
+     * exclusive of that day, so we return the previous day. This handles periods like
+     * LAST_MONTH where the end is midnight of the first day of the next period.
+     */
+    private fun Instant.toExclusiveLocalDate(tz: TimeZone): LocalDate {
+        val dt = toLocalDateTime(tz)
+        return if (dt.hour == 0 && dt.minute == 0 && dt.second == 0 && dt.nanosecond == 0) {
+            dt.date.minus(1, DateTimeUnit.DAY)
+        } else {
+            dt.date
+        }
     }
 }

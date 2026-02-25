@@ -7,7 +7,6 @@ import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
-import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.session.ExportAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
@@ -40,7 +39,6 @@ import kotlin.time.Instant
 
 class AnalyticsViewModel(
     private val teaSessionRepository: TeaSessionRepository,
-    private val teaRepository: TeaRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getAnalyticsUseCase: GetAnalyticsUseCase,
     private val generateInsightsUseCase: GenerateInsightsUseCase,
@@ -63,7 +61,16 @@ class AnalyticsViewModel(
     private var loadJob: Job? = null
 
     init {
-        onIntent(AnalyticsIntent.LoadAnalytics)
+        viewModelScope.launch {
+            val savedPeriod = preferencesRepository.getPreferences().analyticsPeriod
+            _state.update {
+                it.copy(
+                    selectedPeriod = savedPeriod,
+                    periodLabel = savedPeriod.label,
+                )
+            }
+            loadAnalytics()
+        }
     }
 
     fun onIntent(intent: AnalyticsIntent) {
@@ -82,19 +89,25 @@ class AnalyticsViewModel(
                     )
                 )
             }
+
             is AnalyticsIntent.TapTeaType -> {
                 _navEvents.trySend(
                     AnalyticsNavEvent.NavigateToHistory(filterTeaTypeId = intent.teaTypeId)
                 )
             }
+
             is AnalyticsIntent.TapTopTea -> {
                 _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
             }
+
             is AnalyticsIntent.ShowExportDialog -> generateExport()
             is AnalyticsIntent.HideExportDialog -> {
                 _state.update { it.copy(showExportDialog = false, exportCsvContent = null) }
             }
-            is AnalyticsIntent.TapVessel -> { /* no-op: no vessel detail screen yet */ }
+
+            is AnalyticsIntent.TapVessel -> { /* no-op: no vessel detail screen yet */
+            }
+
             is AnalyticsIntent.TapTopRatedTea -> {
                 _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
             }
@@ -109,6 +122,7 @@ class AnalyticsViewModel(
                 periodLabel = period.label,
             )
         }
+        viewModelScope.launch { preferencesRepository.updateAnalyticsPeriod(period) }
         loadAnalytics()
     }
 
@@ -131,7 +145,6 @@ class AnalyticsViewModel(
 
             try {
                 val prefs = preferencesRepository.getPreferences()
-                val teas = teaRepository.getAll()
 
                 // Count total completed sessions for empty state check
                 val allSessions = teaSessionRepository.getByDateRange(
@@ -158,38 +171,68 @@ class AnalyticsViewModel(
                 val previousEnd = start
                 val previousData = getAnalyticsUseCase(previousStart, previousEnd)
 
+                // Fetch steep insights for both periods (needed for comparison)
+                val steepInsights = getSteepInsightsUseCase(start, end)
+                val previousSteepInsights = getSteepInsightsUseCase(previousStart, previousEnd)
+
+                fun pctChange(current: Double, previous: Double): Float? =
+                    if (previous == 0.0) null else ((current - previous) / previous * 100.0).toFloat()
+
                 val comparison = if (previousData.totalSessions > 0) {
-                    val change = ((currentData.totalSessions - previousData.totalSessions).toFloat() /
-                            previousData.totalSessions * 100f)
                     PeriodComparison(
-                        previousSessions = previousData.totalSessions,
-                        percentageChange = change,
+                        percentageChangeSessions = pctChange(
+                            currentData.totalSessions.toDouble(),
+                            previousData.totalSessions.toDouble(),
+                        ),
+                        percentageChangeBrewTime = pctChange(
+                            currentData.totalBrewingTime.inWholeSeconds.toDouble(),
+                            previousData.totalBrewingTime.inWholeSeconds.toDouble(),
+                        ),
+                        percentageChangeWater = pctChange(
+                            currentData.totalWaterMl,
+                            previousData.totalWaterMl,
+                        ),
+                        percentageChangeUniqueTeas = pctChange(
+                            currentData.uniqueTeasCount.toDouble(),
+                            previousData.uniqueTeasCount.toDouble(),
+                        ),
+                        percentageChangeAverageSteeps = pctChange(
+                            steepInsights.averageSteepsPerSession.toDouble(),
+                            previousSteepInsights.averageSteepsPerSession.toDouble(),
+                        ),
+                        percentageChangeNewTeas = pctChange(
+                            steepInsights.newTeaDiscoveries.toDouble(),
+                            previousSteepInsights.newTeaDiscoveries.toDouble(),
+                        ),
                     )
                 } else {
                     null
                 }
 
-                val insights = generateInsightsUseCase(
-                    current = currentData,
-                    previous = previousData,
-                    teas = teas,
-                    periodLabel = currentState.periodLabel.lowercase(),
-                    start = start,
-                    end = end,
-                )
-
-                val formattedWater = VolumeFormatter.format(currentData.totalWaterMl, prefs.volumeUnit)
+                val formattedWater =
+                    VolumeFormatter.format(currentData.totalWaterMl, prefs.volumeUnit)
                 val formattedTime = formatDuration(currentData.totalBrewingTime)
 
                 // Load chart data
                 val trendPoints = getBrewingTrendsUseCase(start, end)
                 val teaTypeDistribution = getTeaTypeDistributionUseCase(start, end)
                 val topTeas = getTopTeasUseCase(start, end)
-                val activityCells = getBrewingActivityUseCase(start, end, currentState.selectedPeriod)
-                    .getOrElse { emptyList() }
-                val steepInsights = getSteepInsightsUseCase(start, end)
+                val activityCells =
+                    getBrewingActivityUseCase(start, end, currentState.selectedPeriod)
+                        .getOrElse { emptyList() }
                 val topRatedTeas = getTopRatedTeasUseCase(start, end)
                 val vesselDistribution = getVesselDistributionUseCase(start, end)
+
+                val insights = generateInsightsUseCase(
+                    current = currentData,
+                    topTeas = topTeas,
+                    steepInsights = steepInsights,
+                    teaTypeDistribution = teaTypeDistribution,
+                    topRatedTeas = topRatedTeas,
+                    vesselDistribution = vesselDistribution,
+                    activityCells = activityCells,
+                    period = currentState.selectedPeriod,
+                )
 
                 _state.update {
                     it.copy(
@@ -252,7 +295,7 @@ class AnalyticsViewModel(
 
             return when (period) {
                 AnalyticsPeriod.LAST_7_DAYS -> {
-                    val start = today.minus(7, DateTimeUnit.DAY)
+                    val start = today.minus(6, DateTimeUnit.DAY)
                     start.atStartOfDayIn(tz) to now
                 }
 
@@ -268,13 +311,14 @@ class AnalyticsViewModel(
 
                 AnalyticsPeriod.THIS_WEEK -> {
                     val dayOfWeek = today.dayOfWeek.ordinal // Monday = 0
-                    val monday = today.minus(dayOfWeek, DateTimeUnit.DAY)
+                    val monday = today.minus(dayOfWeek + 1, DateTimeUnit.DAY)
                     monday.atStartOfDayIn(tz) to now
                 }
 
                 AnalyticsPeriod.THIS_MONTH -> {
                     val firstOfMonth = LocalDate(today.year, today.month, 1)
-                    firstOfMonth.atStartOfDayIn(tz) to now
+                    val firstOfNextMonth = firstOfMonth.plus(1, DateTimeUnit.MONTH)
+                    firstOfMonth.atStartOfDayIn(tz) to firstOfNextMonth.atStartOfDayIn(tz)
                 }
 
                 AnalyticsPeriod.LAST_MONTH -> {
@@ -327,5 +371,6 @@ sealed interface AnalyticsNavEvent {
         val filterDateStart: String? = null,
         val filterDateEnd: String? = null,
     ) : AnalyticsNavEvent
+
     data class NavigateToTeaDetail(val teaId: String) : AnalyticsNavEvent
 }

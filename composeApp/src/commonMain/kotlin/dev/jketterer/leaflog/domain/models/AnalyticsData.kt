@@ -13,8 +13,12 @@ data class AnalyticsData(
 )
 
 data class PeriodComparison(
-    val previousSessions: Int,
-    val percentageChange: Float,
+    val percentageChangeSessions: Float?,
+    val percentageChangeBrewTime: Float?,
+    val percentageChangeWater: Float?,
+    val percentageChangeUniqueTeas: Float?,
+    val percentageChangeAverageSteeps: Float?,
+    val percentageChangeNewTeas: Float?,
 )
 
 data class Insight(
@@ -23,11 +27,13 @@ data class Insight(
 )
 
 enum class InsightType {
-    PERIOD_COMPARISON,
     MOST_BREWED,
     AVERAGE_RATING,
     CONSISTENCY,
-    VARIETY,
+    FAVORITE_TYPE,
+    RE_STEEP,
+    TOP_RATED,
+    PREFERRED_VESSEL,
 }
 
 data class TrendPoint(

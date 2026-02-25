@@ -17,8 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,7 +40,10 @@ import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Download
 import compose.icons.feathericons.Droplet
+import compose.icons.feathericons.Layers
+import compose.icons.feathericons.Search
 import compose.icons.feathericons.Star
+import compose.icons.feathericons.Sunrise
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.Insight
@@ -53,6 +54,7 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
+import dev.jketterer.leaflog.domain.models.TopReSteepedTea
 import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingActivityHeatmap
@@ -248,8 +250,6 @@ private fun AnalyticsDataContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Period selector (right-aligned)
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -289,13 +289,14 @@ private fun AnalyticsDataContent(
                     value = analytics.totalSessions.toString(),
                     label = "Sessions",
                     icon = FeatherIcons.Coffee,
-                    percentageChange = state.comparison?.percentageChange,
+                    percentageChange = state.comparison?.percentageChangeSessions,
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
                     value = state.formattedBrewingTime,
                     label = "Brew Time",
                     icon = FeatherIcons.Clock,
+                    percentageChange = state.comparison?.percentageChangeBrewTime,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -308,22 +309,43 @@ private fun AnalyticsDataContent(
                     value = state.formattedWaterQuantity,
                     label = "Water Used",
                     icon = FeatherIcons.Droplet,
+                    percentageChange = state.comparison?.percentageChangeWater,
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
                     value = analytics.uniqueTeasCount.toString(),
                     label = "Unique Teas",
                     icon = FeatherIcons.Star,
+                    percentageChange = state.comparison?.percentageChangeUniqueTeas,
                     modifier = Modifier.weight(1f),
                 )
             }
         }
 
-        // Steep insights row
+        // Steep insights cards
         val steepInsights = state.steepInsights
         if (steepInsights != null) {
             Spacer(modifier = Modifier.height(8.dp))
-            SteepInsightsRow(steepInsights = steepInsights)
+            val averageSteeps = (steepInsights.averageSteepsPerSession * 10).roundToInt() / 10.0
+            Row(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SummaryCard(
+                    value = averageSteeps.toString(),
+                    label = "Average Steeps",
+                    icon = FeatherIcons.Layers,
+                    percentageChange = state.comparison?.percentageChangeAverageSteeps,
+                    modifier = Modifier.weight(1f),
+                )
+                SummaryCard(
+                    value = steepInsights.newTeaDiscoveries.toString(),
+                    label = "New Teas",
+                    icon = FeatherIcons.Search,
+                    percentageChange = state.comparison?.percentageChangeNewTeas,
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
 
         // Insights section
@@ -380,38 +402,6 @@ private fun AnalyticsDataContent(
     }
 }
 
-@Composable
-private fun SteepInsightsRow(steepInsights: SteepInsights) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            val averageSteeps = (steepInsights.averageSteepsPerSession * 10).roundToInt() / 10.0
-            Text(
-                text = "Avg $averageSteeps steeps/session",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = "·",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Text(
-                text = "${steepInsights.newTeaDiscoveries} new teas discovered",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable
@@ -441,23 +431,53 @@ private fun AnalyticsDataContentPreview() {
                     ratedSessionsCount = 35,
                 ),
                 comparison = PeriodComparison(
-                    previousSessions = 38,
-                    percentageChange = 10.5f,
+                    percentageChangeSessions = 10.5f,
+                    percentageChangeBrewTime = 8.0f,
+                    percentageChangeWater = 5.0f,
+                    percentageChangeUniqueTeas = 25.0f,
+                    percentageChangeAverageSteeps = -5.0f,
+                    percentageChangeNewTeas = 33.0f,
+                ),
+                steepInsights = SteepInsights(
+                    averageSteepsPerSession = 2.3f,
+                    topReSteepedTea = TopReSteepedTea(
+                        tea = Tea(
+                            id = "1",
+                            name = "Dragon Well",
+                            teaTypeId = "1",
+                            createdAt = now,
+                            updatedAt = now,
+                            syncStatus = SyncStatus.LOCAL_ONLY
+                        ),
+                        averageSteeps = 3.2f,
+                        ),
+                    newTeaDiscoveries = 4,
                 ),
                 insights = listOf(
                     Insight(
-                        InsightType.PERIOD_COMPARISON,
-                        "Sessions are up 11% compared to the previous period"
-                    ),
-                    Insight(
                         InsightType.MOST_BREWED,
-                        "Dragon Well is your most brewed tea with 12 sessions"
+                        "Dragon Well is your most brewed tea with 12 sessions",
                     ),
                     Insight(
-                        InsightType.AVERAGE_RATING,
-                        "Your average rating is 4.2 across 35 rated sessions"
+                        InsightType.FAVORITE_TYPE,
+                        "Green tea makes up 38% of your sessions",
                     ),
-                    Insight(InsightType.VARIETY, "You've explored 8 different teas this month"),
+                    Insight(
+                        InsightType.RE_STEEP,
+                        "Dragon Well is your most re-steeped tea, averaging 3.2 steeps per session",
+                    ),
+                    Insight(
+                        InsightType.TOP_RATED,
+                        "Tie Guan Yin is your highest rated tea at 4.8 ★",
+                    ),
+                    Insight(
+                        InsightType.PREFERRED_VESSEL,
+                        "Gaiwan is your go-to vessel, used in 60% of sessions",
+                    ),
+                    Insight(
+                        InsightType.CONSISTENCY,
+                        "Your longest brewing streak was 5 days in a row",
+                    ),
                 ),
                 formattedWaterQuantity = "5.2L",
                 formattedBrewingTime = "2h 30m",

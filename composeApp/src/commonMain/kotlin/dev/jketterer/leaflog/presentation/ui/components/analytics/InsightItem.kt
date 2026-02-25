@@ -18,8 +18,10 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Award
 import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.PieChart
+import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Star
-import compose.icons.feathericons.TrendingUp
+import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Zap
 import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -52,11 +54,13 @@ fun InsightItem(
 
 private val InsightType.icon: ImageVector
     get() = when (this) {
-        InsightType.PERIOD_COMPARISON -> FeatherIcons.TrendingUp
         InsightType.MOST_BREWED -> FeatherIcons.Coffee
         InsightType.AVERAGE_RATING -> FeatherIcons.Star
         InsightType.CONSISTENCY -> FeatherIcons.Zap
-        InsightType.VARIETY -> FeatherIcons.Award
+        InsightType.FAVORITE_TYPE -> FeatherIcons.PieChart
+        InsightType.RE_STEEP -> FeatherIcons.RefreshCw
+        InsightType.TOP_RATED -> FeatherIcons.Award
+        InsightType.PREFERRED_VESSEL -> FeatherIcons.Thermometer
     }
 
 @Preview(showBackground = true)

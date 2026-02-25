@@ -1,61 +1,39 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsData
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.Insight
 import dev.jketterer.leaflog.domain.models.InsightType
-import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import kotlin.math.absoluteValue
+import dev.jketterer.leaflog.domain.models.SteepInsights
+import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
+import dev.jketterer.leaflog.domain.models.TopRatedTea
+import dev.jketterer.leaflog.domain.models.TopTea
+import dev.jketterer.leaflog.domain.models.VesselDistribution
 import kotlin.math.roundToInt
-import kotlin.time.Instant
 
-class GenerateInsightsUseCase(
-    private val teaSessionRepository: TeaSessionRepository,
-) {
-    suspend operator fun invoke(
+class GenerateInsightsUseCase {
+    operator fun invoke(
         current: AnalyticsData,
-        previous: AnalyticsData?,
-        teas: List<Tea>,
-        periodLabel: String,
-        start: Instant,
-        end: Instant,
+        topTeas: List<TopTea>,
+        steepInsights: SteepInsights?,
+        teaTypeDistribution: List<TeaTypeDistribution>,
+        topRatedTeas: List<TopRatedTea>,
+        vesselDistribution: List<VesselDistribution>,
+        activityCells: List<ActivityCell>,
+        period: AnalyticsPeriod,
     ): List<Insight> {
         val insights = mutableListOf<Insight>()
 
-        // Period comparison
-        if (previous != null && previous.totalSessions > 0) {
-            val change = ((current.totalSessions - previous.totalSessions).toFloat() /
-                    previous.totalSessions * 100f)
-            if (change.absoluteValue > 10f) {
-                val direction = if (change > 0) "up" else "down"
-                val absChange = change.absoluteValue.roundToInt()
-                insights.add(
-                    Insight(
-                        type = InsightType.PERIOD_COMPARISON,
-                        text = "Sessions are $direction ${absChange}% compared to the previous period",
-                    )
-                )
-            }
-        }
-
         // Most brewed tea
-        if (current.totalSessions > 0) {
-            val sessions = teaSessionRepository.getByDateRange(start, end)
-                .filter { it.status == SessionStatus.COMPLETED && it.parentSessionId == null }
-            val teaCountMap = sessions.groupBy { it.teaId }
-                .mapValues { it.value.size }
-            val topTeaId = teaCountMap.maxByOrNull { it.value }?.key
-            val topTea = teas.find { it.id == topTeaId }
-            val topCount = teaCountMap[topTeaId] ?: 0
-            if (topTea != null && topCount > 1) {
-                insights.add(
-                    Insight(
-                        type = InsightType.MOST_BREWED,
-                        text = "${topTea.name} is your most brewed tea with $topCount sessions",
-                    )
+        val topTea = topTeas.maxByOrNull { it.sessionCount }
+        if (topTea != null && topTea.sessionCount > 1) {
+            insights.add(
+                Insight(
+                    type = InsightType.MOST_BREWED,
+                    text = "${topTea.tea.name} is your most brewed tea with ${topTea.sessionCount} sessions",
                 )
-            }
+            )
         }
 
         // Average rating
@@ -69,16 +47,81 @@ class GenerateInsightsUseCase(
             )
         }
 
-        // Variety
-        if (current.uniqueTeasCount > 1) {
+        // Favorite tea type
+        val topType = teaTypeDistribution.maxByOrNull { it.sessionCount }
+        if (topType != null && topType.sessionCount > 1) {
+            val pct = topType.percentage.roundToInt()
             insights.add(
                 Insight(
-                    type = InsightType.VARIETY,
-                    text = "You've explored ${current.uniqueTeasCount} different teas $periodLabel",
+                    type = InsightType.FAVORITE_TYPE,
+                    text = "${topType.teaType.name} tea makes up ${pct}% of your sessions",
                 )
             )
         }
 
-        return insights.take(4)
+        // Most re-steeped tea
+        val topReSteep = steepInsights?.topReSteepedTea
+        if (topReSteep != null) {
+            val avgSteeps = (topReSteep.averageSteeps * 10).roundToInt() / 10.0
+            insights.add(
+                Insight(
+                    type = InsightType.RE_STEEP,
+                    text = "${topReSteep.tea.name} is your most re-steeped tea, averaging $avgSteeps steeps per session",
+                )
+            )
+        }
+
+        // Highest rated tea
+        val topRated = topRatedTeas.firstOrNull()
+        if (topRated != null && topRated.ratedSessionCount >= 2) {
+            val rounded = (topRated.averageRating * 10).roundToInt() / 10f
+            insights.add(
+                Insight(
+                    type = InsightType.TOP_RATED,
+                    text = "${topRated.tea.name} is your highest rated tea at $rounded ★",
+                )
+            )
+        }
+
+        // Preferred vessel
+        val topVessel = vesselDistribution.maxByOrNull { it.sessionCount }
+        if (topVessel != null && vesselDistribution.size > 1) {
+            val pct = topVessel.percentage.roundToInt()
+            insights.add(
+                Insight(
+                    type = InsightType.PREFERRED_VESSEL,
+                    text = "${topVessel.vessel.name} is your go-to vessel, used in ${pct}% of sessions",
+                )
+            )
+        }
+
+        // Brewing consistency (streak)
+        val useWeekly = period == AnalyticsPeriod.LAST_90_DAYS || period == AnalyticsPeriod.THIS_YEAR
+        val maxStreak = computeMaxStreak(activityCells.sortedBy { it.date })
+        if (maxStreak >= 3) {
+            val unit = if (useWeekly) "week" else "day"
+            insights.add(
+                Insight(
+                    type = InsightType.CONSISTENCY,
+                    text = "Your longest brewing streak was $maxStreak ${unit}s in a row",
+                )
+            )
+        }
+
+        return insights
+    }
+
+    private fun computeMaxStreak(cells: List<ActivityCell>): Int {
+        var maxStreak = 0
+        var currentStreak = 0
+        for (cell in cells) {
+            if (cell.sessionCount > 0) {
+                currentStreak++
+                if (currentStreak > maxStreak) maxStreak = currentStreak
+            } else {
+                currentStreak = 0
+            }
+        }
+        return maxStreak
     }
 }

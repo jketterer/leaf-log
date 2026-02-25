@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -21,6 +22,7 @@ actual class PreferencesDataStore(private val context: Context) {
         val TEMPERATURE_UNIT_KEY = stringPreferencesKey("temperature_unit")
         val VOLUME_UNIT_KEY = stringPreferencesKey("volume_unit")
         val TEA_SORT_OPTION_KEY = stringPreferencesKey("tea_sort_option")
+        val ANALYTICS_PERIOD_KEY = stringPreferencesKey("analytics_period")
     }
 
     actual fun getPreferencesFlow(): Flow<UserPreferences> {
@@ -47,6 +49,13 @@ actual class PreferencesDataStore(private val context: Context) {
                         TeaSortOption.NAME_ASC
                     }
                 } ?: TeaSortOption.NAME_ASC,
+                analyticsPeriod = prefs[ANALYTICS_PERIOD_KEY]?.let {
+                    try {
+                        AnalyticsPeriod.valueOf(it)
+                    } catch (e: IllegalArgumentException) {
+                        AnalyticsPeriod.THIS_WEEK
+                    }
+                } ?: AnalyticsPeriod.THIS_WEEK,
             )
         }
     }
@@ -66,6 +75,12 @@ actual class PreferencesDataStore(private val context: Context) {
     actual suspend fun updateTeaSortOption(option: TeaSortOption) {
         context.dataStore.edit { prefs ->
             prefs[TEA_SORT_OPTION_KEY] = option.name
+        }
+    }
+
+    actual suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod) {
+        context.dataStore.edit { prefs ->
+            prefs[ANALYTICS_PERIOD_KEY] = period.name
         }
     }
 }

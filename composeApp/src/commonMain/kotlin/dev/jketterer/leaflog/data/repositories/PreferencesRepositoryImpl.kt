@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.data.repositories
 
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -42,6 +43,15 @@ class PreferencesRepositoryImpl(
     override suspend fun updateTeaSortOption(option: TeaSortOption): Result<Unit> {
         return try {
             preferencesDataStore.updateTeaSortOption(option)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod): Result<Unit> {
+        return try {
+            preferencesDataStore.updateAnalyticsPeriod(period)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

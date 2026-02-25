@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.analytics
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,28 +38,36 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.BarChart2
+import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Download
+import compose.icons.feathericons.Droplet
+import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.Insight
 import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.domain.models.PeriodComparison
+import dev.jketterer.leaflog.domain.models.SteepInsights
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.domain.models.TrendPoint
+import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingActivityHeatmap
 import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingTrendsChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.InsightItem
 import dev.jketterer.leaflog.presentation.ui.components.analytics.PeriodSelector
 import dev.jketterer.leaflog.presentation.ui.components.analytics.SummaryCard
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TeaTypeDistributionChart
+import dev.jketterer.leaflog.presentation.ui.components.analytics.TopRatedTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopTeasChart
+import dev.jketterer.leaflog.presentation.ui.components.analytics.VesselDistributionChart
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
@@ -79,6 +90,7 @@ fun AnalyticsScreen(
                     event.filterDateStart,
                     event.filterDateEnd,
                 )
+
                 is AnalyticsNavEvent.NavigateToTeaDetail -> onNavigateToTeaDetail(event.teaId)
             }
         }
@@ -236,54 +248,82 @@ private fun AnalyticsDataContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        // Period selector
-        PeriodSelector(
-            currentLabel = state.periodLabel,
-            expanded = state.showPeriodSelector,
-            onExpandChange = { expanded ->
-                if (expanded) onIntent(AnalyticsIntent.ShowPeriodSelector)
-                else onIntent(AnalyticsIntent.HidePeriodSelector)
-            },
-            onPeriodSelected = { period -> onIntent(AnalyticsIntent.SelectPeriod(period)) },
-        )
-
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Period selector (right-aligned)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PeriodSelector(
+                currentLabel = state.periodLabel,
+                expanded = state.showPeriodSelector,
+                onExpandChange = { expanded ->
+                    if (expanded) onIntent(AnalyticsIntent.ShowPeriodSelector)
+                    else onIntent(AnalyticsIntent.HidePeriodSelector)
+                },
+                onPeriodSelected = { period -> onIntent(AnalyticsIntent.SelectPeriod(period)) },
+            )
+        }
+
+        // Brewing activity heatmap (hidden for ALL_TIME)
+        if (state.selectedPeriod != AnalyticsPeriod.ALL_TIME && state.activityCells.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            BrewingActivityHeatmap(
+                cells = state.activityCells,
+                period = state.selectedPeriod,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Summary cards - 2x2 grid
         val analytics = state.analytics
         if (analytics != null) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 SummaryCard(
                     value = analytics.totalSessions.toString(),
                     label = "Sessions",
+                    icon = FeatherIcons.Coffee,
                     percentageChange = state.comparison?.percentageChange,
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
                     value = state.formattedBrewingTime,
                     label = "Brew Time",
+                    icon = FeatherIcons.Clock,
                     modifier = Modifier.weight(1f),
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 SummaryCard(
                     value = state.formattedWaterQuantity,
                     label = "Water Used",
+                    icon = FeatherIcons.Droplet,
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
                     value = analytics.uniqueTeasCount.toString(),
                     label = "Unique Teas",
+                    icon = FeatherIcons.Star,
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+
+        // Steep insights row
+        val steepInsights = state.steepInsights
+        if (steepInsights != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            SteepInsightsRow(steepInsights = steepInsights)
         }
 
         // Insights section
@@ -316,15 +356,62 @@ private fun AnalyticsDataContent(
             onTapSegment = { teaTypeId -> onIntent(AnalyticsIntent.TapTeaType(teaTypeId)) },
         )
 
-        // Top Teas Chart
+        // Vessel Distribution Chart
+        Spacer(modifier = Modifier.height(12.dp))
+        VesselDistributionChart(
+            distribution = state.vesselDistribution,
+            onTapSegment = { vesselId -> onIntent(AnalyticsIntent.TapVessel(vesselId)) },
+        )
+
+        // Most Brewed Teas Chart
         Spacer(modifier = Modifier.height(12.dp))
         TopTeasChart(
             topTeas = state.topTeas,
             onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopTea(teaId)) },
         )
+
+        // Highest Rated Teas Chart
+        Spacer(modifier = Modifier.height(12.dp))
+        TopRatedTeasChart(
+            topRatedTeas = state.topRatedTeas,
+            onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopRatedTea(teaId)) },
+        )
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
+
+@Composable
+private fun SteepInsightsRow(steepInsights: SteepInsights) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            val averageSteeps = (steepInsights.averageSteepsPerSession * 10).roundToInt() / 10.0
+            Text(
+                text = "Avg $averageSteeps steeps/session",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = "·",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = "${steepInsights.newTeaDiscoveries} new teas discovered",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -358,9 +445,18 @@ private fun AnalyticsDataContentPreview() {
                     percentageChange = 10.5f,
                 ),
                 insights = listOf(
-                    Insight(InsightType.PERIOD_COMPARISON, "Sessions are up 11% compared to the previous period"),
-                    Insight(InsightType.MOST_BREWED, "Dragon Well is your most brewed tea with 12 sessions"),
-                    Insight(InsightType.AVERAGE_RATING, "Your average rating is 4.2 across 35 rated sessions"),
+                    Insight(
+                        InsightType.PERIOD_COMPARISON,
+                        "Sessions are up 11% compared to the previous period"
+                    ),
+                    Insight(
+                        InsightType.MOST_BREWED,
+                        "Dragon Well is your most brewed tea with 12 sessions"
+                    ),
+                    Insight(
+                        InsightType.AVERAGE_RATING,
+                        "Your average rating is 4.2 across 35 rated sessions"
+                    ),
                     Insight(InsightType.VARIETY, "You've explored 8 different teas this month"),
                 ),
                 formattedWaterQuantity = "5.2L",
@@ -396,15 +492,36 @@ private fun AnalyticsDataContentPreview() {
                 ),
                 topTeas = listOf(
                     TopTea(
-                        tea = Tea(id = "1", name = "Dragon Well", teaTypeId = "1", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                        tea = Tea(
+                            id = "1",
+                            name = "Dragon Well",
+                            teaTypeId = "1",
+                            createdAt = now,
+                            updatedAt = now,
+                            syncStatus = SyncStatus.LOCAL_ONLY
+                        ),
                         sessionCount = 12,
                     ),
                     TopTea(
-                        tea = Tea(id = "2", name = "Tie Guan Yin", teaTypeId = "2", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                        tea = Tea(
+                            id = "2",
+                            name = "Tie Guan Yin",
+                            teaTypeId = "2",
+                            createdAt = now,
+                            updatedAt = now,
+                            syncStatus = SyncStatus.LOCAL_ONLY
+                        ),
                         sessionCount = 8,
                     ),
                     TopTea(
-                        tea = Tea(id = "3", name = "Earl Grey", teaTypeId = "3", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                        tea = Tea(
+                            id = "3",
+                            name = "Earl Grey",
+                            teaTypeId = "3",
+                            createdAt = now,
+                            updatedAt = now,
+                            syncStatus = SyncStatus.LOCAL_ONLY
+                        ),
                         sessionCount = 6,
                     ),
                 ),

@@ -8,27 +8,31 @@ import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.data.ExportDataUseCase
-import dev.jketterer.leaflog.domain.usecases.data.ImportDataUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.data.ExportDataUseCase
+import dev.jketterer.leaflog.domain.usecases.data.ImportDataUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ExportAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
-import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
@@ -75,6 +79,10 @@ val useCaseModule = module {
     factoryOf(::GetTeaTypeDistributionUseCase)
     factoryOf(::GetTopTeasUseCase)
     factoryOf(::ExportAnalyticsUseCase)
+    factoryOf(::GetBrewingActivityUseCase)
+    factoryOf(::GetSteepInsightsUseCase)
+    factoryOf(::GetTopRatedTeasUseCase)
+    factoryOf(::GetVesselDistributionUseCase)
 
     // Timer use cases
     factoryOf(::StartTimerUseCase)

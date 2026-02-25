@@ -12,9 +12,13 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.session.ExportAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +48,10 @@ class AnalyticsViewModel(
     private val getTeaTypeDistributionUseCase: GetTeaTypeDistributionUseCase,
     private val getTopTeasUseCase: GetTopTeasUseCase,
     private val exportAnalyticsUseCase: ExportAnalyticsUseCase,
+    private val getBrewingActivityUseCase: GetBrewingActivityUseCase,
+    private val getSteepInsightsUseCase: GetSteepInsightsUseCase,
+    private val getTopRatedTeasUseCase: GetTopRatedTeasUseCase,
+    private val getVesselDistributionUseCase: GetVesselDistributionUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnalyticsState())
@@ -85,6 +93,10 @@ class AnalyticsViewModel(
             is AnalyticsIntent.ShowExportDialog -> generateExport()
             is AnalyticsIntent.HideExportDialog -> {
                 _state.update { it.copy(showExportDialog = false, exportCsvContent = null) }
+            }
+            is AnalyticsIntent.TapVessel -> { /* no-op: no vessel detail screen yet */ }
+            is AnalyticsIntent.TapTopRatedTea -> {
+                _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
             }
         }
     }
@@ -173,6 +185,11 @@ class AnalyticsViewModel(
                 val trendPoints = getBrewingTrendsUseCase(start, end)
                 val teaTypeDistribution = getTeaTypeDistributionUseCase(start, end)
                 val topTeas = getTopTeasUseCase(start, end)
+                val activityCells = getBrewingActivityUseCase(start, end, currentState.selectedPeriod)
+                    .getOrElse { emptyList() }
+                val steepInsights = getSteepInsightsUseCase(start, end)
+                val topRatedTeas = getTopRatedTeasUseCase(start, end)
+                val vesselDistribution = getVesselDistributionUseCase(start, end)
 
                 _state.update {
                     it.copy(
@@ -187,6 +204,10 @@ class AnalyticsViewModel(
                         trendPoints = trendPoints,
                         teaTypeDistribution = teaTypeDistribution,
                         topTeas = topTeas,
+                        activityCells = activityCells,
+                        steepInsights = steepInsights,
+                        topRatedTeas = topRatedTeas,
+                        vesselDistribution = vesselDistribution,
                     )
                 }
             } catch (e: Exception) {

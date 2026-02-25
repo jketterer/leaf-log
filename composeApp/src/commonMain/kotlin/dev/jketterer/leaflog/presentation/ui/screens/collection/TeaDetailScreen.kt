@@ -25,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -439,6 +440,22 @@ private fun TeaDetailContent(
                     .padding(16.dp),
             ) {
                 Text("🍵 Brew This Tea")
+            }
+        }
+
+        state.error?.let { error ->
+            Snackbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .padding(bottom = 80.dp),
+                action = {
+                    TextButton(onClick = { onIntent(TeaDetailIntent.ClearError) }) {
+                        Text("Dismiss")
+                    }
+                },
+            ) {
+                Text(error)
             }
         }
 

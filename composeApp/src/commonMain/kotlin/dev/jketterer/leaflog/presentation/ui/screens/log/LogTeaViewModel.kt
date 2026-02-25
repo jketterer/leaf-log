@@ -103,6 +103,7 @@ class LogTeaViewModel(
             )
 
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
+            is LogTeaIntent.ClearError -> _state.update { it.copy(error = null) }
 
             is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
             is LogTeaIntent.MethodSelected -> selectMethod(intent.configurationId)

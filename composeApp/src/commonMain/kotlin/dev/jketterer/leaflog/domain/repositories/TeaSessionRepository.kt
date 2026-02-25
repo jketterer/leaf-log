@@ -22,4 +22,5 @@ interface TeaSessionRepository {
     suspend fun upsert(session: TeaSession)
     suspend fun delete(id: String)
     suspend fun countByDateRange(start: Instant, end: Instant): Int
+    suspend fun hasInProgressSession(): Boolean
 }

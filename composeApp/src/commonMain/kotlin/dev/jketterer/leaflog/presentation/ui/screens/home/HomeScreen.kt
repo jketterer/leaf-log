@@ -264,6 +264,7 @@ private fun HomeContent(
                                 onDeleteClick = {
                                     onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.id))
                                 },
+                                canBrewAgain = state.inProgressSessionsCount == 0,
                                 modifier = Modifier.padding(horizontal = 16.dp),
                             )
                         }

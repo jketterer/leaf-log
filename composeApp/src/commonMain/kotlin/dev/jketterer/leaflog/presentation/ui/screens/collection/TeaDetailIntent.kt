@@ -18,4 +18,5 @@ sealed interface TeaDetailIntent {
     data class DeleteConfigurationClicked(val configId: String) : TeaDetailIntent
 
     data object AddConfigurationClicked : TeaDetailIntent
+    data object ClearError : TeaDetailIntent
 }

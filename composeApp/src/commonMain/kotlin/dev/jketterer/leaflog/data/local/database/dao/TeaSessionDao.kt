@@ -161,6 +161,16 @@ interface TeaSessionDao {
     )
     suspend fun deleteSyncedOldItems(cutoffTimestamp: Long): Int
 
+    @Query(
+        """
+        SELECT COUNT(*) FROM tea_session
+        WHERE deletedAt IS NULL
+        AND status = 'IN_PROGRESS'
+        AND parentSessionId IS NULL
+    """
+    )
+    suspend fun countInProgressParentSessions(): Int
+
     @Query("SELECT COUNT(*) FROM tea_session WHERE deletedAt IS NULL")
     suspend fun count(): Int
 

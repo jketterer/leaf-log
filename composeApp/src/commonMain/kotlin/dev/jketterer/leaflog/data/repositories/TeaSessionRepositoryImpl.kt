@@ -119,4 +119,8 @@ class TeaSessionRepositoryImpl(
             endTimestamp = end.toEpochMilliseconds()
         )
     }
+
+    override suspend fun hasInProgressSession(): Boolean {
+        return teaSessionDao.countInProgressParentSessions() > 0
+    }
 }

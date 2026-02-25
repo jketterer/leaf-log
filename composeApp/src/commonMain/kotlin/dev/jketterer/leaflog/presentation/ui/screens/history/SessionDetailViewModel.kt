@@ -103,6 +103,8 @@ class SessionDetailViewModel(
             is SessionDetailIntent.BackClicked -> {
                 _navEvents.trySend(SessionDetailNavEvent.NavigateBack)
             }
+
+            is SessionDetailIntent.ClearError -> _state.update { it.copy(error = null) }
         }
     }
 

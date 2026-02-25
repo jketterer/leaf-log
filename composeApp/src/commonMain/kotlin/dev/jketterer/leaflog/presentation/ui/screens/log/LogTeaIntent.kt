@@ -35,6 +35,7 @@ sealed interface LogTeaIntent {
     data object SaveAsCompleted : LogTeaIntent
     data object StartTimerClicked : LogTeaIntent
     data object BackClicked : LogTeaIntent
+    data object ClearError : LogTeaIntent
 
     // Complete session dialog
     data class CompletionDialogNotesChanged(val notes: String) : LogTeaIntent

@@ -73,6 +73,7 @@ fun SessionCard(
     onBrewAgainClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    canBrewAgain: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -208,7 +209,7 @@ fun SessionCard(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
-                    if (session.status == SessionStatus.COMPLETED) {
+                    if (session.status == SessionStatus.COMPLETED && canBrewAgain) {
                         DropdownMenuItem(
                             text = { Text("Brew Again") },
                             onClick = {

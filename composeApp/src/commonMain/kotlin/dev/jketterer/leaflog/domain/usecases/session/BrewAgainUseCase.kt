@@ -15,6 +15,12 @@ class BrewAgainUseCase(
     suspend operator fun invoke(
         sourceSession: TeaSession,
     ): Result<TeaSession> {
+        if (teaSessionRepository.hasInProgressSession()) {
+            return Result.failure(
+                IllegalStateException("A session is already in progress. Please complete it before starting a new one.")
+            )
+        }
+
         val now = Clock.System.now()
 
         // Create new session with same parameters

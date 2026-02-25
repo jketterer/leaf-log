@@ -89,6 +89,8 @@ class TeaDetailViewModel(
                 val teaId = _state.value.tea?.id ?: return
                 _navEvents.trySend(TeaDetailNavigationEvent.NavigateToCreateConfig(teaId))
             }
+
+            is TeaDetailIntent.ClearError -> _state.update { it.copy(error = null) }
         }
     }
 

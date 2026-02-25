@@ -27,6 +27,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -324,6 +325,22 @@ private fun SessionDetailContent(
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
+            }
+        }
+
+        state.error?.let { error ->
+            Snackbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .padding(bottom = 80.dp),
+                action = {
+                    TextButton(onClick = { onIntent(SessionDetailIntent.ClearError) }) {
+                        Text("Dismiss")
+                    }
+                },
+            ) {
+                Text(error)
             }
         }
 

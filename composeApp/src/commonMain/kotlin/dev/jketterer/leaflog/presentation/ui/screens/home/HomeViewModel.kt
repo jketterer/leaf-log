@@ -18,6 +18,7 @@ import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,6 +49,8 @@ class HomeViewModel(
 
     private val _navEvents = Channel<HomeNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    private var loadJob: Job? = null
 
     init {
         loadPreferences(
@@ -97,7 +100,11 @@ class HomeViewModel(
                 _state.update { it.copy(isFabExpanded = intent.expanded) }
             }
 
-            is HomeIntent.BrewAgainClicked -> brewAgain(intent.session)
+            is HomeIntent.BrewAgainClicked -> {
+                val session = _state.value.recentSessionsWithTea
+                    .find { it.session.id == intent.sessionId }?.session ?: return
+                brewAgain(session)
+            }
 
             is HomeIntent.DeleteSessionClicked -> deleteSession(intent.sessionId)
             is HomeIntent.EditSessionClicked -> {
@@ -112,9 +119,7 @@ class HomeViewModel(
             is HomeIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
-            is HomeIntent.InProgressBannerClicked -> _navEvents.trySend(
-                HomeNavEvent.NavigateToHistory(showInProgressOnly = true)
-            )
+            is HomeIntent.InProgressBannerClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
 
             is HomeIntent.DailyStatsTodaySessionsClicked -> {
                 val today = Clock.System.now()
@@ -139,33 +144,33 @@ class HomeViewModel(
     }
 
     private fun handleSessionClick(sessionId: String) {
-        viewModelScope.launch {
-            val session = teaSessionRepository.getById(sessionId)
-            if (session?.status == SessionStatus.IN_PROGRESS) {
+        val session = _state.value.recentSessionsWithTea.find { it.session.id == sessionId }?.session
+        if (session?.status == SessionStatus.IN_PROGRESS) {
+            viewModelScope.launch {
                 // Find the active child steep to navigate to, if any
                 val activeChildSteep = teaSessionRepository.getChildSteeps(sessionId)
                     .find { it.status == SessionStatus.IN_PROGRESS }
                 val targetSessionId = activeChildSteep?.id ?: sessionId
                 _navEvents.trySend(HomeNavEvent.NavigateToTimer(targetSessionId))
-            } else {
-                _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))
             }
+        } else {
+            _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))
         }
     }
 
     private fun loadData() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
 
             try {
-                // Generate greeting
                 val greeting = generateGreeting()
                 _state.update { it.copy(greeting = greeting) }
 
-                collectDailyStats()
-                collectRecentSessions()
-                collectInProgressCount()
-                collectMostRecentInProgress()
+                launch { collectDailyStats() }
+                launch { collectRecentSessions() }
+                launch { collectInProgressCount() }
+                launch { collectMostRecentInProgress() }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -177,7 +182,7 @@ class HomeViewModel(
         }
     }
 
-    private fun collectDailyStats() = viewModelScope.launch {
+    private suspend fun collectDailyStats() {
         getDailyStatsUseCase()
             .catch { e ->
                 _state.update {
@@ -192,7 +197,7 @@ class HomeViewModel(
             }
     }
 
-    private fun collectRecentSessions() = viewModelScope.launch {
+    private suspend fun collectRecentSessions() {
         combine(
             teaSessionRepository.getRecentFlow(limit = 5),
             teaRepository.getAllFlow(),
@@ -217,7 +222,6 @@ class HomeViewModel(
 
                 _state.update {
                     it.copy(
-                        recentSessions = sessions,
                         recentSessionsWithTea = sessions.map { session ->
                             val tea = teaMap[session.teaId]
                             val type = tea?.let { t -> typeMap[t.teaTypeId] }
@@ -237,13 +241,13 @@ class HomeViewModel(
             }
     }
 
-    private fun collectInProgressCount() = viewModelScope.launch {
+    private suspend fun collectInProgressCount() {
         teaSessionRepository.getInProgressCountFlow()
             .catch { e -> println("Failed to load in-progress count: ${e.message}") }
             .collect { count -> _state.update { it.copy(inProgressSessionsCount = count) } }
     }
 
-    private fun collectMostRecentInProgress() = viewModelScope.launch {
+    private suspend fun collectMostRecentInProgress() {
         combine(
             teaSessionRepository.getInProgressFlow(),
             teaRepository.getAllFlow(),
@@ -265,23 +269,7 @@ class HomeViewModel(
     }
 
     private fun refresh() {
-        viewModelScope.launch {
-            _state.update { it.copy(isRefreshing = true) }
-
-            try {
-                // TODO: Trigger Firebase sync when implemented
-                // For now, just reload local data
-                loadData()
-                _state.update { it.copy(isRefreshing = false) }
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isRefreshing = false,
-                        error = "Refresh failed: ${e.message}",
-                    )
-                }
-            }
-        }
+        loadData()
     }
 
     private fun generateGreeting(): String {
@@ -309,7 +297,11 @@ class HomeViewModel(
     }
 
     private fun deleteSession(sessionId: String?) = viewModelScope.launch {
-        sessionId?.let { deleteSessionUseCase(it) }
+        sessionId ?: return@launch
+        deleteSessionUseCase(sessionId)
+            .onFailure { e ->
+                _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
+            }
     }
 
     private fun toggleVolumeUnit() = viewModelScope.launch {
@@ -332,7 +324,6 @@ data class SessionWithTeaData(
 
 sealed interface HomeNavEvent {
     data class NavigateToHistory(
-        val showInProgressOnly: Boolean = false,
         val filterDateStart: String? = null,
         val filterDateEnd: String? = null,
     ) : HomeNavEvent

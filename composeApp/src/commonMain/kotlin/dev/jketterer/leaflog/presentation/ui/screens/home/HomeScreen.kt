@@ -86,7 +86,10 @@ fun HomeScreen(
                 }
 
                 is HomeNavEvent.NavigateToHistory -> {
-                    onNavigateToHistory(event.filterDateStart, event.filterDateEnd)
+                    onNavigateToHistory(
+                        event.filterDateStart,
+                        event.filterDateEnd
+                    )
                 }
 
                 is HomeNavEvent.NavigateToCollection -> {
@@ -253,11 +256,7 @@ private fun HomeContent(
                                     onIntent(HomeIntent.SessionClicked(sessionData.session.id))
                                 },
                                 onBrewAgainClick = {
-                                    onIntent(
-                                        HomeIntent.BrewAgainClicked(
-                                            session = sessionData.session,
-                                        )
-                                    )
+                                    onIntent(HomeIntent.BrewAgainClicked(sessionData.session.id))
                                 },
                                 onEditClick = {
                                     onIntent(HomeIntent.EditSessionClicked(sessionData.session.id))
@@ -277,19 +276,6 @@ private fun HomeContent(
                 }
             }
 
-            // Error snackbar
-            state.error?.let { error ->
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    action = {
-                        TextButton(onClick = { onIntent(HomeIntent.ClearError) }) {
-                            Text("Dismiss")
-                        }
-                    },
-                ) {
-                    Text(error)
-                }
-            }
         }
 
         ExpandableFAB(
@@ -302,6 +288,22 @@ private fun HomeContent(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
         )
+
+        state.error?.let { error ->
+            Snackbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .padding(bottom = 80.dp),
+                action = {
+                    TextButton(onClick = { onIntent(HomeIntent.ClearError) }) {
+                        Text("Dismiss")
+                    }
+                },
+            ) {
+                Text(error)
+            }
+        }
     }
 
     // Quick Timer Duration Sheet

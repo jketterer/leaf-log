@@ -17,7 +17,6 @@ data class InProgressSessionInfo(
 data class HomeState(
     val greeting: String = "Good day",
     val dailyStats: DailyStats = DailyStats(),
-    val recentSessions: List<TeaSession> = emptyList(),
     val recentSessionsWithTea: List<SessionWithTeaData> = emptyList(),
     val inProgressSessionsCount: Int = 0,
     val mostRecentInProgress: InProgressSessionInfo? = null,

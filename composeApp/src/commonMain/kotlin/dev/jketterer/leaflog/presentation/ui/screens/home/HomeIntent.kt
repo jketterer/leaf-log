@@ -1,7 +1,5 @@
 package dev.jketterer.leaflog.presentation.ui.screens.home
 
-import dev.jketterer.leaflog.domain.models.TeaSession
-
 sealed interface HomeIntent {
     data object LoadData : HomeIntent
     data object Refresh : HomeIntent
@@ -10,7 +8,7 @@ sealed interface HomeIntent {
     data class StartQuickTimer(val durationSeconds: Int) : HomeIntent
     data object DismissDurationSheet : HomeIntent
     data class FabExpandedChanged(val expanded: Boolean) : HomeIntent
-    data class BrewAgainClicked(val session: TeaSession) : HomeIntent
+    data class BrewAgainClicked(val sessionId: String) : HomeIntent
 
     data class DeleteSessionClicked(val sessionId: String) : HomeIntent
     data class EditSessionClicked(val sessionId: String) : HomeIntent

@@ -59,11 +59,15 @@ class HistoryViewModel(
             is HistoryIntent.FilterByTea -> filterByTea(intent.teaId)
             is HistoryIntent.FilterByDateRange -> filterByDateRange(intent.start, intent.end)
             is HistoryIntent.FilterByMinRating -> filterByMinRating(intent.minRating)
-            is HistoryIntent.ToggleShowInProgressOnly -> toggleShowInProgressOnly(intent.inProgressOnly)
             is HistoryIntent.ClearFilters -> clearFilters()
             is HistoryIntent.DeleteSession -> deleteSession(intent.sessionId)
             is HistoryIntent.BrewAgain -> brewAgain(intent.sessionId)
-            is HistoryIntent.CompleteInProgress -> _navEvents.trySend(HistoryNavEvent.NavigateToTimer(intent.sessionId))
+            is HistoryIntent.CompleteInProgress -> _navEvents.trySend(
+                HistoryNavEvent.NavigateToTimer(
+                    intent.sessionId
+                )
+            )
+
             is HistoryIntent.ClearError -> clearError()
 
             is HistoryIntent.SessionClicked -> _navEvents.trySend(
@@ -246,12 +250,6 @@ class HistoryViewModel(
     private fun filterByMinRating(minRating: Float?) {
         _state.update { it.copy(minRating = minRating) }
         reapplyFilters()
-    }
-
-    private fun toggleShowInProgressOnly(inProgressOnly: Boolean) {
-        _state.update { it.copy(showInProgressOnly = inProgressOnly) }
-        // This changes the data source, so we need to reload
-        loadData()
     }
 
     private fun clearFilters() {

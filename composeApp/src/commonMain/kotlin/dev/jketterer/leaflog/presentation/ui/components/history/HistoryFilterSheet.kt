@@ -197,21 +197,6 @@ fun HistoryFilterSheetContent(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Status section
-        FilterSectionHeader("Status")
-        Spacer(modifier = Modifier.height(8.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FilterChip(
-                selected = state.showInProgressOnly,
-                onClick = {
-                    onIntent(HistoryIntent.ToggleShowInProgressOnly(!state.showInProgressOnly))
-                },
-                label = { Text("In Progress Only") },
-            )
-        }
     }
 }
 

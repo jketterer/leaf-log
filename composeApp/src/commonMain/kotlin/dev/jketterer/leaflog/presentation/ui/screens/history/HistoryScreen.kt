@@ -79,12 +79,6 @@ fun HistoryScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(showInProgressOnly) {
-        if (showInProgressOnly) {
-            viewModel.onIntent(HistoryIntent.ToggleShowInProgressOnly(true))
-        }
-    }
-
     LaunchedEffect(filterTeaTypeId) {
         if (filterTeaTypeId != null) {
             viewModel.onIntent(HistoryIntent.FilterByTeaType(filterTeaTypeId))

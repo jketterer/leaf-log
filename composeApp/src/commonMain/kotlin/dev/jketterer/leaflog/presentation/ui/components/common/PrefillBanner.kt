@@ -20,8 +20,6 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Info
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
-import kotlin.time.Clock
-
 /**
  * Banner that shows the source of pre-filled brewing parameters
  */
@@ -34,24 +32,12 @@ fun PrefillBanner(
     onChooseDifferentMethod: (() -> Unit)? = null,
 ) {
     val bannerText = when (source) {
-        is PrefillSource.DirectSession -> {
-            val daysAgo = (Clock.System.now() - source.timestamp).inWholeDays
-            val timeAgo = when {
-                daysAgo == 0L -> "today"
-                daysAgo == 1L -> "yesterday"
-                daysAgo < 7 -> "$daysAgo days ago"
-                daysAgo < 30 -> "${daysAgo / 7} weeks ago"
-                else -> "${daysAgo / 30} months ago"
-            }
-            "Using your ${source.rating}⭐ method from $timeAgo"
+        is PrefillSource.SavedConfig -> {
+            "Using your saved brewing method for $teaName"
         }
 
-        is PrefillSource.TeaTypeFallback -> {
+        is PrefillSource.SameTypeConfig -> {
             "Suggested parameters based on how you brew ${source.teaName}"
-        }
-
-        is PrefillSource.TeaDefaults -> {
-            "Suggested parameters for $teaName"
         }
 
         PrefillSource.None -> return // Don't show banner if no pre-fill

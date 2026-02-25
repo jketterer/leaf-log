@@ -1,33 +1,18 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
-import kotlin.time.Instant
-
 /**
  * Describes the source of pre-filled brewing parameters
  */
 sealed interface PrefillSource {
     /**
-     * Pre-filled from a previous session with this exact tea + vessel combination
+     * Pre-filled from a saved brewing configuration for this exact tea + vessel
      */
-    data class DirectSession(
-        val sessionId: String,
-        val rating: Float,
-        val timestamp: Instant,
-    ) : PrefillSource
+    data object SavedConfig : PrefillSource
 
     /**
-     * Pre-filled from a session with the same tea type + vessel
+     * Pre-filled from a saved brewing configuration for the same tea type + vessel
      */
-    data class TeaTypeFallback(
-        val sessionId: String,
-        val teaName: String,
-        val rating: Float,
-    ) : PrefillSource
-
-    /**
-     * Pre-filled from tea defaults
-     */
-    data object TeaDefaults : PrefillSource
+    data class SameTypeConfig(val teaName: String) : PrefillSource
 
     /**
      * No pre-fill available

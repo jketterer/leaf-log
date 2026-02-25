@@ -61,7 +61,7 @@ fun HomeScreen(
     onNavigateToLogTea: (String?, String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToEditSession: (String) -> Unit,
-    onNavigateToHistory: (showInProgressOnly: Boolean, filterDateStart: String?, filterDateEnd: String?) -> Unit,
+    onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
     onNavigateToCollection: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
@@ -86,7 +86,7 @@ fun HomeScreen(
                 }
 
                 is HomeNavEvent.NavigateToHistory -> {
-                    onNavigateToHistory(event.showInProgressOnly, event.filterDateStart, event.filterDateEnd)
+                    onNavigateToHistory(event.filterDateStart, event.filterDateEnd)
                 }
 
                 is HomeNavEvent.NavigateToCollection -> {

@@ -39,7 +39,6 @@ data class LogTeaState(
     val usedConfigurationId: String? = null, // Track which configuration was used
     val availableConfigurations: List<BrewingConfiguration> = emptyList(),
     val showChooseMethodDialog: Boolean = false,
-    val parametersRevealed: Boolean = false, // True after first tea+vessel prefill; prevents re-prefill on selection changes
 
     // Validation errors
     val teaError: String? = null,

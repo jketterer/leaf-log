@@ -26,7 +26,6 @@ sealed interface NavRoute : NavKey {
 
     @Serializable
     data class HistoryRoute(
-        val showInProgressOnly: Boolean = false,
         val filterTeaTypeId: String? = null,
         val filterTeaId: String? = null,
         val filterDateStart: String? = null,

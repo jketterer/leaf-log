@@ -215,34 +215,20 @@ class LogTeaViewModel(
     private fun loadConfigurationsAndPrefill(tea: Tea, vessel: BrewingVessel) {
         viewModelScope.launch {
             val configurations = brewingConfigurationRepository.getByTeaAndVessel(tea.id, vessel.id)
-
-            if (!_state.value.parametersRevealed) {
-                // First reveal — always prefill; values are in storage units (Celsius/mL)
-                val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
-                _state.update { state ->
-                    state.copy(
-                        teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
-                        waterQuantityMl = prefill.waterQuantityMl?.toString() ?: "",
-                        waterQuantityDisplay = "",
-                        temperatureCelsius = prefill.temperatureCelsius?.toString() ?: "",
-                        temperatureDisplay = "",
-                        brewingTime = prefill.brewingTime,
-                        selectedWaterType = prefill.waterType ?: state.selectedWaterType,
-                        prefillSource = prefill.source,
-                        availableConfigurations = configurations,
-                        usedConfigurationId = configurations.firstOrNull()?.id,
-                        parametersRevealed = true,
-                    )
-                }
-            } else {
-                // Parameters already revealed — update configurations only, leave fields alone
-                _state.update { currentState ->
-                    currentState.copy(
-                        availableConfigurations = configurations,
-                        prefillSource = PrefillSource.None,
-                        usedConfigurationId = null,
-                    )
-                }
+            val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
+            _state.update { state ->
+                state.copy(
+                    teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
+                    waterQuantityMl = prefill.waterQuantityMl?.toString() ?: "",
+                    waterQuantityDisplay = "",
+                    temperatureCelsius = prefill.temperatureCelsius?.toString() ?: "",
+                    temperatureDisplay = "",
+                    brewingTime = prefill.brewingTime,
+                    selectedWaterType = prefill.waterType ?: state.selectedWaterType,
+                    prefillSource = prefill.source,
+                    availableConfigurations = configurations,
+                    usedConfigurationId = configurations.firstOrNull()?.id,
+                )
             }
         }
     }
@@ -289,15 +275,7 @@ class LogTeaViewModel(
                             brewingTime = config.brewingTime,
                             selectedWaterType = config.waterType,
                             usedConfigurationId = configurationId,
-                            prefillSource = if (config.sourceSessionId != null && config.rating != null) {
-                                PrefillSource.DirectSession(
-                                    sessionId = config.sourceSessionId,
-                                    rating = config.rating,
-                                    timestamp = config.lastUsedAt ?: config.createdAt,
-                                )
-                            } else {
-                                PrefillSource.TeaDefaults
-                            }
+                            prefillSource = PrefillSource.SavedConfig,
                         )
                     }
 

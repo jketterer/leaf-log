@@ -445,7 +445,7 @@ private fun Step2ContentPreview() {
             temperatureCelsius = "80",
             waterQuantityMl = "200",
             waterType = WaterType.FILTERED,
-            prefillSource = PrefillSource.TeaDefaults,
+            prefillSource = PrefillSource.SavedConfig,
             userPreferences = UserPreferences(),
             onTeaQuantityChanged = {},
             onTemperatureChanged = {},

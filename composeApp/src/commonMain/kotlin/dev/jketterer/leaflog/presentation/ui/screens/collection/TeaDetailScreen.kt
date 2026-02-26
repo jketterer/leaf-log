@@ -402,9 +402,12 @@ private fun TeaDetailContent(
                                         onIntent(TeaDetailIntent.EditSessionClicked(session.id))
                                     },
                                     onBrewAgainClick = {
-                                        onIntent(TeaDetailIntent.BrewThisTeaClicked(session.vesselId))
+                                        onIntent(TeaDetailIntent.BrewAgainClicked(session.id))
                                     },
-                                    onDeleteClick = { onIntent(TeaDetailIntent.DeleteTeaClicked) },
+                                    onDeleteClick = {
+                                        onIntent(TeaDetailIntent.DeleteSessionClicked(session.id))
+                                    },
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -459,7 +462,31 @@ private fun TeaDetailContent(
             }
         }
 
-        // Delete confirmation dialog
+        // Delete session confirmation dialog
+        if (state.sessionPendingDelete != null) {
+            AlertDialog(
+                onDismissRequest = { onIntent(TeaDetailIntent.CancelDeleteSession) },
+                title = { Text("Delete Session?") },
+                text = { Text("This will delete the session and all steeps. This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = { onIntent(TeaDetailIntent.ConfirmDeleteSession) },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onIntent(TeaDetailIntent.CancelDeleteSession) }) {
+                        Text("Cancel")
+                    }
+                },
+            )
+        }
+
+        // Delete tea confirmation dialog
         if (state.showDeleteConfirmation) {
             AlertDialog(
                 onDismissRequest = { onIntent(TeaDetailIntent.CancelDelete) },

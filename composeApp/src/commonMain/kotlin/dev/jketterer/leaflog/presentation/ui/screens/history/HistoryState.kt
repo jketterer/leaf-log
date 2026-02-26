@@ -34,6 +34,7 @@ data class HistoryState(
     val isEmpty: Boolean = false,
     val showFilterSheet: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
+    val sessionPendingDelete: String? = null,
 ) {
     val hasActiveFilters: Boolean
         get() = selectedTeaTypeId != null ||

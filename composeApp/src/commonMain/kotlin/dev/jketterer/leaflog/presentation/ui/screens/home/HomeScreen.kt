@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -66,6 +68,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToQuickTimer: (Int) -> Unit,
+    onNavigateToAnalytics: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -111,6 +114,10 @@ fun HomeScreen(
 
                 is HomeNavEvent.NavigateToQuickTimer -> {
                     onNavigateToQuickTimer(event.durationSeconds)
+                }
+
+                is HomeNavEvent.NavigateToAnalytics -> {
+                    onNavigateToAnalytics()
                 }
             }
         }
@@ -213,6 +220,7 @@ private fun HomeContent(
                                 onSessionsCardClick = { onIntent(HomeIntent.DailyStatsTodaySessionsClicked) },
                                 onWaterCardClick = { onIntent(HomeIntent.DailyStatsWaterCardClicked) },
                                 onTeasCardClick = { onIntent(HomeIntent.DailyStatsTeasCardClicked) },
+                                onViewAllClick = { onIntent(HomeIntent.ViewAllStatsClicked) },
                             )
                         }
 
@@ -265,7 +273,9 @@ private fun HomeContent(
                                     onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.id))
                                 },
                                 canBrewAgain = state.inProgressSessionsCount == 0,
-                                modifier = Modifier.padding(horizontal = 16.dp),
+                                modifier = Modifier
+                                    .animateItem()
+                                    .padding(horizontal = 16.dp),
                             )
                         }
 
@@ -305,6 +315,30 @@ private fun HomeContent(
                 Text(error)
             }
         }
+    }
+
+    // Delete session confirmation dialog
+    if (state.sessionPendingDelete != null) {
+        AlertDialog(
+            onDismissRequest = { onIntent(HomeIntent.CancelDeleteSession) },
+            title = { Text("Delete Session?") },
+            text = { Text("This will delete the session and all steeps. This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { onIntent(HomeIntent.ConfirmDeleteSession) },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onIntent(HomeIntent.CancelDeleteSession) }) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 
     // Quick Timer Duration Sheet

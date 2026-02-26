@@ -19,6 +19,8 @@ sealed interface HistoryIntent {
     data class SessionClicked(val sessionId: String) : HistoryIntent
     data class EditSession(val sessionId: String) : HistoryIntent
     data class DeleteSession(val sessionId: String) : HistoryIntent
+    data object ConfirmDeleteSession : HistoryIntent
+    data object CancelDeleteSession : HistoryIntent
     data class BrewAgain(val sessionId: String) : HistoryIntent
     data object ClearError : HistoryIntent
 

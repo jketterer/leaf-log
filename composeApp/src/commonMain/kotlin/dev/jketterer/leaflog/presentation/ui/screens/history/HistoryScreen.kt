@@ -12,8 +12,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -309,7 +311,8 @@ private fun HistoryContent(
                                     },
                                     onDeleteClick = {
                                         onIntent(HistoryIntent.DeleteSession(session.id))
-                                    }
+                                    },
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -330,6 +333,30 @@ private fun HistoryContent(
                     Text(error)
                 }
             }
+        }
+
+        // Delete session confirmation dialog
+        if (state.sessionPendingDelete != null) {
+            AlertDialog(
+                onDismissRequest = { onIntent(HistoryIntent.CancelDeleteSession) },
+                title = { Text("Delete Session?") },
+                text = { Text("This will delete the session and all steeps. This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = { onIntent(HistoryIntent.ConfirmDeleteSession) },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onIntent(HistoryIntent.CancelDeleteSession) }) {
+                        Text("Cancel")
+                    }
+                },
+            )
         }
 
         // Filter bottom sheet

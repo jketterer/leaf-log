@@ -60,7 +60,9 @@ class HistoryViewModel(
             is HistoryIntent.FilterByDateRange -> filterByDateRange(intent.start, intent.end)
             is HistoryIntent.FilterByMinRating -> filterByMinRating(intent.minRating)
             is HistoryIntent.ClearFilters -> clearFilters()
-            is HistoryIntent.DeleteSession -> deleteSession(intent.sessionId)
+            is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
+            is HistoryIntent.ConfirmDeleteSession -> confirmDeleteSession()
+            is HistoryIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
             is HistoryIntent.BrewAgain -> brewAgain(intent.sessionId)
             is HistoryIntent.CompleteInProgress -> _navEvents.trySend(
                 HistoryNavEvent.NavigateToTimer(
@@ -273,8 +275,10 @@ class HistoryViewModel(
         }
     }
 
-    private fun deleteSession(sessionId: String) {
+    private fun confirmDeleteSession() {
         viewModelScope.launch {
+            val sessionId = _state.value.sessionPendingDelete ?: return@launch
+            _state.update { it.copy(sessionPendingDelete = null) }
             deleteSessionUseCase(sessionId)
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
@@ -294,8 +298,8 @@ class HistoryViewModel(
             }
 
             brewAgainUseCase(session)
-                .onSuccess {
-                    // Navigation handled by UI - navigate to Log Tea with pre-filled data
+                .onSuccess { newSession ->
+                    _navEvents.trySend(HistoryNavEvent.NavigateToTimer(newSession.id))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to create new session: ${e.message}") }

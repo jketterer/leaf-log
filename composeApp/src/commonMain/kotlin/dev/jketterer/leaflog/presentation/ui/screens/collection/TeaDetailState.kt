@@ -16,5 +16,6 @@ data class TeaDetailState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val showDeleteConfirmation: Boolean = false,
+    val sessionPendingDelete: String? = null,
     val userPreferences: UserPreferences = UserPreferences(),
 )

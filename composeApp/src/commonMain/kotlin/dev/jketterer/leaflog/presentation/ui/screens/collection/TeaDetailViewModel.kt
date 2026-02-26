@@ -12,6 +12,8 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
@@ -36,7 +38,9 @@ class TeaDetailViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val deleteTeaUseCase: DeleteTeaUseCase,
+    private val deleteSessionUseCase: DeleteSessionUseCase,
     private val deleteBrewingConfigurationUseCase: DeleteBrewingConfigurationUseCase,
+    private val brewAgainUseCase: BrewAgainUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaDetailState())
@@ -73,6 +77,7 @@ class TeaDetailViewModel(
             is TeaDetailIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is TeaDetailIntent.EditSessionClicked -> _navEvents.trySend(NavigateToSession(intent.sessionId))
             is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea(intent.vesselId))
+            is TeaDetailIntent.BrewAgainClicked -> brewAgain(intent.sessionId)
             is TeaDetailIntent.ViewAllSessionsClicked -> {
                 val teaId = _state.value.tea?.id ?: return
                 _navEvents.trySend(TeaDetailNavigationEvent.NavigateToHistory(teaId))
@@ -89,6 +94,10 @@ class TeaDetailViewModel(
                 val teaId = _state.value.tea?.id ?: return
                 _navEvents.trySend(TeaDetailNavigationEvent.NavigateToCreateConfig(teaId))
             }
+
+            is TeaDetailIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
+            is TeaDetailIntent.ConfirmDeleteSession -> confirmDeleteSession()
+            is TeaDetailIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
 
             is TeaDetailIntent.ClearError -> _state.update { it.copy(error = null) }
         }
@@ -219,6 +228,34 @@ class TeaDetailViewModel(
             deleteBrewingConfigurationUseCase(configId)
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to delete configuration: ${e.message}") }
+                }
+        }
+    }
+
+    private fun confirmDeleteSession() {
+        viewModelScope.launch {
+            val sessionId = _state.value.sessionPendingDelete ?: return@launch
+            _state.update { it.copy(sessionPendingDelete = null) }
+            deleteSessionUseCase(sessionId)
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
+                }
+        }
+    }
+
+    private fun brewAgain(sessionId: String) {
+        viewModelScope.launch {
+            val session = teaSessionRepository.getById(sessionId)
+            if (session == null) {
+                _state.update { it.copy(error = "Session not found") }
+                return@launch
+            }
+            brewAgainUseCase(session)
+                .onSuccess { newSession ->
+                    _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(newSession.id))
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
                 }
         }
     }

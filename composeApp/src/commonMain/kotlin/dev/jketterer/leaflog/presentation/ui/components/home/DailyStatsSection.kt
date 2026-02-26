@@ -7,16 +7,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Droplet
+import compose.icons.feathericons.Layers
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 /**
- * Section displaying daily statistics with three cards.
+ * Section displaying daily statistics with three cards and a View All action.
  */
 @Composable
 fun DailyStatsSection(
@@ -24,17 +30,28 @@ fun DailyStatsSection(
     onSessionsCardClick: () -> Unit,
     onWaterCardClick: () -> Unit,
     onTeasCardClick: () -> Unit,
+    onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = "TODAY'S STATS",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "TODAY'S STATS",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            TextButton(onClick = onViewAllClick) {
+                Text("View All")
+            }
+        }
 
         Row(
             modifier = Modifier
@@ -45,19 +62,28 @@ fun DailyStatsSection(
             DailyStatsCard(
                 value = stats.sessionCount.toString(),
                 label = if (stats.sessionCount == 1) "Session" else "Sessions",
+                icon = FeatherIcons.Coffee,
                 onClick = onSessionsCardClick,
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.weight(1f),
             )
             DailyStatsCard(
                 value = stats.formattedWaterQuantity,
                 label = "Water",
+                icon = FeatherIcons.Droplet,
                 onClick = onWaterCardClick,
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.weight(1f),
             )
             DailyStatsCard(
                 value = stats.differentTeasCount.toString(),
                 label = if (stats.differentTeasCount == 1) "Tea" else "Teas",
+                icon = FeatherIcons.Layers,
                 onClick = onTeasCardClick,
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -81,6 +107,7 @@ private fun DailyStatsSectionPreview() {
                 onSessionsCardClick = {},
                 onWaterCardClick = {},
                 onTeasCardClick = {},
+                onViewAllClick = {},
             )
 
             // Empty state
@@ -89,6 +116,7 @@ private fun DailyStatsSectionPreview() {
                 onSessionsCardClick = {},
                 onWaterCardClick = {},
                 onTeasCardClick = {},
+                onViewAllClick = {},
             )
         }
     }

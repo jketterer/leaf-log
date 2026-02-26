@@ -106,7 +106,10 @@ class HomeViewModel(
                 brewAgain(session)
             }
 
-            is HomeIntent.DeleteSessionClicked -> deleteSession(intent.sessionId)
+            is HomeIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
+            is HomeIntent.ConfirmDeleteSession -> confirmDeleteSession()
+            is HomeIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
+
             is HomeIntent.EditSessionClicked -> {
                 _state.update { it.copy(isFabExpanded = false) }
                 _navEvents.trySend(
@@ -118,6 +121,7 @@ class HomeViewModel(
 
             is HomeIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
+            is HomeIntent.ViewAllStatsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToAnalytics)
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
             is HomeIntent.InProgressBannerClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
 
@@ -296,8 +300,9 @@ class HomeViewModel(
             }
     }
 
-    private fun deleteSession(sessionId: String?) = viewModelScope.launch {
-        sessionId ?: return@launch
+    private fun confirmDeleteSession() = viewModelScope.launch {
+        val sessionId = _state.value.sessionPendingDelete ?: return@launch
+        _state.update { it.copy(sessionPendingDelete = null) }
         deleteSessionUseCase(sessionId)
             .onFailure { e ->
                 _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
@@ -341,6 +346,7 @@ sealed interface HomeNavEvent {
     data class CompleteSession(val sessionId: String) : HomeNavEvent
     data class NavigateToTimer(val sessionId: String) : HomeNavEvent
     data class NavigateToQuickTimer(val durationSeconds: Int) : HomeNavEvent
+    data object NavigateToAnalytics : HomeNavEvent
 }
 
 private data class HomeSessionData(

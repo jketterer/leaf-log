@@ -9,7 +9,11 @@ sealed interface TeaDetailIntent {
     data object ToggleFavorite : TeaDetailIntent
     data class SessionClicked(val sessionId: String) : TeaDetailIntent
     data class EditSessionClicked(val sessionId: String) : TeaDetailIntent
+    data class DeleteSessionClicked(val sessionId: String) : TeaDetailIntent
+    data object ConfirmDeleteSession : TeaDetailIntent
+    data object CancelDeleteSession : TeaDetailIntent
     data class BrewThisTeaClicked(val vesselId: String?) : TeaDetailIntent
+    data class BrewAgainClicked(val sessionId: String) : TeaDetailIntent
     data object ViewAllSessionsClicked : TeaDetailIntent
     data object BackClicked : TeaDetailIntent
 

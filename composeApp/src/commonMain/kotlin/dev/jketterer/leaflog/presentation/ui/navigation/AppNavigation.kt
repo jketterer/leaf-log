@@ -119,6 +119,7 @@ fun AppNavigation() {
                         onNavigateToQuickTimer = { durationSeconds ->
                             backStack.add(NavRoute.QuickTimerRoute(durationSeconds))
                         },
+                        onNavigateToAnalytics = { backStack.add(NavRoute.AnalyticsRoute) },
                     )
                 }
 

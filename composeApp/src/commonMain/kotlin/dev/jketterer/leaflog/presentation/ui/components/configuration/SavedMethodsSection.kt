@@ -60,7 +60,7 @@ fun SavedMethodsSection(
 
         if (configurations.isEmpty()) {
             Text(
-                text = "No saved methods yet. Tap + to add one.",
+                text = "No saved methods yet.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

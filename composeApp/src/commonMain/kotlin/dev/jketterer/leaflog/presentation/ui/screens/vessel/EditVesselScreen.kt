@@ -272,7 +272,7 @@ private fun VesselIconCard(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                imageVector = iconOption.imageVector,
+                painter = iconOption.painter(),
                 contentDescription = null,
                 modifier = Modifier.size(40.dp),
                 tint = if (isSelected)

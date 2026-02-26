@@ -1,38 +1,38 @@
 package dev.jketterer.leaflog.presentation.ui.components.vessel
 
-import androidx.compose.ui.graphics.vector.ImageVector
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Coffee
-import compose.icons.feathericons.Droplet
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import leaflog.composeapp.generated.resources.Res
+import leaflog.composeapp.generated.resources.ic_french_press
+import leaflog.composeapp.generated.resources.ic_teapot
+import org.jetbrains.compose.resources.painterResource
 
 object VesselIconHelper {
-    /**
-     * Maps a vessel icon name to an ImageVector.
-     * Currently uses FeatherIcons as placeholders until actual vessel icons are added.
-     *
-     * TODO: Replace with actual vessel ImageVector resources when available
-     */
-    fun getIconForVessel(iconName: String?): ImageVector {
+    @Composable
+    fun getIconForVessel(iconName: String?): Painter {
         return when (iconName) {
-            "gaiwan", "teapot", "yixing", "mug" -> FeatherIcons.Coffee
-            "kyusu", "generic" -> FeatherIcons.Coffee
-            "glass" -> FeatherIcons.Droplet
-            else -> FeatherIcons.Coffee // Default fallback
+            "gaiwan" -> rememberVectorPainter(VesselIcons.Gaiwan)
+            "teapot" -> painterResource(Res.drawable.ic_teapot)
+            "ic_french_press" -> painterResource(Res.drawable.ic_french_press)
+            "mug" -> rememberVectorPainter(VesselIcons.Mug)
+            "kyusu" -> rememberVectorPainter(VesselIcons.Kyusu)
+            "generic" -> rememberVectorPainter(VesselIcons.TeaCup)
+            else -> rememberVectorPainter(VesselIcons.Mug)
         }
     }
 
-    /**
-     * Returns all available vessel icon options
-     */
     fun getAllIcons(): List<VesselIconOption> {
         return listOf(
-            VesselIconOption("gaiwan", "Gaiwan", FeatherIcons.Coffee),
-            VesselIconOption("teapot", "Teapot", FeatherIcons.Coffee),
-            VesselIconOption("kyusu", "Kyusu", FeatherIcons.Coffee),
-            VesselIconOption("mug", "Mug", FeatherIcons.Coffee),
-            VesselIconOption("yixing", "Yixing", FeatherIcons.Coffee),
-            VesselIconOption("glass", "Glass", FeatherIcons.Droplet),
-            VesselIconOption("generic", "Tea Cup", FeatherIcons.Coffee),
+            VesselIconOption("gaiwan", "Gaiwan") { rememberVectorPainter(VesselIcons.Gaiwan) },
+            VesselIconOption("teapot", "Teapot") { painterResource(Res.drawable.ic_teapot) },
+            VesselIconOption(
+                "ic_french_press",
+                "French Press"
+            ) { painterResource(Res.drawable.ic_french_press) },
+            VesselIconOption("kyusu", "Kyusu") { rememberVectorPainter(VesselIcons.Kyusu) },
+            VesselIconOption("mug", "Mug") { rememberVectorPainter(VesselIcons.Mug) },
+            VesselIconOption("generic", "Tea Cup") { rememberVectorPainter(VesselIcons.TeaCup) },
         )
     }
 }
@@ -40,5 +40,5 @@ object VesselIconHelper {
 data class VesselIconOption(
     val iconName: String,
     val displayName: String,
-    val imageVector: ImageVector
+    val painter: @Composable () -> Painter,
 )

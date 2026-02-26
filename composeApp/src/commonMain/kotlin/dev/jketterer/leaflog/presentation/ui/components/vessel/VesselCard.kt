@@ -65,7 +65,7 @@ fun VesselCard(
                     )
                 } else {
                     Icon(
-                        imageVector = VesselIconHelper.getIconForVessel(vessel.iconName),
+                        painter = VesselIconHelper.getIconForVessel(vessel.iconName),
                         contentDescription = null,
                         modifier = Modifier.size(40.dp),
                         tint = MaterialTheme.colorScheme.primary

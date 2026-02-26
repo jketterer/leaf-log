@@ -191,7 +191,7 @@ fun VesselDetailScreen(
                                     )
                                 } else {
                                     Icon(
-                                        imageVector = VesselIconHelper.getIconForVessel(state.vessel!!.iconName),
+                                        painter = VesselIconHelper.getIconForVessel(state.vessel!!.iconName),
                                         contentDescription = null,
                                         modifier = Modifier.size(80.dp),
                                         tint = MaterialTheme.colorScheme.primary

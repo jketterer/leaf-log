@@ -318,7 +318,6 @@ private fun HistoryFilterSheetContentActiveFiltersPreview() {
             state = HistoryState(
                 selectedTeaTypeId = "1",
                 minRating = 3f,
-                showInProgressOnly = true,
                 teaTypes = mapOf(
                     "1" to TeaType(
                         id = "1",

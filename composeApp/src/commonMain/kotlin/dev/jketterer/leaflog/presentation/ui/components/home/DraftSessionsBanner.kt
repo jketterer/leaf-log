@@ -17,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -45,7 +44,6 @@ fun InProgressSessionsBanner(
     totalInProgressCount: Int,
     timerProgress: Float? = null,
     onResumeClick: () -> Unit,
-    onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (inProgressInfo == null && totalInProgressCount == 0) return
@@ -119,54 +117,24 @@ fun InProgressSessionsBanner(
                         trackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.2f),
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = when {
-                                isTimerComplete -> "Ready to finish"
-                                timerStatus == TimerStatus.PAUSED -> "Paused"
-                                timerStatus == TimerStatus.RUNNING -> "Brewing..."
-                                else -> "Ready to brew"
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                        )
-                        if (totalInProgressCount > 1) {
-                            TextButton(onClick = onViewAllClick) {
-                                Text("View all ($totalInProgressCount)")
-                            }
-                        }
-                    }
-                } else if (totalInProgressCount > 1) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        TextButton(onClick = onViewAllClick) {
-                            Text("View all ($totalInProgressCount)")
-                        }
-                    }
+                    Text(
+                        text = when {
+                            isTimerComplete -> "Ready to finish"
+                            timerStatus == TimerStatus.PAUSED -> "Paused"
+                            timerStatus == TimerStatus.RUNNING -> "Brewing..."
+                            else -> "Ready to brew"
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
+                    )
                 }
             } else {
                 // Fallback when we have count but no details
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "You have $totalInProgressCount incomplete ${if (totalInProgressCount == 1) "session" else "sessions"}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
-                    TextButton(onClick = onViewAllClick) {
-                        Text("View")
-                    }
-                }
+                Text(
+                    text = "You have $totalInProgressCount incomplete ${if (totalInProgressCount == 1) "session" else "sessions"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
             }
         }
     }
@@ -204,9 +172,8 @@ private fun InProgressSessionsBannerPreview() {
                     teaName = "Dragon Well Green Tea",
                     vesselName = "Gaiwan",
                 ),
-                totalInProgressCount = 3,
+                totalInProgressCount = 1,
                 onResumeClick = {},
-                onViewAllClick = {},
             )
 
             // With info - timer complete
@@ -234,7 +201,6 @@ private fun InProgressSessionsBannerPreview() {
                 ),
                 totalInProgressCount = 1,
                 onResumeClick = {},
-                onViewAllClick = {},
             )
 
             // Without timer state
@@ -258,9 +224,8 @@ private fun InProgressSessionsBannerPreview() {
                     teaName = "Aged Pu-erh",
                     vesselName = "Gaiwan",
                 ),
-                totalInProgressCount = 2,
+                totalInProgressCount = 1,
                 onResumeClick = {},
-                onViewAllClick = {},
             )
         }
     }

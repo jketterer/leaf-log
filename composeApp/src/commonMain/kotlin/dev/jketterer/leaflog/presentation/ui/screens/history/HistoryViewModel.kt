@@ -90,14 +90,8 @@ class HistoryViewModel(
             _state.update { it.copy(isLoading = true) }
 
             try {
-                val sessionsFlow = if (_state.value.showInProgressOnly) {
-                    teaSessionRepository.getInProgressFlow()
-                } else {
-                    teaSessionRepository.getAllFlow()
-                }
-
                 combine(
-                    sessionsFlow,
+                    teaSessionRepository.getAllFlow(),
                     teaRepository.getAllFlow(),
                     teaTypeRepository.getAllFlow(),
                     brewingVesselRepository.getAllFlow(),
@@ -255,7 +249,6 @@ class HistoryViewModel(
     }
 
     private fun clearFilters() {
-        val wasShowingInProgressOnly = _state.value.showInProgressOnly
         _state.update {
             it.copy(
                 searchQuery = "",
@@ -264,15 +257,9 @@ class HistoryViewModel(
                 dateRangeStart = null,
                 dateRangeEnd = null,
                 minRating = null,
-                showInProgressOnly = false,
             )
         }
-        // Only reload if we were showing in-progress (data source changes)
-        if (wasShowingInProgressOnly) {
-            loadData()
-        } else {
-            reapplyFilters()
-        }
+        reapplyFilters()
     }
 
     private fun confirmDeleteSession() {

@@ -26,7 +26,6 @@ data class HistoryState(
     val dateRangeStart: LocalDate? = null,
     val dateRangeEnd: LocalDate? = null,
     val minRating: Float? = null,
-    val showInProgressOnly: Boolean = false,
 
     // UI state
     val isLoading: Boolean = false,
@@ -41,8 +40,7 @@ data class HistoryState(
                 selectedTeaId != null ||
                 dateRangeStart != null ||
                 dateRangeEnd != null ||
-                minRating != null ||
-                showInProgressOnly
+                minRating != null
 
     val activeFilterCount: Int
         get() = listOf(
@@ -50,7 +48,6 @@ data class HistoryState(
             selectedTeaId != null,
             dateRangeStart != null || dateRangeEnd != null,
             minRating != null,
-            showInProgressOnly,
         ).count { it }
 }
 

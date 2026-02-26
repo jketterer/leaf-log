@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -48,6 +49,9 @@ import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsB
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaflog.composeapp.generated.resources.Res
+import leaflog.composeapp.generated.resources.ic_tea_leaf
+import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -91,7 +95,7 @@ fun HomeScreen(
                 is HomeNavEvent.NavigateToHistory -> {
                     onNavigateToHistory(
                         event.filterDateStart,
-                        event.filterDateEnd
+                        event.filterDateEnd,
                     )
                 }
 
@@ -144,7 +148,11 @@ private fun HomeContent(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("🍵")
+                        Icon(
+                            vectorResource(Res.drawable.ic_tea_leaf),
+                            "Tea leaf",
+                            modifier = Modifier.size(36.dp)
+                            )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Leaf Log")
                     }
@@ -204,9 +212,6 @@ private fun HomeContent(
                                     timerProgress = state.liveTimerState?.progress,
                                     onResumeClick = {
                                         onIntent(HomeIntent.ResumeInProgressClicked)
-                                    },
-                                    onViewAllClick = {
-                                        onIntent(HomeIntent.InProgressBannerClicked)
                                     },
                                     modifier = Modifier.padding(horizontal = 16.dp),
                                 )
@@ -403,7 +408,7 @@ private fun HomeScreenPreview() {
                             )
                     ),
                 ),
-                inProgressSessionsCount = 2,
+                inProgressSessionsCount = 1,
                 mostRecentInProgress = InProgressSessionInfo(
                     session = TeaSession(
                         id = "in-progress-1",

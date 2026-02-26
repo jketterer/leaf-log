@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Award
 import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Heart
 import compose.icons.feathericons.PieChart
 import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Star
@@ -60,7 +61,7 @@ private val InsightType.icon: ImageVector
         InsightType.FAVORITE_TYPE -> FeatherIcons.PieChart
         InsightType.RE_STEEP -> FeatherIcons.RefreshCw
         InsightType.TOP_RATED -> FeatherIcons.Award
-        InsightType.PREFERRED_VESSEL -> FeatherIcons.Thermometer
+        InsightType.PREFERRED_VESSEL -> FeatherIcons.Heart
     }
 
 @Preview(showBackground = true)

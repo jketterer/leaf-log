@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -123,7 +124,6 @@ class HomeViewModel(
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
             is HomeIntent.ViewAllStatsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToAnalytics)
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
-            is HomeIntent.InProgressBannerClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
 
             is HomeIntent.DailyStatsTodaySessionsClicked -> {
                 val today = Clock.System.now()
@@ -171,10 +171,27 @@ class HomeViewModel(
                 val greeting = generateGreeting()
                 _state.update { it.copy(greeting = greeting) }
 
-                launch { collectDailyStats() }
-                launch { collectRecentSessions() }
-                launch { collectInProgressCount() }
-                launch { collectMostRecentInProgress() }
+                val statsLoaded = MutableStateFlow(false)
+                val sessionsLoaded = MutableStateFlow(false)
+                val inProgressCountLoaded = MutableStateFlow(false)
+                val inProgressRecentLoaded = MutableStateFlow(false)
+
+                launch { collectDailyStats(statsLoaded) }
+                launch { collectRecentSessions(sessionsLoaded) }
+                launch { collectInProgressCount(inProgressCountLoaded) }
+                launch { collectMostRecentInProgress(inProgressRecentLoaded) }
+
+                // Clear loading state once all collectors have emitted at least once
+                launch {
+                    combine(
+                        statsLoaded,
+                        sessionsLoaded,
+                        inProgressCountLoaded,
+                        inProgressRecentLoaded,
+                    ) { s, r, c, m -> s && r && c && m }
+                        .first { it }
+                    _state.update { it.copy(isLoading = false) }
+                }
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -186,22 +203,23 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun collectDailyStats() {
+    private suspend fun collectDailyStats(loaded: MutableStateFlow<Boolean>) {
         getDailyStatsUseCase()
             .catch { e ->
                 _state.update {
                     it.copy(
-                        isLoading = false,
                         error = "Failed to load statistics: ${e.message}",
                     )
                 }
+                loaded.value = true
             }
             .collect { stats ->
                 _state.update { it.copy(dailyStats = stats) }
+                loaded.value = true
             }
     }
 
-    private suspend fun collectRecentSessions() {
+    private suspend fun collectRecentSessions(loaded: MutableStateFlow<Boolean>) {
         combine(
             teaSessionRepository.getRecentFlow(limit = 5),
             teaRepository.getAllFlow(),
@@ -213,10 +231,10 @@ class HomeViewModel(
             .catch { e ->
                 _state.update {
                     it.copy(
-                        isLoading = false,
                         error = "Failed to load sessions: ${e.message}",
                     )
                 }
+                loaded.value = true
             }
             .collect { (sessions, teas, types, vessels) ->
                 // Create lookup maps for efficient access
@@ -239,19 +257,25 @@ class HomeViewModel(
                             )
                         },
                         isEmpty = sessions.isEmpty(),
-                        isLoading = false,
                     )
                 }
+                loaded.value = true
             }
     }
 
-    private suspend fun collectInProgressCount() {
+    private suspend fun collectInProgressCount(loaded: MutableStateFlow<Boolean>) {
         teaSessionRepository.getInProgressCountFlow()
-            .catch { e -> println("Failed to load in-progress count: ${e.message}") }
-            .collect { count -> _state.update { it.copy(inProgressSessionsCount = count) } }
+            .catch { e ->
+                println("Failed to load in-progress count: ${e.message}")
+                loaded.value = true
+            }
+            .collect { count ->
+                _state.update { it.copy(inProgressSessionsCount = count) }
+                loaded.value = true
+            }
     }
 
-    private suspend fun collectMostRecentInProgress() {
+    private suspend fun collectMostRecentInProgress(loaded: MutableStateFlow<Boolean>) {
         combine(
             teaSessionRepository.getInProgressFlow(),
             teaRepository.getAllFlow(),
@@ -266,9 +290,13 @@ class HomeViewModel(
                 vesselName = vessel?.name ?: "Unknown Vessel",
             )
         }
-            .catch { e -> println("Failed to load most recent in-progress session: ${e.message}") }
+            .catch { e ->
+                println("Failed to load most recent in-progress session: ${e.message}")
+                loaded.value = true
+            }
             .collect { inProgressInfo ->
                 _state.update { it.copy(mostRecentInProgress = inProgressInfo) }
+                loaded.value = true
             }
     }
 

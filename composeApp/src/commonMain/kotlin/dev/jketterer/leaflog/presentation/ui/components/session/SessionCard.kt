@@ -54,6 +54,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageVi
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaflog.composeapp.generated.resources.Res
+import leaflog.composeapp.generated.resources.ic_tea_leaf
+import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
 import kotlin.time.toDuration
@@ -151,7 +154,7 @@ fun SessionCard(
                     modifier = Modifier.padding(top = 4.dp),
                 ) {
                     session.teaQuantityGrams?.let {
-                        BrewingParamChip(FeatherIcons.Coffee, "${it}g")
+                        BrewingParamChip(vectorResource(Res.drawable.ic_tea_leaf), "${it}g")
                     }
                     BrewingParamChip(
                         FeatherIcons.Thermometer,
@@ -263,6 +266,7 @@ private fun SessionCardCompletedPreview() {
                 updatedAt = Instant.fromEpochMilliseconds(1735747200000),
                 deletedAt = null,
                 createdAt = Instant.fromEpochMilliseconds(1735747200000),
+                teaQuantityGrams = 4f,
                 temperatureCelsius = 95.0,
                 waterQuantityMl = 200.0,
                 photos = emptyList(),

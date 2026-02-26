@@ -69,7 +69,6 @@ import kotlin.time.toDuration
  */
 @Composable
 fun HistoryScreen(
-    showInProgressOnly: Boolean = false,
     filterTeaTypeId: String? = null,
     filterTeaId: String? = null,
     filterDateStart: String? = null,
@@ -241,12 +240,6 @@ private fun HistoryContent(
                             "No sessions match filters",
                             "Clear Filters",
                             { onIntent(HistoryIntent.ClearFilters) },
-                        )
-
-                        state.showInProgressOnly -> Triple(
-                            "No in progress sessions",
-                            null,
-                            null,
                         )
 
                         else -> Triple(

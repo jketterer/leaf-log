@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.timer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,13 +20,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -55,6 +56,7 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
@@ -124,6 +126,11 @@ private fun TimerContent(
     var showOverflowMenu by remember { mutableStateOf(false) }
 
     Scaffold(
+        bottomBar = {
+            if (state.showCompletionScreen) {
+                CompletionBottomBar(state = state, onIntent = onIntent)
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -416,84 +423,51 @@ private fun CompletionContent(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = modifier.padding(24.dp),
+        modifier = modifier.padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            // Completion indicator
-            Text(
-                text = "✓",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
-
-        item {
-            Text(
-                text = "Steep ${state.session?.steepNumber ?: 1} Complete!",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        item {
-            Text(
-                text = state.tea?.name ?: "",
-                style = MaterialTheme.typography.titleLarge,
-            )
-        }
-
-        item {
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-        }
-
-        item {
-            // Brewing summary
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        text = "Session Summary",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    state.session?.let { session ->
-                        Text(
-                            text = "${
-                                TemperatureFormatter.format(
-                                    session.temperatureCelsius,
-                                    state.userPreferences.temperatureUnit
-                                )
-                            } • ${
-                                VolumeFormatter.format(
-                                    session.waterQuantityMl,
-                                    state.userPreferences.volumeUnit
-                                )
-                            } • ${session.brewingTime}",
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
             Spacer(modifier = Modifier.height(8.dp))
         }
 
+        // Compact hero
         item {
-            // Rating selector
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "✓",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "Steep ${state.session?.steepNumber ?: 1} Complete!",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = state.tea?.name ?: "",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        // Session stat grid
+        state.session?.let { session ->
+            item {
+                SessionStatGrid(
+                    session = session,
+                    userPreferences = state.userPreferences,
+                )
+            }
+        }
+
+        // Rating selector
+        item {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -517,8 +491,8 @@ private fun CompletionContent(
             }
         }
 
+        // Notes input
         item {
-            // Notes input
             OutlinedTextField(
                 value = state.notes ?: "",
                 onValueChange = { onIntent(TimerIntent.NotesChanged(it)) },
@@ -530,8 +504,8 @@ private fun CompletionContent(
             )
         }
 
+        // Photos
         item {
-            // Photos
             PhotoGrid(
                 photos = state.photos,
                 onAddPhoto = { onIntent(TimerIntent.PhotoSelected(it)) },
@@ -540,66 +514,134 @@ private fun CompletionContent(
             )
         }
 
+        // Discard session (destructive, kept at bottom of scroll)
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            TextButton(
+                onClick = { onIntent(TimerIntent.DiscardSession) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+            ) {
+                Text("Discard Session")
+            }
         }
 
         item {
-            // Completion actions
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun SessionStatGrid(
+    session: TeaSession,
+    userPreferences: UserPreferences,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            StatItem(
+                value = TemperatureFormatter.format(
+                    session.temperatureCelsius,
+                    userPreferences.temperatureUnit,
+                ),
+                label = "Temp",
+            )
+            StatItem(
+                value = VolumeFormatter.format(
+                    session.waterQuantityMl,
+                    userPreferences.volumeUnit,
+                ),
+                label = "Water",
+            )
+            StatItem(
+                value = session.brewingTime.toString(),
+                label = "Time",
+            )
+            session.teaQuantityGrams?.takeIf { it > 0 }?.let { qty ->
+                val teaQty = if (qty % 1.0 == 0.0) "${qty.toInt()}g" else "${qty}g"
+                StatItem(value = teaQty, label = "Tea")
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatItem(
+    value: String,
+    label: String,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun CompletionBottomBar(
+    state: TimerScreenState,
+    onIntent: (TimerIntent) -> Unit,
+) {
+    Surface(shadowElevation = 8.dp) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Button(
+                onClick = { onIntent(TimerIntent.ShowNextSteepDialog) },
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                // Continue to next steep (for multi-steep brewing)
-                Button(
-                    onClick = { onIntent(TimerIntent.ShowNextSteepDialog) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Continue to Steep ${(state.session?.steepNumber ?: 1) + 1}")
-                }
-
-                // Save and finish session
-                Button(
-                    onClick = {
-                        state.session?.let { session ->
-                            onIntent(TimerIntent.SaveAndFinish(session))
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Save & Finish Session")
-                }
-
-                // Restart timer (same parameters)
+                Text("Continue to Steep ${(state.session?.steepNumber ?: 1) + 1}")
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 OutlinedButton(
                     onClick = { onIntent(TimerIntent.RestartTimer) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                 ) {
                     Icon(
                         imageVector = FeatherIcons.RotateCw,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Restart Timer")
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Restart")
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Discard session
-                TextButton(
-                    onClick = { onIntent(TimerIntent.DiscardSession) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
+                Button(
+                    onClick = {
+                        state.session?.let { onIntent(TimerIntent.SaveAndFinish(it)) }
+                    },
+                    modifier = Modifier.weight(1f),
                 ) {
-                    Text("Discard Session")
+                    Text("Save & Finish")
                 }
             }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

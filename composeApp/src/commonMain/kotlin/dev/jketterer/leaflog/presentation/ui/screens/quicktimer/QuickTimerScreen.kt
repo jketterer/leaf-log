@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.quicktimer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -20,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -36,7 +40,9 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit
+import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDetailsSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
@@ -89,6 +95,11 @@ private fun QuickTimerContent(
     onIntent: (QuickTimerIntent) -> Unit,
 ) {
     Scaffold(
+        bottomBar = {
+            if (state.isComplete && state.hasRequiredDetails) {
+                QuickTimerCompletionBottomBar(state = state, onIntent = onIntent)
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -331,38 +342,49 @@ private fun QuickTimerCompleteContent(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = modifier.padding(24.dp),
+        modifier = modifier.padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Completion indicator
         item {
-            Text(
-                text = "\u2713",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
+        // Compact hero
         item {
-            Text(
-                text = "Timer Complete!",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        if (state.selectedTea != null) {
-            item {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(
-                    text = state.selectedTea.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "✓",
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.primary,
                 )
+                Text(
+                    text = "Timer Complete!",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                if (state.selectedTea != null) {
+                    Text(
+                        text = state.selectedTea.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
 
-        // Show details status
+        // Stat grid when details are filled
+        if (state.hasRequiredDetails) {
+            item {
+                QuickTimerStatGrid(state = state)
+            }
+        }
+
+        // Show details prompt when not filled
         if (!state.hasRequiredDetails) {
             item {
                 Text(
@@ -377,17 +399,14 @@ private fun QuickTimerCompleteContent(
         if (state.hasRequiredDetails) {
             item {
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = "How was it?",
-                        style = MaterialTheme.typography.labelLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
-
                     Spacer(modifier = Modifier.height(8.dp))
-
                     RatingSelector(
                         rating = state.rating ?: 0f,
                         onRatingChange = { rating ->
@@ -395,6 +414,13 @@ private fun QuickTimerCompleteContent(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    if ((state.rating ?: 0f) == 0f) {
+                        Text(
+                            text = "Tap to rate (optional)",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 
@@ -422,58 +448,137 @@ private fun QuickTimerCompleteContent(
             }
         }
 
-        // Action buttons
-        item {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (state.hasRequiredDetails) {
-                    // Save session button (primary action when details are filled)
-                    Button(
-                        onClick = { onIntent(QuickTimerIntent.SaveSession) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isLoading,
-                    ) {
-                        Text(if (state.isLoading) "Saving..." else "Save Session")
-                    }
-
-                    // Continue to next steep
-                    OutlinedButton(
-                        onClick = { onIntent(QuickTimerIntent.ContinueToNextSteep) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isLoading,
-                    ) {
-                        Text("Continue to Steep 2")
-                    }
-
-                    // Edit details option
-                    TextButton(
-                        onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isLoading,
-                    ) {
-                        Text("Edit Brewing Details")
-                    }
-
-                } else {
-                    // Add details button (primary action when no details)
-                    Button(
-                        onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text("Add Details to Save")
-                    }
-                }
-
-                TextButton(
-                    onClick = { onIntent(QuickTimerIntent.DiscardSession) },
+        // Add details button when no details
+        if (!state.hasRequiredDetails) {
+            item {
+                Button(
+                    onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
                 ) {
-                    Text("Discard & Exit")
+                    Text("Add Details to Save")
+                }
+            }
+        }
+
+        // Discard session (destructive, kept at bottom of scroll)
+        item {
+            TextButton(
+                onClick = { onIntent(QuickTimerIntent.DiscardSession) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error,
+                ),
+            ) {
+                Text("Discard & Exit")
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+private fun QuickTimerStatGrid(
+    state: QuickTimerState,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            state.temperatureCelsius.toDoubleOrNull()?.let { temp ->
+                StatItem(
+                    value = TemperatureFormatter.format(temp, state.userPreferences.temperatureUnit),
+                    label = "Temp",
+                )
+            }
+            state.waterQuantityMl.toDoubleOrNull()?.let { water ->
+                StatItem(
+                    value = VolumeFormatter.format(water, state.userPreferences.volumeUnit),
+                    label = "Water",
+                )
+            }
+            StatItem(
+                value = state.totalDuration.toString(),
+                label = "Time",
+            )
+            state.teaQuantityGrams.toDoubleOrNull()?.takeIf { it > 0 }?.let { qty ->
+                val teaQty = if (qty % 1.0 == 0.0) "${qty.toInt()}g" else "${qty}g"
+                StatItem(value = teaQty, label = "Tea")
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatItem(
+    value: String,
+    label: String,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun QuickTimerCompletionBottomBar(
+    state: QuickTimerState,
+    onIntent: (QuickTimerIntent) -> Unit,
+) {
+    Surface(shadowElevation = 8.dp) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Button(
+                onClick = { onIntent(QuickTimerIntent.ContinueToNextSteep) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.isLoading,
+            ) {
+                Text("Continue to Steep 2")
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                OutlinedButton(
+                    onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
+                    modifier = Modifier.weight(1f),
+                    enabled = !state.isLoading,
+                ) {
+                    Text("Edit Details")
+                }
+                Button(
+                    onClick = { onIntent(QuickTimerIntent.SaveSession) },
+                    modifier = Modifier.weight(1f),
+                    enabled = !state.isLoading,
+                ) {
+                    Text("Save & Finish")
                 }
             }
         }

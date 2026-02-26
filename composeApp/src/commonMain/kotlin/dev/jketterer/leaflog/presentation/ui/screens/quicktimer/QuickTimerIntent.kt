@@ -37,7 +37,9 @@ sealed interface QuickTimerIntent {
     // Brewing parameters (Step 2)
     data class TeaQuantityChanged(val quantity: String) : QuickTimerIntent
     data class TemperatureChanged(val temperature: String) : QuickTimerIntent
+    data object ToggleTemperatureUnit : QuickTimerIntent
     data class WaterQuantityChanged(val quantity: String) : QuickTimerIntent
+    data object ToggleVolumeUnit : QuickTimerIntent
     data class WaterTypeSelected(val waterType: WaterType) : QuickTimerIntent
 
     // Rating and notes

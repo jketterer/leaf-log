@@ -40,9 +40,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDetailsSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
@@ -216,8 +214,8 @@ private fun QuickTimerContent(
             selectedTea = state.selectedTea,
             selectedVessel = state.selectedVessel,
             teaQuantityGrams = state.teaQuantityGrams,
-            temperatureCelsius = state.temperatureCelsius,
-            waterQuantityMl = state.waterQuantityMl,
+            temperatureDisplay = state.temperatureDisplay,
+            waterQuantityDisplay = state.waterQuantityDisplay,
             waterType = state.waterType,
             prefillSource = state.prefillSource,
             availableTeas = state.filteredTeas,
@@ -229,7 +227,9 @@ private fun QuickTimerContent(
             onVesselSelected = { onIntent(QuickTimerIntent.VesselSelected(it)) },
             onTeaQuantityChanged = { onIntent(QuickTimerIntent.TeaQuantityChanged(it)) },
             onTemperatureChanged = { onIntent(QuickTimerIntent.TemperatureChanged(it)) },
+            onToggleTemperatureUnit = { onIntent(QuickTimerIntent.ToggleTemperatureUnit) },
             onWaterQuantityChanged = { onIntent(QuickTimerIntent.WaterQuantityChanged(it)) },
+            onToggleVolumeUnit = { onIntent(QuickTimerIntent.ToggleVolumeUnit) },
             onWaterTypeSelected = { onIntent(QuickTimerIntent.WaterTypeSelected(it)) },
             onNextStep = { onIntent(QuickTimerIntent.NextDetailsStep) },
             onPreviousStep = { onIntent(QuickTimerIntent.PreviousDetailsStep) },
@@ -497,15 +497,15 @@ private fun QuickTimerStatGrid(
                 .padding(vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            state.temperatureCelsius.toDoubleOrNull()?.let { temp ->
+            state.temperatureDisplay.toDoubleOrNull()?.let {
                 StatItem(
-                    value = TemperatureFormatter.format(temp, state.userPreferences.temperatureUnit),
+                    value = "${state.temperatureDisplay}${state.userPreferences.temperatureUnit.symbol}",
                     label = "Temp",
                 )
             }
-            state.waterQuantityMl.toDoubleOrNull()?.let { water ->
+            state.waterQuantityDisplay.toDoubleOrNull()?.let {
                 StatItem(
-                    value = VolumeFormatter.format(water, state.userPreferences.volumeUnit),
+                    value = "${state.waterQuantityDisplay} ${state.userPreferences.volumeUnit.symbol}",
                     label = "Water",
                 )
             }

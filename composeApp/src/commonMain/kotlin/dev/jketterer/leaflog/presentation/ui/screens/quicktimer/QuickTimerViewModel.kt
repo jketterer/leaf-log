@@ -121,7 +121,9 @@ class QuickTimerViewModel(
             // Brewing parameters
             is QuickTimerIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
             is QuickTimerIntent.TemperatureChanged -> updateTemperature(intent.temperature)
+            is QuickTimerIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is QuickTimerIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
+            is QuickTimerIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is QuickTimerIntent.WaterTypeSelected -> updateWaterType(intent.waterType)
 
             // Rating and notes
@@ -378,11 +380,16 @@ class QuickTimerViewModel(
             // Tea quantity is stored in grams (no conversion needed)
             val teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: ""
 
+            // Fall back to vessel capacity when no saved config provides water quantity
+            val waterQuantityDisplay = waterQuantityInPreferredUnit.ifEmpty {
+                vessel.capacityMl?.let { volumeUnit.fromMilliliters(it.toDouble()).toString() } ?: ""
+            }
+
             _state.update {
                 it.copy(
                     teaQuantityGrams = teaQuantityGrams,
-                    temperatureCelsius = temperatureInPreferredUnit,
-                    waterQuantityMl = waterQuantityInPreferredUnit,
+                    temperatureDisplay = temperatureInPreferredUnit,
+                    waterQuantityDisplay = waterQuantityDisplay,
                     waterType = prefill.waterType ?: WaterType.FILTERED,
                     prefillSource = prefill.source,
                 )
@@ -395,11 +402,43 @@ class QuickTimerViewModel(
     }
 
     private fun updateTemperature(temperature: String) {
-        _state.update { it.copy(temperatureCelsius = temperature) }
+        _state.update { it.copy(temperatureDisplay = temperature) }
+    }
+
+    private fun toggleTemperatureUnit() {
+        val current = _state.value
+        val currentUnit = current.userPreferences.temperatureUnit
+        val newUnit = currentUnit.toggle()
+        val currentValue = current.temperatureDisplay.toIntOrNull()
+        val newDisplay = if (currentValue != null) {
+            newUnit.fromCelsius(currentUnit.toCelsius(currentValue)).toString()
+        } else {
+            current.temperatureDisplay
+        }
+        viewModelScope.launch {
+            preferencesRepository.updateTemperatureUnit(newUnit)
+            _state.update { it.copy(temperatureDisplay = newDisplay) }
+        }
     }
 
     private fun updateWaterQuantity(quantity: String) {
-        _state.update { it.copy(waterQuantityMl = quantity) }
+        _state.update { it.copy(waterQuantityDisplay = quantity) }
+    }
+
+    private fun toggleVolumeUnit() {
+        val current = _state.value
+        val currentUnit = current.userPreferences.volumeUnit
+        val newUnit = currentUnit.toggle()
+        val currentValue = current.waterQuantityDisplay.toIntOrNull()
+        val newDisplay = if (currentValue != null) {
+            newUnit.fromMilliliters(currentUnit.toMilliliters(currentValue)).toString()
+        } else {
+            current.waterQuantityDisplay
+        }
+        viewModelScope.launch {
+            preferencesRepository.updateVolumeUnit(newUnit)
+            _state.update { it.copy(waterQuantityDisplay = newDisplay) }
+        }
     }
 
     private fun updateWaterType(waterType: WaterType) {
@@ -422,8 +461,8 @@ class QuickTimerViewModel(
 
         val tea = current.selectedTea ?: return
         val vessel = current.selectedVessel ?: return
-        val temperatureStr = current.temperatureCelsius.takeIf { it.isNotBlank() } ?: return
-        val waterQuantityStr = current.waterQuantityMl.takeIf { it.isNotBlank() } ?: return
+        val temperatureStr = current.temperatureDisplay.takeIf { it.isNotBlank() } ?: return
+        val waterQuantityStr = current.waterQuantityDisplay.takeIf { it.isNotBlank() } ?: return
 
         viewModelScope.launch {
             try {
@@ -517,8 +556,8 @@ class QuickTimerViewModel(
         // Validate required fields for new session creation
         val tea = current.selectedTea ?: return
         val vessel = current.selectedVessel ?: return
-        val temperatureStr = current.temperatureCelsius.takeIf { it.isNotBlank() } ?: return
-        val waterQuantityStr = current.waterQuantityMl.takeIf { it.isNotBlank() } ?: return
+        val temperatureStr = current.temperatureDisplay.takeIf { it.isNotBlank() } ?: return
+        val waterQuantityStr = current.waterQuantityDisplay.takeIf { it.isNotBlank() } ?: return
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
@@ -615,8 +654,8 @@ class QuickTimerViewModel(
 
         val tea = current.selectedTea ?: return
         val vessel = current.selectedVessel ?: return
-        val temperatureStr = current.temperatureCelsius.takeIf { it.isNotBlank() } ?: return
-        val waterQuantityStr = current.waterQuantityMl.takeIf { it.isNotBlank() } ?: return
+        val temperatureStr = current.temperatureDisplay.takeIf { it.isNotBlank() } ?: return
+        val waterQuantityStr = current.waterQuantityDisplay.takeIf { it.isNotBlank() } ?: return
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }

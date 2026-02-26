@@ -22,8 +22,8 @@ data class QuickTimerState(
     val selectedTea: Tea? = null,
     val selectedVessel: BrewingVessel? = null,
     val teaQuantityGrams: String = "",
-    val temperatureCelsius: String = "",
-    val waterQuantityMl: String = "",
+    val temperatureDisplay: String = "", // value in user's preferred unit
+    val waterQuantityDisplay: String = "", // value in user's preferred unit
     val waterType: WaterType = WaterType.FILTERED,
     val prefillSource: PrefillSource = PrefillSource.None,
 
@@ -121,8 +121,8 @@ data class QuickTimerState(
     val hasRequiredDetails: Boolean
         get() = selectedTea != null &&
                 selectedVessel != null &&
-                temperatureCelsius.isNotBlank() &&
-                waterQuantityMl.isNotBlank()
+                temperatureDisplay.isNotBlank() &&
+                waterQuantityDisplay.isNotBlank()
 
     /**
      * Filtered teas based on search query.

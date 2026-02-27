@@ -8,6 +8,8 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
+import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
@@ -42,6 +44,8 @@ class QuickTimerViewModel(
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val addSteepUseCase: AddSteepUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
+    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(QuickTimerState())
@@ -120,6 +124,12 @@ class QuickTimerViewModel(
 
             // Brewing parameters
             is QuickTimerIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
+            is QuickTimerIntent.TeaBagModeChanged -> _state.update {
+                it.copy(
+                    isTeaBag = intent.isTeaBag,
+                    teaQuantityGrams = if (intent.isTeaBag) "" else it.teaQuantityGrams,
+                )
+            }
             is QuickTimerIntent.TemperatureChanged -> updateTemperature(intent.temperature)
             is QuickTimerIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is QuickTimerIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
@@ -388,6 +398,7 @@ class QuickTimerViewModel(
             _state.update {
                 it.copy(
                     teaQuantityGrams = teaQuantityGrams,
+                    isTeaBag = prefill.teaQuantityGrams == null,
                     temperatureDisplay = temperatureInPreferredUnit,
                     waterQuantityDisplay = waterQuantityDisplay,
                     waterType = prefill.waterType ?: WaterType.FILTERED,
@@ -474,7 +485,8 @@ class QuickTimerViewModel(
                 val waterQuantityMl = current.userPreferences.volumeUnit
                     .toMilliliters(waterQuantityInUserUnit)
 
-                val teaQuantityGrams = current.teaQuantityGrams.toFloatOrNull()
+                val teaQuantityGrams = if (current.isTeaBag) null
+                    else current.teaQuantityGrams.toFloatOrNull()
 
                 createSessionUseCase(
                     teaId = tea.id,
@@ -535,7 +547,7 @@ class QuickTimerViewModel(
                     onSuccess = { session ->
                         _state.update { it.copy(isLoading = false, savedSession = session) }
                         if (session.rating != null && session.rating >= 5f) {
-                            _state.update { it.copy(showSaveConfigurationDialog = true) }
+                            maybeShowSaveConfigDialog(session)
                         } else {
                             _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSession(session.id))
                         }
@@ -574,7 +586,8 @@ class QuickTimerViewModel(
                     .toMilliliters(waterQuantityInUserUnit)
 
                 // Parse tea quantity (already in grams)
-                val teaQuantityGrams = current.teaQuantityGrams.toFloatOrNull()
+                val teaQuantityGrams = if (current.isTeaBag) null
+                    else current.teaQuantityGrams.toFloatOrNull()
 
                 val result = createSessionUseCase(
                     teaId = tea.id,
@@ -593,10 +606,8 @@ class QuickTimerViewModel(
                     onSuccess = { session ->
                         _state.update { it.copy(isLoading = false, savedSession = session) }
 
-                        // Check if we should show the save configuration dialog
-                        // Only for sessions with rating >= 5
                         if (session.rating != null && session.rating >= 5f) {
-                            _state.update { it.copy(showSaveConfigurationDialog = true) }
+                            maybeShowSaveConfigDialog(session)
                         } else {
                             _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSession(session.id))
                         }
@@ -618,6 +629,25 @@ class QuickTimerViewModel(
                     )
                 }
             }
+        }
+    }
+
+    private suspend fun maybeShowSaveConfigDialog(session: dev.jketterer.leaflog.domain.models.TeaSession) {
+        if (checkDuplicateConfigurationUseCase(session)) {
+            _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSession(session.id))
+            return
+        }
+        val label = generateConfigurationLabelUseCase(
+            teaName = _state.value.selectedTea?.name ?: "",
+            teaQuantityGrams = session.teaQuantityGrams,
+            waterQuantityMl = session.waterQuantityMl,
+            brewingTime = session.brewingTime,
+        )
+        _state.update {
+            it.copy(
+                showSaveConfigurationDialog = true,
+                suggestedConfigurationLabel = label,
+            )
         }
     }
 
@@ -669,7 +699,8 @@ class QuickTimerViewModel(
                 val waterQuantityMl = current.userPreferences.volumeUnit
                     .toMilliliters(waterQuantityInUserUnit)
 
-                val teaQuantityGrams = current.teaQuantityGrams.toFloatOrNull()
+                val teaQuantityGrams = if (current.isTeaBag) null
+                    else current.teaQuantityGrams.toFloatOrNull()
 
                 // Keep parent session IN_PROGRESS since we're continuing to the next steep
                 val saveResult = createSessionUseCase(

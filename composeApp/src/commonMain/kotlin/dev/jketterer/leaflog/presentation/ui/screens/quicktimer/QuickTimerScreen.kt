@@ -214,6 +214,7 @@ private fun QuickTimerContent(
             selectedTea = state.selectedTea,
             selectedVessel = state.selectedVessel,
             teaQuantityGrams = state.teaQuantityGrams,
+            isTeaBag = state.isTeaBag,
             temperatureDisplay = state.temperatureDisplay,
             waterQuantityDisplay = state.waterQuantityDisplay,
             waterType = state.waterType,
@@ -226,6 +227,7 @@ private fun QuickTimerContent(
             onTeaSelected = { onIntent(QuickTimerIntent.TeaSelected(it)) },
             onVesselSelected = { onIntent(QuickTimerIntent.VesselSelected(it)) },
             onTeaQuantityChanged = { onIntent(QuickTimerIntent.TeaQuantityChanged(it)) },
+            onTeaBagModeChanged = { onIntent(QuickTimerIntent.TeaBagModeChanged(it)) },
             onTemperatureChanged = { onIntent(QuickTimerIntent.TemperatureChanged(it)) },
             onToggleTemperatureUnit = { onIntent(QuickTimerIntent.ToggleTemperatureUnit) },
             onWaterQuantityChanged = { onIntent(QuickTimerIntent.WaterQuantityChanged(it)) },
@@ -251,7 +253,8 @@ private fun QuickTimerContent(
                 temperatureCelsius = session.temperatureCelsius,
                 brewingTimeSeconds = session.brewingTime.inWholeSeconds.toInt(),
                 rating = session.rating ?: 5f,
-                suggestedLabel = "",
+                suggestedLabel = state.suggestedConfigurationLabel,
+                userPreferences = state.userPreferences,
                 onSave = { label ->
                     onIntent(QuickTimerIntent.SaveConfigurationClicked(label.ifBlank { null }))
                 },
@@ -513,9 +516,13 @@ private fun QuickTimerStatGrid(
                 value = state.totalDuration.toString(),
                 label = "Time",
             )
-            state.teaQuantityGrams.toDoubleOrNull()?.takeIf { it > 0 }?.let { qty ->
-                val teaQty = if (qty % 1.0 == 0.0) "${qty.toInt()}g" else "${qty}g"
-                StatItem(value = teaQty, label = "Tea")
+            if (state.isTeaBag) {
+                StatItem(value = "Tea Bag", label = "Tea")
+            } else {
+                state.teaQuantityGrams.toDoubleOrNull()?.takeIf { it > 0 }?.let { qty ->
+                    val teaQty = if (qty % 1.0 == 0.0) "${qty.toInt()}g" else "${qty}g"
+                    StatItem(value = teaQty, label = "Tea")
+                }
             }
         }
     }

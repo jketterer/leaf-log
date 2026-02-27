@@ -5,34 +5,44 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Generates a descriptive label for a brewing configuration based on its parameters
+ * Generates a descriptive label for a brewing configuration based on its parameters.
+ *
+ * When [teaName] is provided the label is personalised ("Jasmine · Gong-fu").
+ * Without it a style-only label is returned ("Gong-fu"), which serves as the
+ * fallback path inside [SaveBrewingConfigurationUseCase].
  */
 class GenerateConfigurationLabelUseCase {
     operator fun invoke(
+        teaName: String = "",
         teaQuantityGrams: Float?,
         waterQuantityMl: Double,
         brewingTime: Duration,
     ): String {
         val ratio = teaQuantityGrams?.let { it.toDouble() / waterQuantityMl } ?: 0.0
 
-        return when {
-            // Gong-fu style: short steep time + high ratio
-            brewingTime <= 45.seconds && ratio > 0.03 -> "Gong-fu Style"
+        val style = when {
+            // Gong-fu: short time + high leaf ratio
+            brewingTime <= 45.seconds && ratio > 0.03 -> "Gong-fu"
 
-            // Western style: long steep time + large volume
-            brewingTime >= 3.minutes && waterQuantityMl >= 250.0 -> "Western Style"
+            // Western: long steep + large volume
+            brewingTime >= 3.minutes && waterQuantityMl >= 250.0 -> "Western"
 
-            // Tea bag method: no quantity specified
-            teaQuantityGrams == null -> "Tea Bag Method"
+            // Tea bag: no quantity specified
+            teaQuantityGrams == null -> "Bag Method"
 
             // Grandpa style: long steep + moderate volume
-            brewingTime >= 2.minutes && waterQuantityMl in 150.0..350.0 -> "Grandpa Style"
+            brewingTime >= 2.minutes && waterQuantityMl in 150.0..350.0 -> "Grandpa"
 
-            // Quick brew: short time
-            brewingTime <= 1.minutes -> "Quick Brew"
+            // Short steeps
+            brewingTime <= 1.minutes -> "Quick Steep"
 
-            // Default
-            else -> "Custom Method"
+            // Medium steeps
+            brewingTime <= 2.minutes -> "Short Steep"
+
+            // Everything else: label by time
+            else -> "Standard"
         }
+
+        return if (teaName.isNotBlank()) "$teaName · $style" else style
     }
 }

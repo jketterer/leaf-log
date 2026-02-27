@@ -20,6 +20,7 @@ sealed interface EditSessionIntent {
     data class WaterTypeSelected(val waterType: WaterType) : EditSessionIntent
     data class WaterQuantityChanged(val quantity: String) : EditSessionIntent
     data class TeaQuantityChanged(val quantity: String) : EditSessionIntent
+    data class TeaBagModeChanged(val isTeaBag: Boolean) : EditSessionIntent
     data class LocationChanged(val location: String) : EditSessionIntent
     data class RatingChanged(val rating: Float) : EditSessionIntent
     data object ToggleVolumeUnit : EditSessionIntent

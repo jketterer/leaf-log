@@ -59,6 +59,7 @@ class LogTeaViewModel(
             is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
             is LogTeaIntent.QuickAddTeaClicked -> showQuickAddTeaDialog()
             is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.tea)
+            is LogTeaIntent.TeaBagModeChanged -> updateTeaBagMode(intent.isTeaBag)
             is LogTeaIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
             is LogTeaIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
             is LogTeaIntent.TemperatureChanged -> updateTemperature(intent.temperature)
@@ -219,6 +220,7 @@ class LogTeaViewModel(
             val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
             _state.update { state ->
                 state.copy(
+                    isTeaBag = prefill.source != PrefillSource.None && prefill.teaQuantityGrams == null,
                     teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
                     waterQuantityMl = prefill.waterQuantityMl?.toString() ?: "",
                     waterQuantityDisplay = "",
@@ -249,6 +251,7 @@ class LogTeaViewModel(
             // User chose "Custom" - clear pre-filled parameters
             _state.update {
                 it.copy(
+                    isTeaBag = false,
                     teaQuantityGrams = "",
                     waterQuantityMl = "",
                     waterQuantityDisplay = "",
@@ -268,6 +271,7 @@ class LogTeaViewModel(
                     _state.update { currentState ->
                         // Configuration values are already in storage units (Celsius/mL), store directly
                         currentState.copy(
+                            isTeaBag = config.teaQuantityGrams == null,
                             teaQuantityGrams = config.teaQuantityGrams?.toString() ?: "",
                             waterQuantityMl = config.waterQuantityMl.toString(),
                             waterQuantityDisplay = "",
@@ -299,10 +303,30 @@ class LogTeaViewModel(
         selectTea(tea.id)
     }
 
+    private fun updateTeaBagMode(isTeaBag: Boolean) {
+        _state.update {
+            it.copy(
+                isTeaBag = isTeaBag,
+                teaQuantityGrams = if (isTeaBag) "" else it.teaQuantityGrams,
+                teaQuantityError = null,
+                hasUnsavedChanges = true,
+                prefillSource = if (isTeaBag) PrefillSource.None else it.prefillSource,
+                usedConfigurationId = if (isTeaBag) null else it.usedConfigurationId,
+            )
+        }
+    }
+
     private fun updateTeaQuantity(quantity: String) {
+        val error = when {
+            quantity.isBlank() -> "Tea quantity is required"
+            quantity.toFloatOrNull() == null -> "Invalid quantity"
+            quantity.toFloat() <= 0 -> "Quantity must be greater than 0"
+            else -> null
+        }
         _state.update {
             it.copy(
                 teaQuantityGrams = quantity,
+                teaQuantityError = error,
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
                 usedConfigurationId = null
@@ -485,6 +509,7 @@ class LogTeaViewModel(
                 it.copy(
                     teaError = if (it.selectedTea == null) "Tea is required" else null,
                     vesselError = if (it.selectedVessel == null) "Brewing vessel is required" else null,
+                    teaQuantityError = if (!it.isTeaBag && it.teaQuantityGrams.isBlank()) "Tea quantity is required" else it.teaQuantityError,
                     waterQuantityError = if (it.waterQuantityMl.toDoubleOrNull() == null) "Water quantity is required" else it.waterQuantityError,
                     temperatureError = if (it.temperatureCelsius.toDoubleOrNull() == null) "Temperature is required" else it.temperatureError,
                     brewingTimeError = if (it.brewingTime == null) "Brewing time is required" else it.brewingTimeError
@@ -503,7 +528,7 @@ class LogTeaViewModel(
             // Use the use case - it has business logic (validation, ID generation, timestamps)
             createSessionUseCase(
                 teaId = currentState.selectedTea!!.id,
-                teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
+                teaQuantityGrams = if (currentState.isTeaBag) null else currentState.teaQuantityGrams.toFloatOrNull(),
                 vesselId = currentState.selectedVessel!!.id,
                 waterType = currentState.selectedWaterType,
                 location = currentState.location.takeIf { it.isNotBlank() },

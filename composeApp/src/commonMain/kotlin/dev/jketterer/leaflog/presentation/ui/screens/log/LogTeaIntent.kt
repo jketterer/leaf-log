@@ -16,6 +16,7 @@ sealed interface LogTeaIntent {
     data class QuickAddTeaSaved(val tea: Tea) : LogTeaIntent
 
     // Parameter changes
+    data class TeaBagModeChanged(val isTeaBag: Boolean) : LogTeaIntent
     data class TeaQuantityChanged(val quantity: String) : LogTeaIntent
     data class WaterQuantityChanged(val quantity: String) : LogTeaIntent
     data class TemperatureChanged(val temperature: String) : LogTeaIntent

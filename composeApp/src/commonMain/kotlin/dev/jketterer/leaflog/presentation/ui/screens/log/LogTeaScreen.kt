@@ -27,6 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -118,7 +121,8 @@ private fun LogTeaContent(
 ) {
     var showOptionalFields by remember { mutableStateOf(false) }
 
-    val hasOptionalData = state.teaQuantityGrams.isNotEmpty() ||
+    val hasOptionalData = state.isTeaBag ||
+            state.teaQuantityGrams.isNotEmpty() ||
             state.selectedWaterType != WaterType.FILTERED ||
             state.location.isNotEmpty()
 
@@ -129,7 +133,6 @@ private fun LogTeaContent(
     }
 
     val optionalSummaryParts = buildList {
-        if (state.teaQuantityGrams.isNotEmpty()) add("${state.teaQuantityGrams}g tea")
         if (state.selectedWaterType != WaterType.FILTERED) add(state.selectedWaterType.displayName)
         if (state.location.isNotEmpty()) add(state.location)
     }
@@ -418,6 +421,52 @@ private fun LogTeaContent(
                         }
                     }
 
+                    item {
+                        // Tea Quantity
+                        val teaQtyPresets = remember {
+                            listOf("1", "2", "3", "4", "5", "7", "10").map {
+                                Preset("${it}g", it)
+                            }
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                                    onClick = { onIntent(LogTeaIntent.TeaBagModeChanged(false)) },
+                                    selected = !state.isTeaBag,
+                                    label = { Text("Loose Leaf") },
+                                )
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                                    onClick = { onIntent(LogTeaIntent.TeaBagModeChanged(true)) },
+                                    selected = state.isTeaBag,
+                                    label = { Text("Tea Bag") },
+                                )
+                            }
+                            if (!state.isTeaBag) {
+                                OutlinedTextField(
+                                    value = state.teaQuantityGrams,
+                                    onValueChange = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
+                                    label = { Text("Tea Quantity *") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    suffix = { Text("g") },
+                                    isError = state.teaQuantityError != null,
+                                    supportingText = state.teaQuantityError?.let { { Text(it) } },
+                                )
+                                PresetChips(
+                                    presets = teaQtyPresets,
+                                    currentValue = state.teaQuantityGrams,
+                                    isSelected = { preset, current ->
+                                        preset.toFloatOrNull() == current?.toFloatOrNull()
+                                    },
+                                    onSelect = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                    }
+
                     // Optional Details Section
                     item(key = "optional_section") {
                         Column {
@@ -456,38 +505,6 @@ private fun LogTeaContent(
                             ) {
                                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                     Spacer(modifier = Modifier.height(0.dp))
-
-                                    // Tea Quantity
-                                    val teaQtyPresets = remember {
-                                        listOf("1", "2", "3", "4", "5", "7", "10").map {
-                                            Preset("${it}g", it)
-                                        }
-                                    }
-                                    Column {
-                                        OutlinedTextField(
-                                            value = state.teaQuantityGrams,
-                                            onValueChange = {
-                                                onIntent(
-                                                    LogTeaIntent.TeaQuantityChanged(
-                                                        it
-                                                    )
-                                                )
-                                            },
-                                            label = { Text("Tea Quantity (g)") },
-                                            supportingText = { Text("Optional - leave empty for tea bags") },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            singleLine = true,
-                                        )
-                                        PresetChips(
-                                            presets = teaQtyPresets,
-                                            currentValue = state.teaQuantityGrams,
-                                            isSelected = { preset, current ->
-                                                preset.toFloatOrNull() == current?.toFloatOrNull()
-                                            },
-                                            onSelect = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
-                                            modifier = Modifier.fillMaxWidth(),
-                                        )
-                                    }
 
                                     // Water Type Selector
                                     WaterTypeSelector(
@@ -787,6 +804,56 @@ private fun LogTeaScreenEmptyPreview() {
     LeafLogTheme {
         LogTeaContent(
             state = LogTeaState(),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LogTeaScreenTeaBagPreview() {
+    LeafLogTheme {
+        LogTeaContent(
+            state = LogTeaState(
+                selectedTea = Tea(
+                    id = "tea-1",
+                    name = "English Breakfast",
+                    teaTypeId = "black",
+                    totalSessions = 3,
+                    createdAt = Clock.System.now(),
+                    updatedAt = Clock.System.now(),
+                    syncStatus = SyncStatus.LOCAL_ONLY,
+                ),
+                selectedTeaType = TeaType(
+                    id = "black",
+                    name = "Black",
+                    colorHex = "#795548",
+                ),
+                waterQuantityMl = "250",
+                temperatureCelsius = "100",
+                brewingTime = 3.minutes,
+                isTeaBag = true,
+                selectedVessel = BrewingVessel(
+                    id = "mug",
+                    name = "Mug",
+                    iconName = "mug",
+                    isSystemDefault = true,
+                    displayOrder = 1,
+                    createdAt = Clock.System.now(),
+                    updatedAt = Clock.System.now(),
+                ),
+                availableVessels = listOf(
+                    BrewingVessel(
+                        id = "mug",
+                        name = "Mug",
+                        iconName = "mug",
+                        isSystemDefault = true,
+                        displayOrder = 1,
+                        createdAt = Clock.System.now(),
+                        updatedAt = Clock.System.now(),
+                    ),
+                ),
+            ),
             onIntent = {},
         )
     }

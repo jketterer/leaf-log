@@ -2,12 +2,15 @@ package dev.jketterer.leaflog.presentation.ui.components.configuration
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -17,13 +20,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Bookmark
+import compose.icons.feathericons.Clock
+import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Droplet
+import compose.icons.feathericons.Thermometer
+import dev.jketterer.leaflog.domain.models.TemperatureFormatter
+import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
+import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 
 /**
  * Dialog to save a brewing configuration after a great session
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SaveConfigurationDialog(
     teaName: String,
@@ -34,6 +50,7 @@ fun SaveConfigurationDialog(
     brewingTimeSeconds: Int,
     rating: Float,
     suggestedLabel: String,
+    userPreferences: UserPreferences,
     onSave: (label: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -42,63 +59,72 @@ fun SaveConfigurationDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "💡 Save This as a Brewing Method?",
-                style = MaterialTheme.typography.titleLarge
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = FeatherIcons.Bookmark,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "Save as Brewing Method",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
         },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                // Tea + Vessel info
-                Text(
-                    text = "$teaName in $vesselName",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                // Parameters summary
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val params = buildList {
-                        teaQuantityGrams?.let { add("${it}g") }
-                        add("${waterQuantityMl.toInt()}ml")
-                        add("${temperatureCelsius.toInt()}°C")
-                        add(formatBrewingTime(brewingTimeSeconds))
-                    }
+                // Tea + Vessel + Rating
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = params.joinToString(" • "),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = "$teaName in $vesselName",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                     )
+                    RatingDisplay(rating = rating, iconsOnly = true)
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                // Parameters as chips
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    if (teaQuantityGrams != null) {
+                        BrewingParamChip(icon = FeatherIcons.Coffee, text = "${teaQuantityGrams}g")
+                    } else {
+                        BrewingParamChip(icon = FeatherIcons.Coffee, text = "Tea Bag")
+                    }
+                    BrewingParamChip(icon = FeatherIcons.Droplet, text = VolumeFormatter.format(waterQuantityMl, userPreferences.volumeUnit))
+                    BrewingParamChip(icon = FeatherIcons.Thermometer, text = TemperatureFormatter.format(temperatureCelsius, userPreferences.temperatureUnit))
+                    BrewingParamChip(icon = FeatherIcons.Clock, text = formatBrewingTime(brewingTimeSeconds))
+                }
 
                 // Editable label
                 OutlinedTextField(
                     value = label,
                     onValueChange = { label = it },
                     label = { Text("Name this method") },
-                    placeholder = { Text(suggestedLabel) },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
                 )
 
                 // Help text
                 Text(
                     text = "This will be suggested next time you brew this combination",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = { onSave(label.ifBlank { suggestedLabel }) }
             ) {
                 Text("Save Method")
@@ -106,9 +132,9 @@ fun SaveConfigurationDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Skip")
+                Text("Not Now")
             }
-        }
+        },
     )
 }
 

@@ -22,6 +22,7 @@ data class QuickTimerState(
     val selectedTea: Tea? = null,
     val selectedVessel: BrewingVessel? = null,
     val teaQuantityGrams: String = "",
+    val isTeaBag: Boolean = false,
     val temperatureDisplay: String = "", // value in user's preferred unit
     val waterQuantityDisplay: String = "", // value in user's preferred unit
     val waterType: WaterType = WaterType.FILTERED,
@@ -46,6 +47,7 @@ data class QuickTimerState(
     val showResetConfirmation: Boolean = false,
     val showCompletionDialog: Boolean = false,
     val showSaveConfigurationDialog: Boolean = false,
+    val suggestedConfigurationLabel: String = "",
 
     // Next session details
     val nextSteepDuration: Duration? = null,
@@ -116,13 +118,14 @@ data class QuickTimerState(
         get() = !isLoading && status != TimerStatus.NOT_STARTED
 
     /**
-     * Whether the user has filled in required details (tea + vessel + temp + water qty).
+     * Whether the user has filled in required details (tea + vessel + temp + water qty + tea type).
      */
     val hasRequiredDetails: Boolean
         get() = selectedTea != null &&
                 selectedVessel != null &&
                 temperatureDisplay.isNotBlank() &&
-                waterQuantityDisplay.isNotBlank()
+                waterQuantityDisplay.isNotBlank() &&
+                (isTeaBag || teaQuantityGrams.isNotBlank())
 
     /**
      * Filtered teas based on search query.

@@ -24,6 +24,7 @@ data class EditSessionState(
     val waterQuantityMl: String = "",
     val waterQuantityDisplay: String = "", // User's input in display unit (preserves exact value)
     val teaQuantityGrams: String = "",
+    val isTeaBag: Boolean = false,
     val location: String = "",
     val rating: Float = 0f,
 
@@ -48,6 +49,7 @@ data class EditSessionState(
     val error: String? = null,
     val showDiscardDialog: Boolean = false,
     val showSaveConfigurationDialog: Boolean = false,
+    val suggestedConfigurationLabel: String = "",
     val savedSession: TeaSession? = null, // Session that was just saved
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
@@ -60,6 +62,7 @@ data class EditSessionState(
                 selectedVessel?.id != session.vesselId ||
                 selectedWaterType != session.waterType ||
                 waterQuantityMl.toDoubleOrNull() != session.waterQuantityMl ||
+                isTeaBag != (session.teaQuantityGrams == null) ||
                 teaQuantityGrams.toFloatOrNull() != session.teaQuantityGrams ||
                 location != (session.location ?: "")
             } else {
@@ -80,11 +83,16 @@ data class EditSessionState(
                     waterQuantityMl.toDoubleOrNull() != null &&
                     waterQuantityMl.toDouble() > 0
 
+                val teaQuantityValid = isTeaBag || run {
+                    val qty = teaQuantityGrams.toFloatOrNull()
+                    qty != null && qty > 0
+                }
+
                 val noErrors = vesselError == null &&
                     waterQuantityError == null &&
                     teaQuantityError == null
 
-                parentFieldsValid && noErrors
+                parentFieldsValid && teaQuantityValid && noErrors
             } else {
                 // When editing steep, validate steep-specific fields
                 val hasRequiredFields = brewingTime != null &&

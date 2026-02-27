@@ -48,6 +48,7 @@ sealed interface TimerIntent {
     data class EditTemperatureChanged(val value: String) : TimerIntent
     data class EditWaterQuantityChanged(val value: String) : TimerIntent
     data class EditTeaQuantityChanged(val value: String) : TimerIntent
+    data class EditTeaBagModeChanged(val isTeaBag: Boolean) : TimerIntent
     data class EditWaterTypeChanged(val waterType: WaterType) : TimerIntent
     data object ConfirmEditSession : TimerIntent
     data object CancelEditSession : TimerIntent

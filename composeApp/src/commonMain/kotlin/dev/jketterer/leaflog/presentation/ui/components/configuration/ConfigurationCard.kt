@@ -36,6 +36,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaflog.composeapp.generated.resources.Res
+import leaflog.composeapp.generated.resources.ic_tea_leaf
+import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
@@ -146,7 +149,7 @@ fun ConfigurationCard(
             ) {
                 configuration.teaQuantityGrams?.let {
                     BrewingParamChip(
-                        FeatherIcons.Coffee,
+                        vectorResource(Res.drawable.ic_tea_leaf),
                         "${it}g"
                     )
                 }

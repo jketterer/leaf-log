@@ -16,7 +16,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -56,6 +59,7 @@ fun QuickTimerDetailsSheet(
     selectedTea: Tea?,
     selectedVessel: BrewingVessel?,
     teaQuantityGrams: String,
+    isTeaBag: Boolean,
     temperatureDisplay: String,
     waterQuantityDisplay: String,
     waterType: WaterType,
@@ -68,6 +72,7 @@ fun QuickTimerDetailsSheet(
     onTeaSelected: (String) -> Unit,
     onVesselSelected: (String) -> Unit,
     onTeaQuantityChanged: (String) -> Unit,
+    onTeaBagModeChanged: (Boolean) -> Unit,
     onTemperatureChanged: (String) -> Unit,
     onToggleTemperatureUnit: () -> Unit,
     onWaterQuantityChanged: (String) -> Unit,
@@ -102,6 +107,7 @@ fun QuickTimerDetailsSheet(
             2 -> Step2Content(
                 selectedTea = selectedTea,
                 teaQuantityGrams = teaQuantityGrams,
+                isTeaBag = isTeaBag,
                 temperatureDisplay = temperatureDisplay,
                 waterQuantityDisplay = waterQuantityDisplay,
                 isWaterQuantityEditable = isWaterQuantityEditable,
@@ -109,6 +115,7 @@ fun QuickTimerDetailsSheet(
                 prefillSource = prefillSource,
                 userPreferences = userPreferences,
                 onTeaQuantityChanged = onTeaQuantityChanged,
+                onTeaBagModeChanged = onTeaBagModeChanged,
                 onTemperatureChanged = onTemperatureChanged,
                 onToggleTemperatureUnit = onToggleTemperatureUnit,
                 onWaterQuantityChanged = onWaterQuantityChanged,
@@ -260,10 +267,12 @@ private fun Step1Content(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Step2Content(
     selectedTea: Tea?,
     teaQuantityGrams: String,
+    isTeaBag: Boolean,
     temperatureDisplay: String,
     waterQuantityDisplay: String,
     isWaterQuantityEditable: Boolean,
@@ -271,6 +280,7 @@ private fun Step2Content(
     prefillSource: PrefillSource,
     userPreferences: UserPreferences,
     onTeaQuantityChanged: (String) -> Unit,
+    onTeaBagModeChanged: (Boolean) -> Unit,
     onTemperatureChanged: (String) -> Unit,
     onToggleTemperatureUnit: () -> Unit,
     onWaterQuantityChanged: (String) -> Unit,
@@ -280,7 +290,8 @@ private fun Step2Content(
     onDone: () -> Unit,
 ) {
     val isValid = temperatureDisplay.isNotBlank() &&
-            (!isWaterQuantityEditable || waterQuantityDisplay.isNotBlank())
+            (!isWaterQuantityEditable || waterQuantityDisplay.isNotBlank()) &&
+            (isTeaBag || teaQuantityGrams.isNotBlank())
 
     val tempUnit = userPreferences.temperatureUnit
     val volUnit = userPreferences.volumeUnit
@@ -333,26 +344,44 @@ private fun Step2Content(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Tea Quantity
-        Column {
-            OutlinedTextField(
-                value = teaQuantityGrams,
-                onValueChange = onTeaQuantityChanged,
-                label = { Text("Tea Quantity") },
-                supportingText = { Text("Optional - leave empty for tea bags") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                suffix = { Text("g") },
+        // Tea type selector
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                onClick = { onTeaBagModeChanged(false) },
+                selected = !isTeaBag,
+                label = { Text("Loose Leaf") },
             )
-            PresetChips(
-                presets = teaQtyPresets,
-                currentValue = teaQuantityGrams,
-                isSelected = { preset, current ->
-                    preset.toFloatOrNull() == current?.toFloatOrNull()
-                },
-                onSelect = onTeaQuantityChanged,
-                modifier = Modifier.fillMaxWidth(),
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                onClick = { onTeaBagModeChanged(true) },
+                selected = isTeaBag,
+                label = { Text("Tea Bag") },
             )
+        }
+
+        if (!isTeaBag) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Column {
+                OutlinedTextField(
+                    value = teaQuantityGrams,
+                    onValueChange = onTeaQuantityChanged,
+                    label = { Text("Tea Quantity") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    suffix = { Text("g") },
+                )
+                PresetChips(
+                    presets = teaQtyPresets,
+                    currentValue = teaQuantityGrams,
+                    isSelected = { preset, current ->
+                        preset.toFloatOrNull() == current?.toFloatOrNull()
+                    },
+                    onSelect = onTeaQuantityChanged,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -495,7 +524,7 @@ private fun Step1ContentWithSelectionPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun Step2ContentVesselCapacityPreview() {
+private fun Step2ContentLooseLeafPreview() {
     LeafLogTheme {
         Step2Content(
             selectedTea = Tea(
@@ -507,6 +536,7 @@ private fun Step2ContentVesselCapacityPreview() {
                 syncStatus = dev.jketterer.leaflog.domain.models.SyncStatus.LOCAL_ONLY,
             ),
             teaQuantityGrams = "5",
+            isTeaBag = false,
             temperatureDisplay = "80",
             waterQuantityDisplay = "120",
             isWaterQuantityEditable = false,
@@ -514,6 +544,7 @@ private fun Step2ContentVesselCapacityPreview() {
             prefillSource = PrefillSource.SavedConfig,
             userPreferences = UserPreferences(),
             onTeaQuantityChanged = {},
+            onTeaBagModeChanged = {},
             onTemperatureChanged = {},
             onToggleTemperatureUnit = {},
             onWaterQuantityChanged = {},
@@ -527,7 +558,7 @@ private fun Step2ContentVesselCapacityPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun Step2ContentNoVesselCapacityPreview() {
+private fun Step2ContentTeaBagPreview() {
     LeafLogTheme {
         Step2Content(
             selectedTea = Tea(
@@ -538,7 +569,8 @@ private fun Step2ContentNoVesselCapacityPreview() {
                 updatedAt = Clock.System.now(),
                 syncStatus = dev.jketterer.leaflog.domain.models.SyncStatus.LOCAL_ONLY,
             ),
-            teaQuantityGrams = "5",
+            teaQuantityGrams = "",
+            isTeaBag = true,
             temperatureDisplay = "80",
             waterQuantityDisplay = "",
             isWaterQuantityEditable = true,
@@ -546,6 +578,7 @@ private fun Step2ContentNoVesselCapacityPreview() {
             prefillSource = PrefillSource.None,
             userPreferences = UserPreferences(),
             onTeaQuantityChanged = {},
+            onTeaBagModeChanged = {},
             onTemperatureChanged = {},
             onToggleTemperatureUnit = {},
             onWaterQuantityChanged = {},

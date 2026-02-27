@@ -9,6 +9,8 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
@@ -33,6 +35,8 @@ class EditSessionViewModel(
     private val imageStorage: ImageStorage,
     private val updateSessionUseCase: UpdateSessionUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
+    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
 ) : ViewModel() {
 
     /** Tracks photos added during this edit session for cleanup on discard. */
@@ -76,6 +80,13 @@ class EditSessionViewModel(
             is EditSessionIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
             is EditSessionIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
             is EditSessionIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
+            is EditSessionIntent.TeaBagModeChanged -> _state.update {
+                it.copy(
+                    isTeaBag = intent.isTeaBag,
+                    teaQuantityGrams = if (intent.isTeaBag) "" else it.teaQuantityGrams,
+                    teaQuantityError = null,
+                )
+            }
             is EditSessionIntent.LocationChanged -> updateLocation(intent.location)
             is EditSessionIntent.RatingChanged -> updateRating(intent.rating)
             is EditSessionIntent.NotesChanged -> updateNotes(intent.notes)
@@ -142,6 +153,7 @@ class EditSessionViewModel(
                             selectedWaterType = session.waterType,
                             waterQuantityMl = session.waterQuantityMl.toString(),
                             teaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
+                            isTeaBag = session.teaQuantityGrams == null,
                             location = session.location ?: "",
                             rating = session.rating ?: 0f,
                             notes = session.notes ?: "",
@@ -358,7 +370,8 @@ class EditSessionViewModel(
                     vesselId = currentState.selectedVessel?.id,
                     waterType = currentState.selectedWaterType,
                     waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull(),
-                    teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
+                    teaQuantityGrams = if (currentState.isTeaBag) null
+                        else currentState.teaQuantityGrams.toFloatOrNull(),
                     location = currentState.location.takeIf { it.isNotBlank() },
                 )
             } else {
@@ -394,7 +407,7 @@ class EditSessionViewModel(
                         updatedSession.rating != null &&
                         updatedSession.rating >= 5f
                     ) {
-                        _state.update { it.copy(showSaveConfigurationDialog = true) }
+                        maybeShowSaveConfigDialog(updatedSession)
                     } else {
                         _navEvents.send(EditSessionNavEvent.NavigateBack)
                     }
@@ -407,6 +420,25 @@ class EditSessionViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    private suspend fun maybeShowSaveConfigDialog(session: dev.jketterer.leaflog.domain.models.TeaSession) {
+        if (checkDuplicateConfigurationUseCase(session)) {
+            _navEvents.send(EditSessionNavEvent.NavigateBack)
+            return
+        }
+        val label = generateConfigurationLabelUseCase(
+            teaName = _state.value.teaName ?: "",
+            teaQuantityGrams = session.teaQuantityGrams,
+            waterQuantityMl = session.waterQuantityMl,
+            brewingTime = session.brewingTime,
+        )
+        _state.update {
+            it.copy(
+                showSaveConfigurationDialog = true,
+                suggestedConfigurationLabel = label,
+            )
         }
     }
 

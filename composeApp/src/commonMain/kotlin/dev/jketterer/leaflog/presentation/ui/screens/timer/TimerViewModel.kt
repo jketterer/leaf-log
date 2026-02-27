@@ -12,6 +12,8 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
@@ -55,6 +57,8 @@ class TimerViewModel(
     private val completeTimerUseCase: CompleteTimerUseCase,
     private val cancelTimerUseCase: CancelTimerUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
+    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
     private val updateTeaStatsUseCase: UpdateTeaStatsUseCase,
     private val saveTimerStateUseCase: SaveTimerStateUseCase,
     private val restoreTimerStateUseCase: RestoreTimerStateUseCase,
@@ -141,6 +145,12 @@ class TimerViewModel(
             is TimerIntent.EditTemperatureChanged -> _state.update { it.copy(editTemperatureCelsius = intent.value) }
             is TimerIntent.EditWaterQuantityChanged -> _state.update { it.copy(editWaterQuantityMl = intent.value) }
             is TimerIntent.EditTeaQuantityChanged -> _state.update { it.copy(editTeaQuantityGrams = intent.value) }
+            is TimerIntent.EditTeaBagModeChanged -> _state.update {
+                it.copy(
+                    editIsTeaBag = intent.isTeaBag,
+                    editTeaQuantityGrams = if (intent.isTeaBag) "" else it.editTeaQuantityGrams,
+                )
+            }
             is TimerIntent.EditWaterTypeChanged -> _state.update { it.copy(editWaterType = intent.waterType) }
             is TimerIntent.ConfirmEditSession -> confirmEditSession()
             is TimerIntent.CancelEditSession -> _state.update { it.copy(showEditSheet = false) }
@@ -592,14 +602,29 @@ class TimerViewModel(
             updatedSession.rating >= 3f &&
             updatedSession.usedConfigurationId == null
         ) {
-            _state.update {
-                it.copy(
-                    showSaveConfigurationDialog = true,
-                    savedSession = updatedSession
-                )
-            }
+            maybeShowSaveConfigDialog(updatedSession)
         } else {
             _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
+        }
+    }
+
+    private suspend fun maybeShowSaveConfigDialog(session: TeaSession) {
+        if (checkDuplicateConfigurationUseCase(session)) {
+            _navigationEvents.send(TimerNavEvent.NavigateToComplete(session.id))
+            return
+        }
+        val label = generateConfigurationLabelUseCase(
+            teaName = _state.value.tea?.name ?: "",
+            teaQuantityGrams = session.teaQuantityGrams,
+            waterQuantityMl = session.waterQuantityMl,
+            brewingTime = session.brewingTime,
+        )
+        _state.update {
+            it.copy(
+                showSaveConfigurationDialog = true,
+                suggestedConfigurationLabel = label,
+                savedSession = session,
+            )
         }
     }
 
@@ -671,6 +696,7 @@ class TimerViewModel(
                     .toString(),
                 editWaterQuantityMl = volUnit.fromMilliliters(session.waterQuantityMl).toString(),
                 editTeaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
+                editIsTeaBag = session.teaQuantityGrams == null,
                 editWaterType = session.waterType,
             )
         }
@@ -690,7 +716,8 @@ class TimerViewModel(
             volUnit.toMilliliters(it)
         } ?: session.waterQuantityMl
 
-        val teaQuantityGrams = currentState.editTeaQuantityGrams.toFloatOrNull()
+        val teaQuantityGrams = if (currentState.editIsTeaBag) null
+            else currentState.editTeaQuantityGrams.toFloatOrNull()
 
         val waterType = currentState.editWaterType ?: session.waterType
 

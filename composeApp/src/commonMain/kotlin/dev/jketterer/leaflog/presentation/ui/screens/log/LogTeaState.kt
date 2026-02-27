@@ -19,6 +19,7 @@ data class LogTeaState(
 
     // Brewing parameters
     val teaQuantityGrams: String = "",
+    val isTeaBag: Boolean = false,
     val waterQuantityMl: String = "",
     val waterQuantityDisplay: String = "", // User's input in display unit (preserves exact value)
     val temperatureCelsius: String = "",
@@ -43,6 +44,7 @@ data class LogTeaState(
     // Validation errors
     val teaError: String? = null,
     val vesselError: String? = null,
+    val teaQuantityError: String? = null,
     val waterQuantityError: String? = null,
     val temperatureError: String? = null,
     val brewingTimeError: String? = null,
@@ -66,6 +68,7 @@ data class LogTeaState(
         get() = selectedTea != null &&
                 teaError == null &&
                 vesselError == null &&
+                (isTeaBag || (teaQuantityGrams.isNotBlank() && teaQuantityError == null)) &&
                 waterQuantityError == null &&
                 temperatureError == null &&
                 brewingTimeError == null

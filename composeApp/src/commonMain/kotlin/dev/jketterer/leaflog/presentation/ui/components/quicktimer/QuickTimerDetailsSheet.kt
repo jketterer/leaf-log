@@ -299,7 +299,7 @@ private fun Step2Content(
     val tempPresets = remember(tempUnit) {
         when (tempUnit) {
             TemperatureUnit.CELSIUS -> listOf(60, 70, 75, 80, 85, 90, 95, 100)
-            TemperatureUnit.FAHRENHEIT -> listOf(140, 160, 170, 175, 185, 195, 200, 212)
+            TemperatureUnit.FAHRENHEIT -> listOf(140, 160, 170, 175, 185, 195, 200, 208, 212)
         }.map { Preset("$it${tempUnit.symbol}", it.toString()) }
     }
 

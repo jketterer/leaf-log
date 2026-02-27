@@ -45,11 +45,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import androidx.compose.ui.graphics.vector.ImageVector
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.MoreVertical
+import compose.icons.feathericons.Star
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.regular.Heart
@@ -313,7 +315,8 @@ private fun TeaDetailContent(
                                     if (state.tea.averageRating != null) {
                                         DetailRow(
                                             label = "Average Rating",
-                                            value = "${state.tea.averageRating.format(1)} ⭐"
+                                            value = state.tea.averageRating.format(1),
+                                            trailingIcon = FeatherIcons.Star,
                                         )
                                     }
                                 }
@@ -535,21 +538,35 @@ private fun DetailRow(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
+    trailingIcon: ImageVector? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+            )
+            if (trailingIcon != null) {
+                Icon(
+                    imageVector = trailingIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+        }
     }
 }
 

@@ -284,8 +284,9 @@ class AnalyticsViewModel(
 
                 AnalyticsPeriod.THIS_WEEK -> {
                     val dayOfWeek = today.dayOfWeek.ordinal // Monday = 0
-                    val monday = today.minus(dayOfWeek + 1, DateTimeUnit.DAY)
-                    monday.atStartOfDayIn(tz) to now
+                    val startOfWeek = today.minus(dayOfWeek + 1, DateTimeUnit.DAY)
+                    val endOfWeek = startOfWeek.plus(7, DateTimeUnit.DAY)
+                    startOfWeek.atStartOfDayIn(tz) to endOfWeek.atStartOfDayIn(tz)
                 }
 
                 AnalyticsPeriod.THIS_MONTH -> {

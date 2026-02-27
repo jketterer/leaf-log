@@ -48,6 +48,16 @@ private val MONTH_NAMES = listOf(
 private fun intensityAlpha(sessionCount: Int): Float =
     if (sessionCount <= 0) 1f else min(1f, 0.35f + sessionCount * 0.22f)
 
+/** Returns white or black depending on which has better contrast against [color]. */
+private fun contrastingTextColor(color: Color): Color {
+    val r = color.red
+    val g = color.green
+    val b = color.blue
+    // Relative luminance (sRGB)
+    val luminance = 0.2126f * r + 0.7152f * g + 0.0722f * b
+    return if (luminance > 0.35f) Color.Black else Color.White
+}
+
 @Composable
 fun BrewingActivityHeatmap(
     cells: List<ActivityCell>,
@@ -89,7 +99,6 @@ private fun WeekHeatmapCanvas(
     val outlineColor = MaterialTheme.colorScheme.outline
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayRingColor = MaterialTheme.colorScheme.primary
-    val dayNumberFilledColor = MaterialTheme.colorScheme.onPrimary
     val dayNumberEmptyColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(
@@ -171,7 +180,7 @@ private fun WeekHeatmapCanvas(
 
                 // Day number
                 val dayText = cell.date.day.toString()
-                val dayTextColor = if (color != null) dayNumberFilledColor else dayNumberEmptyColor
+                val dayTextColor = if (color != null) contrastingTextColor(color) else dayNumberEmptyColor
                 val dayResult = textMeasurer.measure(
                     text = dayText,
                     style = dayNumberStyle.copy(color = dayTextColor),
@@ -209,7 +218,6 @@ private fun MonthCalendarHeatmapCanvas(
     val outlineColor = MaterialTheme.colorScheme.outline
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayRingColor = MaterialTheme.colorScheme.primary
-    val dayNumberFilledColor = MaterialTheme.colorScheme.onPrimary
     val dayNumberEmptyColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(
@@ -321,7 +329,7 @@ private fun MonthCalendarHeatmapCanvas(
 
                 // Day number
                 val dayText = cell.date.day.toString()
-                val dayTextColor = if (color != null) dayNumberFilledColor else dayNumberEmptyColor
+                val dayTextColor = if (color != null) contrastingTextColor(color) else dayNumberEmptyColor
                 val dayResult = textMeasurer.measure(
                     text = dayText,
                     style = dayNumberStyle.copy(color = dayTextColor),

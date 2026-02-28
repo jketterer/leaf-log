@@ -1,7 +1,9 @@
 package dev.jketterer.leaflog.data.local.database
 
+import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import dev.jketterer.leaflog.data.local.database.dao.BrewingConfigurationDao
 import dev.jketterer.leaflog.data.local.database.dao.BrewingVesselDao
@@ -14,6 +16,10 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
 
+// Room KSP generates the actual implementations for each platform.
+@Suppress("NO_ACTUAL_FOR_EXPECT")
+expect object LeafLogDatabaseConstructor : RoomDatabaseConstructor<LeafLogDatabase>
+
 @Database(
     entities = [
         TeaEntity::class,
@@ -25,6 +31,7 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
     version = 1,
     exportSchema = true,
 )
+@ConstructedBy(LeafLogDatabaseConstructor::class)
 @TypeConverters(Converters::class)
 abstract class LeafLogDatabase : RoomDatabase() {
     abstract fun teaDao(): TeaDao

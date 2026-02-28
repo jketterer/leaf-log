@@ -31,12 +31,15 @@ install_jdk_if_needed() {
         return 0
     fi
 
-    echo " - No valid JDK installation found, installing via Homebrew..."
-    brew install --cask temurin@17
+    echo " - No valid JDK installation found, installing via Homebrew formula..."
+    # Use the formula (not --cask) — cask installs to /usr/local/Caskroom which requires
+    # sudo and fails in non-interactive CI. The formula installs to the Homebrew prefix
+    # without elevated permissions.
+    brew install openjdk@17
 
     echo " - Symlinking JDK to ${jdk_dir}"
     mkdir -p "$(dirname "$jdk_dir")"
-    ln -sf "$(/usr/libexec/java_home -v 17)" "$jdk_dir"
+    ln -sf "$(brew --prefix openjdk@17)" "$jdk_dir"
 
     echo " - JAVA_HOME will be set to ${jdk_dir}"
     return 0

@@ -31,8 +31,6 @@ if [[ $(uname -m) == "arm64" ]]; then
     fi
 # Location of version / arch detection file.
     detect_loc="${jdk_dir}/.${jdk_version}.${arch_type}"
-echo "export JAVA_HOME=\"${jdk_dir}\"" >> ~/.zshenv
-echo "export PATH=\"${jdk_dir}/bin:\$PATH\"" >> ~/.zshenv
 if [ -f $detect_loc ]; then
         echo " - Found a valid JDK installation, skipping install"
         return 0
@@ -43,6 +41,7 @@ tar_name="OpenJDK17U-jdk_${arch_type}_mac_hotspot_${jdk_version}_${jdk_build}.ta
     curl -OL "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-${jdk_version}%2B${jdk_build}/${tar_name}"
     tar xzf $tar_name -C $root_dir
 # Move the JDK to our desired location.
+    mkdir -p "$(dirname $jdk_dir)"
     rm -rf $jdk_dir
     mv "${root_dir}/jdk-${jdk_version}+${jdk_build}" $jdk_dir
 # Some cleanup.

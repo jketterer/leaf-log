@@ -145,9 +145,8 @@ actual class TimerNotificationService : NSObject(),
         }
     }
 
-    companion object {
-        private const val NOTIFICATION_ID = "timer_running"
-        private const val COMPLETION_NOTIFICATION_ID = "timer_complete"
-        private const val SCHEDULED_COMPLETION_ID = "timer_scheduled_complete"
-    }
 }
+
+private const val NOTIFICATION_ID = "timer_running"
+private const val COMPLETION_NOTIFICATION_ID = "timer_complete"
+private const val SCHEDULED_COMPLETION_ID = "timer_scheduled_complete"

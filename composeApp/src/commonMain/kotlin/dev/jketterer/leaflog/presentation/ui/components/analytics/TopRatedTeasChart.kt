@@ -146,11 +146,16 @@ private fun TopRatedTeaRow(
         }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "${"%.1f".format(topRatedTea.averageRating)} ★",
+            text = "${topRatedTea.averageRating.formatOneDecimal()} ★",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
         )
     }
+}
+
+private fun Float.formatOneDecimal(): String {
+    val tenths = (this * 10).toInt()
+    return "${tenths / 10}.${tenths % 10}"
 }
 
 @Preview(showBackground = true)

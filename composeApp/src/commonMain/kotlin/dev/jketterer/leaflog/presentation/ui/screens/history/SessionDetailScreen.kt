@@ -210,7 +210,7 @@ private fun SessionDetailContent(
                                         .toLocalDateTime(TimeZone.currentSystemDefault())
                                     val dateTimeString = buildString {
                                         append(localDateTime.month.name.lowercase().replaceFirstChar { it.uppercase() })
-                                        append(" ${localDateTime.dayOfMonth}, ${localDateTime.year}")
+                                        append(" ${localDateTime.day}, ${localDateTime.year}")
                                         append(" at ")
                                         val hour = if (localDateTime.hour == 0) 12 else if (localDateTime.hour > 12) localDateTime.hour - 12 else localDateTime.hour
                                         val amPm = if (localDateTime.hour < 12) "AM" else "PM"

@@ -35,7 +35,8 @@ install_jdk_if_needed() {
     # Use the formula (not --cask) — cask installs to /usr/local/Caskroom which requires
     # sudo and fails in non-interactive CI. The formula installs to the Homebrew prefix
     # without elevated permissions.
-    brew install openjdk@17
+    # Disable auto-update so brew doesn't waste time re-fetching its own formulae index.
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install openjdk@17
 
     echo " - Symlinking JDK to ${jdk_dir}"
     mkdir -p "$(dirname "$jdk_dir")"

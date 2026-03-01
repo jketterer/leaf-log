@@ -17,7 +17,7 @@ import platform.Foundation.NSHomeDirectory
 
 actual fun platformModule() = module {
     single {
-        val dbFilePath = NSHomeDirectory() + "/leaflog.db"
+        val dbFilePath = NSHomeDirectory() + "/Documents/leaflog.db"
         Room.databaseBuilder<LeafLogDatabase>(
             name = dbFilePath,
         )

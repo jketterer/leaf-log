@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.navigation
 
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -24,9 +27,9 @@ import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Home
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
-import dev.jketterer.leaflog.presentation.ui.screens.configuration.CreateBrewingConfigurationScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailScreen
+import dev.jketterer.leaflog.presentation.ui.screens.configuration.CreateBrewingConfigurationScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.EditSessionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
@@ -91,6 +94,18 @@ fun AppNavigation() {
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
             ),
+            transitionSpec = {
+                slideInHorizontally(initialOffsetX = { it }) togetherWith
+                        slideOutHorizontally(targetOffsetX = { -it })
+            },
+            popTransitionSpec = {
+                slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                        slideOutHorizontally(targetOffsetX = { it })
+            },
+            predictivePopTransitionSpec = {
+                slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                        slideOutHorizontally(targetOffsetX = { it })
+            },
             entryProvider = entryProvider {
                 entry<NavRoute.HomeRoute> {
                     HomeScreen(

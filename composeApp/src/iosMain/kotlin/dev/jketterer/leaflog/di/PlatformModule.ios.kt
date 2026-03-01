@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
+import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl
@@ -33,8 +34,16 @@ actual fun platformModule() = module {
     single { get<LeafLogDatabase>().brewingConfigurationDao() }
 
     // Platform-specific services
+    // TimerNotificationServiceImpl extends NSObject (ObjC), so it cannot also implement a Kotlin
+    // interface. We wrap it in an anonymous object so Koin only indexes the Kotlin interface KClass.
     single<TimerNotificationService> {
-        TimerNotificationServiceImpl()
+        val impl = TimerNotificationServiceImpl()
+        object : TimerNotificationService {
+            override fun showTimerRunning(state: TimerState) = impl.showTimerRunning(state)
+            override fun showTimerComplete(teaName: String, sessionId: String?) = impl.showTimerComplete(teaName, sessionId)
+            override fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?) = impl.scheduleCompletionAlarm(teaName, remainingSeconds, sessionId)
+            override fun cancelCompletionAlarm() = impl.cancelCompletionAlarm()
+        }
     }
 
     single {

@@ -6,7 +6,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.services.TimerNotificationService
+import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl
 import dev.jketterer.leaflog.domain.services.TimerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +19,7 @@ import org.koin.android.ext.android.inject
 class TimerForegroundService : Service() {
 
     private val timerService: TimerService by inject()
-    private val notificationService: TimerNotificationService by inject()
+    private val notificationService: TimerNotificationServiceImpl by inject()
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var collectionJob: Job? = null
 

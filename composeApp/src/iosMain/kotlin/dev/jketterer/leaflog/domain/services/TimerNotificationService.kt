@@ -14,8 +14,8 @@ import platform.UserNotifications.UNUserNotificationCenter
 import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
 import platform.darwin.NSObject
 
-actual class TimerNotificationService : NSObject(),
-    UNUserNotificationCenterDelegateProtocol {
+class TimerNotificationServiceImpl : NSObject(),
+    UNUserNotificationCenterDelegateProtocol, TimerNotificationService {
 
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
@@ -34,7 +34,7 @@ actual class TimerNotificationService : NSObject(),
         }
     }
 
-    actual fun showTimerRunning(state: TimerState) {
+    override fun showTimerRunning(state: TimerState) {
         val minutes = state.remainingDuration.inWholeMinutes
         val seconds = state.remainingDuration.inWholeSeconds % 60
         val remainingTime = "${minutes}:${seconds.toString().padStart(2, '0')}"
@@ -59,7 +59,7 @@ actual class TimerNotificationService : NSObject(),
         }
     }
 
-    actual fun showTimerComplete(teaName: String, sessionId: String?) {
+    override fun showTimerComplete(teaName: String, sessionId: String?) {
         val content = UNMutableNotificationContent().apply {
             setTitle("$teaName is ready!")
             setBody("Time to enjoy your tea")
@@ -83,7 +83,7 @@ actual class TimerNotificationService : NSObject(),
     /**
      * Schedule a local notification that iOS will fire even if the app is suspended.
      */
-    actual fun scheduleCompletionAlarm(
+    override fun scheduleCompletionAlarm(
         teaName: String,
         remainingSeconds: Double,
         sessionId: String?,
@@ -117,7 +117,7 @@ actual class TimerNotificationService : NSObject(),
         }
     }
 
-    actual fun cancelCompletionAlarm() {
+    override fun cancelCompletionAlarm() {
         center.removePendingNotificationRequestsWithIdentifiers(
             listOf(SCHEDULED_COMPLETION_ID),
         )

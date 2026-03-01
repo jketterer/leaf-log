@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
+import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.dsl.module
@@ -32,8 +33,8 @@ actual fun platformModule() = module {
     single { get<LeafLogDatabase>().brewingConfigurationDao() }
 
     // Platform-specific services
-    single {
-        TimerNotificationService()
+    single<TimerNotificationService> {
+        TimerNotificationServiceImpl()
     }
 
     single {

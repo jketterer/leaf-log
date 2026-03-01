@@ -9,8 +9,10 @@ import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
+import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl
 import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.Module
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 actual fun platformModule(): Module = module {
@@ -36,9 +38,7 @@ actual fun platformModule(): Module = module {
     single { get<LeafLogDatabase>().brewingConfigurationDao() }
 
     // Platform-specific services
-    single {
-        TimerNotificationService(context = get())
-    }
+    single { TimerNotificationServiceImpl(context = get()) } bind TimerNotificationService::class
 
     single {
         TimerLifecycleHandler(context = get())

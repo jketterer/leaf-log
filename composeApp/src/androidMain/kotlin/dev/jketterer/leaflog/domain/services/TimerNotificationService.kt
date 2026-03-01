@@ -15,7 +15,7 @@ import dev.jketterer.leaflog.domain.models.TimerState
 /**
  * Manages timer notifications for Android.
  */
-actual class TimerNotificationService(private val context: Context) {
+class TimerNotificationServiceImpl(private val context: Context) : TimerNotificationService {
 
     private val notificationManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -82,14 +82,14 @@ actual class TimerNotificationService(private val context: Context) {
     /**
      * Show ongoing timer notification while brewing.
      */
-    actual fun showTimerRunning(state: TimerState) {
+    override fun showTimerRunning(state: TimerState) {
         notificationManager.notify(NOTIFICATION_ID, buildRunningNotification(state))
     }
 
     /**
      * Show completion notification when timer finishes.
      */
-    actual fun showTimerComplete(teaName: String, sessionId: String?) {
+    override fun showTimerComplete(teaName: String, sessionId: String?) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_COMPLETE)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("$teaName is ready!")
@@ -111,7 +111,7 @@ actual class TimerNotificationService(private val context: Context) {
      * No-op on Android — the foreground service keeps the process alive,
      * so the coroutine-based countdown fires the completion notification directly.
      */
-    actual fun scheduleCompletionAlarm(
+    override fun scheduleCompletionAlarm(
         teaName: String,
         remainingSeconds: Double,
         sessionId: String?
@@ -122,7 +122,7 @@ actual class TimerNotificationService(private val context: Context) {
     /**
      * No-op on Android.
      */
-    actual fun cancelCompletionAlarm() {
+    override fun cancelCompletionAlarm() {
         // Intentionally empty
     }
 

@@ -6,6 +6,9 @@ import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNMutableNotificationContent
+import platform.UserNotifications.UNNotification
+import platform.UserNotifications.UNNotificationPresentationOptionBanner
+import platform.UserNotifications.UNNotificationPresentationOptionSound
 import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNNotificationResponse
 import platform.UserNotifications.UNNotificationSound
@@ -35,31 +38,15 @@ class TimerNotificationServiceImpl : NSObject(),
     }
 
     fun showTimerRunning(state: TimerState) {
-        val minutes = state.remainingDuration.inWholeMinutes
-        val seconds = state.remainingDuration.inWholeSeconds % 60
-        val remainingTime = "${minutes}:${seconds.toString().padStart(2, '0')}"
-
-        val content = UNMutableNotificationContent().apply {
-            setTitle(state.teaName)
-            setBody("$remainingTime remaining")
-            setSound(null)  // No sound for ongoing
-            setUserInfo(buildUserInfo(state.sessionId))
-        }
-
-        val request = UNNotificationRequest.requestWithIdentifier(
-            identifier = NOTIFICATION_ID,
-            content = content,
-            trigger = null,  // Show immediately
-        )
-
-        center.addNotificationRequest(request) { error ->
-            error?.let {
-                println("Failed to show notification: ${it.localizedDescription}")
-            }
-        }
+        // No-op on iOS: the UI shows the countdown while the app is in the foreground,
+        // and the app is suspended in the background so we cannot update every second.
+        // Background completion is handled by scheduleCompletionAlarm().
     }
 
     fun showTimerComplete(teaName: String, sessionId: String?) {
+        // Cancel the scheduled alarm first so it doesn't double-fire alongside this one.
+        cancelCompletionAlarm()
+
         val content = UNMutableNotificationContent().apply {
             setTitle("$teaName is ready!")
             setBody("Time to enjoy your tea")
@@ -123,6 +110,16 @@ class TimerNotificationServiceImpl : NSObject(),
         )
     }
 
+    // Required to display notifications while the app is in the foreground.
+    // Without this, iOS silently drops all notifications when the app is active.
+    override fun userNotificationCenter(
+        center: UNUserNotificationCenter,
+        willPresentNotification: UNNotification,
+        withCompletionHandler: (ULong) -> Unit,
+    ) {
+        withCompletionHandler(UNNotificationPresentationOptionBanner or UNNotificationPresentationOptionSound)
+    }
+
     // UNUserNotificationCenterDelegateProtocol — handle notification taps
     override fun userNotificationCenter(
         center: UNUserNotificationCenter,
@@ -147,6 +144,5 @@ class TimerNotificationServiceImpl : NSObject(),
 
 }
 
-private const val NOTIFICATION_ID = "timer_running"
 private const val COMPLETION_NOTIFICATION_ID = "timer_complete"
 private const val SCHEDULED_COMPLETION_ID = "timer_scheduled_complete"

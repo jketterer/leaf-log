@@ -154,7 +154,7 @@ class EditVesselViewModel(
     private fun onCapacityChanged(capacity: String) {
         // Convert from display unit to storage unit (mL)
         val storageValue = capacity.toIntOrNull()?.let { displayValue ->
-            _state.value.userPreferences.volumeUnit.toMilliliters(displayValue).toString()
+            _state.value.userPreferences.volumeUnit.toMilliliters(displayValue).toInt().toString()
         } ?: capacity
 
         _state.update {

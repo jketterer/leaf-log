@@ -11,6 +11,7 @@
 		3F0EA6BA2F57574300C5FF6E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3F0EA6B92F57574300C5FF6E /* SwiftUI.framework */; };
 		3F0EA6C72F57574500C5FF6E /* LeafLogWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3F0EA6B52F57574300C5FF6E /* LeafLogWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3F0EA6D12F5758C000C5FF6E /* LeafLogShared in Frameworks */ = {isa = PBXBuildFile; productRef = 3F0EA6D02F5758C000C5FF6E /* LeafLogShared */; };
+		3F0EA6D32F57664100C5FF6E /* LeafLogShared in Frameworks */ = {isa = PBXBuildFile; productRef = 3F0EA6D22F57664100C5FF6E /* LeafLogShared */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +92,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3F0EA6BA2F57574300C5FF6E /* SwiftUI.framework in Frameworks */,
+				3F0EA6D32F57664100C5FF6E /* LeafLogShared in Frameworks */,
 				3F0EA6B82F57574300C5FF6E /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -155,6 +157,7 @@
 			);
 			name = LeafLogWidgetsExtension;
 			packageProductDependencies = (
+				3F0EA6D22F57664100C5FF6E /* LeafLogShared */,
 			);
 			productName = LeafLogWidgetsExtension;
 			productReference = 3F0EA6B52F57574300C5FF6E /* LeafLogWidgetsExtension.appex */;
@@ -579,6 +582,11 @@
 /* Begin XCSwiftPackageProductDependency section */
 		3F0EA6D02F5758C000C5FF6E /* LeafLogShared */ = {
 			isa = XCSwiftPackageProductDependency;
+			productName = LeafLogShared;
+		};
+		3F0EA6D22F57664100C5FF6E /* LeafLogShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3F0EA6CF2F5758C000C5FF6E /* XCLocalSwiftPackageReference "Packages/LeafLogShared" */;
 			productName = LeafLogShared;
 		};
 /* End XCSwiftPackageProductDependency section */

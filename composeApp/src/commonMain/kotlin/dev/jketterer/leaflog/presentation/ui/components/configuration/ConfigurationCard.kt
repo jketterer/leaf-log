@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -20,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
-import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Thermometer
@@ -126,7 +124,7 @@ fun ConfigurationCard(
                     val timeAgo = when {
                         daysAgo == 0L -> "today"
                         daysAgo == 1L -> "yesterday"
-                        daysAgo < 7 -> "$daysAgo day(s) ago"
+                        daysAgo < 7 -> "$daysAgo days ago"
                         daysAgo < 30 -> "${daysAgo / 7} week(s) ago"
                         daysAgo < 365 -> "${daysAgo / 30} month(s) ago"
                         else -> "${daysAgo / 365} year(s) ago"

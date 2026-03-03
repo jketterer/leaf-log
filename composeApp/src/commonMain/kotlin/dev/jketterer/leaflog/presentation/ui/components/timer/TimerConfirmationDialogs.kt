@@ -12,14 +12,16 @@ fun TimerStopConfirmationDialog(
     text: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    title: String = "Stop Timer?",
+    confirmText: String = "Stop",
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Stop Timer?") },
+        title = { Text(title) },
         text = { Text(text) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Stop")
+                Text(confirmText)
             }
         },
         dismissButton = {

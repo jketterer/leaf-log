@@ -107,7 +107,7 @@ class TimerService(
         timerJob?.cancel()
         timerJob = null
         lifecycleHandler.onTimerStopped()
-        notificationService.cancelCompletionAlarm()
+        notificationService.onTimerStopped()
         _timerState.value = TimerState()
     }
 

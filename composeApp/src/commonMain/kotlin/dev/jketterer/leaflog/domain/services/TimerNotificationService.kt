@@ -7,4 +7,5 @@ interface TimerNotificationService {
     fun showTimerComplete(teaName: String, sessionId: String?)
     fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?)
     fun cancelCompletionAlarm()
+    fun onTimerStopped()
 }

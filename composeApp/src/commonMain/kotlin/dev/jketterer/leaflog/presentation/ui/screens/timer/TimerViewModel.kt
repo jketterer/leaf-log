@@ -83,9 +83,9 @@ class TimerViewModel(
             is TimerIntent.ResetTimer -> showResetConfirmation()
             is TimerIntent.ConfirmReset -> confirmReset()
             is TimerIntent.CancelReset -> cancelReset()
-            is TimerIntent.StopTimer -> showStopConfirmation()
-            is TimerIntent.ConfirmStop -> confirmStop()
-            is TimerIntent.CancelStop -> cancelStop()
+            is TimerIntent.DiscardSession -> showDiscardSessionConfirmation()
+            is TimerIntent.ConfirmStop -> confirmDiscardSession()
+            is TimerIntent.CancelStop -> cancelDiscardSession()
             is TimerIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is TimerIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is TimerIntent.RestartTimer -> restartTimer()
@@ -101,6 +101,7 @@ class TimerViewModel(
                     editTeaQuantityGrams = if (intent.isTeaBag) "" else it.editTeaQuantityGrams,
                 )
             }
+
             is TimerIntent.EditWaterTypeChanged -> _state.update { it.copy(editWaterType = intent.waterType) }
             is TimerIntent.ConfirmEditSession -> confirmEditSession()
             is TimerIntent.CancelEditSession -> _state.update { it.copy(showEditSheet = false) }
@@ -311,16 +312,17 @@ class TimerViewModel(
         timerService.updateState(resetState)
     }
 
-    private fun showStopConfirmation() {
-        _state.update { it.copy(showStopConfirmation = true) }
+    private fun showDiscardSessionConfirmation() {
+        _state.update { it.copy(showDiscardSessionConfirmation = true) }
     }
 
-    private fun cancelStop() {
-        _state.update { it.copy(showStopConfirmation = false) }
+    private fun cancelDiscardSession() {
+        _state.update { it.copy(showDiscardSessionConfirmation = false) }
     }
 
-    private fun confirmStop() {
-        _state.update { it.copy(showStopConfirmation = false) }
+    private fun confirmDiscardSession() {
+        val session = _state.value.session ?: return
+        _state.update { it.copy(showDiscardSessionConfirmation = false) }
 
         viewModelScope.launch {
             // 1. Call use case - handles cleanup logic
@@ -333,15 +335,16 @@ class TimerViewModel(
                     timerService.stop()
 
                     // 4. Clear persisted timer state
-                    _state.value.session?.id?.let { sessionId ->
-                        saveTimerStateUseCase.clear(sessionId)
-                    }
+                    saveTimerStateUseCase.clear(session.id)
+
+                    // 5. Delete the session from the database
+                    teaSessionRepository.delete(session.id)
 
                     _navigationEvents.send(TimerNavEvent.NavigateBack)
                 }
                 .onFailure { e ->
                     _state.update {
-                        it.copy(error = "Failed to stop timer: ${e.message}")
+                        it.copy(error = "Failed to discard session: ${e.message}")
                     }
                 }
         }
@@ -438,7 +441,7 @@ class TimerViewModel(
         } ?: session.waterQuantityMl
 
         val teaQuantityGrams = if (currentState.editIsTeaBag) null
-            else currentState.editTeaQuantityGrams.toFloatOrNull()
+        else currentState.editTeaQuantityGrams.toFloatOrNull()
 
         val waterType = currentState.editWaterType ?: session.waterType
 

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
@@ -139,7 +138,7 @@ private fun TimerContent(
                             },
                             onClick = {
                                 showOverflowMenu = false
-                                onIntent(TimerIntent.StopTimer)
+                                onIntent(TimerIntent.DiscardSession)
                             },
                             leadingIcon = {
                                 Icon(
@@ -178,10 +177,12 @@ private fun TimerContent(
         }
     }
 
-    // Stop confirmation dialog
-    if (state.showStopConfirmation) {
+    // Discard session confirmation dialog
+    if (state.showDiscardSessionConfirmation) {
         TimerStopConfirmationDialog(
-            text = "The session will be saved as in progress. You can complete it later from the History screen.",
+            title = "Cancel Session?",
+            text = "This will permanently delete the session. This action cannot be undone.",
+            confirmText = "Delete",
             onConfirm = { onIntent(TimerIntent.ConfirmStop) },
             onDismiss = { onIntent(TimerIntent.CancelStop) },
         )
@@ -235,81 +236,81 @@ private fun TimerRunningContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-        // Tea name, vessel name, and steep number
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = state.tea?.name ?: "Unknown Tea",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            if (state.vessel != null) {
-                Text(
-                    text = state.vessel.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            if (state.session != null && state.session.steepNumber > 1) {
-                Text(
-                    text = "Steep ${state.session.steepNumber}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        // Circular timer ring
-        CircularTimerRing(
-            progress = state.timerState.progress,
-            timeText = state.formattedTime,
-            modifier = Modifier.size(ringSize),
-        )
-
-        // Quick adjustment buttons
-        QuickAdjustButtons(
-            onAdjust = { adjustment ->
-                onIntent(TimerIntent.AdjustTime(adjustment))
-            },
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Brewing parameters
-        if (state.session != null) {
+            // Tea name, vessel name, and steep number
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = "${
-                        TemperatureFormatter.format(
-                            state.session.temperatureCelsius,
-                            state.userPreferences.temperatureUnit
-                        )
-                    } • ${
-                        VolumeFormatter.format(
-                            state.session.waterQuantityMl,
-                            state.userPreferences.volumeUnit
-                        )
-                    } • ${state.session.waterType.displayName}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = state.tea?.name ?: "Unknown Tea",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
                 )
+                if (state.vessel != null) {
+                    Text(
+                        text = state.vessel.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (state.session != null && state.session.steepNumber > 1) {
+                    Text(
+                        text = "Steep ${state.session.steepNumber}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-        }
 
-        // Control buttons
-        TimerControlButtons(
-            isRunning = state.timerState.isRunning,
-            isPaused = state.timerState.status == TimerStatus.PAUSED,
-            onStartClick = { onIntent(TimerIntent.StartTimer) },
-            onPauseClick = { onIntent(TimerIntent.PauseTimer) },
-            onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
-            onResetClick = { onIntent(TimerIntent.ResetTimer) },
-        )
+            // Circular timer ring
+            CircularTimerRing(
+                progress = state.timerState.progress,
+                timeText = state.formattedTime,
+                modifier = Modifier.size(ringSize),
+            )
+
+            // Quick adjustment buttons
+            QuickAdjustButtons(
+                onAdjust = { adjustment ->
+                    onIntent(TimerIntent.AdjustTime(adjustment))
+                },
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Brewing parameters
+            if (state.session != null) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = "${
+                            TemperatureFormatter.format(
+                                state.session.temperatureCelsius,
+                                state.userPreferences.temperatureUnit
+                            )
+                        } • ${
+                            VolumeFormatter.format(
+                                state.session.waterQuantityMl,
+                                state.userPreferences.volumeUnit
+                            )
+                        } • ${state.session.waterType.displayName}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            // Control buttons
+            TimerControlButtons(
+                isRunning = state.timerState.isRunning,
+                isPaused = state.timerState.status == TimerStatus.PAUSED,
+                onStartClick = { onIntent(TimerIntent.StartTimer) },
+                onPauseClick = { onIntent(TimerIntent.PauseTimer) },
+                onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
+                onResetClick = { onIntent(TimerIntent.ResetTimer) },
+            )
         }
     }
 }

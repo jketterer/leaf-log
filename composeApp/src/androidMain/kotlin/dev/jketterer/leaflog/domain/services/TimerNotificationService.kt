@@ -126,6 +126,13 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         // Intentionally empty
     }
 
+    /**
+     * No-op on Android — no Live Activity equivalent.
+     */
+    override fun onTimerStopped() {
+        // Intentionally empty
+    }
+
     companion object {
         private const val CHANNEL_ID_RUNNING = "timer_running"
         private const val CHANNEL_ID_COMPLETE = "timer_complete"

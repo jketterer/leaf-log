@@ -18,10 +18,16 @@ struct LeafLogLiveActivityWidget: Widget {
                         .font(.title2)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(formatTime(context.state.remainingSeconds))
-                        .font(.title.monospacedDigit())
-                        .foregroundStyle(context.state.isPaused ? .secondary : .primary)
-                        .contentTransition(.numericText(countsDown: true))
+                    if context.state.isPaused {
+                        Text(formatTime(context.state.remainingSeconds))
+                            .font(.title.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(context.state.endDate, style: .timer)
+                            .font(.title.monospacedDigit())
+                            .foregroundStyle(.primary)
+                            .contentTransition(.numericText(countsDown: true))
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(spacing: 2) {
@@ -34,9 +40,9 @@ struct LeafLogLiveActivityWidget: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressBarView(
-                        progress: elapsed(context),
-                        isPaused: context.state.isPaused
+                    timerProgress(
+                        attributes: context.attributes,
+                        state: context.state
                     )
                     .padding(.horizontal)
                     .padding(.bottom, 8)
@@ -46,20 +52,21 @@ struct LeafLogLiveActivityWidget: Widget {
                     .foregroundStyle(.green)
                     .font(.caption2)
             } compactTrailing: {
-                Text(formatTime(context.state.remainingSeconds))
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(context.state.isPaused ? .secondary : .primary)
-                    .contentTransition(.numericText(countsDown: true))
+                if context.state.isPaused {
+                    Text(formatTime(context.state.remainingSeconds))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(context.state.endDate, style: .timer)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.primary)
+                        .contentTransition(.numericText(countsDown: true))
+                }
             } minimal: {
                 Image(systemName: context.state.isPaused ? "pause.circle.fill" : "leaf.fill")
                     .foregroundStyle(.green)
             }
         }
-    }
-
-    private func elapsed(_ ctx: ActivityViewContext<TeaTimerAttributes>) -> Double {
-        guard ctx.attributes.totalSeconds > 0 else { return 0 }
-        return 1.0 - (ctx.state.remainingSeconds / ctx.attributes.totalSeconds)
     }
 }
 
@@ -69,30 +76,10 @@ struct LockScreenLiveActivityView: View {
     let attributes: TeaTimerAttributes
     let state: TeaTimerAttributes.ContentState
 
-    private var progress: Double {
-        guard attributes.totalSeconds > 0 else { return 0 }
-        return 1.0 - (state.remainingSeconds / attributes.totalSeconds)
-    }
-
     var body: some View {
         HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .stroke(lineWidth: 4)
-                    .foregroundStyle(.tertiary)
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(
-                        state.isPaused ? Color.orange : Color.green,
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .animation(.easeInOut, value: progress)
-                Image(systemName: state.isPaused ? "pause.fill" : "leaf.fill")
-                    .foregroundStyle(state.isPaused ? .orange : .green)
-                    .font(.caption)
-            }
-            .frame(width: 48, height: 48)
+            circularProgress(attributes: attributes, state: state)
+                .frame(width: 48, height: 48)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(attributes.teaName)
@@ -105,10 +92,16 @@ struct LockScreenLiveActivityView: View {
 
             Spacer()
 
-            Text(formatTime(state.remainingSeconds))
-                .font(.title.monospacedDigit().bold())
-                .foregroundStyle(state.isPaused ? .secondary : .primary)
-                .contentTransition(.numericText(countsDown: true))
+            if state.isPaused {
+                Text(formatTime(state.remainingSeconds))
+                    .font(.title.monospacedDigit().bold())
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(state.endDate, style: .timer)
+                    .font(.title.monospacedDigit().bold())
+                    .foregroundStyle(.primary)
+                    .contentTransition(.numericText(countsDown: true))
+            }
         }
         .padding()
         .activityBackgroundTint(Color(.systemBackground))
@@ -116,25 +109,53 @@ struct LockScreenLiveActivityView: View {
     }
 }
 
-// MARK: - Progress Bar (Dynamic Island expanded bottom)
+// MARK: - Progress helpers
 
-struct ProgressBarView: View {
-    let progress: Double
-    let isPaused: Bool
+/// Linear progress bar for the Dynamic Island expanded bottom region.
+@ViewBuilder
+private func timerProgress(
+    attributes: TeaTimerAttributes,
+    state: TeaTimerAttributes.ContentState
+) -> some View {
+    if state.isPaused {
+        let value = attributes.totalSeconds > 0
+            ? 1.0 - (state.remainingSeconds / attributes.totalSeconds)
+            : 0.0
+        ProgressView(value: value)
+            .tint(.orange)
+    } else {
+        let startDate = state.endDate.addingTimeInterval(-attributes.totalSeconds)
+        ProgressView(timerInterval: startDate...state.endDate, countsDown: false)
+            .tint(.green)
+    }
+}
 
-    var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 3)
-                    .foregroundStyle(.tertiary)
-                    .frame(height: 6)
-                RoundedRectangle(cornerRadius: 3)
-                    .foregroundStyle(isPaused ? Color.orange : Color.green)
-                    .frame(width: geo.size.width * max(0, min(1, progress)), height: 6)
-                    .animation(.linear(duration: 1), value: progress)
-            }
+/// Circular progress ring for the lock screen view.
+@ViewBuilder
+private func circularProgress(
+    attributes: TeaTimerAttributes,
+    state: TeaTimerAttributes.ContentState
+) -> some View {
+    if state.isPaused {
+        let value = attributes.totalSeconds > 0
+            ? 1.0 - (state.remainingSeconds / attributes.totalSeconds)
+            : 0.0
+        ProgressView(value: value) {
+            Image(systemName: "pause.fill")
+                .foregroundStyle(.orange)
+                .font(.caption)
         }
-        .frame(height: 6)
+        .progressViewStyle(.circular)
+        .tint(.orange)
+    } else {
+        let startDate = state.endDate.addingTimeInterval(-attributes.totalSeconds)
+        ProgressView(timerInterval: startDate...state.endDate, countsDown: false) {
+            Image(systemName: "leaf.fill")
+                .foregroundStyle(.green)
+                .font(.caption)
+        }
+        .progressViewStyle(.circular)
+        .tint(.green)
     }
 }
 

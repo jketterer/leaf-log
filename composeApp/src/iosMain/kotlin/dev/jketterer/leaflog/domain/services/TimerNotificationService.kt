@@ -67,6 +67,15 @@ class TimerNotificationServiceImpl : NSObject(),
     fun showTimerComplete(teaName: String, sessionId: String?) {
         // The UNTimeIntervalNotificationTrigger scheduled in scheduleCompletionAlarm()
         // fires independently and is shown via willPresentNotification (even in foreground).
+        endLiveActivity()
+    }
+
+    fun onTimerStopped() {
+        cancelCompletionAlarm()
+        endLiveActivity()
+    }
+
+    private fun endLiveActivity() {
         if (isActivityActive) {
             LiveActivityServiceHolder.instance?.end()
             isActivityActive = false

@@ -15,7 +15,7 @@ sealed interface TimerIntent {
     data object ResetTimer : TimerIntent
     data object ConfirmReset : TimerIntent
     data object CancelReset : TimerIntent
-    data object StopTimer : TimerIntent
+    data object DiscardSession : TimerIntent
     data object ConfirmStop : TimerIntent
     data object CancelStop : TimerIntent
     data object ToggleTemperatureUnit : TimerIntent

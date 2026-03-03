@@ -7,7 +7,6 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * UI State for the Timer screen.
@@ -19,7 +18,7 @@ data class TimerScreenState(
     val session: TeaSession? = null,
     val tea: Tea? = null,
     val vessel: BrewingVessel? = null,
-    val showStopConfirmation: Boolean = false,
+    val showDiscardSessionConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
     val showEditSheet: Boolean = false,
     val editTemperatureCelsius: String = "",

@@ -22,10 +22,11 @@ class SaveBrewingConfigurationUseCase(
     suspend operator fun invoke(
         session: TeaSession,
         customLabel: String? = null,
+        skipRatingCheck: Boolean = false,
     ): Result<BrewingConfiguration> {
         return try {
             // Validate that session has required data
-            if (session.rating == null || session.rating < 3f) {
+            if (!skipRatingCheck && (session.rating == null || session.rating < 3f)) {
                 return Result.failure(IllegalArgumentException("Session must have a rating of 3+ stars"))
             }
 

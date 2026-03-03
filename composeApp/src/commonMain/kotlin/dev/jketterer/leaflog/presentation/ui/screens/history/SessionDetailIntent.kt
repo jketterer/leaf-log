@@ -22,4 +22,7 @@ sealed interface SessionDetailIntent {
     data class ViewTeaClicked(val teaId: String) : SessionDetailIntent
     data object BackClicked : SessionDetailIntent
     data object ClearError : SessionDetailIntent
+    data object SaveAsConfigurationClicked : SessionDetailIntent
+    data class ConfirmSaveConfiguration(val label: String) : SessionDetailIntent
+    data object DismissSaveConfiguration : SessionDetailIntent
 }

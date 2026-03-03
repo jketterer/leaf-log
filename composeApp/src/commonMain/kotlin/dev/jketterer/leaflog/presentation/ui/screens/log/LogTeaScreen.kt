@@ -121,9 +121,7 @@ private fun LogTeaContent(
 ) {
     var showOptionalFields by remember { mutableStateOf(false) }
 
-    val hasOptionalData = state.isTeaBag ||
-            state.teaQuantityGrams.isNotEmpty() ||
-            state.selectedWaterType != WaterType.FILTERED ||
+    val hasOptionalData = state.selectedWaterType != state.userPreferences.defaultWaterType ||
             state.location.isNotEmpty()
 
     LaunchedEffect(hasOptionalData) {
@@ -292,6 +290,52 @@ private fun LogTeaContent(
                         }
                     }
 
+                    // Tea Quantity
+                    item(key = "tea_quantity") {
+                        val teaQtyPresets = remember {
+                            listOf("1", "2", "3", "4", "5", "7", "10").map {
+                                Preset("${it}g", it)
+                            }
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                                    onClick = { onIntent(LogTeaIntent.TeaBagModeChanged(false)) },
+                                    selected = !state.isTeaBag,
+                                    label = { Text("Loose Leaf") },
+                                )
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                                    onClick = { onIntent(LogTeaIntent.TeaBagModeChanged(true)) },
+                                    selected = state.isTeaBag,
+                                    label = { Text("Tea Bag") },
+                                )
+                            }
+                            if (!state.isTeaBag) {
+                                OutlinedTextField(
+                                    value = state.teaQuantityGrams,
+                                    onValueChange = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
+                                    label = { Text("Tea Quantity *") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    suffix = { Text("g") },
+                                    isError = state.teaQuantityError != null,
+                                    supportingText = state.teaQuantityError?.let { { Text(it) } },
+                                )
+                                PresetChips(
+                                    presets = teaQtyPresets,
+                                    currentValue = state.teaQuantityGrams,
+                                    isSelected = { preset, current ->
+                                        preset.toFloatOrNull() == current?.toFloatOrNull()
+                                    },
+                                    onSelect = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                    }
+
                     // Brewing Time
                     item(key = "brewing_time") {
                         val brewingTimePresets = remember {
@@ -422,52 +466,6 @@ private fun LogTeaContent(
                         }
                     }
 
-                    item {
-                        // Tea Quantity
-                        val teaQtyPresets = remember {
-                            listOf("1", "2", "3", "4", "5", "7", "10").map {
-                                Preset("${it}g", it)
-                            }
-                        }
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                                SegmentedButton(
-                                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                                    onClick = { onIntent(LogTeaIntent.TeaBagModeChanged(false)) },
-                                    selected = !state.isTeaBag,
-                                    label = { Text("Loose Leaf") },
-                                )
-                                SegmentedButton(
-                                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                                    onClick = { onIntent(LogTeaIntent.TeaBagModeChanged(true)) },
-                                    selected = state.isTeaBag,
-                                    label = { Text("Tea Bag") },
-                                )
-                            }
-                            if (!state.isTeaBag) {
-                                OutlinedTextField(
-                                    value = state.teaQuantityGrams,
-                                    onValueChange = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
-                                    label = { Text("Tea Quantity *") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true,
-                                    suffix = { Text("g") },
-                                    isError = state.teaQuantityError != null,
-                                    supportingText = state.teaQuantityError?.let { { Text(it) } },
-                                )
-                                PresetChips(
-                                    presets = teaQtyPresets,
-                                    currentValue = state.teaQuantityGrams,
-                                    isSelected = { preset, current ->
-                                        preset.toFloatOrNull() == current?.toFloatOrNull()
-                                    },
-                                    onSelect = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                            }
-                        }
-                    }
-
                     // Optional Details Section
                     item(key = "optional_section") {
                         Column {
@@ -558,20 +556,20 @@ private fun LogTeaContent(
             }
         }
 
-            state.error?.let { error ->
-                Snackbar(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
-                    action = {
-                        TextButton(onClick = { onIntent(LogTeaIntent.ClearError) }) {
-                            Text("Dismiss")
-                        }
-                    },
-                ) {
-                    Text(error)
-                }
+        state.error?.let { error ->
+            Snackbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+                action = {
+                    TextButton(onClick = { onIntent(LogTeaIntent.ClearError) }) {
+                        Text("Dismiss")
+                    }
+                },
+            ) {
+                Text(error)
             }
+        }
     } // end Box
 
     // Tea Search Dialog

@@ -28,6 +28,7 @@ val navSerializationConfig = SavedStateConfiguration {
             subclass(NavRoute.TeaTypeListRoute::class, NavRoute.TeaTypeListRoute.serializer())
             subclass(NavRoute.EditTeaTypeRoute::class, NavRoute.EditTeaTypeRoute.serializer())
             subclass(NavRoute.CreateBrewingConfigurationRoute::class, NavRoute.CreateBrewingConfigurationRoute.serializer())
+            subclass(NavRoute.SteepCompleteRoute::class, NavRoute.SteepCompleteRoute.serializer())
         }
     }
 }

@@ -87,7 +87,9 @@ fun SaveConfigurationDialog(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
-                    RatingDisplay(rating = rating, iconsOnly = true)
+                    if (rating > 0f) {
+                        RatingDisplay(rating = rating, iconsOnly = true)
+                    }
                 }
 
                 // Parameters as chips

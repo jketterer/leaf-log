@@ -40,6 +40,8 @@ import dev.jketterer.leaflog.domain.models.ImportResult
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import androidx.compose.material3.IconButton
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
@@ -175,6 +177,13 @@ private fun PreferencesSection(
             currentUnit = state.preferences.volumeUnit,
             onUnitChange = { onIntent(SettingsIntent.UpdateVolumeUnit(it)) }
         )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+        DefaultWaterTypeSetting(
+            currentWaterType = state.preferences.defaultWaterType,
+            onWaterTypeChange = { onIntent(SettingsIntent.UpdateDefaultWaterType(it)) }
+        )
     }
 }
 
@@ -292,6 +301,35 @@ private fun ImportResultDialog(
             }
         },
     )
+}
+
+@Composable
+private fun DefaultWaterTypeSetting(
+    currentWaterType: WaterType,
+    onWaterTypeChange: (WaterType) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = "Default Water Type",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = "Pre-selected water type when logging a session",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        WaterTypeSelector(
+            selectedWaterType = currentWaterType,
+            onWaterTypeSelected = onWaterTypeChange,
+        )
+    }
 }
 
 @Composable
@@ -447,6 +485,17 @@ private fun ImportResultDialogPreview() {
                 configurationsImported = 8,
             ),
             onDismiss = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DefaultWaterTypeSettingPreview() {
+    LeafLogTheme {
+        DefaultWaterTypeSetting(
+            currentWaterType = WaterType.FILTERED,
+            onWaterTypeChange = {},
         )
     }
 }

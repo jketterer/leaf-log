@@ -2,10 +2,12 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings
 
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.domain.models.WaterType
 
 sealed interface SettingsIntent {
     data class UpdateTemperatureUnit(val unit: TemperatureUnit) : SettingsIntent
     data class UpdateVolumeUnit(val unit: VolumeUnit) : SettingsIntent
+    data class UpdateDefaultWaterType(val waterType: WaterType) : SettingsIntent
     data object ClearError : SettingsIntent
     data object ExportData : SettingsIntent
     data object ExportCompleted : SettingsIntent

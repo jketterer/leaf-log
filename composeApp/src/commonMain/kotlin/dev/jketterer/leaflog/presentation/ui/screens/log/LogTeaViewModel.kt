@@ -136,6 +136,7 @@ class LogTeaViewModel(
                             availableTeas = teas,
                             availableVessels = vessels,
                             isLoading = false,
+                            selectedWaterType = prefs.defaultWaterType,
                         )
                     }
                 }
@@ -222,7 +223,8 @@ class LogTeaViewModel(
                 state.copy(
                     isTeaBag = prefill.source != PrefillSource.None && prefill.teaQuantityGrams == null,
                     teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
-                    waterQuantityMl = prefill.waterQuantityMl?.toString() ?: "",
+                    waterQuantityMl = prefill.waterQuantityMl?.toString()
+                        ?: vessel.capacityMl?.toString() ?: "",
                     waterQuantityDisplay = "",
                     temperatureCelsius = prefill.temperatureCelsius?.toString() ?: "",
                     temperatureDisplay = "",
@@ -436,6 +438,13 @@ class LogTeaViewModel(
         val tea = _state.value.selectedTea
         if (tea != null) {
             loadConfigurationsAndPrefill(tea, vessel)
+        } else if (vessel.capacityMl != null) {
+            _state.update {
+                it.copy(
+                    waterQuantityMl = vessel.capacityMl.toString(),
+                    waterQuantityDisplay = "",
+                )
+            }
         }
     }
 

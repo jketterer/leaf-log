@@ -24,6 +24,10 @@ data class SessionDetailState(
     val nextSteepDuration: Duration? = null,
     val nextSteepTemperature: Double? = null,
 
+    // Save as configuration dialog
+    val showSaveConfigurationDialog: Boolean = false,
+    val suggestedConfigurationLabel: String = "",
+
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),
 ) {

@@ -8,6 +8,9 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
@@ -33,6 +36,9 @@ class SessionDetailViewModel(
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
     private val addSteepUseCase: AddSteepUseCase,
+    private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
+    private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionDetailState())
@@ -105,6 +111,9 @@ class SessionDetailViewModel(
             }
 
             is SessionDetailIntent.ClearError -> _state.update { it.copy(error = null) }
+            is SessionDetailIntent.SaveAsConfigurationClicked -> saveAsConfiguration()
+            is SessionDetailIntent.ConfirmSaveConfiguration -> confirmSaveConfiguration(intent.label)
+            is SessionDetailIntent.DismissSaveConfiguration -> _state.update { it.copy(showSaveConfigurationDialog = false) }
         }
     }
 
@@ -364,6 +373,47 @@ class SessionDetailViewModel(
         viewModelScope.launch {
             val newUnit = _state.value.userPreferences.temperatureUnit.toggle()
             preferencesRepository.updateTemperatureUnit(newUnit)
+        }
+    }
+
+    private fun saveAsConfiguration() {
+        val session = _state.value.parentSession ?: return
+
+        viewModelScope.launch {
+            val isDuplicate = checkDuplicateConfigurationUseCase(session)
+            if (isDuplicate) {
+                _state.update { it.copy(error = "A matching configuration already exists") }
+                return@launch
+            }
+
+            val teaName = _state.value.tea?.name ?: ""
+            val label = generateConfigurationLabelUseCase(
+                teaName = teaName,
+                teaQuantityGrams = session.teaQuantityGrams,
+                waterQuantityMl = session.waterQuantityMl,
+                brewingTime = session.brewingTime,
+            )
+            _state.update {
+                it.copy(
+                    showSaveConfigurationDialog = true,
+                    suggestedConfigurationLabel = label,
+                )
+            }
+        }
+    }
+
+    private fun confirmSaveConfiguration(label: String) {
+        val session = _state.value.parentSession ?: return
+
+        viewModelScope.launch {
+            _state.update { it.copy(showSaveConfigurationDialog = false) }
+            saveBrewingConfigurationUseCase(
+                session = session,
+                customLabel = label,
+                skipRatingCheck = true,
+            ).onFailure { e ->
+                _state.update { it.copy(error = "Failed to save configuration: ${e.message}") }
+            }
         }
     }
 

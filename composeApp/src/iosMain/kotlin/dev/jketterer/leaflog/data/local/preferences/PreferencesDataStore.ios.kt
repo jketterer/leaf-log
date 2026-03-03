@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.domain.models.WaterType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ actual class PreferencesDataStore {
         private const val VOLUME_UNIT_KEY = "volume_unit"
         private const val TEA_SORT_OPTION_KEY = "tea_sort_option"
         private const val ANALYTICS_PERIOD_KEY = "analytics_period"
+        private const val DEFAULT_WATER_TYPE_KEY = "default_water_type"
     }
 
     private val _preferencesFlow = MutableStateFlow(loadPreferences())
@@ -52,11 +54,18 @@ actual class PreferencesDataStore {
         _preferencesFlow.update { it.copy(analyticsPeriod = period) }
     }
 
+    actual suspend fun updateDefaultWaterType(waterType: WaterType) {
+        userDefaults.setObject(waterType.name, DEFAULT_WATER_TYPE_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(defaultWaterType = waterType) }
+    }
+
     private fun loadPreferences(): UserPreferences {
         val temperatureUnitString = userDefaults.stringForKey(TEMPERATURE_UNIT_KEY)
         val volumeUnitString = userDefaults.stringForKey(VOLUME_UNIT_KEY)
         val teaSortOptionString = userDefaults.stringForKey(TEA_SORT_OPTION_KEY)
         val analyticsPeriodString = userDefaults.stringForKey(ANALYTICS_PERIOD_KEY)
+        val defaultWaterTypeString = userDefaults.stringForKey(DEFAULT_WATER_TYPE_KEY)
 
         return UserPreferences(
             temperatureUnit = temperatureUnitString?.let {
@@ -87,6 +96,13 @@ actual class PreferencesDataStore {
                     AnalyticsPeriod.THIS_WEEK
                 }
             } ?: AnalyticsPeriod.THIS_WEEK,
+            defaultWaterType = defaultWaterTypeString?.let {
+                try {
+                    WaterType.valueOf(it)
+                } catch (e: IllegalArgumentException) {
+                    WaterType.FILTERED
+                }
+            } ?: WaterType.FILTERED,
         )
     }
 }

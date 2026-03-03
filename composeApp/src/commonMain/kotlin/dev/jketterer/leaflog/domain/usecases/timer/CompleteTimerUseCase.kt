@@ -18,10 +18,6 @@ class CompleteTimerUseCase(
         currentState: TimerState,
         session: TeaSession,
     ): Result<TimerState> {
-        if (currentState.status == TimerStatus.COMPLETE) {
-            return Result.failure(IllegalStateException("Timer is already complete"))
-        }
-
         return try {
             // Update session with completion (still in progress - user needs to rate/finish)
             val updatedSession = session.copy(

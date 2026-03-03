@@ -7,7 +7,6 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -20,19 +19,8 @@ data class TimerScreenState(
     val session: TeaSession? = null,
     val tea: Tea? = null,
     val vessel: BrewingVessel? = null,
-    val rating: Float = 0f,
-    val notes: String? = null,
-    val photos: List<String> = emptyList(),
     val showStopConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
-    val showNextSteepDialog: Boolean = false,
-    val nextSteepDuration: Duration? = null,
-    val nextSteepTemperature: Double? = null,
-    val nextSteepWaterQuantity: Double? = null,
-    val showSaveConfigurationDialog: Boolean = false,
-    val suggestedConfigurationLabel: String = "",
-    val savedSession: TeaSession? = null, // Session that was just saved
-    val showDiscardConfirmation: Boolean = false,
     val showEditSheet: Boolean = false,
     val editTemperatureCelsius: String = "",
     val editWaterQuantityMl: String = "",
@@ -66,10 +54,4 @@ data class TimerScreenState(
             val seconds = totalSeconds % 60
             return "${minutes}:${seconds.toString().padStart(2, '0')}"
         }
-
-    /**
-     * Whether the completion screen should be shown.
-     */
-    val showCompletionScreen: Boolean
-        get() = timerState.isComplete
 }

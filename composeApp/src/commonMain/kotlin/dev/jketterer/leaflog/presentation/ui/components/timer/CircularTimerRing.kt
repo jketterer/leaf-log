@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,7 +26,7 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 fun CircularTimerRing(
     progress: Float,
     timeText: String,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(240.dp),
     ringColor: Color = MaterialTheme.colorScheme.primary,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
 ) {
@@ -36,10 +37,10 @@ fun CircularTimerRing(
     )
 
     Box(
-        modifier = modifier.size(240.dp),
+        modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.size(240.dp)) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
             val canvasSize = size.minDimension
             val strokeWidth = 16.dp.toPx()
             val radius = (canvasSize - strokeWidth) / 2

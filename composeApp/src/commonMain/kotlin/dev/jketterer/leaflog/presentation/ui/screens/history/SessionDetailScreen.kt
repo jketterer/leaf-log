@@ -73,6 +73,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -138,7 +139,7 @@ private fun SessionDetailContent(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxSize()
-                .padding(bottom = 80.dp),
+                .padding(bottom = 136.dp),
         ) {
             TopAppBar(
                 title = { Text("Session Details") },
@@ -333,7 +334,7 @@ private fun SessionDetailContent(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(16.dp)
-                    .padding(bottom = 80.dp),
+                    .padding(bottom = 136.dp),
                 action = {
                     TextButton(onClick = { onIntent(SessionDetailIntent.ClearError) }) {
                         Text("Dismiss")
@@ -348,19 +349,32 @@ private fun SessionDetailContent(
             tonalElevation = 3.dp,
             modifier = Modifier.align(Alignment.BottomCenter),
         ) {
-            Button(
-                onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    imageVector = FeatherIcons.Coffee,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Brew Again")
+                if (state.parentSession != null) {
+                    OutlinedButton(
+                        onClick = { onIntent(SessionDetailIntent.SaveAsConfigurationClicked) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Save as Method")
+                    }
+                }
+                Button(
+                    onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = FeatherIcons.Coffee,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Brew Again")
+                }
             }
         }
     }
@@ -402,6 +416,23 @@ private fun SessionDetailContent(
             onToggleUnit = { onIntent(SessionDetailIntent.ToggleTemperatureUnit) },
             onConfirm = { onIntent(SessionDetailIntent.ConfirmAddSteep) },
             onDismiss = { onIntent(SessionDetailIntent.CancelAddSteep) },
+        )
+    }
+
+    // Save as configuration dialog
+    if (state.showSaveConfigurationDialog && state.parentSession != null) {
+        SaveConfigurationDialog(
+            teaName = state.tea?.name ?: "",
+            vesselName = state.vessel?.name ?: "",
+            teaQuantityGrams = state.parentSession.teaQuantityGrams,
+            waterQuantityMl = state.parentSession.waterQuantityMl,
+            temperatureCelsius = state.parentSession.temperatureCelsius,
+            brewingTimeSeconds = state.parentSession.brewingTime.inWholeSeconds.toInt(),
+            rating = state.parentSession.rating ?: 0f,
+            suggestedLabel = state.suggestedConfigurationLabel,
+            userPreferences = state.userPreferences,
+            onSave = { label -> onIntent(SessionDetailIntent.ConfirmSaveConfiguration(label)) },
+            onDismiss = { onIntent(SessionDetailIntent.DismissSaveConfiguration) },
         )
     }
 

@@ -46,15 +46,4 @@ sealed interface QuickTimerIntent {
     // Rating and notes
     data class RatingChanged(val rating: Float?) : QuickTimerIntent
     data class NotesChanged(val notes: String) : QuickTimerIntent
-
-    // Completion
-    data object ShowCompletionDialog : QuickTimerIntent
-    data object DismissCompletionDialog : QuickTimerIntent
-    data object SaveSession : QuickTimerIntent
-    data object ContinueToNextSteep : QuickTimerIntent
-    data object DiscardSession : QuickTimerIntent
-
-    // Configuration saving
-    data class SaveConfigurationClicked(val customLabel: String?) : QuickTimerIntent
-    data object SkipSaveConfiguration : QuickTimerIntent
 }

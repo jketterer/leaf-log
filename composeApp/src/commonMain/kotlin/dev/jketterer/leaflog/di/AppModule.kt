@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.configuration.CreateBrewing
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.SteepCompleteViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailViewModel
@@ -57,6 +58,7 @@ val appModule = module {
 
     viewModelOf(::TimerViewModel)
     viewModelOf(::QuickTimerViewModel)
+    viewModelOf(::SteepCompleteViewModel)
 
     viewModelOf(::SettingsViewModel)
     viewModelOf(::TeaTypeListViewModel)

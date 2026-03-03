@@ -29,6 +29,7 @@ class SettingsViewModel(
         when (intent) {
             is SettingsIntent.UpdateTemperatureUnit -> updateTemperatureUnit(intent.unit)
             is SettingsIntent.UpdateVolumeUnit -> updateVolumeUnit(intent.unit)
+            is SettingsIntent.UpdateDefaultWaterType -> updateDefaultWaterType(intent.waterType)
             is SettingsIntent.ClearError -> clearError()
             is SettingsIntent.ExportData -> exportData()
             is SettingsIntent.ExportCompleted -> _state.update {
@@ -68,6 +69,17 @@ class SettingsViewModel(
                 .onFailure { error ->
                     _state.update {
                         it.copy(error = error.message ?: "Failed to update volume unit")
+                    }
+                }
+        }
+    }
+
+    private fun updateDefaultWaterType(waterType: dev.jketterer.leaflog.domain.models.WaterType) {
+        viewModelScope.launch {
+            preferencesRepository.updateDefaultWaterType(waterType)
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(error = error.message ?: "Failed to update default water type")
                     }
                 }
         }

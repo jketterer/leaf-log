@@ -2,20 +2,13 @@ package dev.jketterer.leaflog.presentation.ui.screens.timer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -23,12 +16,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,7 +36,6 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
-import compose.icons.feathericons.RotateCw
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -56,15 +44,10 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
-import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
-import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
-import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
-import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
@@ -72,7 +55,6 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmat
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -83,8 +65,7 @@ import kotlin.time.Duration.Companion.seconds
 fun TimerScreen(
     sessionId: String,
     onNavigateBack: () -> Unit,
-    onNavigateToNextSteep: (String) -> Unit,
-    onNavigateToComplete: (String) -> Unit,
+    onNavigateToSteepComplete: (String) -> Unit,
     viewModel: TimerViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -96,12 +77,8 @@ fun TimerScreen(
     LaunchedEffect(Unit) {
         viewModel.navigationEvents.collect { event ->
             when (event) {
-                is TimerNavEvent.NavigateToNextSteep -> {
-                    onNavigateToNextSteep(event.sessionId)
-                }
-
-                is TimerNavEvent.NavigateToComplete -> {
-                    onNavigateToComplete(event.sessionId)
+                is TimerNavEvent.NavigateToSteepComplete -> {
+                    onNavigateToSteepComplete(event.sessionId)
                 }
 
                 is TimerNavEvent.NavigateBack -> {
@@ -126,11 +103,6 @@ private fun TimerContent(
     var showOverflowMenu by remember { mutableStateOf(false) }
 
     Scaffold(
-        bottomBar = {
-            if (state.showCompletionScreen) {
-                CompletionBottomBar(state = state, onIntent = onIntent)
-            }
-        },
         topBar = {
             TopAppBar(
                 title = {
@@ -138,7 +110,6 @@ private fun TimerContent(
                         when (state.timerState.status) {
                             TimerStatus.RUNNING -> "Brewing"
                             TimerStatus.PAUSED -> "Paused"
-                            TimerStatus.COMPLETE -> "Complete"
                             else -> "Timer"
                         },
                     )
@@ -152,33 +123,32 @@ private fun TimerContent(
                     IconButton(onClick = { onIntent(TimerIntent.EditSession) }) {
                         Icon(FeatherIcons.Edit, contentDescription = "Edit parameters")
                     }
-                    if (state.timerState.status != TimerStatus.COMPLETE) {
-                        IconButton(onClick = { showOverflowMenu = true }) {
-                            Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
-                        }
-                        DropdownMenu(
-                            expanded = showOverflowMenu,
-                            onDismissRequest = { },
-                        ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "Cancel Session",
-                                        color = MaterialTheme.colorScheme.error,
-                                    )
-                                },
-                                onClick = {
-                                    onIntent(TimerIntent.DiscardSession)
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        FeatherIcons.Trash2,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.error,
-                                    )
-                                },
-                            )
-                        }
+                    IconButton(onClick = { showOverflowMenu = true }) {
+                        Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
+                    }
+                    DropdownMenu(
+                        expanded = showOverflowMenu,
+                        onDismissRequest = { showOverflowMenu = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "Cancel Session",
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                            onClick = {
+                                showOverflowMenu = false
+                                onIntent(TimerIntent.StopTimer)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    FeatherIcons.Trash2,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                        )
                     }
                 },
             )
@@ -194,16 +164,6 @@ private fun TimerContent(
                 ) {
                     CircularProgressIndicator()
                 }
-            }
-
-            state.showCompletionScreen -> {
-                CompletionContent(
-                    state = state,
-                    onIntent = onIntent,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                )
             }
 
             else -> {
@@ -236,72 +196,6 @@ private fun TimerContent(
         )
     }
 
-    // Next steep parameter dialog
-    if (state.showNextSteepDialog && state.session != null) {
-        val currentSession = state.session
-        NextSteepParameterDialog(
-            currentSession = currentSession,
-            duration = state.nextSteepDuration,
-            temperature = state.nextSteepTemperature ?: currentSession.temperatureCelsius,
-            temperatureUnit = state.userPreferences.temperatureUnit,
-            onDurationChange = { onIntent(TimerIntent.UpdateNextSteepDuration(it)) },
-            onTemperatureChange = { onIntent(TimerIntent.UpdateNextSteepTemperature(it)) },
-            onToggleUnit = {
-                onIntent(TimerIntent.ToggleTemperatureUnit)
-            },
-            onConfirm = { onIntent(TimerIntent.ConfirmNextSteep(currentSession)) },
-            onDismiss = { onIntent(TimerIntent.CancelNextSteepDialog) },
-        )
-    }
-
-    // Discard session confirmation dialog
-    if (state.showDiscardConfirmation) {
-        AlertDialog(
-            onDismissRequest = { onIntent(TimerIntent.CancelDiscardSession) },
-            title = { Text("Discard Session?") },
-            text = { Text("This session will be permanently deleted. This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
-                    onClick = { onIntent(TimerIntent.ConfirmDiscardSession) },
-                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) {
-                    Text("Discard")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(TimerIntent.CancelDiscardSession) }) {
-                    Text("Cancel")
-                }
-            },
-        )
-    }
-
-    // Save Configuration Dialog
-    if (state.showSaveConfigurationDialog && state.savedSession != null) {
-        val session = state.savedSession
-        val vessel = state.vessel
-        val tea = state.tea
-        if (vessel != null && tea != null) {
-            SaveConfigurationDialog(
-                teaName = tea.name,
-                vesselName = vessel.name,
-                teaQuantityGrams = session.teaQuantityGrams,
-                waterQuantityMl = session.waterQuantityMl,
-                temperatureCelsius = session.temperatureCelsius,
-                brewingTimeSeconds = session.brewingTime.inWholeSeconds.toInt(),
-                rating = session.rating ?: 5f,
-                suggestedLabel = state.suggestedConfigurationLabel,
-                userPreferences = state.userPreferences,
-                onSave = { label ->
-                    onIntent(TimerIntent.SaveConfigurationClicked(label.ifBlank { null }))
-                },
-                onDismiss = { onIntent(TimerIntent.SkipSaveConfiguration) }
-            )
-        }
-    }
-
     // Edit session parameters sheet
     if (state.showEditSheet && state.editWaterType != null) {
         EditSessionParametersSheet(
@@ -331,13 +225,16 @@ private fun TimerRunningContent(
     onIntent: (TimerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
+    BoxWithConstraints(modifier = modifier.padding(24.dp)) {
+        // Shrink the ring on smaller screens (e.g. iPhone SE) so control buttons stay visible.
+        // 420.dp accounts for the approximate height of all other fixed content + gaps.
+        val ringSize = (maxHeight - 420.dp).coerceIn(100.dp, 240.dp)
 
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
         // Tea name, vessel name, and steep number
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -364,12 +261,11 @@ private fun TimerRunningContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
         // Circular timer ring
         CircularTimerRing(
             progress = state.timerState.progress,
             timeText = state.formattedTime,
+            modifier = Modifier.size(ringSize),
         )
 
         // Quick adjustment buttons
@@ -405,8 +301,6 @@ private fun TimerRunningContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Control buttons
         TimerControlButtons(
             isRunning = state.timerState.isRunning,
@@ -416,235 +310,6 @@ private fun TimerRunningContent(
             onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
             onResetClick = { onIntent(TimerIntent.ResetTimer) },
         )
-    }
-}
-
-@Composable
-private fun CompletionContent(
-    state: TimerScreenState,
-    onIntent: (TimerIntent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyColumn(
-        modifier = modifier.padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        // Compact hero
-        item {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = "✓",
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    text = "Steep ${state.session?.steepNumber ?: 1} Complete!",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    text = state.tea?.name ?: "",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        // Session stat grid
-        state.session?.let { session ->
-            item {
-                SessionStatGrid(
-                    session = session,
-                    userPreferences = state.userPreferences,
-                )
-            }
-        }
-
-        // Rating selector
-        item {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "How was it?",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                RatingSelector(
-                    rating = state.rating,
-                    onRatingChange = { onIntent(TimerIntent.RatingChanged(it)) },
-                )
-                if (state.rating == 0f) {
-                    Text(
-                        text = "Tap to rate (optional)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-
-        // Notes input
-        item {
-            OutlinedTextField(
-                value = state.notes ?: "",
-                onValueChange = { onIntent(TimerIntent.NotesChanged(it)) },
-                label = { Text("Notes for this steep (optional)") },
-                placeholder = { Text("How did it taste?") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                maxLines = 5,
-            )
-        }
-
-        // Photos
-        item {
-            PhotoGrid(
-                photos = state.photos,
-                onAddPhoto = { onIntent(TimerIntent.PhotoSelected(it)) },
-                onRemovePhoto = { onIntent(TimerIntent.PhotoRemoved(it)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
-        // Discard session (destructive, kept at bottom of scroll)
-        item {
-            TextButton(
-                onClick = { onIntent(TimerIntent.DiscardSession) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error,
-                ),
-            ) {
-                Text("Discard Session")
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-    }
-}
-
-@Composable
-private fun SessionStatGrid(
-    session: TeaSession,
-    userPreferences: UserPreferences,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        ),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            StatItem(
-                value = TemperatureFormatter.format(
-                    session.temperatureCelsius,
-                    userPreferences.temperatureUnit,
-                ),
-                label = "Temp",
-            )
-            StatItem(
-                value = VolumeFormatter.format(
-                    session.waterQuantityMl,
-                    userPreferences.volumeUnit,
-                ),
-                label = "Water",
-            )
-            StatItem(
-                value = session.brewingTime.toString(),
-                label = "Time",
-            )
-            session.teaQuantityGrams?.takeIf { it > 0 }?.let { qty ->
-                val teaQty = if (qty % 1.0 == 0.0) "${qty.toInt()}g" else "${qty}g"
-                StatItem(value = teaQty, label = "Tea")
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatItem(
-    value: String,
-    label: String,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun CompletionBottomBar(
-    state: TimerScreenState,
-    onIntent: (TimerIntent) -> Unit,
-) {
-    Surface(shadowElevation = 8.dp) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = { onIntent(TimerIntent.ShowNextSteepDialog) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Continue to Steep ${(state.session?.steepNumber ?: 1) + 1}")
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                OutlinedButton(
-                    onClick = { onIntent(TimerIntent.RestartTimer) },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Icon(
-                        imageVector = FeatherIcons.RotateCw,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Restart")
-                }
-                Button(
-                    onClick = {
-                        state.session?.let { onIntent(TimerIntent.SaveAndFinish(it)) }
-                    },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("Save & Finish")
-                }
-            }
         }
     }
 }
@@ -738,45 +403,3 @@ private fun TimerScreenPausedPreview() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-private fun TimerScreenCompletePreview() {
-    LeafLogTheme {
-        CompletionContent(
-            state = TimerScreenState(
-                timerState = TimerState(
-                    sessionId = "session-1",
-                    teaId = "tea-1",
-                    teaName = "Dragon Well",
-                    steepNumber = 1,
-                    totalDuration = 2.minutes,
-                    remainingDuration = Duration.ZERO,
-                    status = TimerStatus.COMPLETE,
-                ),
-                session = TeaSession(
-                    id = "session-1",
-                    teaId = "tea-1",
-                    vesselId = "gaiwan",
-                    waterType = WaterType.FILTERED,
-                    timestamp = Clock.System.now(),
-                    brewingTime = 2.minutes,
-                    temperatureCelsius = 80.0,
-                    waterQuantityMl = 200.0,
-                    status = SessionStatus.IN_PROGRESS,
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
-                ),
-                tea = Tea(
-                    id = "tea-1",
-                    name = "Dragon Well",
-                    teaTypeId = "green",
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                ),
-            ),
-            onIntent = {},
-        )
-    }
-}

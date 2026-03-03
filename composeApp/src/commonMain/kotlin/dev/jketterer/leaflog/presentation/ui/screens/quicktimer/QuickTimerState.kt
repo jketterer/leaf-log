@@ -45,9 +45,6 @@ data class QuickTimerState(
     val showNextSteepDialog: Boolean = false,
     val showStopConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
-    val showCompletionDialog: Boolean = false,
-    val showSaveConfigurationDialog: Boolean = false,
-    val suggestedConfigurationLabel: String = "",
 
     // Next session details
     val nextSteepDuration: Duration? = null,
@@ -56,9 +53,6 @@ data class QuickTimerState(
 
     // Auto-saved in-progress session (persisted when timer completes with required details)
     val inProgressSession: TeaSession? = null,
-
-    // Saved session (for configuration saving)
-    val savedSession: TeaSession? = null,
 
     // Loading/error
     val isLoading: Boolean = false,

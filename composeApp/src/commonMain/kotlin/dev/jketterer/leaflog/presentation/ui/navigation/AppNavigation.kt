@@ -44,6 +44,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListScreen
+import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.SteepCompleteScreen
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
@@ -368,13 +369,9 @@ fun AppNavigation() {
                             // Timer keeps running in background via TimerService
                             backStack.removeLast()
                         },
-                        onNavigateToNextSteep = { _ ->
-                            // do nothing?
-                        },
-                        onNavigateToComplete = { sessionId ->
-                            backStack.clear()
-                            backStack.add(NavRoute.SessionDetailsRoute(sessionId))
-                            backStack.add(0, NavRoute.HomeRoute)
+                        onNavigateToSteepComplete = { sessionId ->
+                            backStack.removeLast()
+                            backStack.add(NavRoute.SteepCompleteRoute(sessionId))
                         },
                     )
                 }
@@ -385,16 +382,32 @@ fun AppNavigation() {
                         onNavigateBack = {
                             backStack.removeLast()
                         },
-                        onNavigateToSession = { sessionId ->
-                            // Clear quick timer from stack and navigate to session details
+                        onNavigateToSteepComplete = { sessionId ->
                             backStack.removeLast()
-                            backStack.add(NavRoute.SessionDetailsRoute(sessionId))
+                            backStack.add(NavRoute.SteepCompleteRoute(sessionId))
                         },
                         onNavigateToTimer = { sessionId ->
                             // Replace quick timer with the full timer for the next steep
                             backStack.removeLast()
                             backStack.add(NavRoute.TimerRoute(sessionId))
                         },
+                    )
+                }
+
+                entry<NavRoute.SteepCompleteRoute> { entry ->
+                    SteepCompleteScreen(
+                        sessionId = entry.sessionId,
+                        onNavigateToHome = {
+                            backStack.clear()
+                            backStack.add(NavRoute.HomeRoute)
+                        },
+                        onNavigateToTimer = { sessionId ->
+                            backStack.removeLast()
+                            backStack.add(NavRoute.TimerRoute(sessionId))
+                        },
+                        onNavigateBack = {
+                            backStack.removeLast()
+                        }
                     )
                 }
             }

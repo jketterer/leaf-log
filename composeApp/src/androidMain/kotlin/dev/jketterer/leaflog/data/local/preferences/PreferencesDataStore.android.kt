@@ -11,6 +11,7 @@ import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.domain.models.WaterType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -23,6 +24,7 @@ actual class PreferencesDataStore(private val context: Context) {
         val VOLUME_UNIT_KEY = stringPreferencesKey("volume_unit")
         val TEA_SORT_OPTION_KEY = stringPreferencesKey("tea_sort_option")
         val ANALYTICS_PERIOD_KEY = stringPreferencesKey("analytics_period")
+        val DEFAULT_WATER_TYPE_KEY = stringPreferencesKey("default_water_type")
     }
 
     actual fun getPreferencesFlow(): Flow<UserPreferences> {
@@ -56,6 +58,13 @@ actual class PreferencesDataStore(private val context: Context) {
                         AnalyticsPeriod.THIS_WEEK
                     }
                 } ?: AnalyticsPeriod.THIS_WEEK,
+                defaultWaterType = prefs[DEFAULT_WATER_TYPE_KEY]?.let {
+                    try {
+                        WaterType.valueOf(it)
+                    } catch (e: IllegalArgumentException) {
+                        WaterType.FILTERED
+                    }
+                } ?: WaterType.FILTERED,
             )
         }
     }
@@ -81,6 +90,12 @@ actual class PreferencesDataStore(private val context: Context) {
     actual suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod) {
         context.dataStore.edit { prefs ->
             prefs[ANALYTICS_PERIOD_KEY] = period.name
+        }
+    }
+
+    actual suspend fun updateDefaultWaterType(waterType: WaterType) {
+        context.dataStore.edit { prefs ->
+            prefs[DEFAULT_WATER_TYPE_KEY] = waterType.name
         }
     }
 }

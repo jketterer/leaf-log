@@ -1,3 +1,10 @@
+//
+//  LeafLogWidgetsBundle.swift
+//  LeafLogWidgets
+//
+//  Created by Jeremy on 3/3/26.
+//
+
 import WidgetKit
 import SwiftUI
 

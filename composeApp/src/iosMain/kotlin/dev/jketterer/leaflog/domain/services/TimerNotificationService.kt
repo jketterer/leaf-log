@@ -22,6 +22,9 @@ class TimerNotificationServiceImpl : NSObject(),
 
     private val center = UNUserNotificationCenter.currentNotificationCenter()
 
+    private var lastState: TimerState? = null
+    private var isActivityActive = false
+
     init {
         requestAuthorization()
         center.delegate = this
@@ -38,32 +41,36 @@ class TimerNotificationServiceImpl : NSObject(),
     }
 
     fun showTimerRunning(state: TimerState) {
-        // No-op on iOS: the UI shows the countdown while the app is in the foreground,
-        // and the app is suspended in the background so we cannot update every second.
-        // Background completion is handled by scheduleCompletionAlarm().
+        val service = LiveActivityServiceHolder.instance
+        val prev = lastState
+        lastState = state
+
+        if (service != null) {
+            if (!isActivityActive || prev?.sessionId != state.sessionId) {
+                service.start(
+                    teaName = state.teaName,
+                    steepNumber = state.steepNumber,
+                    totalSeconds = state.totalDuration.inWholeSeconds.toDouble(),
+                    remainingSeconds = state.remainingDuration.inWholeSeconds.toDouble(),
+                    sessionId = state.sessionId,
+                )
+                isActivityActive = true
+            } else {
+                service.update(
+                    remainingSeconds = state.remainingDuration.inWholeSeconds.toDouble(),
+                    isPaused = false,
+                )
+            }
+        }
     }
 
     fun showTimerComplete(teaName: String, sessionId: String?) {
-        // Cancel the scheduled alarm first so it doesn't double-fire alongside this one.
-        cancelCompletionAlarm()
-
-        val content = UNMutableNotificationContent().apply {
-            setTitle("$teaName is ready!")
-            setBody("Time to enjoy your tea")
-            setSound(UNNotificationSound.defaultSound())
-            setUserInfo(buildUserInfo(sessionId))
-        }
-
-        val request = UNNotificationRequest.requestWithIdentifier(
-            identifier = COMPLETION_NOTIFICATION_ID,
-            content = content,
-            trigger = null,
-        )
-
-        center.addNotificationRequest(request) { error ->
-            error?.let {
-                println("Failed to show completion notification: ${it.localizedDescription}")
-            }
+        // The UNTimeIntervalNotificationTrigger scheduled in scheduleCompletionAlarm()
+        // fires independently and is shown via willPresentNotification (even in foreground).
+        if (isActivityActive) {
+            LiveActivityServiceHolder.instance?.end()
+            isActivityActive = false
+            lastState = null
         }
     }
 
@@ -108,6 +115,10 @@ class TimerNotificationServiceImpl : NSObject(),
         center.removePendingNotificationRequestsWithIdentifiers(
             listOf(SCHEDULED_COMPLETION_ID),
         )
+        if (isActivityActive) {
+            val remaining = lastState?.remainingDuration?.inWholeSeconds?.toDouble() ?: 0.0
+            LiveActivityServiceHolder.instance?.update(remainingSeconds = remaining, isPaused = true)
+        }
     }
 
     // Required to display notifications while the app is in the foreground.
@@ -144,5 +155,4 @@ class TimerNotificationServiceImpl : NSObject(),
 
 }
 
-private const val COMPLETION_NOTIFICATION_ID = "timer_complete"
 private const val SCHEDULED_COMPLETION_ID = "timer_scheduled_complete"

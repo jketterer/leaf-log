@@ -28,21 +28,25 @@ class TimerForegroundService : Service() {
             ACTION_START -> startForeground()
             ACTION_STOP -> stopSelf()
         }
-        return START_STICKY
+        // START_NOT_STICKY: if the OS kills this service, do not restart it with a null intent.
+        // TimerService holds the authoritative state; the next user interaction will re-start
+        // the foreground service via TimerLifecycleHandler if a session is still active.
+        return START_NOT_STICKY
     }
 
     private fun startForeground() {
         val initialState = timerService.getCurrentState()
         val notification = notificationService.buildRunningNotification(initialState)
 
+        val notificationId = TimerNotificationServiceImpl.NOTIFICATION_ID
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
-                NOTIFICATION_ID,
+                notificationId,
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
             )
         } else {
-            startForeground(NOTIFICATION_ID, notification)
+            startForeground(notificationId, notification)
         }
 
         // Auto-stop when the timer completes or is cancelled
@@ -69,6 +73,5 @@ class TimerForegroundService : Service() {
     companion object {
         const val ACTION_START = "ACTION_START"
         const val ACTION_STOP = "ACTION_STOP"
-        private const val NOTIFICATION_ID = 1001
     }
 }

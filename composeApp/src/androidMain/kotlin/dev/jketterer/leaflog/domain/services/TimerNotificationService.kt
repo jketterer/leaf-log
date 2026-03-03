@@ -7,10 +7,14 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.SystemClock
+import android.view.View
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import dev.jketterer.leaflog.MainActivity
 import dev.jketterer.leaflog.R
 import dev.jketterer.leaflog.domain.models.TimerState
+import dev.jketterer.leaflog.domain.models.TimerStatus
 
 /**
  * Manages timer notifications for Android.
@@ -60,23 +64,105 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
     }
 
     /**
-     * Build a notification for the foreground service (does not post it).
+     * Build the expanded (big content) notification view with Chronometer countdown,
+     * tea name, steep label, and a progress bar showing remaining brew time.
+     *
+     * The Chronometer widget auto-updates on-screen without requiring per-second
+     * notification rebuilds — analogous to iOS's `Text(endDate, style: .timer)`.
      */
-    fun buildRunningNotification(state: TimerState): Notification {
-        val minutes = state.remainingDuration.inWholeMinutes
-        val seconds = state.remainingDuration.inWholeSeconds % 60
-        val remainingTime = "%d:%02d".format(minutes, seconds)
+    private fun buildExpandedView(state: TimerState): RemoteViews {
+        val isRunning = state.status == TimerStatus.RUNNING
+        val remainingMillis = state.remainingDuration.inWholeMilliseconds
+        val totalMillis = state.totalDuration.inWholeMilliseconds
+        val steepLabel = "Steep ${state.steepNumber}"
 
-        return NotificationCompat.Builder(context, CHANNEL_ID_RUNNING)
+        val views = RemoteViews(context.packageName, R.layout.notification_timer_running)
+
+        views.setTextViewText(R.id.tv_tea_name, state.teaName)
+        views.setTextViewText(
+            R.id.tv_steep_label,
+            if (isRunning) steepLabel else "Paused · $steepLabel",
+        )
+
+        if (isRunning) {
+            // Chronometer counts down automatically — no per-second update needed
+            views.setViewVisibility(R.id.chronometer_countdown, View.VISIBLE)
+            views.setViewVisibility(R.id.tv_paused_time, View.GONE)
+            // Set direction before starting — avoids a one-frame flicker where the
+            // Chronometer briefly renders in count-up mode before the flag arrives.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                views.setChronometerCountDown(R.id.chronometer_countdown, true)
+            }
+            val chronoBase = SystemClock.elapsedRealtime() + remainingMillis
+            views.setChronometer(R.id.chronometer_countdown, chronoBase, null, true)
+        } else {
+            // Static remaining time when paused — Chronometer would drift if left running
+            views.setViewVisibility(R.id.chronometer_countdown, View.GONE)
+            views.setViewVisibility(R.id.tv_paused_time, View.VISIBLE)
+            val minutes = state.remainingDuration.inWholeMinutes
+            val seconds = state.remainingDuration.inWholeSeconds % 60
+            views.setTextViewText(R.id.tv_paused_time, "%d:%02d".format(minutes, seconds))
+        }
+
+        // Progress bar drains from full → empty as brew time elapses
+        val progress = if (totalMillis > 0) {
+            ((remainingMillis.toFloat() / totalMillis.toFloat()) * 1000).toInt().coerceIn(0, 1000)
+        } else {
+            0
+        }
+        views.setProgressBar(R.id.progress_brew, 1000, progress, false)
+
+        return views
+    }
+
+    /**
+     * Build a notification for the foreground service (does not post it).
+     *
+     * Compact view: tea name + steep number in header, auto-updating countdown
+     * via [NotificationCompat.Builder.setUsesChronometer] (running) or static
+     * remaining time text (paused), plus a draining progress bar.
+     *
+     * Expanded view: custom layout with large Chronometer countdown and progress bar.
+     */
+    internal fun buildRunningNotification(state: TimerState): Notification {
+        val isRunning = state.status == TimerStatus.RUNNING
+        val remainingMillis = state.remainingDuration.inWholeMilliseconds
+        val totalMillis = state.totalDuration.inWholeMilliseconds
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID_RUNNING)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(state.teaName)
-            .setContentText("$remainingTime remaining")
+            .setSubText("Steep ${state.steepNumber}")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(createTimerPendingIntent(state.sessionId))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-            .build()
+            .setCustomBigContentView(buildExpandedView(state))
+
+        if (isRunning) {
+            // Compact countdown auto-updates in the notification header timestamp area
+            builder
+                .setWhen(System.currentTimeMillis() + remainingMillis)
+                .setUsesChronometer(true)
+                .setChronometerCountDown(true)
+                .setShowWhen(true)
+        } else {
+            val minutes = state.remainingDuration.inWholeMinutes
+            val seconds = state.remainingDuration.inWholeSeconds % 60
+            builder
+                .setContentText("Paused · %d:%02d".format(minutes, seconds))
+                .setShowWhen(false)
+        }
+
+        // Draining progress bar visible in the compact notification
+        if (totalMillis > 0) {
+            val progress = ((remainingMillis.toFloat() / totalMillis.toFloat()) * 1000)
+                .toInt().coerceIn(0, 1000)
+            builder.setProgress(1000, progress, false)
+        }
+
+        return builder.build()
     }
 
     /**

@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.domain.models
 
 import kotlinx.datetime.LocalDate
-import kotlin.time.Duration
 import kotlin.time.Instant
 
 data class Tea(
@@ -14,9 +13,7 @@ data class Tea(
     val purchaseDate: LocalDate? = null,
     val purchasePrice: Double? = null,
     val stockAmount: Int? = null,
-    val defaultBrewingTime: Duration? = null,
     val defaultTemperatureCelsius: Int? = null,
-    val defaultQuantity: Int? = null,
     val description: String? = null,
     val photos: List<String> = emptyList(),
     val isFavorite: Boolean = false,

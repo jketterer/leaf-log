@@ -2,11 +2,14 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,13 +21,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlin.time.Duration
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class EditTeaViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
+    private val preferencesRepository: PreferencesRepository,
     private val createTeaUseCase: CreateTeaUseCase,
     private val editTeaUseCase: EditTeaUseCase,
     private val imageStorage: ImageStorage,
@@ -41,6 +44,11 @@ class EditTeaViewModel(
     init {
         loadTeaTypes()
         loadProducers()
+        loadPreferences(
+            preferencesRepository = preferencesRepository,
+            stateFlow = _state,
+            updateState = { state, prefs -> state.copy(userPreferences = prefs) }
+        )
     }
 
     fun onIntent(intent: EditTeaIntent) {
@@ -51,13 +59,11 @@ class EditTeaViewModel(
             is EditTeaIntent.OriginChanged -> updateOrigin(intent.origin)
             is EditTeaIntent.ProducerChanged -> updateProducer(intent.producer)
             is EditTeaIntent.PurchaseDateChanged -> updatePurchaseDate(intent.date)
-            is EditTeaIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
             is EditTeaIntent.TemperatureChanged -> updateTemperature(intent.temperature)
-            is EditTeaIntent.QuantityChanged -> updateQuantity(intent.quantity)
             is EditTeaIntent.DescriptionChanged -> updateDescription(intent.description)
             is EditTeaIntent.PhotoSelected -> addPhoto(intent.imageBytes)
             is EditTeaIntent.PhotoRemoved -> removePhoto(intent.photoPath)
-            is EditTeaIntent.ToggleBrewingParams -> toggleBrewingParams()
+            is EditTeaIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is EditTeaIntent.SaveClicked -> save()
             is EditTeaIntent.BackClicked -> handleBack()
             is EditTeaIntent.ConfirmDiscard -> confirmDiscard()
@@ -115,10 +121,8 @@ class EditTeaViewModel(
                                 origin = tea.origin ?: "",
                                 producer = tea.producer ?: "",
                                 purchaseDate = tea.purchaseDate,
-                                defaultBrewingTime = tea.defaultBrewingTime,
                                 defaultTemperatureCelsius = tea.defaultTemperatureCelsius?.toString()
                                     ?: "",
-                                defaultQuantity = tea.defaultQuantity?.toString() ?: "",
                                 description = tea.description ?: "",
                                 photos = tea.photos,
                             )
@@ -155,33 +159,38 @@ class EditTeaViewModel(
         _state.update { it.copy(purchaseDate = date) }
     }
 
-    private fun updateBrewingTime(duration: Duration?) {
-        _state.update { it.copy(defaultBrewingTime = duration) }
-    }
-
     private fun updateTemperature(temperature: String) {
-        val error = when {
-            temperature.isBlank() -> null
-            temperature.toIntOrNull() == null -> "Invalid temperature"
-            temperature.toInt() !in 0..100 -> "Temperature must be 0-100°C"
-            else -> null
-        }
-        _state.update {
-            it.copy(defaultTemperatureCelsius = temperature, temperatureError = error)
-        }
-    }
+        val currentState = _state.value
+        val tempUnit = currentState.userPreferences.temperatureUnit
 
-    private fun updateQuantity(quantity: String) {
+        // Convert from display unit to storage unit (Celsius)
+        val storageValue = temperature.toIntOrNull()?.let { displayValue ->
+            tempUnit.toCelsius(displayValue).toString()
+        } ?: temperature
+
+        // Validate in display unit for user-friendly error messages
         val error = when {
-            quantity.isBlank() -> null
-            quantity.toIntOrNull() == null -> "Invalid quantity"
-            quantity.toInt() < 0 -> "Quantity cannot be negative"
-            else -> null
+            temperature.isBlank() -> "Temperature is required"
+            temperature.toIntOrNull() == null -> "Invalid temperature"
+            else -> {
+                val value = temperature.toInt()
+                when (tempUnit) {
+                    TemperatureUnit.CELSIUS -> {
+                        if (value !in 0..100) "Temperature must be 0-100°C" else null
+                    }
+
+                    TemperatureUnit.FAHRENHEIT -> {
+                        if (value !in 32..212) "Temperature must be 32-212°F" else null
+                    }
+                }
+            }
         }
+
         _state.update {
             it.copy(
-                defaultQuantity = quantity,
-                quantityError = error
+                defaultTemperatureCelsius = storageValue,
+                defaultTemperatureDisplay = temperature,
+                temperatureError = error,
             )
         }
     }
@@ -210,8 +219,11 @@ class EditTeaViewModel(
         }
     }
 
-    private fun toggleBrewingParams() {
-        _state.update { it.copy(showBrewingParams = !it.showBrewingParams) }
+    private fun toggleTemperatureUnit() {
+        viewModelScope.launch {
+            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
+            _state.update { it.copy(defaultTemperatureDisplay = "") } // Clear so screen reconverts from storage
+        }
     }
 
     private fun save() {
@@ -239,9 +251,7 @@ class EditTeaViewModel(
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    defaultBrewingTime = currentState.defaultBrewingTime,
                     defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toIntOrNull(),
-                    defaultQuantity = currentState.defaultQuantity.toIntOrNull(),
                     description = currentState.description.takeIf { it.isNotBlank() },
                     photos = currentState.photos,
                 )
@@ -256,9 +266,7 @@ class EditTeaViewModel(
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    defaultBrewingTime = currentState.defaultBrewingTime,
                     defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toIntOrNull(),
-                    defaultQuantity = currentState.defaultQuantity.toIntOrNull(),
                     description = currentState.description.takeIf { it.isNotBlank() },
                     photos = currentState.photos
                 )

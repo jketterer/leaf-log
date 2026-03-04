@@ -4,7 +4,6 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
-import kotlin.time.Duration
 import kotlin.time.Instant
 
 @Serializable
@@ -20,7 +19,6 @@ data class TeaTypeEntity(
     @PrimaryKey val id: String,
     val name: String,
     val defaultTemperatureCelsius: Int?,
-    val defaultBrewingTime: Duration?,
     val colorHex: String,
     val isSystemDefault: Boolean,
     val displayOrder: Int,

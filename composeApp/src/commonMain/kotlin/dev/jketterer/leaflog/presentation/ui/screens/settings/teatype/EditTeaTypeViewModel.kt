@@ -45,7 +45,6 @@ class EditTeaTypeViewModel(
             is EditTeaTypeIntent.NameChanged -> onNameChanged(intent.name)
             is EditTeaTypeIntent.ColorSelected -> onColorSelected(intent.colorHex)
             is EditTeaTypeIntent.TemperatureChanged -> onTemperatureChanged(intent.temperature)
-            is EditTeaTypeIntent.BrewTimeChanged -> _state.update { it.copy(brewTime = intent.duration) }
             is EditTeaTypeIntent.SaveClicked -> save()
             is EditTeaTypeIntent.BackClicked -> onBackClicked()
             is EditTeaTypeIntent.ConfirmDiscard -> confirmDiscard()
@@ -79,7 +78,6 @@ class EditTeaTypeViewModel(
                             name = teaType.name,
                             colorHex = teaType.colorHex,
                             temperature = displayTemp?.toString() ?: "",
-                            brewTime = teaType.defaultBrewingTime,
                             canDelete = teaCount == 0,
                             teaCount = teaCount,
                             isLoading = false,
@@ -164,7 +162,6 @@ class EditTeaTypeViewModel(
                         name = currentState.name,
                         colorHex = currentState.colorHex,
                         defaultTemperatureCelsius = temperatureCelsius,
-                        defaultBrewingTime = currentState.brewTime,
                         updatedAt = now,
                     )
                 } else {
@@ -175,7 +172,6 @@ class EditTeaTypeViewModel(
                         name = currentState.name,
                         colorHex = currentState.colorHex,
                         defaultTemperatureCelsius = temperatureCelsius,
-                        defaultBrewingTime = currentState.brewTime,
                         isSystemDefault = false,
                         displayOrder = maxOrder + 1,
                         createdAt = now,

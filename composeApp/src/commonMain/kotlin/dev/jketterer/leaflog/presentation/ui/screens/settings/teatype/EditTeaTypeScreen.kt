@@ -52,11 +52,8 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
-import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 val colorPalette = listOf(
     "#4CAF50", // Green
@@ -237,13 +234,6 @@ private fun EditTeaTypeContent(
                         enabled = !state.isSaving,
                     )
 
-                    // Brew time
-                    DurationPicker(
-                        duration = state.brewTime,
-                        onDurationChange = { onIntent(EditTeaTypeIntent.BrewTimeChanged(it)) },
-                        label = "Default Brewing Time (optional)",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
                 }
             }
 
@@ -386,7 +376,6 @@ private fun EditTeaTypeEditPreview() {
                 name = "Green",
                 colorHex = "#4CAF50",
                 temperature = "80",
-                brewTime = 2.minutes + 30.seconds,
             ),
             onIntent = {},
         )

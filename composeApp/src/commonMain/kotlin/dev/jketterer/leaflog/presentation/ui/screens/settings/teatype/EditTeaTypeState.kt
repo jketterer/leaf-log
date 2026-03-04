@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings.teatype
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.UserPreferences
-import kotlin.time.Duration
 
 data class EditTeaTypeState(
     val isEditMode: Boolean = false,
@@ -13,7 +12,6 @@ data class EditTeaTypeState(
     val name: String = "",
     val colorHex: String = "",
     val temperature: String = "",
-    val brewTime: Duration? = null,
     val userPreferences: UserPreferences = UserPreferences(),
 
     // Validation
@@ -36,10 +34,9 @@ data class EditTeaTypeState(
             }?.toString() ?: ""
             name != existingTeaType.name ||
                     colorHex != existingTeaType.colorHex ||
-                    temperature != existingTemp ||
-                    brewTime != existingTeaType.defaultBrewingTime
+                    temperature != existingTemp
         } else {
-            name.isNotBlank() || colorHex.isNotBlank() || temperature.isNotBlank() || brewTime != null
+            name.isNotBlank() || colorHex.isNotBlank() || temperature.isNotBlank()
         }
 
     val isValid: Boolean

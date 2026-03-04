@@ -7,7 +7,6 @@ import androidx.room.PrimaryKey
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
-import kotlin.time.Duration
 import kotlin.time.Instant
 
 @Serializable
@@ -40,9 +39,7 @@ data class TeaEntity(
     val purchaseDate: LocalDate? = null,
     val purchasePrice: Double? = null,
     val stockAmount: Int? = null,
-    val defaultBrewingTime: Duration? = null,
     val defaultTemperatureCelsius: Int? = null,
-    val defaultQuantity: Int? = null,
     val description: String? = null,
     val photos: List<String> = emptyList(),
     val isFavorite: Boolean = false,

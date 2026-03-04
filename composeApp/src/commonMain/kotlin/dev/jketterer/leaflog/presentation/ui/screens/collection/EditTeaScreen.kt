@@ -1,19 +1,15 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,28 +30,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
-import compose.icons.feathericons.ChevronDown
-import compose.icons.feathericons.ChevronUp
 import compose.icons.feathericons.Save
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
+import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 
 /**
  * Add/Edit Tea Screen - create or edit a tea in the collection.
@@ -255,75 +244,26 @@ private fun EditTeaContent(
                     )
                 }
 
-                // Collapsible Brewing Parameters
-                item(key = "brewing_params") {
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onIntent(EditTeaIntent.ToggleBrewingParams) }
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = "Default Brewing Parameters",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Icon(
-                                imageVector = if (state.showBrewingParams) FeatherIcons.ChevronUp else FeatherIcons.ChevronDown,
-                                contentDescription = if (state.showBrewingParams) "Collapse" else "Expand",
-                            )
-                        }
-
-                        AnimatedVisibility(
-                            visible = state.showBrewingParams,
-                            enter = expandVertically(),
-                            exit = shrinkVertically(),
-                        ) {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                            ) {
-                                DurationPicker(
-                                    duration = state.defaultBrewingTime,
-                                    onDurationChange = { duration ->
-                                        onIntent(EditTeaIntent.BrewingTimeChanged(duration))
-                                    },
-                                    label = "Default Brewing Time",
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-
-                                OutlinedTextField(
-                                    value = state.defaultTemperatureCelsius,
-                                    onValueChange = { onIntent(EditTeaIntent.TemperatureChanged(it)) },
-                                    label = { Text("Default Temperature (°C)") },
-                                    isError = state.temperatureError != null,
-                                    supportingText = state.temperatureError?.let { { Text(it) } }
-                                        ?: { Text("Temperature for brewing this tea") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true,
-                                    suffix = { Text("°C") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                                )
-
-                                OutlinedTextField(
-                                    value = state.defaultQuantity,
-                                    onValueChange = { onIntent(EditTeaIntent.QuantityChanged(it)) },
-                                    label = { Text("Default Tea Quantity (g)") },
-                                    isError = state.quantityError != null,
-                                    supportingText = state.quantityError?.let { { Text(it) } }
-                                        ?: { Text("Grams of tea per session") },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true,
-                                    suffix = { Text("g") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                                )
-                            }
-                        }
+                item(key = "default_temp") {
+                    val tempUnit = state.userPreferences.temperatureUnit
+                    val displayValue = state.defaultTemperatureDisplay.ifEmpty {
+                        state.defaultTemperatureCelsius.toDoubleOrNull()?.let { celsius ->
+                            tempUnit.fromCelsius(celsius).toString()
+                        } ?: state.defaultTemperatureCelsius
                     }
+
+                    TemperatureInputField(
+                        value = displayValue,
+                        onValueChange = { onIntent(EditTeaIntent.TemperatureChanged(it)) },
+                        currentUnit = tempUnit,
+                        onToggleUnit = {
+                            onIntent(EditTeaIntent.ToggleTemperatureUnit)
+                        },
+                        label = { Text("Default Temperature") },
+                        isError = state.temperatureError != null,
+                        supportingText = state.temperatureError?.let { { Text(it) } },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
 
                 // Photos
@@ -387,7 +327,6 @@ private fun EditTeaScreenAddModePreview() {
                         id = "green",
                         name = "Green",
                         defaultTemperatureCelsius = 75,
-                        defaultBrewingTime = 2.minutes,
                         colorHex = "#4CAF50",
                         isSystemDefault = true,
                         displayOrder = 0,
@@ -398,7 +337,6 @@ private fun EditTeaScreenAddModePreview() {
                         id = "black",
                         name = "Black",
                         defaultTemperatureCelsius = 95,
-                        defaultBrewingTime = 4.minutes,
                         colorHex = "#795548",
                         isSystemDefault = true,
                         displayOrder = 1,
@@ -431,7 +369,6 @@ private fun EditTeaScreenEditModePreview() {
                         id = "green",
                         name = "Green",
                         defaultTemperatureCelsius = 75,
-                        defaultBrewingTime = 2.minutes,
                         colorHex = "#4CAF50",
                         isSystemDefault = true,
                         displayOrder = 0,

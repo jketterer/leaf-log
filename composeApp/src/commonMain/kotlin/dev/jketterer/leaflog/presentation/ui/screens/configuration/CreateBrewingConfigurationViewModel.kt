@@ -121,7 +121,7 @@ class CreateBrewingConfigurationViewModel(
 
                 var prefillTemp = ""
                 var prefillWater = ""
-                var prefillTime = tea?.defaultBrewingTime
+                var prefillTime: kotlin.time.Duration? = null
                 var prefillWaterType = null as dev.jketterer.leaflog.domain.models.WaterType?
                 var prefillTeaQty = ""
 
@@ -129,7 +129,7 @@ class CreateBrewingConfigurationViewModel(
                     val prefill = getBrewingParametersPrefillUseCase(tea, firstVessel)
                     prefillTemp = prefill.temperatureCelsius?.toString() ?: ""
                     prefillWater = prefill.waterQuantityMl?.toString() ?: ""
-                    prefillTime = prefill.brewingTime ?: tea.defaultBrewingTime
+                    prefillTime = prefill.brewingTime
                     prefillWaterType = prefill.waterType
                     prefillTeaQty = prefill.teaQuantityGrams?.toString() ?: ""
                 } else if (tea != null) {

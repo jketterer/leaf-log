@@ -2,8 +2,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.UserPreferences
 import kotlinx.datetime.LocalDate
-import kotlin.time.Duration
 
 data class EditTeaState(
     val isEditMode: Boolean = false,
@@ -15,9 +15,8 @@ data class EditTeaState(
     val origin: String = "",
     val producer: String = "",
     val purchaseDate: LocalDate? = null,
-    val defaultBrewingTime: Duration? = null,
     val defaultTemperatureCelsius: String = "",
-    val defaultQuantity: String = "",
+    val defaultTemperatureDisplay: String = "", // User's input in display unit (preserves exact value)
     val description: String = "",
     val photos: List<String> = emptyList(),
 
@@ -29,7 +28,6 @@ data class EditTeaState(
     val nameError: String? = null,
     val teaTypeError: String? = null,
     val temperatureError: String? = null,
-    val quantityError: String? = null,
 
     // UI state
     val isLoading: Boolean = false,
@@ -37,6 +35,9 @@ data class EditTeaState(
     val error: String? = null,
     val showDiscardDialog: Boolean = false,
     val showBrewingParams: Boolean = false,
+
+    // User preferences
+    val userPreferences: UserPreferences = UserPreferences(),
 ) {
     val hasChanges: Boolean
         get() = if (isEditMode && existingTea != null) {
@@ -47,7 +48,6 @@ data class EditTeaState(
                     purchaseDate != existingTea.purchaseDate ||
                     defaultTemperatureCelsius != (existingTea.defaultTemperatureCelsius?.toString()
                 ?: "") ||
-                    defaultQuantity != (existingTea.defaultQuantity?.toString() ?: "") ||
                     description != (existingTea.description ?: "") ||
                     photos != existingTea.photos
         } else {
@@ -57,7 +57,6 @@ data class EditTeaState(
                     producer.isNotBlank() ||
                     purchaseDate != null ||
                     defaultTemperatureCelsius.isNotBlank() ||
-                    defaultQuantity.isNotBlank() ||
                     description.isNotBlank() ||
                     photos.isNotEmpty()
         }
@@ -66,7 +65,6 @@ data class EditTeaState(
         get() = nameError == null &&
                 teaTypeError == null &&
                 temperatureError == null &&
-                quantityError == null &&
                 name.isNotBlank() &&
                 selectedTeaTypeId != null
 }

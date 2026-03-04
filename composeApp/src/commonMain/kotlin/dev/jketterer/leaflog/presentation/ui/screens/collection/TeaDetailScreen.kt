@@ -299,13 +299,6 @@ private fun TeaDetailContent(
                                         )
                                     }
 
-                                    if (state.tea.defaultBrewingTime != null) {
-                                        DetailRow(
-                                            label = "Brewing Time",
-                                            value = state.tea.defaultBrewingTime.toString(),
-                                        )
-                                    }
-
                                     // Statistics
                                     DetailRow(
                                         label = "Total Sessions",
@@ -583,7 +576,6 @@ private fun TeaDetailScreenPreview() {
                     origin = "Hangzhou, China",
                     producer = "West Lake Tea Company",
                     defaultTemperatureCelsius = 80,
-                    defaultBrewingTime = 2.minutes + 30.seconds,
                     description = "Premium Dragon Well green tea with a sweet, nutty flavor and chesnut aroma.",
                     isFavorite = true,
                     totalSessions = 12,
@@ -596,7 +588,6 @@ private fun TeaDetailScreenPreview() {
                     id = "green",
                     name = "Green",
                     defaultTemperatureCelsius = 75,
-                    defaultBrewingTime = 2.minutes + 30.seconds,
                     colorHex = "#4CAF50",
                     isSystemDefault = true,
                     displayOrder = 0,

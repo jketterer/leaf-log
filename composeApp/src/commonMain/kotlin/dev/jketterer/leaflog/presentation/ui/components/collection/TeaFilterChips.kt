@@ -78,7 +78,6 @@ private fun TeaFilterChipsPreview() {
                 TeaType(
                     id = "1",
                     name = "Black Tea",
-                    defaultBrewingTime = null,
                     defaultTemperatureCelsius = null,
                     colorHex = "",
                     isSystemDefault = true,
@@ -89,7 +88,6 @@ private fun TeaFilterChipsPreview() {
                 TeaType(
                     id = "2",
                     name = "Green Tea",
-                    defaultBrewingTime = null,
                     defaultTemperatureCelsius = null,
                     colorHex = "",
                     isSystemDefault = true,

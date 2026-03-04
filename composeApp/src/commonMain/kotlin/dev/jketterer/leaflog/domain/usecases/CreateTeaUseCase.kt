@@ -5,7 +5,6 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import kotlinx.datetime.LocalDate
 import kotlin.time.Clock
-import kotlin.time.Duration
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -19,9 +18,7 @@ class CreateTeaUseCase(
         origin: String? = null,
         producer: String? = null,
         purchaseDate: LocalDate? = null,
-        defaultBrewingTime: Duration? = null,
         defaultTemperatureCelsius: Int? = null,
-        defaultQuantity: Int? = null,
         description: String? = null,
         photos: List<String> = emptyList()
     ): Result<Tea> {
@@ -48,9 +45,7 @@ class CreateTeaUseCase(
             purchaseDate = purchaseDate,
             purchasePrice = null,
             stockAmount = null,
-            defaultBrewingTime = defaultBrewingTime,
             defaultTemperatureCelsius = defaultTemperatureCelsius,
-            defaultQuantity = defaultQuantity,
             description = description?.takeIf { it.isNotBlank() }?.trim(),
             photos = photos,
             isFavorite = false,

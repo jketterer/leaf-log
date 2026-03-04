@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 import kotlinx.datetime.LocalDate
-import kotlin.time.Duration
 
 sealed interface EditTeaIntent {
     data class LoadTea(val teaId: String?) : EditTeaIntent
@@ -12,9 +11,7 @@ sealed interface EditTeaIntent {
     data class OriginChanged(val origin: String) : EditTeaIntent
     data class ProducerChanged(val producer: String) : EditTeaIntent
     data class PurchaseDateChanged(val date: LocalDate?) : EditTeaIntent
-    data class BrewingTimeChanged(val duration: Duration?) : EditTeaIntent
     data class TemperatureChanged(val temperature: String) : EditTeaIntent
-    data class QuantityChanged(val quantity: String) : EditTeaIntent
     data class DescriptionChanged(val description: String) : EditTeaIntent
 
     // Photo management
@@ -22,7 +19,7 @@ sealed interface EditTeaIntent {
     data class PhotoRemoved(val photoPath: String) : EditTeaIntent
 
     // UI toggles
-    data object ToggleBrewingParams : EditTeaIntent
+    data object ToggleTemperatureUnit : EditTeaIntent
 
     // Actions
     data object SaveClicked : EditTeaIntent

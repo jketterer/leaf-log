@@ -48,8 +48,6 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun TeaTypeListScreen(
@@ -207,17 +205,6 @@ private fun TeaTypeCard(
                         )
                         add("$displayTemp${userPreferences.temperatureUnit.symbol}")
                     }
-                    teaType.defaultBrewingTime?.let { duration ->
-                        val mins = duration.inWholeMinutes
-                        val secs = duration.inWholeSeconds % 60
-                        add(
-                            when {
-                                mins > 0 && secs > 0 -> "${mins}m ${secs}s"
-                                mins > 0 -> "${mins}m"
-                                else -> "${secs}s"
-                            }
-                        )
-                    }
                 }
                 if (details.isNotEmpty()) {
                     Text(
@@ -243,14 +230,12 @@ private fun TeaTypeListScreenPreview() {
                         name = "Green",
                         colorHex = "#4CAF50",
                         defaultTemperatureCelsius = 80,
-                        defaultBrewingTime = 2.minutes + 30.seconds,
                     ),
                     TeaType(
                         id = "2",
                         name = "Black",
                         colorHex = "#795548",
                         defaultTemperatureCelsius = 100,
-                        defaultBrewingTime = 4.minutes,
                     ),
                     TeaType(
                         id = "3",

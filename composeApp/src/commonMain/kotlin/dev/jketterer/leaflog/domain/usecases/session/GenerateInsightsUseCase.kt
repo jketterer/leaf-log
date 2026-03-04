@@ -25,13 +25,14 @@ class GenerateInsightsUseCase {
     ): List<Insight> {
         val insights = mutableListOf<Insight>()
 
-        // Most brewed tea
-        val topTea = topTeas.maxByOrNull { it.sessionCount }
-        if (topTea != null && topTea.sessionCount > 1) {
+        // Most brewed tea (only if there's a clear winner — no ties)
+        val maxBrewCount = topTeas.maxOfOrNull { it.sessionCount } ?: 0
+        val topTeaList = topTeas.filter { it.sessionCount == maxBrewCount }
+        if (maxBrewCount > 1 && topTeaList.size == 1) {
             insights.add(
                 Insight(
                     type = InsightType.MOST_BREWED,
-                    text = "${topTea.tea.name} is your most brewed tea with ${topTea.sessionCount} sessions",
+                    text = "${topTeaList.first().tea.name} is your most brewed tea with ${maxBrewCount} sessions",
                 )
             )
         }

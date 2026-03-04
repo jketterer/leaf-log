@@ -22,7 +22,6 @@ class GetTopRatedTeasUseCase(
 
         return ratedParents
             .groupBy { it.teaId }
-            .filter { (_, sessions) -> sessions.size >= 2 }
             .mapNotNull { (teaId, sessions) ->
                 val tea = teas[teaId] ?: return@mapNotNull null
                 val avgRating = sessions.map { session ->

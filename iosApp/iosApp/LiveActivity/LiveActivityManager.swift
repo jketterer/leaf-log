@@ -21,7 +21,7 @@ final class LiveActivityManager: NSObject, LiveActivityService {
             totalSeconds: totalSeconds,
             sessionId: sessionId
         )
-        let endDate = Date().addingTimeInterval(remainingSeconds)
+        let endDate = Date().addingTimeInterval(ceil(remainingSeconds))
         let state = TeaTimerAttributes.ContentState(remainingSeconds: remainingSeconds, isPaused: false, endDate: endDate)
         let staleDate = Date().addingTimeInterval(remainingSeconds + 60)
 
@@ -35,7 +35,7 @@ final class LiveActivityManager: NSObject, LiveActivityService {
     func update(remainingSeconds: Double, isPaused: Bool) {
         let current = activity
         Task {
-            let endDate = isPaused ? Date() : Date().addingTimeInterval(remainingSeconds)
+            let endDate = isPaused ? Date() : Date().addingTimeInterval(ceil(remainingSeconds))
             let state = TeaTimerAttributes.ContentState(remainingSeconds: remainingSeconds, isPaused: isPaused, endDate: endDate)
             let staleDate = isPaused
                 ? Date().addingTimeInterval(300)

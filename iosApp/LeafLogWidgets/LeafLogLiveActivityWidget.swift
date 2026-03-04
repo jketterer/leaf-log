@@ -149,11 +149,16 @@ private func circularProgress(
         .tint(.orange)
     } else {
         let startDate = state.endDate.addingTimeInterval(-attributes.totalSeconds)
-        ProgressView(timerInterval: startDate...state.endDate, countsDown: false) {
-            Image(systemName: "leaf.fill")
-                .foregroundStyle(.green)
-                .font(.caption)
-        }
+        ProgressView(
+            timerInterval: startDate...state.endDate,
+            countsDown: false,
+            label: { EmptyView() },
+            currentValueLabel: {
+                Image(systemName: "leaf.fill")
+                    .foregroundStyle(.green)
+                    .font(.caption)
+            }
+        )
         .progressViewStyle(.circular)
         .tint(.green)
     }

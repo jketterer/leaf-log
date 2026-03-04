@@ -1,4 +1,5 @@
 import ActivityKit
+import Foundation
 
 public struct TeaTimerAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {

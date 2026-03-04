@@ -2,12 +2,14 @@ package dev.jketterer.leaflog.presentation.ui.screens.quicktimer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -190,71 +192,78 @@ private fun QuickTimerRunningContent(
     onIntent: (QuickTimerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier.padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        Spacer(modifier = Modifier.height(16.dp))
+    BoxWithConstraints(modifier = modifier.padding(24.dp)) {
+        // Shrink the ring on smaller screens (e.g. iPhone SE) so control buttons stay visible.
+        // 420.dp accounts for the approximate height of all other fixed content + gaps.
+        val ringSize = (maxHeight - 420.dp).coerceIn(100.dp, 240.dp)
 
-        // Title - show tea name if selected, otherwise "Quick Timer"
         Column(
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            Text(
-                text = state.selectedTea?.name ?: "Quick Timer",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            if (state.selectedVessel != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Title - show tea name if selected, otherwise "Quick Timer"
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 Text(
-                    text = state.selectedVessel.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = state.selectedTea?.name ?: "Quick Timer",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+                if (state.selectedVessel != null) {
+                    Text(
+                        text = state.selectedVessel.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Circular timer ring
+            CircularTimerRing(
+                progress = state.progress,
+                timeText = state.formattedTime,
+                modifier = Modifier.size(ringSize),
+            )
+
+            // Quick adjustment buttons
+            if (state.isRunning || state.isPaused) {
+                QuickAdjustButtons(
+                    onAdjust = { adjustment ->
+                        onIntent(QuickTimerIntent.AdjustTime(adjustment))
+                    },
+                    enabled = state.controlsEnabled,
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            // "Add details" nudge - show when timer is running/paused/complete and no details yet
+            if (!state.hasRequiredDetails && state.status != TimerStatus.NOT_STARTED) {
+                OutlinedButton(
+                    onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Add Tea & Brewing Details")
+                }
+            }
 
-        // Circular timer ring
-        CircularTimerRing(
-            progress = state.progress,
-            timeText = state.formattedTime,
-        )
+            Spacer(modifier = Modifier.weight(1f))
 
-        // Quick adjustment buttons
-        if (state.isRunning || state.isPaused) {
-            QuickAdjustButtons(
-                onAdjust = { adjustment ->
-                    onIntent(QuickTimerIntent.AdjustTime(adjustment))
-                },
-                enabled = state.controlsEnabled,
+            // Control buttons
+            TimerControlButtons(
+                isRunning = state.isRunning,
+                isPaused = state.isPaused,
+                onStartClick = { onIntent(QuickTimerIntent.StartTimer) },
+                onPauseClick = { onIntent(QuickTimerIntent.PauseTimer) },
+                onResumeClick = { onIntent(QuickTimerIntent.ResumeTimer) },
+                onResetClick = { onIntent(QuickTimerIntent.ResetTimer) },
             )
         }
-
-        // "Add details" nudge - show when timer is running/paused/complete and no details yet
-        if (!state.hasRequiredDetails && state.status != TimerStatus.NOT_STARTED) {
-            OutlinedButton(
-                onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text("Add Tea & Brewing Details")
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Control buttons
-        TimerControlButtons(
-            isRunning = state.isRunning,
-            isPaused = state.isPaused,
-            onStartClick = { onIntent(QuickTimerIntent.StartTimer) },
-            onPauseClick = { onIntent(QuickTimerIntent.PauseTimer) },
-            onResumeClick = { onIntent(QuickTimerIntent.ResumeTimer) },
-            onResetClick = { onIntent(QuickTimerIntent.ResetTimer) },
-        )
     }
 }
 

@@ -47,6 +47,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
@@ -69,6 +73,7 @@ fun EditVesselScreen(
     val state by viewModel.state.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
 
     // Load vessel on initial composition
     LaunchedEffect(vesselId) {
@@ -150,6 +155,8 @@ fun EditVesselScreen(
                         supportingText = state.nameError?.let { { Text(it) } },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         enabled = !state.isSaving
                     )
 

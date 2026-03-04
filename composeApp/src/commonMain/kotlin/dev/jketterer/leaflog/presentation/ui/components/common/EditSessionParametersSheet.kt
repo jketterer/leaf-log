@@ -23,6 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -96,6 +101,7 @@ private fun EditSessionParametersContent(
     val isValid = temperatureValue.isNotBlank() &&
             waterQuantityValue.isNotBlank() &&
             (isTeaBag || teaQuantityValue.isNotBlank())
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier
@@ -161,6 +167,8 @@ private fun EditSessionParametersContent(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 suffix = { Text("g") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             )
         }
 

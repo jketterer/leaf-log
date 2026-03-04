@@ -26,6 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import dev.jketterer.leaflog.domain.models.BrewingVessel
@@ -78,6 +83,7 @@ private fun CreateBrewingConfigurationContent(
     state: CreateBrewingConfigurationState,
     onIntent: (CreateBrewingConfigurationIntent) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -145,6 +151,8 @@ private fun CreateBrewingConfigurationContent(
                     label = { Text("Name (optional)") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 )
             }
 
@@ -301,6 +309,8 @@ private fun CreateBrewingConfigurationContent(
                         supportingText = { Text("Optional - leave empty for tea bags") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     )
                     PresetChips(
                         presets = teaQtyPresets,

@@ -3,13 +3,17 @@ package dev.jketterer.leaflog.presentation.ui.components.common
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
@@ -76,6 +80,7 @@ fun DurationPicker(
 
     val isMinutesFocused by minutesInteractionSource.collectIsFocusedAsState()
     val isSecondsFocused by secondsInteractionSource.collectIsFocusedAsState()
+    val focusManager = LocalFocusManager.current
 
     // Select all text when field gains focus
     LaunchedEffect(isMinutesFocused) {
@@ -132,7 +137,8 @@ fun DurationPicker(
                 label = { Text("Min") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) }),
                 isError = isError || (minutesFieldValue.text.isNotEmpty() && minutesFieldValue.text.toIntOrNull() == null),
                 interactionSource = minutesInteractionSource,
             )
@@ -163,7 +169,8 @@ fun DurationPicker(
                 label = { Text("Sec") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 isError = isError || (secondsFieldValue.text.isNotEmpty() && secondsFieldValue.text.toIntOrNull() == null),
                 interactionSource = secondsInteractionSource,
             )

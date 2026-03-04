@@ -39,6 +39,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.ChevronDown
@@ -89,6 +94,7 @@ private fun EditTeaContent(
     state: EditTeaState,
     onIntent: (EditTeaIntent) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
@@ -128,6 +134,8 @@ private fun EditTeaContent(
                         supportingText = state.nameError?.let { { Text(it) } },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     )
                 }
 
@@ -212,6 +220,8 @@ private fun EditTeaContent(
                                 .fillMaxWidth()
                                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
                             singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         )
 
                         ExposedDropdownMenu(
@@ -240,6 +250,8 @@ private fun EditTeaContent(
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         maxLines = 5,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     )
                 }
 
@@ -292,6 +304,8 @@ private fun EditTeaContent(
                                     modifier = Modifier.fillMaxWidth(),
                                     singleLine = true,
                                     suffix = { Text("°C") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                                 )
 
                                 OutlinedTextField(
@@ -304,6 +318,8 @@ private fun EditTeaContent(
                                     modifier = Modifier.fillMaxWidth(),
                                     singleLine = true,
                                     suffix = { Text("g") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                                 )
                             }
                         }

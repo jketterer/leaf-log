@@ -24,6 +24,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
@@ -55,6 +59,7 @@ fun SaveConfigurationDialog(
     onDismiss: () -> Unit,
 ) {
     var label by remember { mutableStateOf(suggestedLabel) }
+    val focusManager = LocalFocusManager.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -114,6 +119,8 @@ fun SaveConfigurationDialog(
                     label = { Text("Name this method") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 )
 
                 // Help text

@@ -30,6 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
@@ -143,6 +148,7 @@ private fun Step1Content(
     onCancel: () -> Unit,
 ) {
     val canProceed = selectedTea != null && selectedVessel != null
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier
@@ -200,6 +206,8 @@ private fun Step1Content(
                 label = { Text("Search teas") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -313,6 +321,7 @@ private fun Step2Content(
     val teaQtyPresets = remember {
         listOf("1", "2", "3", "4", "5", "7", "10").map { Preset("${it}g", it) }
     }
+    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier
@@ -371,6 +380,8 @@ private fun Step2Content(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     suffix = { Text("g") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 )
                 PresetChips(
                     presets = teaQtyPresets,

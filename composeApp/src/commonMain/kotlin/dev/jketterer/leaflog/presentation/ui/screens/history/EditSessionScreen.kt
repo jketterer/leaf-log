@@ -31,6 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Check
@@ -89,6 +94,7 @@ private fun EditSessionContent(
     state: EditSessionState,
     onIntent: (EditSessionIntent) -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -265,6 +271,8 @@ private fun EditSessionContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 suffix = { Text("g") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                             )
                         }
                     }
@@ -278,6 +286,8 @@ private fun EditSessionContent(
                         label = { Text("Location (optional)") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     )
                 }
             }
@@ -331,6 +341,8 @@ private fun EditSessionContent(
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3,
                         maxLines = 5,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     )
                 }
 

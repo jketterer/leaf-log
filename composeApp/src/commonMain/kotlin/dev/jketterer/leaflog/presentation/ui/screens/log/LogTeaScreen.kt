@@ -46,6 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.ChevronDown
@@ -120,6 +125,7 @@ private fun LogTeaContent(
     onIntent: (LogTeaIntent) -> Unit,
 ) {
     var showOptionalFields by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
 
     val hasOptionalData = state.selectedWaterType != state.userPreferences.defaultWaterType ||
             state.location.isNotEmpty()
@@ -322,6 +328,8 @@ private fun LogTeaContent(
                                     suffix = { Text("g") },
                                     isError = state.teaQuantityError != null,
                                     supportingText = state.teaQuantityError?.let { { Text(it) } },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                                 )
                                 PresetChips(
                                     presets = teaQtyPresets,
@@ -521,6 +529,8 @@ private fun LogTeaContent(
                                         label = { Text("Location (optional)") },
                                         modifier = Modifier.fillMaxWidth(),
                                         singleLine = true,
+                                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                                     )
 
                                 }
@@ -625,6 +635,7 @@ private fun TeaSearchDialog(
     onQuickAddClicked: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Select Tea") },
@@ -636,6 +647,8 @@ private fun TeaSearchDialog(
                     label = { Text("Search teas") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -683,6 +696,7 @@ private fun CompleteSessionDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Complete Session") },
@@ -708,6 +722,8 @@ private fun CompleteSessionDialog(
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
                     maxLines = 5,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                 )
             }
         },

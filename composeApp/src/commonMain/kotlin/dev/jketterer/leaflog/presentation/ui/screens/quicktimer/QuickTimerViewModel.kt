@@ -3,11 +3,13 @@ package dev.jketterer.leaflog.presentation.ui.screens.quicktimer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
+import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
@@ -32,6 +34,7 @@ class QuickTimerViewModel(
     private val teaRepository: TeaRepository,
     private val vesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val notificationService: TimerNotificationService,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
@@ -144,6 +147,12 @@ class QuickTimerViewModel(
         _state.update {
             it.copy(status = TimerStatus.RUNNING)
         }
+        val current = _state.value
+        notificationService.scheduleCompletionAlarm(
+            teaName = current.selectedTea?.name ?: "",
+            remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
+            sessionId = current.inProgressSession?.id,
+        )
         startCountdown()
     }
 
@@ -153,6 +162,7 @@ class QuickTimerViewModel(
         _state.update {
             it.copy(status = TimerStatus.PAUSED)
         }
+        notificationService.cancelCompletionAlarm()
     }
 
     private fun resumeTimer() {
@@ -165,6 +175,12 @@ class QuickTimerViewModel(
         _state.update {
             it.copy(status = TimerStatus.RUNNING)
         }
+        val current = _state.value
+        notificationService.scheduleCompletionAlarm(
+            teaName = current.selectedTea?.name ?: "",
+            remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
+            sessionId = current.inProgressSession?.id,
+        )
         startCountdown()
     }
 
@@ -185,6 +201,15 @@ class QuickTimerViewModel(
                 remainingDuration = newRemaining,
             )
         }
+
+        // Reschedule completion alarm so notification fires at the correct (adjusted) time
+        if (current.status == TimerStatus.RUNNING) {
+            notificationService.scheduleCompletionAlarm(
+                teaName = current.selectedTea?.name ?: "",
+                remainingSeconds = newRemaining.inWholeMilliseconds / 1000.0,
+                sessionId = current.inProgressSession?.id,
+            )
+        }
     }
 
     private fun showResetConfirmation() {
@@ -200,6 +225,7 @@ class QuickTimerViewModel(
         timerJob?.cancel()
         timerJob = null
         startedAt = null
+        notificationService.onTimerStopped()
         val total = _state.value.totalDuration
         _state.update {
             it.copy(
@@ -226,6 +252,7 @@ class QuickTimerViewModel(
         timerJob?.cancel()
         timerJob = null
         startedAt = null
+        notificationService.onTimerStopped()
         _state.update { it.copy(showStopConfirmation = false) }
         _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
     }
@@ -248,6 +275,7 @@ class QuickTimerViewModel(
     }
 
     private fun startCountdown() {
+        var lastNotificationSecond = -1L
         timerJob = viewModelScope.launch {
             while (isActive) {
                 delay(100) // Update every 100ms for smooth UI
@@ -264,6 +292,13 @@ class QuickTimerViewModel(
 
                 _state.update { it.copy(remainingDuration = remaining) }
 
+                // Update live activity once per second
+                val currentSecond = elapsed.inWholeSeconds
+                if (currentSecond > lastNotificationSecond) {
+                    notificationService.showTimerRunning(buildTimerState(current.copy(remainingDuration = remaining)))
+                    lastNotificationSecond = currentSecond
+                }
+
                 // Check if timer completed
                 if (remaining == Duration.ZERO) {
                     _state.update {
@@ -272,6 +307,10 @@ class QuickTimerViewModel(
                             remainingDuration = Duration.ZERO,
                         )
                     }
+                    notificationService.showTimerComplete(
+                        teaName = current.selectedTea?.name ?: "",
+                        sessionId = current.inProgressSession?.id,
+                    )
                     // Auto-save as IN_PROGRESS if we have the required details
                     if (_state.value.hasRequiredDetails) {
                         autoSaveCompleted()
@@ -280,6 +319,18 @@ class QuickTimerViewModel(
                 }
             }
         }
+    }
+
+    private fun buildTimerState(state: QuickTimerState): TimerState {
+        return TimerState(
+            sessionId = state.inProgressSession?.id,
+            teaName = state.selectedTea?.name ?: "",
+            steepNumber = 1,
+            totalDuration = state.totalDuration,
+            remainingDuration = state.remainingDuration,
+            status = state.status,
+            startedAt = startedAt,
+        )
     }
 
     // Details sheet methods
@@ -483,6 +534,7 @@ class QuickTimerViewModel(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+        notificationService.onTimerStopped()
     }
 }
 

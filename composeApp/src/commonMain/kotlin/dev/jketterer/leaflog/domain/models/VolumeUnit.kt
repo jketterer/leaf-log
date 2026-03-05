@@ -29,4 +29,10 @@ enum class VolumeUnit {
             MILLILITERS -> "mL"
             FLUID_OUNCES -> "fl oz"
         }
+
+    val largeSymbol: String
+        get() = when (this) {
+            MILLILITERS -> "L"
+            FLUID_OUNCES -> "gal"
+        }
 }

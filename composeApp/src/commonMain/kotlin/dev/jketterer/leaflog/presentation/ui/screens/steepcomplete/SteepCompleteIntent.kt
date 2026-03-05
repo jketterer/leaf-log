@@ -1,6 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 
-import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerIntent
+import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 sealed interface SteepCompleteIntent {
@@ -25,4 +25,15 @@ sealed interface SteepCompleteIntent {
     data class PreviousSteepNotesChanged(val steepId: String, val notes: String) : SteepCompleteIntent
     data object ToggleTemperatureUnit : SteepCompleteIntent
     data object BackClicked : SteepCompleteIntent
+    data object ShowEditParametersSheet : SteepCompleteIntent
+    data object DismissEditParametersSheet : SteepCompleteIntent
+    data class EditBrewingTimeChanged(val duration: Duration) : SteepCompleteIntent
+    data class EditTemperatureChanged(val value: String) : SteepCompleteIntent
+    data class EditWaterQuantityChanged(val value: String) : SteepCompleteIntent
+    data class EditTeaQuantityChanged(val value: String) : SteepCompleteIntent
+    data class EditTeaBagModeChanged(val isTeaBag: Boolean) : SteepCompleteIntent
+    data class EditWaterTypeChanged(val waterType: WaterType) : SteepCompleteIntent
+    data object ConfirmEditParameters : SteepCompleteIntent
+    data object CancelEditParameters : SteepCompleteIntent
+    data object ToggleVolumeUnit : SteepCompleteIntent
 }

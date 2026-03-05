@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 data class SteepCompleteState(
@@ -23,6 +24,14 @@ data class SteepCompleteState(
     val showSaveConfigurationDialog: Boolean = false,
     val suggestedConfigurationLabel: String = "",
     val savedSession: TeaSession? = null,
+    // Edit parameters sheet
+    val showEditParametersSheet: Boolean = false,
+    val editBrewingTime: Duration = Duration.ZERO,
+    val editTemperatureCelsius: String = "",
+    val editWaterQuantityMl: String = "",
+    val editTeaQuantityGrams: String = "",
+    val editIsTeaBag: Boolean = false,
+    val editWaterType: WaterType? = null,
     // Discard
     val showDiscardConfirmation: Boolean = false,
     // Loading/error

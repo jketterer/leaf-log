@@ -48,6 +48,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
+import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.SessionStatus
@@ -59,6 +60,7 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
+import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
@@ -218,6 +220,30 @@ private fun SteepCompleteContent(
         )
     }
 
+    // Edit parameters sheet
+    if (state.showEditParametersSheet && state.editWaterType != null) {
+        EditSessionParametersSheet(
+            brewingTime = state.editBrewingTime,
+            onBrewingTimeChanged = { onIntent(SteepCompleteIntent.EditBrewingTimeChanged(it)) },
+            temperatureValue = state.editTemperatureCelsius,
+            waterQuantityValue = state.editWaterQuantityMl,
+            teaQuantityValue = state.editTeaQuantityGrams,
+            isTeaBag = state.editIsTeaBag,
+            waterType = state.editWaterType,
+            temperatureUnit = state.userPreferences.temperatureUnit,
+            volumeUnit = state.userPreferences.volumeUnit,
+            onTemperatureChanged = { onIntent(SteepCompleteIntent.EditTemperatureChanged(it)) },
+            onWaterQuantityChanged = { onIntent(SteepCompleteIntent.EditWaterQuantityChanged(it)) },
+            onTeaQuantityChanged = { onIntent(SteepCompleteIntent.EditTeaQuantityChanged(it)) },
+            onTeaBagModeChanged = { onIntent(SteepCompleteIntent.EditTeaBagModeChanged(it)) },
+            onWaterTypeSelected = { onIntent(SteepCompleteIntent.EditWaterTypeChanged(it)) },
+            onToggleTemperatureUnit = { onIntent(SteepCompleteIntent.ToggleTemperatureUnit) },
+            onToggleVolumeUnit = { onIntent(SteepCompleteIntent.ToggleVolumeUnit) },
+            onSave = { onIntent(SteepCompleteIntent.ConfirmEditParameters) },
+            onDismiss = { onIntent(SteepCompleteIntent.CancelEditParameters) },
+        )
+    }
+
     // Save Configuration Dialog
     if (state.showSaveConfigurationDialog && state.savedSession != null) {
         val session = state.savedSession
@@ -265,6 +291,7 @@ private fun SteepCompleteBody(
                 teaName = state.tea?.name ?: "",
                 vesselName = state.vessel?.name,
                 userPreferences = state.userPreferences,
+                onEditClick = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
             )
         }
 
@@ -345,6 +372,7 @@ private fun SteepHeaderCard(
     teaName: String,
     vesselName: String?,
     userPreferences: UserPreferences,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -396,6 +424,13 @@ private fun SteepHeaderCard(
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
+                }
+                IconButton(onClick = onEditClick) {
+                    Icon(
+                        FeatherIcons.Edit,
+                        contentDescription = "Edit parameters",
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
                 }
             }
 

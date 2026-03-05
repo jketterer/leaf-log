@@ -32,6 +32,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import kotlin.time.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +53,8 @@ fun EditSessionParametersSheet(
     onToggleVolumeUnit: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
+    brewingTime: Duration? = null,
+    onBrewingTimeChanged: ((Duration) -> Unit)? = null,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -74,6 +77,8 @@ fun EditSessionParametersSheet(
             onToggleVolumeUnit = onToggleVolumeUnit,
             onSave = onSave,
             onDismiss = onDismiss,
+            brewingTime = brewingTime,
+            onBrewingTimeChanged = onBrewingTimeChanged,
         )
     }
 }
@@ -97,10 +102,13 @@ private fun EditSessionParametersContent(
     onToggleVolumeUnit: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
+    brewingTime: Duration? = null,
+    onBrewingTimeChanged: ((Duration) -> Unit)? = null,
 ) {
     val isValid = temperatureValue.isNotBlank() &&
             waterQuantityValue.isNotBlank() &&
-            (isTeaBag || teaQuantityValue.isNotBlank())
+            (isTeaBag || teaQuantityValue.isNotBlank()) &&
+            (brewingTime == null || brewingTime > Duration.ZERO)
     val focusManager = LocalFocusManager.current
 
     Column(
@@ -116,6 +124,17 @@ private fun EditSessionParametersContent(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        // Brewing Time (optional)
+        if (brewingTime != null) {
+            DurationPicker(
+                duration = brewingTime.takeIf { it > Duration.ZERO },
+                onDurationChange = { onBrewingTimeChanged?.invoke(it ?: Duration.ZERO) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Temperature
         TemperatureInputField(

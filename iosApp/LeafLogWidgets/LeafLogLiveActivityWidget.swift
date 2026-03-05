@@ -12,11 +12,6 @@ struct LeafLogLiveActivityWidget: Widget {
             )
         } dynamicIsland: { context in
             DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "leaf.fill")
-                        .foregroundStyle(.green)
-                        .font(.title2)
-                }
                 DynamicIslandExpandedRegion(.trailing) {
                     if context.state.isPaused {
                         Text(formatTime(context.state.remainingSeconds))
@@ -38,14 +33,6 @@ struct LeafLogLiveActivityWidget: Widget {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                }
-                DynamicIslandExpandedRegion(.bottom) {
-                    timerProgress(
-                        attributes: context.attributes,
-                        state: context.state
-                    )
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
                 }
             } compactLeading: {
                 Image(systemName: "leaf.fill")
@@ -78,9 +65,6 @@ struct LockScreenLiveActivityView: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            circularProgress(attributes: attributes, state: state)
-                .frame(width: 48, height: 48)
-
             VStack(alignment: .leading, spacing: 2) {
                 Text(attributes.teaName)
                     .font(.headline)
@@ -106,61 +90,6 @@ struct LockScreenLiveActivityView: View {
         .padding()
         .activityBackgroundTint(Color(.systemBackground))
         .activitySystemActionForegroundColor(.primary)
-    }
-}
-
-// MARK: - Progress helpers
-
-/// Linear progress bar for the Dynamic Island expanded bottom region.
-@ViewBuilder
-private func timerProgress(
-    attributes: TeaTimerAttributes,
-    state: TeaTimerAttributes.ContentState
-) -> some View {
-    if state.isPaused {
-        let value = attributes.totalSeconds > 0
-            ? 1.0 - (state.remainingSeconds / attributes.totalSeconds)
-            : 0.0
-        ProgressView(value: value)
-            .tint(.orange)
-    } else {
-        let startDate = state.endDate.addingTimeInterval(-attributes.totalSeconds)
-        ProgressView(timerInterval: startDate...state.endDate, countsDown: false)
-            .tint(.green)
-    }
-}
-
-/// Circular progress ring for the lock screen view.
-@ViewBuilder
-private func circularProgress(
-    attributes: TeaTimerAttributes,
-    state: TeaTimerAttributes.ContentState
-) -> some View {
-    if state.isPaused {
-        let value = attributes.totalSeconds > 0
-            ? 1.0 - (state.remainingSeconds / attributes.totalSeconds)
-            : 0.0
-        ProgressView(value: value) {
-            Image(systemName: "pause.fill")
-                .foregroundStyle(.orange)
-                .font(.caption)
-        }
-        .progressViewStyle(.circular)
-        .tint(.orange)
-    } else {
-        let startDate = state.endDate.addingTimeInterval(-attributes.totalSeconds)
-        ProgressView(
-            timerInterval: startDate...state.endDate,
-            countsDown: false,
-            label: { EmptyView() },
-            currentValueLabel: {
-                Image(systemName: "leaf.fill")
-                    .foregroundStyle(.green)
-                    .font(.caption)
-            }
-        )
-        .progressViewStyle(.circular)
-        .tint(.green)
     }
 }
 

@@ -104,6 +104,16 @@ class AnalyticsViewModel(
             is AnalyticsIntent.TapTopRatedTea -> {
                 _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
             }
+
+            is AnalyticsIntent.ToggleWaterUnit -> toggleWaterUnit()
+        }
+    }
+
+    private fun toggleWaterUnit() {
+        viewModelScope.launch {
+            val prefs = preferencesRepository.getPreferences()
+            preferencesRepository.updateVolumeUnit(prefs.volumeUnit.toggle())
+            loadAnalytics()
         }
     }
 

@@ -281,6 +281,7 @@ private fun AnalyticsDataContent(
                     label = "Water Used",
                     icon = FeatherIcons.Droplet,
                     percentageChange = state.comparison?.percentageChangeWater,
+                    onClick = { onIntent(AnalyticsIntent.ToggleWaterUnit) },
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(

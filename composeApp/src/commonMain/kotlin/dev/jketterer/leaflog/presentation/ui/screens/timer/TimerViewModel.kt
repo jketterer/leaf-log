@@ -114,8 +114,15 @@ class TimerViewModel(
                 .collect { timerState ->
                     _state.update { it.copy(timerState = timerState) }
 
-                    // Auto-complete when timer reaches zero
-                    if (timerState.status == TimerStatus.COMPLETE && _state.value.session != null) {
+                    // Auto-complete when timer reaches zero.
+                    // Guard on sessionId to prevent stale COMPLETE emissions from a previous
+                    // session (that completed while no ViewModel was active) from triggering
+                    // completion on the newly loaded session.
+                    val currentSession = _state.value.session
+                    if (timerState.status == TimerStatus.COMPLETE &&
+                        currentSession != null &&
+                        timerState.sessionId == currentSession.id
+                    ) {
                         handleTimerComplete()
                     }
                 }
@@ -362,6 +369,9 @@ class TimerViewModel(
                     timerService.updateState(newState)
                     // Persist completed state for restoration
                     saveTimerStateUseCase(newState)
+                    // Reset singleton state so the next Timer screen (e.g., next steep) starts
+                    // clean and doesn't receive a stale COMPLETE emission in collectTimerState()
+                    timerService.stop()
                     // Navigate to SteepComplete screen
                     _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(session.id))
                 }

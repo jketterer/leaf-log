@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
@@ -36,6 +37,7 @@ class SteepCompleteViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val imageStorage: ImageStorage,
+    private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
     private val updateTeaStatsUseCase: UpdateTeaStatsUseCase,
@@ -295,6 +297,8 @@ class SteepCompleteViewModel(
                 waterQuantityMl = waterQuantity,
             ).onSuccess { nextSteep ->
                 _state.update { it.copy(isLoading = false) }
+                // Reset TimerService singleton state before the next Timer screen starts
+                timerService.stop()
                 _navigationEvents.send(SteepCompleteNavEvent.NavigateToTimer(nextSteep.id))
             }.onFailure { e ->
                 _state.update {
@@ -324,6 +328,8 @@ class SteepCompleteViewModel(
                 timerRemainingMs = null,
             )
             teaSessionRepository.upsert(updatedSession)
+            // Reset TimerService singleton state so the next Timer screen starts clean
+            timerService.stop()
 
             session.parentSessionId?.let { parentId ->
                 updateAverageRatingUseCase(parentId)

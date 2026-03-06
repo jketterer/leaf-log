@@ -40,8 +40,11 @@ fun SummaryCard(
     modifier: Modifier = Modifier,
     percentageChange: Float? = null,
     icon: ImageVector? = null,
+    onClick: (() -> Unit)? = null,
 ) {
     Card(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
         modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),

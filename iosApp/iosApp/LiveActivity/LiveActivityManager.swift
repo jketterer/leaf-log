@@ -71,7 +71,11 @@ final class LiveActivityManager: NSObject, LiveActivityService {
         completionTask?.cancel()
         let activity = self.activity
         completionTask = Task {
-            try? await Task.sleep(for: .seconds(ceil(seconds)))
+            do {
+                try await Task.sleep(for: .seconds(ceil(seconds)))
+            } catch {
+                return // Task was cancelled; do not end the activity.
+            }
             await activity?.end(dismissalPolicy: .immediate)
         }
     }

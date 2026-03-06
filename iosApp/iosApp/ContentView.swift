@@ -10,13 +10,11 @@ struct ComposeView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        redrawAllSubviews(uiViewController.view)
-    }
-
-    private func redrawAllSubviews(_ view: UIView) {
-        view.setNeedsDisplay()
-        view.layer.setNeedsDisplay()
-        view.subviews.forEach { redrawAllSubviews($0) }
+        guard let superview = uiViewController.view.superview else { return }
+        let frame = uiViewController.view.frame
+        uiViewController.view.removeFromSuperview()
+        superview.addSubview(uiViewController.view)
+        uiViewController.view.frame = frame
     }
 }
 

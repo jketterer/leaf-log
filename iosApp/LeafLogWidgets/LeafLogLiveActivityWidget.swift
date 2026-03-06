@@ -73,8 +73,7 @@ struct LockScreenLiveActivityView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             if state.isPaused {
                 Text(formatTime(state.remainingSeconds))

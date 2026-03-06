@@ -440,7 +440,7 @@ private fun AnalyticsDataContentPreview() {
                     ),
                     Insight(
                         InsightType.TOP_RATED,
-                        "Tie Guan Yin is your highest rated tea at 4.8 ★",
+                        "Tie Guan Yin is your highest rated tea at 4.8",
                     ),
                     Insight(
                         InsightType.PREFERRED_VESSEL,

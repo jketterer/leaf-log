@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -53,6 +54,7 @@ import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.MoreVertical
+import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Star
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
@@ -443,7 +445,13 @@ private fun TeaDetailContent(
                     .fillMaxWidth()
                     .padding(16.dp),
             ) {
-                Text("🍵 Brew This Tea")
+                Icon(
+                    imageVector = FeatherIcons.Coffee,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Brew This Tea")
             }
         }
 

@@ -25,9 +25,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Image
 import coil3.compose.AsyncImage
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -99,9 +101,10 @@ fun VesselSelector(
                                         contentScale = ContentScale.Crop,
                                     )
                                 } else if (vessel.iconName != null) {
-                                    Text(
-                                        text = getVesselEmoji(vessel.iconName),
-                                        style = MaterialTheme.typography.titleMedium,
+                                    Image(
+                                        painter = VesselIconHelper.getIconForVessel(vessel.iconName),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(24.dp),
                                     )
                                 }
                                 Column(modifier = Modifier.weight(1f)) {
@@ -139,20 +142,6 @@ fun VesselSelector(
     }
 }
 
-/**
- * Map icon names to emojis.
- */
-private fun getVesselEmoji(iconName: String): String {
-    return when (iconName) {
-        "gaiwan" -> "🫖"
-        "teapot" -> "🫖"
-        "kyusu" -> "🍵"
-        "mug" -> "☕"
-        "yixing" -> "🫖"
-        "glass" -> "🫗"
-        else -> "🍵"
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

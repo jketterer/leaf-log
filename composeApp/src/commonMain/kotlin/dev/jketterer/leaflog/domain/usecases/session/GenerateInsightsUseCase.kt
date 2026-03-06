@@ -79,7 +79,7 @@ class GenerateInsightsUseCase {
             insights.add(
                 Insight(
                     type = InsightType.TOP_RATED,
-                    text = "${topRated.tea.name} is your highest rated tea at $rounded ★",
+                    text = "${topRated.tea.name} is your highest rated tea at $rounded",
                 )
             )
         }

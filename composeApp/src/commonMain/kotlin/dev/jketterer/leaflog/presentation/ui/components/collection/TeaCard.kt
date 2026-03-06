@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.components.collection
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -32,6 +33,8 @@ import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.regular.Heart
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Star
 import compose.icons.fontawesomeicons.solid.Heart
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.Tea
@@ -116,17 +119,41 @@ fun TeaCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    val brewStats = buildList {
-                        if (tea.totalSessions > 0) add("${tea.totalSessions} brews")
-                        tea.averageRating?.let { add("★ ${it.formatOneDecimal()}") }
-                    }
-                    if (brewStats.isNotEmpty()) {
+                    val hasBrews = tea.totalSessions > 0
+                    if (hasBrews || tea.averageRating != null) {
                         Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = brewStats.joinToString(" · "),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            if (hasBrews) {
+                                Text(
+                                    text = "${tea.totalSessions} brews",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            tea.averageRating?.let { rating ->
+                                if (hasBrews) {
+                                    Text(
+                                        text = "·",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                Icon(
+                                    imageVector = FeatherIcons.Star,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(10.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    text = rating.formatOneDecimal(),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
 

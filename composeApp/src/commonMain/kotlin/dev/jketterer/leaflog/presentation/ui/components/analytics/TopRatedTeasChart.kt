@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Star
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -145,11 +148,21 @@ private fun TopRatedTeaRow(
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "${topRatedTea.averageRating.formatOneDecimal()} ★",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = topRatedTea.averageRating.formatOneDecimal(),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+            )
+            Icon(
+                imageVector = FeatherIcons.Star,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+            )
+        }
     }
 }
 

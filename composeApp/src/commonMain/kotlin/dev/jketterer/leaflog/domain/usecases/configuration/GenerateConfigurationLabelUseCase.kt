@@ -7,13 +7,13 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Generates a descriptive label for a brewing configuration based on its parameters.
  *
- * When [teaName] is provided the label is personalised ("Jasmine · Gong-fu").
+ * When [vesselName] is provided the label is personalised ("Gaiwan · Gong-fu").
  * Without it a style-only label is returned ("Gong-fu"), which serves as the
  * fallback path inside [SaveBrewingConfigurationUseCase].
  */
 class GenerateConfigurationLabelUseCase {
     operator fun invoke(
-        teaName: String = "",
+        vesselName: String = "",
         teaQuantityGrams: Float?,
         waterQuantityMl: Double,
         brewingTime: Duration,
@@ -43,6 +43,6 @@ class GenerateConfigurationLabelUseCase {
             else -> "Standard"
         }
 
-        return if (teaName.isNotBlank()) "$teaName · $style" else style
+        return if (vesselName.isNotBlank()) "$vesselName · $style" else style
     }
 }

@@ -358,7 +358,7 @@ class SteepCompleteViewModel(
             return
         }
         val label = generateConfigurationLabelUseCase(
-            teaName = _state.value.tea?.name ?: "",
+            vesselName = _state.value.vessel?.name ?: "",
             teaQuantityGrams = session.teaQuantityGrams,
             waterQuantityMl = session.waterQuantityMl,
             brewingTime = session.brewingTime,

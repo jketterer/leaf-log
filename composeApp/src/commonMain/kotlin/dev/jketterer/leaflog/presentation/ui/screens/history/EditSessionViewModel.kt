@@ -429,7 +429,7 @@ class EditSessionViewModel(
             return
         }
         val label = generateConfigurationLabelUseCase(
-            teaName = _state.value.teaName ?: "",
+            vesselName = _state.value.selectedVessel?.name ?: "",
             teaQuantityGrams = session.teaQuantityGrams,
             waterQuantityMl = session.waterQuantityMl,
             brewingTime = session.brewingTime,

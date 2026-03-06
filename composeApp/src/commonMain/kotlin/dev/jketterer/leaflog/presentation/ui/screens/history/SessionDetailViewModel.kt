@@ -386,9 +386,8 @@ class SessionDetailViewModel(
                 return@launch
             }
 
-            val teaName = _state.value.tea?.name ?: ""
             val label = generateConfigurationLabelUseCase(
-                teaName = teaName,
+                vesselName = _state.value.vessel?.name ?: "",
                 teaQuantityGrams = session.teaQuantityGrams,
                 waterQuantityMl = session.waterQuantityMl,
                 brewingTime = session.brewingTime,

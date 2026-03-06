@@ -65,11 +65,8 @@ class TimerNotificationServiceImpl : NSObject(),
     }
 
     fun showTimerComplete(teaName: String, sessionId: String?) {
-        // Cancel the pending UNTimeIntervalNotificationTrigger — the Kotlin countdown already
-        // fired completion, so we don't want the OS alarm to deliver a duplicate notification
-        // and drive a second deep-link navigation into TimerRoute while the user is on
-        // SteepComplete.
-        cancelCompletionAlarm()
+        // The UNTimeIntervalNotificationTrigger scheduled in scheduleCompletionAlarm()
+        // fires independently and is shown via willPresentNotification (even in foreground).
         endLiveActivity()
     }
 

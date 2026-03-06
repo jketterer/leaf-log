@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -20,8 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Star
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TopRatedTea
@@ -179,27 +180,62 @@ private fun TopRatedTeasChartPreview() {
         TopRatedTeasChart(
             topRatedTeas = listOf(
                 TopRatedTea(
-                    tea = Tea(id = "1", name = "Dragon Well", teaTypeId = "1", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                    tea = Tea(
+                        id = "1",
+                        name = "Dragon Well",
+                        teaTypeId = "1",
+                        createdAt = now,
+                        updatedAt = now,
+                        syncStatus = SyncStatus.LOCAL_ONLY
+                    ),
                     averageRating = 4.8f,
                     ratedSessionCount = 6,
                 ),
                 TopRatedTea(
-                    tea = Tea(id = "2", name = "Tie Guan Yin", teaTypeId = "2", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                    tea = Tea(
+                        id = "2",
+                        name = "Tie Guan Yin",
+                        teaTypeId = "2",
+                        createdAt = now,
+                        updatedAt = now,
+                        syncStatus = SyncStatus.LOCAL_ONLY
+                    ),
                     averageRating = 4.5f,
                     ratedSessionCount = 4,
                 ),
                 TopRatedTea(
-                    tea = Tea(id = "3", name = "Earl Grey", teaTypeId = "3", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                    tea = Tea(
+                        id = "3",
+                        name = "Earl Grey",
+                        teaTypeId = "3",
+                        createdAt = now,
+                        updatedAt = now,
+                        syncStatus = SyncStatus.LOCAL_ONLY
+                    ),
                     averageRating = 4.2f,
                     ratedSessionCount = 3,
                 ),
                 TopRatedTea(
-                    tea = Tea(id = "4", name = "Sencha", teaTypeId = "1", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                    tea = Tea(
+                        id = "4",
+                        name = "Sencha",
+                        teaTypeId = "1",
+                        createdAt = now,
+                        updatedAt = now,
+                        syncStatus = SyncStatus.LOCAL_ONLY
+                    ),
                     averageRating = 3.9f,
                     ratedSessionCount = 5,
                 ),
                 TopRatedTea(
-                    tea = Tea(id = "5", name = "Silver Needle", teaTypeId = "4", createdAt = now, updatedAt = now, syncStatus = SyncStatus.LOCAL_ONLY),
+                    tea = Tea(
+                        id = "5",
+                        name = "Silver Needle",
+                        teaTypeId = "4",
+                        createdAt = now,
+                        updatedAt = now,
+                        syncStatus = SyncStatus.LOCAL_ONLY
+                    ),
                     averageRating = 3.7f,
                     ratedSessionCount = 2,
                 ),

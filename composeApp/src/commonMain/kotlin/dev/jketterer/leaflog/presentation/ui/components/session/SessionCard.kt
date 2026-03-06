@@ -80,7 +80,7 @@ fun SessionCard(
     onDeleteClick: () -> Unit,
     canBrewAgain: Boolean = true,
     modifier: Modifier = Modifier,
-    imageStorage: ImageStorage = koinInject(),
+    imageStorage: ImageStorage? = koinInject(),
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showPhotoViewer by remember { mutableStateOf(false) }
@@ -98,29 +98,29 @@ fun SessionCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Tea photo
-            if (session.photos.isNotEmpty()) {
+            if (session.photos.isNotEmpty() && imageStorage != null) {
                 AsyncImage(
                     model = imageStorage.resolveImagePath(session.photos.first()),
                     contentDescription = teaName,
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(48.dp)
                         .clip(MaterialTheme.shapes.medium)
                         .clickable { showPhotoViewer = true },
                     contentScale = ContentScale.Crop
                 )
-            } else if (teaPhotoUrl != null) {
+            } else if (teaPhotoUrl != null && imageStorage != null) {
                 AsyncImage(
                     model = imageStorage.resolveImagePath(teaPhotoUrl),
                     contentDescription = teaName,
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(48.dp)
                         .clip(MaterialTheme.shapes.medium),
                     contentScale = ContentScale.Crop
                 )
             }
 
             if (session.photos.isNotEmpty() || teaPhotoUrl != null) {
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
             }
 
             // Session info
@@ -243,7 +243,7 @@ fun SessionCard(
         }
     }
 
-    if (showPhotoViewer && session.photos.isNotEmpty()) {
+    if (showPhotoViewer && session.photos.isNotEmpty() && imageStorage != null) {
         FullscreenImageViewer(
             photos = session.photos.map { imageStorage.resolveImagePath(it) },
             initialIndex = 0,
@@ -286,6 +286,7 @@ private fun SessionCardCompletedPreview() {
             onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
+            imageStorage = null,
         )
     }
 }
@@ -323,6 +324,7 @@ private fun SessionCardInProgressPreview() {
             onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
+            imageStorage = null,
         )
     }
 }
@@ -360,6 +362,7 @@ private fun SessionCardNoRatingPreview() {
             onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
+            imageStorage = null,
         )
     }
 }
@@ -386,7 +389,7 @@ private fun SessionCardFahrenheitPreview() {
                 photos = emptyList(),
                 syncStatus = SyncStatus.LOCAL_ONLY,
                 rating = 3.5f,
-                notes = null
+                notes = null,
             ),
             teaName = "Ti Kuan Yin Oolong",
             teaTypeName = "Oolong",
@@ -397,6 +400,7 @@ private fun SessionCardFahrenheitPreview() {
             onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
+            imageStorage = null,
         )
     }
 }
@@ -434,6 +438,7 @@ private fun SessionCardLongNamesPreview() {
             onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
+            imageStorage = null,
         )
     }
 }

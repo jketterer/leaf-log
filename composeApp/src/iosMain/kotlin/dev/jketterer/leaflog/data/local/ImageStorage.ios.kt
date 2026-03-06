@@ -31,6 +31,7 @@ actual class ImageStorage {
     }
 
     actual fun resolveImagePath(path: String): String {
+        if (path.startsWith("http")) return path
         if (!path.startsWith("/")) {
             return NSHomeDirectory() + "/Documents/$path"
         }

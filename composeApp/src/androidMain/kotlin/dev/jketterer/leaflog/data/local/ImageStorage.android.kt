@@ -10,7 +10,8 @@ actual class ImageStorage(private val context: Context) {
         File(context.filesDir, subdirectory).also { it.mkdirs() }
 
     actual fun resolveImagePath(path: String): String =
-        if (path.startsWith("/")) path else File(context.filesDir, path).absolutePath
+        if (path.startsWith("/") || path.startsWith("http")) path
+        else File(context.filesDir, path).absolutePath
 
     actual suspend fun saveImage(imageBytes: ByteArray, fileName: String, subdirectory: String): String =
         withContext(Dispatchers.IO) {

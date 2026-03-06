@@ -5,10 +5,16 @@ import LeafLogShared
 @available(iOS 16.2, *)
 final class LiveActivityManager: NSObject, LiveActivityService {
     private var activity: Activity<TeaTimerAttributes>?
+    /// Automatically ends the Live Activity when the timer completes, even if the app is
+    /// backgrounded or suspended. Task.sleep uses ContinuousClock which advances during
+    /// process suspension, so this fires immediately when the app resumes after the timer ends.
+    private var completionTask: Task<Void, Never>?
 
     func start(teaName: String, steepNumber: Int32, totalSeconds: Double,
                remainingSeconds: Double, sessionId: String?) {
         // End any existing activity
+        completionTask?.cancel()
+        completionTask = nil
         let current = activity
         Task { await current?.end(dismissalPolicy: .immediate) }
         activity = nil
@@ -30,6 +36,8 @@ final class LiveActivityManager: NSObject, LiveActivityService {
             content: .init(state: state, staleDate: staleDate),
             pushType: nil
         )
+
+        scheduleCompletion(after: remainingSeconds)
     }
 
     func update(remainingSeconds: Double, isPaused: Bool) {
@@ -42,11 +50,29 @@ final class LiveActivityManager: NSObject, LiveActivityService {
                 : Date().addingTimeInterval(remainingSeconds + 10)
             await current?.update(ActivityContent(state: state, staleDate: staleDate))
         }
+
+        if isPaused {
+            completionTask?.cancel()
+            completionTask = nil
+        } else {
+            scheduleCompletion(after: remainingSeconds)
+        }
     }
 
     func end() {
+        completionTask?.cancel()
+        completionTask = nil
         let current = activity
         activity = nil
         Task { await current?.end(dismissalPolicy: .immediate) }
+    }
+
+    private func scheduleCompletion(after seconds: Double) {
+        completionTask?.cancel()
+        let activity = self.activity
+        completionTask = Task {
+            try? await Task.sleep(for: .seconds(ceil(seconds)))
+            await activity?.end(dismissalPolicy: .immediate)
+        }
     }
 }

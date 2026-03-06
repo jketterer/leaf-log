@@ -79,11 +79,13 @@ struct LockScreenLiveActivityView: View {
                 Text(formatTime(state.remainingSeconds))
                     .font(.title.monospacedDigit().bold())
                     .foregroundStyle(.secondary)
+                    .fixedSize()
             } else {
                 Text(state.endDate, style: .timer)
                     .font(.title.monospacedDigit().bold())
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText(countsDown: true))
+                    .fixedSize()
             }
         }
         .padding()

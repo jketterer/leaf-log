@@ -33,10 +33,12 @@ import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.regular.Heart
 import compose.icons.fontawesomeicons.solid.Heart
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Instant
+import org.koin.compose.koinInject
 
 /**
  * Card component displaying tea summary information.
@@ -53,6 +55,7 @@ fun TeaCard(
     teaTypeColorHex: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
+    imageStorage: ImageStorage = koinInject(),
 ) {
     val accentColor = teaTypeColorHex?.hexToColor()
 
@@ -86,7 +89,7 @@ fun TeaCard(
                 // Tea photo
                 if (tea.photos.isNotEmpty()) {
                     AsyncImage(
-                        model = tea.photos.first(),
+                        model = imageStorage.resolveImagePath(tea.photos.first()),
                         contentDescription = tea.name,
                         modifier = Modifier
                             .size(64.dp)

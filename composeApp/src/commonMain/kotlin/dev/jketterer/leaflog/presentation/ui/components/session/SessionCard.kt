@@ -53,6 +53,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaflog.composeapp.generated.resources.Res
 import leaflog.composeapp.generated.resources.ic_tea_leaf
@@ -60,6 +61,7 @@ import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
 import kotlin.time.toDuration
+import org.koin.compose.koinInject
 
 /**
  * Card component displaying session summary information.
@@ -77,7 +79,8 @@ fun SessionCard(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     canBrewAgain: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    imageStorage: ImageStorage = koinInject(),
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showPhotoViewer by remember { mutableStateOf(false) }
@@ -97,7 +100,7 @@ fun SessionCard(
             // Tea photo
             if (session.photos.isNotEmpty()) {
                 AsyncImage(
-                    model = session.photos.first(),
+                    model = imageStorage.resolveImagePath(session.photos.first()),
                     contentDescription = teaName,
                     modifier = Modifier
                         .size(64.dp)
@@ -107,7 +110,7 @@ fun SessionCard(
                 )
             } else if (teaPhotoUrl != null) {
                 AsyncImage(
-                    model = teaPhotoUrl,
+                    model = imageStorage.resolveImagePath(teaPhotoUrl),
                     contentDescription = teaName,
                     modifier = Modifier
                         .size(64.dp)
@@ -242,7 +245,7 @@ fun SessionCard(
 
     if (showPhotoViewer && session.photos.isNotEmpty()) {
         FullscreenImageViewer(
-            photos = session.photos,
+            photos = session.photos.map { imageStorage.resolveImagePath(it) },
             initialIndex = 0,
             onDismiss = { showPhotoViewer = false },
         )

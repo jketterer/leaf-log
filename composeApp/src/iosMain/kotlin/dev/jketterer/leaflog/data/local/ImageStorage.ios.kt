@@ -30,6 +30,17 @@ actual class ImageStorage {
         return dir
     }
 
+    actual fun resolveImagePath(path: String): String {
+        if (!path.startsWith("/")) {
+            return NSHomeDirectory() + "/Documents/$path"
+        }
+        val docsMarker = "/Documents/"
+        val docsIndex = path.indexOf(docsMarker)
+        if (docsIndex < 0) return path
+        val relativePart = path.substring(docsIndex + docsMarker.length)
+        return NSHomeDirectory() + "/Documents/$relativePart"
+    }
+
     actual suspend fun saveImage(
         imageBytes: ByteArray,
         fileName: String,
@@ -41,16 +52,16 @@ actual class ImageStorage {
                 NSData.create(bytes = allocArrayOf(imageBytes), length = imageBytes.size.toULong())
             }
             data.writeToFile(destPath, atomically = true)
-            destPath
+            "$subdirectory/$fileName"
         }
 
     actual suspend fun deleteImage(path: String) = withContext(Dispatchers.IO) {
-        NSFileManager.defaultManager.removeItemAtPath(path, error = null)
+        NSFileManager.defaultManager.removeItemAtPath(resolveImagePath(path), error = null)
         Unit
     }
 
     actual suspend fun readImage(path: String): ByteArray? = withContext(Dispatchers.IO) {
-        val data = NSData.create(contentsOfFile = path) ?: return@withContext null
+        val data = NSData.create(contentsOfFile = resolveImagePath(path)) ?: return@withContext null
         val length = data.length.toInt()
         if (length == 0) return@withContext null
         ByteArray(length).also { bytes ->

@@ -26,11 +26,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
+import org.koin.compose.koinInject
 
 /**
  * Dropdown selector for brewing vessel.
@@ -46,6 +48,7 @@ fun VesselSelector(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
+    imageStorage: ImageStorage = koinInject(),
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -88,7 +91,7 @@ fun VesselSelector(
                             ) {
                                 if (vessel.imagePath != null) {
                                     AsyncImage(
-                                        model = vessel.imagePath,
+                                        model = imageStorage.resolveImagePath(vessel.imagePath),
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(24.dp)

@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,11 +63,14 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -150,6 +155,8 @@ private fun TeaDetailContent(
     state: TeaDetailState,
     onIntent: (TeaDetailIntent) -> Unit,
 ) {
+    val imageStorage: ImageStorage = koinInject()
+    var expandedPhotoIndex by remember { mutableIntStateOf(-1) }
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -240,16 +247,14 @@ private fun TeaDetailContent(
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
-                                    items(
-                                        items = state.tea.photos,
-                                        key = { it },
-                                    ) { photoUri ->
+                                    items(state.tea.photos.size) { index ->
                                         AsyncImage(
-                                            model = photoUri,
+                                            model = imageStorage.resolveImagePath(state.tea.photos[index]),
                                             contentDescription = "Tea photo",
                                             modifier = Modifier
                                                 .size(120.dp)
-                                                .clip(MaterialTheme.shapes.medium),
+                                                .clip(MaterialTheme.shapes.medium)
+                                                .clickable { expandedPhotoIndex = index },
                                             contentScale = ContentScale.Crop,
                                         )
                                     }
@@ -440,6 +445,14 @@ private fun TeaDetailContent(
             ) {
                 Text("🍵 Brew This Tea")
             }
+        }
+
+        if (expandedPhotoIndex >= 0 && state.tea != null) {
+            FullscreenImageViewer(
+                photos = state.tea.photos.map { imageStorage.resolveImagePath(it) },
+                initialIndex = expandedPhotoIndex,
+                onDismiss = { expandedPhotoIndex = -1 },
+            )
         }
 
         state.error?.let { error ->

@@ -31,9 +31,11 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 
 @Composable
 fun PhotoGrid(
@@ -42,6 +44,7 @@ fun PhotoGrid(
     onRemovePhoto: (String) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    imageStorage: ImageStorage = koinInject(),
 ) {
     val scope = rememberCoroutineScope()
     var expandedPhotoIndex by remember { mutableIntStateOf(-1) }
@@ -58,7 +61,7 @@ fun PhotoGrid(
                 itemsIndexed(photos, key = { _, path -> path }) { index, photoPath ->
                     Box {
                         AsyncImage(
-                            model = photoPath,
+                            model = imageStorage.resolveImagePath(photoPath),
                             contentDescription = "Session photo",
                             modifier = Modifier
                                 .size(80.dp)
@@ -102,7 +105,7 @@ fun PhotoGrid(
 
     if (expandedPhotoIndex >= 0) {
         FullscreenImageViewer(
-            photos = photos,
+            photos = photos.map { imageStorage.resolveImagePath(it) },
             initialIndex = expandedPhotoIndex,
             onDismiss = { expandedPhotoIndex = -1 },
         )

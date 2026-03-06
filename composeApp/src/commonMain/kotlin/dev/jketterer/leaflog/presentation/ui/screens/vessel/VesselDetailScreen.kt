@@ -48,8 +48,10 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +60,8 @@ fun VesselDetailScreen(
     vesselId: String,
     onNavigateBack: () -> Unit,
     onNavigateToEditVessel: (String) -> Unit,
-    viewModel: VesselDetailViewModel = koinViewModel()
+    viewModel: VesselDetailViewModel = koinViewModel(),
+    imageStorage: ImageStorage = koinInject(),
 ) {
     val state by viewModel.state.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
@@ -182,7 +185,7 @@ fun VesselDetailScreen(
                                 // Large image or icon
                                 if (state.vessel!!.imagePath != null) {
                                     AsyncImage(
-                                        model = state.vessel!!.imagePath,
+                                        model = imageStorage.resolveImagePath(state.vessel!!.imagePath!!),
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(80.dp)

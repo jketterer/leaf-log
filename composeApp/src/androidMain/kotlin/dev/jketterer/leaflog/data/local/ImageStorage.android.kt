@@ -9,15 +9,18 @@ actual class ImageStorage(private val context: Context) {
     private fun getImagesDir(subdirectory: String): File =
         File(context.filesDir, subdirectory).also { it.mkdirs() }
 
+    actual fun resolveImagePath(path: String): String =
+        if (path.startsWith("/")) path else File(context.filesDir, path).absolutePath
+
     actual suspend fun saveImage(imageBytes: ByteArray, fileName: String, subdirectory: String): String =
         withContext(Dispatchers.IO) {
             val destFile = File(getImagesDir(subdirectory), fileName)
             destFile.writeBytes(imageBytes)
-            destFile.absolutePath
+            "$subdirectory/$fileName"
         }
 
     actual suspend fun deleteImage(path: String) = withContext(Dispatchers.IO) {
-        val file = File(path)
+        val file = File(resolveImagePath(path))
         if (file.exists()) {
             file.delete()
         }
@@ -25,7 +28,7 @@ actual class ImageStorage(private val context: Context) {
     }
 
     actual suspend fun readImage(path: String): ByteArray? = withContext(Dispatchers.IO) {
-        File(path).takeIf { it.exists() }?.readBytes()
+        File(resolveImagePath(path)).takeIf { it.exists() }?.readBytes()
     }
 
     actual fun getTempDir(): String = context.cacheDir.absolutePath

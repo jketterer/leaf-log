@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,6 +58,7 @@ import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.regular.Star
 import compose.icons.fontawesomeicons.solid.Star
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -77,12 +78,13 @@ import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfig
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
 import kotlin.time.toDuration
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 /**
  * Session Detail Screen - displays complete session information.
@@ -94,7 +96,7 @@ fun SessionDetailScreen(
     onNavigateToEdit: (String, Boolean) -> Unit,
     onNavigateToTea: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
-    viewModel: SessionDetailViewModel = koinViewModel()
+    viewModel: SessionDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -210,12 +212,16 @@ private fun SessionDetailContent(
                                     val localDateTime = state.parentSession.timestamp
                                         .toLocalDateTime(TimeZone.currentSystemDefault())
                                     val dateTimeString = buildString {
-                                        append(localDateTime.month.name.lowercase().replaceFirstChar { it.uppercase() })
+                                        append(
+                                            localDateTime.month.name.lowercase()
+                                                .replaceFirstChar { it.uppercase() })
                                         append(" ${localDateTime.day}, ${localDateTime.year}")
                                         append(" at ")
-                                        val hour = if (localDateTime.hour == 0) 12 else if (localDateTime.hour > 12) localDateTime.hour - 12 else localDateTime.hour
+                                        val hour =
+                                            if (localDateTime.hour == 0) 12 else if (localDateTime.hour > 12) localDateTime.hour - 12 else localDateTime.hour
                                         val amPm = if (localDateTime.hour < 12) "AM" else "PM"
-                                        val minute = localDateTime.minute.toString().padStart(2, '0')
+                                        val minute =
+                                            localDateTime.minute.toString().padStart(2, '0')
                                         append("$hour:$minute $amPm")
                                     }
                                     Text(
@@ -469,6 +475,7 @@ private fun SteepCard(
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val imageStorage: ImageStorage = koinInject()
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -581,7 +588,7 @@ private fun SteepCard(
                 ) {
                     items(steep.photos.size) { index ->
                         AsyncImage(
-                            model = steep.photos[index],
+                            model = imageStorage.resolveImagePath(steep.photos[index]),
                             contentDescription = "Session photo",
                             modifier = Modifier
                                 .size(72.dp)
@@ -594,7 +601,7 @@ private fun SteepCard(
 
                 if (expandedPhotoIndex >= 0) {
                     FullscreenImageViewer(
-                        photos = steep.photos,
+                        photos = steep.photos.map { imageStorage.resolveImagePath(it) },
                         initialIndex = expandedPhotoIndex,
                         onDismiss = { expandedPhotoIndex = -1 },
                     )

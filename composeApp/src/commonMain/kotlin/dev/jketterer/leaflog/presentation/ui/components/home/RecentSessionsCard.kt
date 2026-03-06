@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
@@ -29,6 +30,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import org.koin.compose.koinInject
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -47,6 +49,7 @@ fun RecentSessionCard(
     onSessionClick: () -> Unit,
     temperatureUnit: TemperatureUnit,
     modifier: Modifier = Modifier,
+    imageStorage: ImageStorage = koinInject(),
 ) {
     Card(
         modifier = modifier
@@ -63,7 +66,7 @@ fun RecentSessionCard(
             // Tea photo thumbnail
             if (session.photos.isNotEmpty()) {
                 AsyncImage(
-                    model = session.photos.first(),
+                    model = imageStorage.resolveImagePath(session.photos.first()),
                     contentDescription = teaName,
                     modifier = Modifier
                         .size(48.dp)
@@ -73,7 +76,7 @@ fun RecentSessionCard(
                 Spacer(modifier = Modifier.width(12.dp))
             } else if (teaPhotoUrl != null) {
                 AsyncImage(
-                    model = teaPhotoUrl,
+                    model = imageStorage.resolveImagePath(teaPhotoUrl),
                     contentDescription = teaName,
                     modifier = Modifier
                         .size(48.dp)

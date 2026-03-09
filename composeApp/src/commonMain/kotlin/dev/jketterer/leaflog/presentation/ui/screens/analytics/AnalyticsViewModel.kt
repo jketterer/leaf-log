@@ -112,8 +112,12 @@ class AnalyticsViewModel(
     private fun toggleWaterUnit() {
         viewModelScope.launch {
             val prefs = preferencesRepository.getPreferences()
-            preferencesRepository.updateVolumeUnit(prefs.volumeUnit.toggle())
-            loadAnalytics()
+            val newUnit = prefs.volumeUnit.toggle()
+            preferencesRepository.updateVolumeUnit(newUnit)
+            val currentWaterMl = _state.value.analytics?.totalWaterMl ?: return@launch
+            _state.update {
+                it.copy(formattedWaterQuantity = VolumeFormatter.format(currentWaterMl, newUnit))
+            }
         }
     }
 

@@ -42,13 +42,10 @@ fun SummaryCard(
     icon: ImageVector? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    Card(
-        onClick = { onClick?.invoke() },
-        enabled = onClick != null,
-        modifier = modifier.fillMaxHeight(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
+    val cardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    val cardElevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    val cardModifier = modifier.fillMaxHeight()
+    val content: @Composable () -> Unit = {
         Column(
             modifier = Modifier
                 .padding(16.dp)
@@ -111,6 +108,22 @@ fun SummaryCard(
                 }
             }
         }
+    }
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = cardModifier,
+            colors = cardColors,
+            elevation = cardElevation,
+            content = { content() },
+        )
+    } else {
+        Card(
+            modifier = cardModifier,
+            colors = cardColors,
+            elevation = cardElevation,
+            content = { content() },
+        )
     }
 }
 

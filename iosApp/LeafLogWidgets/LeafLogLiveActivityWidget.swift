@@ -73,23 +73,23 @@ struct LockScreenLiveActivityView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer()
 
             if state.isPaused {
                 Text(formatTime(state.remainingSeconds))
                     .font(.title.monospacedDigit().bold())
                     .foregroundStyle(.secondary)
-                    .fixedSize()
             } else {
-                Text(state.endDate, style: .timer)
+                Text(timerInterval: Date.now...state.endDate, countsDown: true)
                     .font(.title.monospacedDigit().bold())
                     .foregroundStyle(.primary)
-                    .contentTransition(.numericText(countsDown: true))
-                    .fixedSize()
+                    .multilineTextAlignment(.trailing)
             }
         }
-        .padding()
-        .activityBackgroundTint(Color(.systemBackground))
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .activityBackgroundTint(.black)
         .activitySystemActionForegroundColor(.primary)
     }
 }

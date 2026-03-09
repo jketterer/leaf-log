@@ -1,8 +1,12 @@
 import SwiftUI
 import ComposeApp
+import ActivityKit
+import LeafLogShared
 
 @main
 struct iOSApp: App {
+    @Environment(\.scenePhase) private var scenePhase
+
     init() {
         KoinInitializerKt.doInitKoin()
         if #available(iOS 16.2, *) {
@@ -13,6 +17,13 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                if #available(iOS 16.2, *) {
+                    LiveActivityManager.cleanupStaleActivities()
+                }
+            }
         }
     }
 }

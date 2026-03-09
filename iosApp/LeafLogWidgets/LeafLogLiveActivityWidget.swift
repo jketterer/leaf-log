@@ -63,34 +63,52 @@ struct LockScreenLiveActivityView: View {
     let attributes: TeaTimerAttributes
     let state: TeaTimerAttributes.ContentState
 
+    private var isComplete: Bool {
+        state.remainingSeconds <= 0 || (!state.isPaused && state.endDate <= Date.now)
+    }
+
+    private var statusText: String {
+        if isComplete {
+            return "Complete"
+        } else if state.isPaused {
+            return "Paused"
+        } else {
+            return "Steeping"
+        }
+    }
+
     var body: some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(attributes.teaName)
                     .font(.headline)
                     .lineLimit(1)
-                Text("Steep \(attributes.steepNumber) · \(state.isPaused ? "Paused" : "Steeping")")
+                Text("Steep \(attributes.steepNumber) · \(statusText)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            if state.isPaused {
+            if isComplete {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title)
+                    .foregroundStyle(.green)
+            } else if state.isPaused {
                 Text(formatTime(state.remainingSeconds))
                     .font(.title.monospacedDigit().bold())
                     .foregroundStyle(.secondary)
             } else {
-                Text(timerInterval: Date.now...state.endDate, countsDown: true)
+                Text(state.endDate, style: .timer)
                     .font(.title.monospacedDigit().bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.white)
                     .multilineTextAlignment(.trailing)
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
         .activityBackgroundTint(.black)
-        .activitySystemActionForegroundColor(.primary)
+        .activitySystemActionForegroundColor(.white)
     }
 }
 

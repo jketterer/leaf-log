@@ -10,6 +10,16 @@ final class LiveActivityManager: NSObject, LiveActivityService {
     /// process suspension, so this fires immediately when the app resumes after the timer ends.
     private var completionTask: Task<Void, Never>?
 
+    /// Ends any Live Activities whose timer has elapsed. Called when the app becomes active
+    /// to clean up activities that persisted while the app was suspended or terminated.
+    static func cleanupStaleActivities() {
+        for activity in Activity<TeaTimerAttributes>.activities {
+            if !activity.content.state.isPaused && activity.content.state.endDate < Date() {
+                Task { await activity.end(dismissalPolicy: .immediate) }
+            }
+        }
+    }
+
     func start(teaName: String, steepNumber: Int32, totalSeconds: Double,
                remainingSeconds: Double, sessionId: String?) {
         // End any existing activity

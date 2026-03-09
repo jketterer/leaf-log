@@ -146,6 +146,7 @@ class TimerNotificationServiceImpl : NSObject(),
         didReceiveNotificationResponse: UNNotificationResponse,
         withCompletionHandler: () -> Unit,
     ) {
+        endLiveActivity()
         val userInfo = didReceiveNotificationResponse.notification.request.content.userInfo
         val sessionId = userInfo["sessionId"] as? String
         if (sessionId != null) {

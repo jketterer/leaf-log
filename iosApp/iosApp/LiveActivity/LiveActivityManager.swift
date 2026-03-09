@@ -9,6 +9,9 @@ final class LiveActivityManager: NSObject, LiveActivityService {
     /// backgrounded or suspended. Task.sleep uses ContinuousClock which advances during
     /// process suspension, so this fires immediately when the app resumes after the timer ends.
     private var completionTask: Task<Void, Never>?
+    /// Tracks the in-flight update Task so it can be cancelled when ending the activity,
+    /// preventing a race where an update runs after the end call.
+    private var updateTask: Task<Void, Never>?
 
     /// Ends any Live Activities whose timer has elapsed. Called when the app becomes active
     /// to clean up activities that persisted while the app was suspended or terminated.
@@ -25,6 +28,8 @@ final class LiveActivityManager: NSObject, LiveActivityService {
         // End any existing activity
         completionTask?.cancel()
         completionTask = nil
+        updateTask?.cancel()
+        updateTask = nil
         let current = activity
         Task { await current?.end(dismissalPolicy: .immediate) }
         activity = nil
@@ -52,7 +57,8 @@ final class LiveActivityManager: NSObject, LiveActivityService {
 
     func update(remainingSeconds: Double, isPaused: Bool) {
         let current = activity
-        Task {
+        updateTask?.cancel()
+        updateTask = Task {
             let endDate = isPaused ? Date() : Date().addingTimeInterval(ceil(remainingSeconds))
             let state = TeaTimerAttributes.ContentState(remainingSeconds: remainingSeconds, isPaused: isPaused, endDate: endDate)
             let staleDate = isPaused
@@ -72,6 +78,8 @@ final class LiveActivityManager: NSObject, LiveActivityService {
     func end() {
         completionTask?.cancel()
         completionTask = nil
+        updateTask?.cancel()
+        updateTask = nil
         let current = activity
         activity = nil
         Task { await current?.end(dismissalPolicy: .immediate) }
@@ -86,6 +94,7 @@ final class LiveActivityManager: NSObject, LiveActivityService {
             } catch {
                 return // Task was cancelled; do not end the activity.
             }
+            self.activity = nil
             await activity?.end(dismissalPolicy: .immediate)
         }
     }

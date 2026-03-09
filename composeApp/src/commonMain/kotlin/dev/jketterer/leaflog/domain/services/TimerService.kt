@@ -72,14 +72,16 @@ class TimerService(
 
                 _timerState.update { it.copy(remainingDuration = remaining) }
 
-                // Trigger notification update every second
-                val currentSecond = elapsed.inWholeSeconds
-                if (currentSecond > lastNotificationSecond) {
-                    notificationService.showTimerRunning(state)
-                    lastNotificationSecond = currentSecond
+                // Check if timer completed before sending notification update,
+                // to avoid sending remainingSeconds=0 which races with the end call
+                if (remaining > Duration.ZERO) {
+                    val currentSecond = elapsed.inWholeSeconds
+                    if (currentSecond > lastNotificationSecond) {
+                        notificationService.showTimerRunning(state)
+                        lastNotificationSecond = currentSecond
+                    }
                 }
 
-                // Check if timer completed
                 if (remaining == Duration.ZERO) {
                     val completedState = state.copy(
                         status = TimerStatus.COMPLETE,

@@ -118,6 +118,8 @@ fun TeaCard(
                         text = detailInfo.joinToString(" · "),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     val hasBrews = tea.totalSessions > 0
                     if (hasBrews || tea.averageRating != null) {

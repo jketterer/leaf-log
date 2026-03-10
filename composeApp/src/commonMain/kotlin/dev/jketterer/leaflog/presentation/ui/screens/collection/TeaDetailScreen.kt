@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +39,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,29 +48,31 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import androidx.compose.ui.graphics.vector.ImageVector
 import compose.icons.FeatherIcons
 import compose.icons.FontAwesomeIcons
 import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.MoreVertical
-import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Star
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.regular.Heart
 import compose.icons.fontawesomeicons.solid.Heart
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
@@ -148,6 +155,7 @@ fun TeaDetailScreen(
     TeaDetailContent(
         state = state,
         onIntent = viewModel::onIntent,
+        imageStorage = koinInject(),
     )
 }
 
@@ -156,9 +164,11 @@ fun TeaDetailScreen(
 private fun TeaDetailContent(
     state: TeaDetailState,
     onIntent: (TeaDetailIntent) -> Unit,
+    imageStorage: ImageStorage? = null,
 ) {
-    val imageStorage: ImageStorage = koinInject()
     var expandedPhotoIndex by remember { mutableIntStateOf(-1) }
+    val listState = rememberLazyListState()
+    val nameHeadingVisible by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -168,7 +178,19 @@ private fun TeaDetailContent(
                 .padding(bottom = 80.dp),
         ) {
             TopAppBar(
-                title = { Text(state.tea?.name ?: "Tea Details") },
+                title = {
+                    AnimatedVisibility(
+                        visible = !nameHeadingVisible,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) {
+                        Text(
+                            text = state.tea?.name ?: "Tea Details",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(TeaDetailIntent.BackClicked) }) {
                         Icon(
@@ -239,12 +261,20 @@ private fun TeaDetailContent(
 
                 state.tea != null -> {
                     LazyColumn(
+                        state = listState,
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
+                        item(key = "name") {
+                            Text(
+                                text = state.tea.name,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
                         // Photo gallery
-                        if (state.tea.photos.isNotEmpty()) {
+                        if (state.tea.photos.isNotEmpty() && imageStorage != null) {
                             item(key = "photos") {
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -411,6 +441,7 @@ private fun TeaDetailContent(
                                         onIntent(TeaDetailIntent.DeleteSessionClicked(session.id))
                                     },
                                     modifier = Modifier.animateItem(),
+                                    imageStorage = imageStorage,
                                 )
                             }
                         }
@@ -455,7 +486,7 @@ private fun TeaDetailContent(
             }
         }
 
-        if (expandedPhotoIndex >= 0 && state.tea != null) {
+        if (expandedPhotoIndex >= 0 && state.tea != null && imageStorage != null) {
             FullscreenImageViewer(
                 photos = state.tea.photos.map { imageStorage.resolveImagePath(it) },
                 initialIndex = expandedPhotoIndex,
@@ -563,15 +594,20 @@ private fun DetailRow(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
         )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
             verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f),
         ) {
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.End,
             )
             if (trailingIcon != null) {
                 Icon(
@@ -592,7 +628,7 @@ private fun TeaDetailScreenPreview() {
             state = TeaDetailState(
                 tea = Tea(
                     id = "tea-1",
-                    name = "Dragon Well",
+                    name = "Dragon Well Imperial Grade Long Jing of Yunnan",
                     teaTypeId = "green",
                     origin = "Hangzhou, China",
                     producer = "West Lake Tea Company",

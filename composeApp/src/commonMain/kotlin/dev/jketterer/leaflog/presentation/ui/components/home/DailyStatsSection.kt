@@ -20,6 +20,9 @@ import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Layers
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaflog.composeapp.generated.resources.Res
+import leaflog.composeapp.generated.resources.ic_tea_leaf
+import org.jetbrains.compose.resources.vectorResource
 
 /**
  * Section displaying daily statistics with three cards and a View All action.
@@ -70,7 +73,7 @@ fun DailyStatsSection(
             )
             DailyStatsCard(
                 value = stats.formattedWaterQuantity,
-                label = "Water",
+                label = "Water Used",
                 icon = FeatherIcons.Droplet,
                 onClick = onWaterCardClick,
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -80,7 +83,7 @@ fun DailyStatsSection(
             DailyStatsCard(
                 value = stats.differentTeasCount.toString(),
                 label = if (stats.differentTeasCount == 1) "Tea" else "Teas",
-                icon = FeatherIcons.Layers,
+                icon = vectorResource(Res.drawable.ic_tea_leaf),
                 onClick = onTeasCardClick,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer,

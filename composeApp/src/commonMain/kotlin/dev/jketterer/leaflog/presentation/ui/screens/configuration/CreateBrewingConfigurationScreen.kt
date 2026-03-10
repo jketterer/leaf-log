@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.configuration
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,7 +14,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -84,51 +84,24 @@ private fun CreateBrewingConfigurationContent(
     onIntent: (CreateBrewingConfigurationIntent) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (state.isEditMode) "Edit Brewing Method" else "Add Brewing Method") },
-                navigationIcon = {
-                    IconButton(onClick = { onIntent(CreateBrewingConfigurationIntent.NavigateBack) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
-                    }
-                },
-            )
-        },
-        bottomBar = {
-            Surface(tonalElevation = 3.dp) {
-                Button(
-                    onClick = { onIntent(CreateBrewingConfigurationIntent.Save) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    enabled = state.canSave && !state.isSaving,
-                ) {
-                    Text("Save")
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text(if (state.isEditMode) "Edit Brewing Method" else "Add Brewing Method") },
+            navigationIcon = {
+                IconButton(onClick = { onIntent(CreateBrewingConfigurationIntent.NavigateBack) }) {
+                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                 }
-            }
-        },
-    ) { paddingValues ->
-        if (state.isLoading) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-            return@Scaffold
-        }
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+            },
+        )
+        Box(modifier = Modifier.weight(1f)) {
+            if (state.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
             // Vessel selector
             item(key = "vessel") {
                 VesselSelector(
@@ -337,6 +310,19 @@ private fun CreateBrewingConfigurationContent(
                     },
                     modifier = Modifier.fillMaxWidth(),
                 )
+                }
+            }
+        }
+        }
+        Surface(tonalElevation = 3.dp) {
+            Button(
+                onClick = { onIntent(CreateBrewingConfigurationIntent.Save) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                enabled = state.canSave && !state.isSaving,
+            ) {
+                Text("Save")
             }
         }
     }

@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -12,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -73,63 +73,62 @@ fun VesselListScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text("Brewing Vessels") },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.onIntent(VesselListIntent.BackClicked) }) {
                         Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                     }
-                }
+                },
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.onIntent(VesselListIntent.AddVesselClicked) }
-            ) {
-                Icon(FeatherIcons.Plus, contentDescription = "Add vessel")
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                state.isLoading && state.vessels.isEmpty() -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    state.isLoading && state.vessels.isEmpty() -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
 
-                state.vessels.isEmpty() -> {
-                    Text(
-                        text = "No vessels found",
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                    state.vessels.isEmpty() -> {
+                        Text(
+                            text = "No vessels found",
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
 
-                else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(
-                            items = state.vessels,
-                            key = { it.id }
-                        ) { vessel ->
-                            VesselCard(
-                                vessel = vessel,
-                                volumeUnit = state.userPreferences.volumeUnit,
-                                onClick = { viewModel.onIntent(VesselListIntent.VesselClicked(vessel.id)) }
-                            )
+                    else -> {
+                        LazyColumn(
+                            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(
+                                items = state.vessels,
+                                key = { it.id },
+                            ) { vessel ->
+                                VesselCard(
+                                    vessel = vessel,
+                                    volumeUnit = state.userPreferences.volumeUnit,
+                                    onClick = { viewModel.onIntent(VesselListIntent.VesselClicked(vessel.id)) },
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+        FloatingActionButton(
+            onClick = { viewModel.onIntent(VesselListIntent.AddVesselClicked) },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        ) {
+            Icon(FeatherIcons.Plus, contentDescription = "Add vessel")
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }

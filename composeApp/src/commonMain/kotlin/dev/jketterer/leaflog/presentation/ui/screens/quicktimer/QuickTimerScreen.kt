@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -84,40 +83,35 @@ private fun QuickTimerContent(
     state: QuickTimerState,
     onIntent: (QuickTimerIntent) -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        when (state.status) {
-                            TimerStatus.RUNNING -> "Quick Timer"
-                            TimerStatus.PAUSED -> "Paused"
-                            TimerStatus.COMPLETE -> "Complete"
-                            else -> "Quick Timer"
-                        },
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { onIntent(QuickTimerIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                Text(
+                    when (state.status) {
+                        TimerStatus.RUNNING -> "Quick Timer"
+                        TimerStatus.PAUSED -> "Paused"
+                        TimerStatus.COMPLETE -> "Complete"
+                        else -> "Quick Timer"
+                    },
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = { onIntent(QuickTimerIntent.BackClicked) }) {
+                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                }
+            },
+            actions = {
+                if (state.hasRequiredDetails) {
+                    IconButton(onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) }) {
+                        Icon(FeatherIcons.Edit, contentDescription = "Edit brewing details")
                     }
-                },
-                actions = {
-                    if (state.hasRequiredDetails) {
-                        IconButton(onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) }) {
-                            Icon(FeatherIcons.Edit, contentDescription = "Edit brewing details")
-                        }
-                    }
-                },
-            )
-        },
-    ) { paddingValues ->
+                }
+            },
+        )
         when {
             state.isLoading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
@@ -128,9 +122,7 @@ private fun QuickTimerContent(
                 QuickTimerRunningContent(
                     state = state,
                     onIntent = onIntent,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

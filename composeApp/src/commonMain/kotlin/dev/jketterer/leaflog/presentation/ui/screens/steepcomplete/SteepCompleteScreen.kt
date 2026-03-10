@@ -26,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -110,73 +109,64 @@ private fun SteepCompleteContent(
     state: SteepCompleteState,
     onIntent: (SteepCompleteIntent) -> Unit,
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text("Steep ${state.session?.steepNumber ?: ""} Complete")
-                },
-                navigationIcon = {
-                    IconButton(onClick = { onIntent(SteepCompleteIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                Text("Steep ${state.session?.steepNumber ?: ""} Complete")
+            },
+            navigationIcon = {
+                IconButton(onClick = { onIntent(SteepCompleteIntent.BackClicked) }) {
+                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                }
+            },
+            actions = {
+                IconButton(onClick = { onIntent(SteepCompleteIntent.ShowDiscardConfirmation) }) {
+                    Icon(
+                        FeatherIcons.Trash2,
+                        contentDescription = "Discard session",
+                        tint = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+        )
+        Box(modifier = Modifier.weight(1f)) {
+            when {
+                state.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
                     }
-                },
-                actions = {
-                    IconButton(onClick = { onIntent(SteepCompleteIntent.ShowDiscardConfirmation) }) {
-                        Icon(
-                            FeatherIcons.Trash2,
-                            contentDescription = "Discard session",
-                            tint = MaterialTheme.colorScheme.error,
+                }
+
+                state.error != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = state.error,
+                            color = MaterialTheme.colorScheme.error,
                         )
                     }
-                },
-            )
-        },
-        bottomBar = {
-            if (!state.isLoading && state.session != null) {
-                SteepCompleteBottomBar(
-                    isLoading = state.isLoading,
-                    onShowNextSteep = { onIntent(SteepCompleteIntent.ShowNextSteepDialog) },
-                    onFinishSession = { onIntent(SteepCompleteIntent.FinishSession) },
-                )
-            }
-        },
-    ) { paddingValues ->
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
                 }
-            }
 
-            state.error != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = state.error,
-                        color = MaterialTheme.colorScheme.error,
+                else -> {
+                    SteepCompleteBody(
+                        state = state,
+                        onIntent = onIntent,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
-
-            else -> {
-                SteepCompleteBody(
-                    state = state,
-                    onIntent = onIntent,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                )
-            }
+        }
+        if (!state.isLoading && state.session != null) {
+            SteepCompleteBottomBar(
+                isLoading = state.isLoading,
+                onShowNextSteep = { onIntent(SteepCompleteIntent.ShowNextSteepDialog) },
+                onFinishSession = { onIntent(SteepCompleteIntent.FinishSession) },
+            )
         }
     }
 

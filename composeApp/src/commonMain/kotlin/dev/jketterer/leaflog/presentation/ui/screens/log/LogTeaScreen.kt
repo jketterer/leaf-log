@@ -26,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -143,22 +142,17 @@ private fun LogTeaContent(
     val optionalSummary = optionalSummaryParts.joinToString(" · ")
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Log Tea Session") },
-                    navigationIcon = {
-                        IconButton(onClick = { onIntent(LogTeaIntent.BackClicked) }) {
-                            Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
-                        }
-                    },
-                )
-            },
-        ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize()) {
+            TopAppBar(
+                title = { Text("Log Tea Session") },
+                navigationIcon = {
+                    IconButton(onClick = { onIntent(LogTeaIntent.BackClicked) }) {
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                    }
+                },
+            )
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {

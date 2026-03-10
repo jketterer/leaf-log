@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Icon
@@ -94,8 +95,10 @@ fun AppNavigation() {
     ) { paddingValues ->
         NavDisplay(
             backStack = backStack,
-            modifier = Modifier.fillMaxSize()
-                .padding(bottom = paddingValues.calculateBottomPadding()),
+            modifier = Modifier
+                .padding(bottom = paddingValues.calculateBottomPadding())
+                .imePadding()
+                .fillMaxSize(),
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),

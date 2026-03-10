@@ -22,7 +22,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -98,8 +97,8 @@ private fun TeaTypeListContent(
         }
     }
 
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text("Tea Types") },
                 navigationIcon = {
@@ -108,52 +107,51 @@ private fun TeaTypeListContent(
                     }
                 },
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onIntent(TeaTypeListIntent.AddClicked) },
-            ) {
-                Icon(FeatherIcons.Plus, contentDescription = "Add tea type")
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-        ) {
-            when {
-                state.isLoading && state.teaTypes.isEmpty() -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
-                state.teaTypes.isEmpty() -> {
-                    Text(
-                        text = "No tea types found",
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
-                else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(
-                            items = state.teaTypes,
-                            key = { it.id },
-                        ) { teaType ->
-                            TeaTypeCard(
-                                teaType = teaType,
-                                userPreferences = state.userPreferences,
-                                onClick = { onIntent(TeaTypeListIntent.TeaTypeClicked(teaType.id)) },
-                            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    state.isLoading && state.teaTypes.isEmpty() -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
+                    state.teaTypes.isEmpty() -> {
+                        Text(
+                            text = "No tea types found",
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
+                    else -> {
+                        LazyColumn(
+                            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(
+                                items = state.teaTypes,
+                                key = { it.id },
+                            ) { teaType ->
+                                TeaTypeCard(
+                                    teaType = teaType,
+                                    userPreferences = state.userPreferences,
+                                    onClick = { onIntent(TeaTypeListIntent.TeaTypeClicked(teaType.id)) },
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+        FloatingActionButton(
+            onClick = { onIntent(TeaTypeListIntent.AddClicked) },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+        ) {
+            Icon(FeatherIcons.Plus, contentDescription = "Add tea type")
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     }
 }
 

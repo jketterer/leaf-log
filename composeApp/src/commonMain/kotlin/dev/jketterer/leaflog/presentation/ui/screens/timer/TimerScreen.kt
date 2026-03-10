@@ -15,7 +15,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -102,64 +101,59 @@ private fun TimerContent(
 ) {
     var showOverflowMenu by remember { mutableStateOf(false) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        when (state.timerState.status) {
-                            TimerStatus.RUNNING -> "Brewing"
-                            TimerStatus.PAUSED -> "Paused"
-                            else -> "Timer"
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = {
+                Text(
+                    when (state.timerState.status) {
+                        TimerStatus.RUNNING -> "Brewing"
+                        TimerStatus.PAUSED -> "Paused"
+                        else -> "Timer"
+                    },
+                )
+            },
+            navigationIcon = {
+                IconButton(onClick = { onIntent(TimerIntent.BackClicked) }) {
+                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                }
+            },
+            actions = {
+                IconButton(onClick = { onIntent(TimerIntent.EditSession) }) {
+                    Icon(FeatherIcons.Edit, contentDescription = "Edit parameters")
+                }
+                IconButton(onClick = { showOverflowMenu = true }) {
+                    Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
+                }
+                DropdownMenu(
+                    expanded = showOverflowMenu,
+                    onDismissRequest = { showOverflowMenu = false },
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "Cancel Session",
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        },
+                        onClick = {
+                            showOverflowMenu = false
+                            onIntent(TimerIntent.DiscardSession)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                FeatherIcons.Trash2,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
                         },
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { onIntent(TimerIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { onIntent(TimerIntent.EditSession) }) {
-                        Icon(FeatherIcons.Edit, contentDescription = "Edit parameters")
-                    }
-                    IconButton(onClick = { showOverflowMenu = true }) {
-                        Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
-                    }
-                    DropdownMenu(
-                        expanded = showOverflowMenu,
-                        onDismissRequest = { showOverflowMenu = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Cancel Session",
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            },
-                            onClick = {
-                                showOverflowMenu = false
-                                onIntent(TimerIntent.DiscardSession)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    FeatherIcons.Trash2,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            },
-                        )
-                    }
-                },
-            )
-        },
-    ) { paddingValues ->
+                }
+            },
+        )
         when {
             state.isLoading -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
@@ -170,9 +164,7 @@ private fun TimerContent(
                 TimerRunningContent(
                     state = state,
                     onIntent = onIntent,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

@@ -87,8 +87,7 @@ struct LockScreenLiveActivityView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             if isComplete {
                 Image(systemName: "checkmark.circle.fill")
@@ -98,11 +97,12 @@ struct LockScreenLiveActivityView: View {
                 Text(formatTime(state.remainingSeconds))
                     .font(.title.monospacedDigit().bold())
                     .foregroundStyle(.secondary)
+                    .fixedSize()
             } else {
                 Text(state.endDate, style: .timer)
                     .font(.title.monospacedDigit().bold())
                     .foregroundStyle(.white)
-                    .multilineTextAlignment(.trailing)
+                    .fixedSize()
             }
         }
         .padding(.horizontal, 20)

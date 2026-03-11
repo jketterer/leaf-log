@@ -149,12 +149,25 @@ class SteepCompleteViewModel(
                 // Load previous steeps
                 val previousSteeps = loadPreviousSteeps(session)
 
+                // Pre-fill rating from tea's average if the session has no rating yet
+                val suggestedRating = if (session.rating == null && tea?.averageRating != null) {
+                    kotlin.math.round(tea.averageRating).coerceIn(1f, 5f)
+                } else {
+                    null
+                }
+
+                if (suggestedRating != null) {
+                    teaSessionRepository.upsert(
+                        session.copy(rating = suggestedRating, updatedAt = Clock.System.now()),
+                    )
+                }
+
                 _state.update {
                     it.copy(
                         session = session,
                         tea = tea,
                         vessel = vessel,
-                        rating = session.rating ?: 0f,
+                        rating = session.rating ?: suggestedRating ?: 0f,
                         notes = session.notes ?: "",
                         photos = session.photos,
                         previousSteeps = previousSteeps,

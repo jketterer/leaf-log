@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,8 @@ class TeaCollectionViewModel(
 
     private val _state = MutableStateFlow(TeaCollectionState())
     val state: StateFlow<TeaCollectionState> = _state.asStateFlow()
+
+    private var teaCollectionJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -85,27 +88,30 @@ class TeaCollectionViewModel(
             }
     }
 
-    private fun collectTeas() = viewModelScope.launch {
-        val teasFlow = when (_state.value.selectedFilter) {
-            FilterType.ALL -> teaRepository.getAllFlow()
-            FilterType.FAVORITES -> teaRepository.getFavoritesFlow()
-            FilterType.BY_TYPE -> _state.value.selectedTypeId?.let { typeId ->
-                teaRepository.getByTypeFlow(typeId)
-            } ?: teaRepository.getAllFlow()
-        }
-
-        teasFlow
-            .catchError("Failed to load teas")
-            .collect { teas ->
-                val sorted = sortTeas(teas, _state.value.selectedSortOption)
-                _state.update {
-                    it.copy(
-                        teas = sorted,
-                        isLoading = false,
-                        isEmpty = teas.isEmpty(),
-                    )
-                }
+    private fun collectTeas() {
+        teaCollectionJob?.cancel()
+        teaCollectionJob = viewModelScope.launch {
+            val teasFlow = when (_state.value.selectedFilter) {
+                FilterType.ALL -> teaRepository.getAllFlow()
+                FilterType.FAVORITES -> teaRepository.getFavoritesFlow()
+                FilterType.BY_TYPE -> _state.value.selectedTypeId?.let { typeId ->
+                    teaRepository.getByTypeFlow(typeId)
+                } ?: teaRepository.getAllFlow()
             }
+
+            teasFlow
+                .catchError("Failed to load teas")
+                .collect { teas ->
+                    val sorted = sortTeas(teas, _state.value.selectedSortOption)
+                    _state.update {
+                        it.copy(
+                            teas = sorted,
+                            isLoading = false,
+                            isEmpty = teas.isEmpty(),
+                        )
+                    }
+                }
+        }
     }
 
     private fun <T> Flow<T>.catchError(message: String): Flow<T> {

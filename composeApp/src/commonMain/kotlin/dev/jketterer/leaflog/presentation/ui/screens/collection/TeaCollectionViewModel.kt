@@ -139,6 +139,7 @@ class TeaCollectionViewModel(
             return
         }
 
+        teaCollectionJob?.cancel()
         viewModelScope.launch {
             try {
                 val results = searchTeaUseCase(query)

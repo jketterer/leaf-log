@@ -19,13 +19,15 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.SearchBar
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +35,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -40,6 +45,8 @@ import compose.icons.feathericons.Check
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.Sliders
+import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaFilterChips
@@ -91,22 +98,54 @@ private fun TeaCollectionContent(
             modifier = Modifier.fillMaxSize(),
         ) {
             if (showSearchBar && state.selectedTab == CollectionTab.TEAS) {
-                SearchBar(
-                    query = state.searchQuery,
-                    onQueryChange = { query ->
-                        onIntent(TeaCollectionIntent.SearchQueryChanged(query))
-                    },
-                    onSearch = {},
-                    active = true,
-                    onActiveChange = { active ->
-                        if (!active) {
+                val focusRequester = remember { FocusRequester() }
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
+                TopAppBar(
+                    navigationIcon = {
+                        IconButton(onClick = {
                             showSearchBar = false
                             onIntent(TeaCollectionIntent.SearchQueryChanged(""))
+                        }) {
+                            Icon(
+                                imageVector = FeatherIcons.ArrowLeft,
+                                contentDescription = "Close search",
+                            )
                         }
                     },
-                    placeholder = { Text("Search teas...") },
-                    modifier = Modifier.fillMaxWidth()
-                ) {}
+                    title = {
+                        TextField(
+                            value = state.searchQuery,
+                            onValueChange = { query ->
+                                onIntent(TeaCollectionIntent.SearchQueryChanged(query))
+                            },
+                            placeholder = { Text("Search teas...") },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
+                        )
+                    },
+                    actions = {
+                        if (state.searchQuery.isNotEmpty()) {
+                            IconButton(onClick = {
+                                onIntent(TeaCollectionIntent.SearchQueryChanged(""))
+                            }) {
+                                Icon(
+                                    imageVector = FeatherIcons.X,
+                                    contentDescription = "Clear search",
+                                )
+                            }
+                        }
+                    },
+                )
             } else {
                 TopAppBar(
                     title = { Text("Collection") },
@@ -227,21 +266,23 @@ private fun TeasTabContent(
     onNavigateToTeaDetail: (String) -> Unit,
     onNavigateToAddTea: () -> Unit,
 ) {
-    // Filter chips
-    TeaFilterChips(
-        teaTypes = state.teaTypes,
-        selectedFilter = state.selectedFilter,
-        selectedTypeId = state.selectedTypeId,
-        onFilterSelected = { filterType, typeId ->
-            when (filterType) {
-                FilterType.ALL -> onIntent(TeaCollectionIntent.ShowAllTeas)
-                FilterType.FAVORITES -> onIntent(TeaCollectionIntent.ShowFavorites)
-                FilterType.BY_TYPE -> typeId?.let {
-                    onIntent(TeaCollectionIntent.FilterByType(it))
+    // Filter chips (hidden during search)
+    if (state.searchQuery.isBlank()) {
+        TeaFilterChips(
+            teaTypes = state.teaTypes,
+            selectedFilter = state.selectedFilter,
+            selectedTypeId = state.selectedTypeId,
+            onFilterSelected = { filterType, typeId ->
+                when (filterType) {
+                    FilterType.ALL -> onIntent(TeaCollectionIntent.ShowAllTeas)
+                    FilterType.FAVORITES -> onIntent(TeaCollectionIntent.ShowFavorites)
+                    FilterType.BY_TYPE -> typeId?.let {
+                        onIntent(TeaCollectionIntent.FilterByType(it))
+                    }
                 }
             }
-        }
-    )
+        )
+    }
 
     // Content
     when {
@@ -256,15 +297,17 @@ private fun TeasTabContent(
 
         state.isEmpty -> {
             EmptyState(
-                message = when (state.selectedFilter) {
+                message = if (state.searchQuery.isNotBlank()) {
+                    "No results found"
+                } else when (state.selectedFilter) {
                     FilterType.ALL -> "No teas in your collection yet"
                     FilterType.FAVORITES -> "No favorite teas yet"
                     FilterType.BY_TYPE -> "No teas of this type"
                 },
-                actionText = if (state.selectedFilter == FilterType.ALL) {
+                actionText = if (state.searchQuery.isBlank() && state.selectedFilter == FilterType.ALL) {
                     "Add Your First Tea"
                 } else null,
-                onActionClick = if (state.selectedFilter == FilterType.ALL) {
+                onActionClick = if (state.searchQuery.isBlank() && state.selectedFilter == FilterType.ALL) {
                     onNavigateToAddTea
                 } else null
             )

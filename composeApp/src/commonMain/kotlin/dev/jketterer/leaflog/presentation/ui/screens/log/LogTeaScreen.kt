@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +22,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +60,8 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.ChevronUp
 import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.MoreVertical
+import compose.icons.feathericons.Play
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -141,6 +148,8 @@ private fun LogTeaContent(
     }
     val optionalSummary = optionalSummaryParts.joinToString(" · ")
 
+    var showOverflowMenu by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
@@ -150,10 +159,31 @@ private fun LogTeaContent(
                         Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                     }
                 },
+                actions = {
+                    if (state.selectedTea != null && state.selectedVessel != null && state.canSave) {
+                        Box {
+                            IconButton(onClick = { showOverflowMenu = true }) {
+                                Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
+                            }
+                            DropdownMenu(
+                                expanded = showOverflowMenu,
+                                onDismissRequest = { showOverflowMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Complete without timer") },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        onIntent(LogTeaIntent.SaveAsCompleted)
+                                    },
+                                )
+                            }
+                        }
+                    }
+                },
             )
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 // Tea Selection
@@ -532,32 +562,23 @@ private fun LogTeaContent(
                         }
                     }
 
-                    // Action Buttons
-                    item(key = "actions") {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Button(
-                                onClick = {
-                                    onIntent(LogTeaIntent.StartTimerClicked)
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = state.canSave && !state.isSaving,
-                            ) {
-                                Text("Start Session")
-                            }
-
-                            OutlinedButton(
-                                onClick = { onIntent(LogTeaIntent.SaveAsCompleted) },
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = state.canSave && !state.isSaving,
-                            ) {
-                                Text("Complete Session")
-                            }
-                        }
-                    }
                 } // end parameters gate
             }
+        }
+
+        AnimatedVisibility(
+            visible = state.canSave,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            enter = scaleIn() + fadeIn(),
+            exit = scaleOut() + fadeOut(),
+        ) {
+            ExtendedFloatingActionButton(
+                onClick = { onIntent(LogTeaIntent.StartTimerClicked) },
+                icon = { Icon(FeatherIcons.Play, contentDescription = null) },
+                text = { Text("Start Session") },
+            )
         }
 
         state.error?.let { error ->

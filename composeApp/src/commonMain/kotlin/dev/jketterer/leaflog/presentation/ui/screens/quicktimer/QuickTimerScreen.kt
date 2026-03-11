@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,7 +13,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -24,15 +21,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
-import compose.icons.feathericons.Edit
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
+import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDetailsSheet
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
@@ -86,27 +81,23 @@ private fun QuickTimerContent(
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = {
-                Text(
-                    when (state.status) {
-                        TimerStatus.RUNNING -> "Quick Timer"
-                        TimerStatus.PAUSED -> "Paused"
-                        TimerStatus.COMPLETE -> "Complete"
-                        else -> "Quick Timer"
-                    },
-                )
+                Column {
+                    Text(state.selectedTea?.name ?: "Quick Timer")
+                    state.selectedVessel?.name?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             },
             navigationIcon = {
                 IconButton(onClick = { onIntent(QuickTimerIntent.BackClicked) }) {
                     Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                 }
             },
-            actions = {
-                if (state.hasRequiredDetails) {
-                    IconButton(onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) }) {
-                        Icon(FeatherIcons.Edit, contentDescription = "Edit brewing details")
-                    }
-                }
-            },
+            actions = {},
         )
         when {
             state.isLoading -> {
@@ -195,55 +186,36 @@ private fun QuickTimerRunningContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Title - show tea name if selected, otherwise "Quick Timer"
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = state.selectedTea?.name ?: "Quick Timer",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (state.selectedVessel != null) {
-                    Text(
-                        text = state.selectedVessel.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Circular timer ring
-            CircularTimerRing(
-                progress = state.progress,
-                timeText = state.formattedTime,
-                modifier = Modifier.size(ringSize),
+            // Brewing parameters card
+            SteepParameterCard(
+                teaQuantity = state.teaQuantityGrams.takeIf { it.isNotBlank() }
+                    ?.let { "${it}g" },
+                waterQuantity = state.waterQuantityDisplay.takeIf { it.isNotBlank() }
+                    ?.let { "$it ${state.userPreferences.volumeUnit.symbol}" },
+                temperature = state.temperatureDisplay.takeIf { it.isNotBlank() }
+                    ?.let { "$it${state.userPreferences.temperatureUnit.symbol}" },
+                brewingTime = formatBrewingTime(state.totalDuration.inWholeSeconds.toInt()),
+                onEditClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
             )
 
-            // Quick adjustment buttons
-            if (state.isRunning || state.isPaused) {
-                QuickAdjustButtons(
-                    onAdjust = { adjustment ->
-                        onIntent(QuickTimerIntent.AdjustTime(adjustment))
-                    },
-                    enabled = state.controlsEnabled,
+            // Circular timer ring + quick adjustment buttons
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                CircularTimerRing(
+                    progress = state.progress,
+                    timeText = state.formattedTime,
+                    modifier = Modifier.size(ringSize),
                 )
-            }
 
-            // "Add details" nudge - show when timer is running/paused/complete and no details yet
-            if (!state.hasRequiredDetails && state.status != TimerStatus.NOT_STARTED) {
-                OutlinedButton(
-                    onClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Add Tea & Brewing Details")
+                if (state.isRunning || state.isPaused) {
+                    QuickAdjustButtons(
+                        onAdjust = { adjustment ->
+                            onIntent(QuickTimerIntent.AdjustTime(adjustment))
+                        },
+                        enabled = state.controlsEnabled,
+                    )
                 }
             }
 

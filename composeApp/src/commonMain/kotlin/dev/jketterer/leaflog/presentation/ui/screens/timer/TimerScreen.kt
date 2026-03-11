@@ -26,26 +26,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
-import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
@@ -104,13 +99,16 @@ private fun TimerContent(
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = {
-                Text(
-                    when (state.timerState.status) {
-                        TimerStatus.RUNNING -> "Brewing"
-                        TimerStatus.PAUSED -> "Paused"
-                        else -> "Timer"
-                    },
-                )
+                Column {
+                    Text(state.tea?.name ?: "")
+                    state.vessel?.name?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             },
             navigationIcon = {
                 IconButton(onClick = { onIntent(TimerIntent.BackClicked) }) {
@@ -118,9 +116,6 @@ private fun TimerContent(
                 }
             },
             actions = {
-                IconButton(onClick = { onIntent(TimerIntent.EditSession) }) {
-                    Icon(FeatherIcons.Edit, contentDescription = "Edit parameters")
-                }
                 IconButton(onClick = { showOverflowMenu = true }) {
                     Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
                 }
@@ -229,73 +224,33 @@ private fun TimerRunningContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            // Tea name, vessel name, and steep number
+            // Brewing parameters card
+            if (state.session != null) {
+                SteepParameterCard(
+                    session = state.session,
+                    userPreferences = state.userPreferences,
+                    onEditClick = { onIntent(TimerIntent.EditSession) },
+                )
+            }
+
+            // Circular timer ring + quick adjustment buttons
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
-                    text = state.tea?.name ?: "Unknown Tea",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                CircularTimerRing(
+                    progress = state.timerState.progress,
+                    timeText = state.formattedTime,
+                    modifier = Modifier.size(ringSize),
                 )
-                if (state.vessel != null) {
-                    Text(
-                        text = state.vessel.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (state.session != null && state.session.steepNumber > 1) {
-                    Text(
-                        text = "Steep ${state.session.steepNumber}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+                QuickAdjustButtons(
+                    onAdjust = { adjustment ->
+                        onIntent(TimerIntent.AdjustTime(adjustment))
+                    },
+                )
             }
-
-            // Circular timer ring
-            CircularTimerRing(
-                progress = state.timerState.progress,
-                timeText = state.formattedTime,
-                modifier = Modifier.size(ringSize),
-            )
-
-            // Quick adjustment buttons
-            QuickAdjustButtons(
-                onAdjust = { adjustment ->
-                    onIntent(TimerIntent.AdjustTime(adjustment))
-                },
-            )
 
             Spacer(modifier = Modifier.weight(1f))
-
-            // Brewing parameters
-            if (state.session != null) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = "${
-                            TemperatureFormatter.format(
-                                state.session.temperatureCelsius,
-                                state.userPreferences.temperatureUnit
-                            )
-                        } • ${
-                            VolumeFormatter.format(
-                                state.session.waterQuantityMl,
-                                state.userPreferences.volumeUnit
-                            )
-                        } • ${state.session.waterType.displayName}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
 
             // Control buttons
             TimerControlButtons(

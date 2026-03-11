@@ -66,12 +66,13 @@ data class LogTeaState(
 ) {
     val isValid: Boolean
         get() = selectedTea != null &&
+                selectedVessel != null &&
                 teaError == null &&
                 vesselError == null &&
                 (isTeaBag || (teaQuantityGrams.isNotBlank() && teaQuantityError == null)) &&
-                waterQuantityError == null &&
-                temperatureError == null &&
-                brewingTimeError == null
+                waterQuantityMl.toDoubleOrNull() != null && waterQuantityError == null &&
+                temperatureCelsius.toDoubleOrNull() != null && temperatureError == null &&
+                brewingTime != null && brewingTimeError == null
 
     val canSave: Boolean
         get() = isValid && !isSaving

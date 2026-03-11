@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -38,7 +37,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -63,6 +61,7 @@ import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
@@ -295,17 +294,11 @@ private fun SteepCompleteBody(
 
         // Brewing parameters
         state.session?.let { session ->
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                ),
-            ) {
-                SteepParameterRow(
-                    session = session,
-                    userPreferences = state.userPreferences,
-                    onEditClick = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
-                )
-            }
+            SteepParameterCard(
+                session = session,
+                userPreferences = state.userPreferences,
+                onEditClick = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
+            )
         }
 
         // Photos — capture the moment while sipping
@@ -373,106 +366,6 @@ private fun SteepCompleteBody(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-    }
-}
-
-@Composable
-private fun SteepParameterRow(
-    session: TeaSession,
-    userPreferences: UserPreferences,
-    onEditClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-
-            Text(
-                text = "Steep ${session.steepNumber}",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-
-            IconButton(onClick = onEditClick) {
-                Icon(
-                    FeatherIcons.Edit,
-                    contentDescription = "Edit parameters",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        Column(
-            modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            session.teaQuantityGrams?.let {
-                ParameterRow(
-                    icon = vectorResource(Res.drawable.ic_tea_leaf),
-                    label = "Tea quantity",
-                    value = "${it}g",
-                )
-            }
-            ParameterRow(
-                icon = FeatherIcons.Droplet,
-                label = "Water",
-                value = VolumeFormatter.format(
-                    session.waterQuantityMl,
-                    userPreferences.volumeUnit,
-                ),
-            )
-            ParameterRow(
-                icon = FeatherIcons.Thermometer,
-                label = "Temperature",
-                value = TemperatureFormatter.format(
-                    session.temperatureCelsius,
-                    userPreferences.temperatureUnit,
-                ),
-            )
-            ParameterRow(
-                icon = FeatherIcons.Clock,
-                label = "Time",
-                value = formatBrewingTime(session.brewingTime.inWholeSeconds.toInt()),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ParameterRow(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
     }
 }
 

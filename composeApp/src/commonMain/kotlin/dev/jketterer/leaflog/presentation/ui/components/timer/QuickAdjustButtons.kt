@@ -1,6 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.components.timer
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,65 +22,77 @@ fun QuickAdjustButtons(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val compactPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            OutlinedButton(
-                onClick = { onAdjust(Duration.parse("-1m")) },
-                enabled = enabled,
-            ) {
-                Text("-1m")
-            }
-            OutlinedButton(
-                onClick = { onAdjust(Duration.parse("-30s")) },
-                enabled = enabled,
-            ) {
-                Text("-30s")
-            }
-            OutlinedButton(
-                onClick = { onAdjust(Duration.parse("30s")) },
-                enabled = enabled,
-            ) {
-                Text("+30s")
-            }
-            OutlinedButton(
-                onClick = { onAdjust(Duration.parse("1m")) },
-                enabled = enabled,
-            ) {
-                Text("+1m")
-            }
-        }
+        // Fine adjustments — closer to the timer ring
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             OutlinedButton(
                 onClick = { onAdjust(Duration.parse("-10s")) },
                 enabled = enabled,
+                contentPadding = compactPadding,
             ) {
-                Text("-10s")
+                Text("-10s", style = MaterialTheme.typography.labelMedium)
             }
             OutlinedButton(
                 onClick = { onAdjust(Duration.parse("-5s")) },
                 enabled = enabled,
+                contentPadding = compactPadding,
             ) {
-                Text("-5s")
+                Text("-5s", style = MaterialTheme.typography.labelMedium)
             }
             OutlinedButton(
                 onClick = { onAdjust(Duration.parse("5s")) },
                 enabled = enabled,
+                contentPadding = compactPadding,
             ) {
-                Text("+5s")
+                Text("+5s", style = MaterialTheme.typography.labelMedium)
             }
             OutlinedButton(
                 onClick = { onAdjust(Duration.parse("10s")) },
                 enabled = enabled,
+                contentPadding = compactPadding,
             ) {
-                Text("+10s")
+                Text("+10s", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+        // Coarse adjustments
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilledTonalButton(
+                onClick = { onAdjust(Duration.parse("-1m")) },
+                enabled = enabled,
+                contentPadding = compactPadding,
+            ) {
+                Text("-1m", style = MaterialTheme.typography.labelLarge)
+            }
+            FilledTonalButton(
+                onClick = { onAdjust(Duration.parse("-30s")) },
+                enabled = enabled,
+                contentPadding = compactPadding,
+            ) {
+                Text("-30s", style = MaterialTheme.typography.labelLarge)
+            }
+            FilledTonalButton(
+                onClick = { onAdjust(Duration.parse("30s")) },
+                enabled = enabled,
+                contentPadding = compactPadding,
+            ) {
+                Text("+30s", style = MaterialTheme.typography.labelLarge)
+            }
+            FilledTonalButton(
+                onClick = { onAdjust(Duration.parse("1m")) },
+                enabled = enabled,
+                contentPadding = compactPadding,
+            ) {
+                Text("+1m", style = MaterialTheme.typography.labelLarge)
             }
         }
     }

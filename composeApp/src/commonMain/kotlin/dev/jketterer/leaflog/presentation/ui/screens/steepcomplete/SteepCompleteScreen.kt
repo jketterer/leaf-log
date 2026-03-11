@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -36,13 +38,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Clock
@@ -50,6 +51,8 @@ import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Trash2
+import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -69,6 +72,7 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaflog.composeapp.generated.resources.Res
 import leaflog.composeapp.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -100,6 +104,7 @@ fun SteepCompleteScreen(
     SteepCompleteContent(
         state = state,
         onIntent = viewModel::onIntent,
+        imageStorage = koinInject(),
     )
 }
 
@@ -108,11 +113,21 @@ fun SteepCompleteScreen(
 private fun SteepCompleteContent(
     state: SteepCompleteState,
     onIntent: (SteepCompleteIntent) -> Unit,
+    imageStorage: ImageStorage?,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = {
-                Text("Steep ${state.session?.steepNumber ?: ""} Complete")
+                Column {
+                    Text(state.tea?.name ?: "")
+                    state.vessel?.name?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             },
             navigationIcon = {
                 IconButton(onClick = { onIntent(SteepCompleteIntent.BackClicked) }) {
@@ -156,6 +171,7 @@ private fun SteepCompleteContent(
                     SteepCompleteBody(
                         state = state,
                         onIntent = onIntent,
+                        imageStorage = imageStorage,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -263,73 +279,77 @@ private fun SteepCompleteContent(
 private fun SteepCompleteBody(
     state: SteepCompleteState,
     onIntent: (SteepCompleteIntent) -> Unit,
+    imageStorage: ImageStorage?,
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
+    val hasPreviousSteeps = state.previousSteeps.isNotEmpty()
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
-        // Steep header card
+        // Brewing parameters
         state.session?.let { session ->
-            SteepHeaderCard(
-                session = session,
-                teaName = state.tea?.name ?: "",
-                vesselName = state.vessel?.name,
-                userPreferences = state.userPreferences,
-                onEditClick = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
-            )
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
+            ) {
+                SteepParameterRow(
+                    session = session,
+                    userPreferences = state.userPreferences,
+                    onEditClick = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
+                )
+            }
         }
 
-        // Rating section
+        // Photos — capture the moment while sipping
+        PhotoGrid(
+            photos = state.photos,
+            onAddPhoto = { onIntent(SteepCompleteIntent.PhotoSelected(it)) },
+            onRemovePhoto = { onIntent(SteepCompleteIntent.PhotoRemoved(it)) },
+            imageStorage = imageStorage,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // Rating — comes last, after tasting
+        HorizontalDivider()
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "How was it?",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+                text = "Rate this steep",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             RatingSelector(
                 rating = state.rating,
                 onRatingChange = { onIntent(SteepCompleteIntent.RatingChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (state.rating == 0f) {
-                Text(
-                    text = "Tap to rate (optional)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
+        HorizontalDivider()
 
-        // Notes input
+        // Notes — jot down flavor observations
         OutlinedTextField(
             value = state.notes,
             onValueChange = { onIntent(SteepCompleteIntent.NotesChanged(it)) },
-            label = { Text("Notes for this steep (optional)") },
-            placeholder = { Text("How did it taste?") },
+            label = { Text("Tasting notes (optional)") },
+            placeholder = { Text("Flavor, aroma, mouthfeel...") },
             modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            maxLines = 5,
+            minLines = if (hasPreviousSteeps) 3 else 5,
+            maxLines = 8,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
         )
 
-        // Photos section
-        PhotoGrid(
-            photos = state.photos,
-            onAddPhoto = { onIntent(SteepCompleteIntent.PhotoSelected(it)) },
-            onRemovePhoto = { onIntent(SteepCompleteIntent.PhotoRemoved(it)) },
-            modifier = Modifier.fillMaxWidth(),
-        )
 
         // Previous steeps section
-        if (state.previousSteeps.isNotEmpty()) {
+        if (hasPreviousSteeps) {
             HorizontalDivider()
 
             Text(
@@ -357,103 +377,102 @@ private fun SteepCompleteBody(
 }
 
 @Composable
-private fun SteepHeaderCard(
+private fun SteepParameterRow(
     session: TeaSession,
-    teaName: String,
-    vesselName: String?,
     userPreferences: UserPreferences,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
-    ) {
-        Column(
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    Text(
-                        text = teaName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                    if (vesselName != null) {
-                        Text(
-                            text = vesselName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                        )
-                    }
-                }
-                if (session.steepNumber > 1) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                    ) {
-                        Text(
-                            text = "Steep ${session.steepNumber}",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    }
-                }
-                IconButton(onClick = onEditClick) {
-                    Icon(
-                        FeatherIcons.Edit,
-                        contentDescription = "Edit parameters",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-            }
 
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                session.teaQuantityGrams?.let {
-                    BrewingParamChip(
-                        icon = vectorResource(Res.drawable.ic_tea_leaf),
-                        text = "${it}g"
-                    )
-                }
-                BrewingParamChip(
-                    icon = FeatherIcons.Droplet,
-                    text = VolumeFormatter.format(
-                        session.waterQuantityMl,
-                        userPreferences.volumeUnit
-                    ),
-                )
-                BrewingParamChip(
-                    icon = FeatherIcons.Thermometer,
-                    text = TemperatureFormatter.format(
-                        session.temperatureCelsius,
-                        userPreferences.temperatureUnit
-                    ),
-                )
-                BrewingParamChip(
-                    icon = FeatherIcons.Clock,
-                    text = formatBrewingTime(session.brewingTime.inWholeSeconds.toInt()),
+            Text(
+                text = "Steep ${session.steepNumber}",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+
+            IconButton(onClick = onEditClick) {
+                Icon(
+                    FeatherIcons.Edit,
+                    contentDescription = "Edit parameters",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
+        Column(
+            modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            session.teaQuantityGrams?.let {
+                ParameterRow(
+                    icon = vectorResource(Res.drawable.ic_tea_leaf),
+                    label = "Tea quantity",
+                    value = "${it}g",
+                )
+            }
+            ParameterRow(
+                icon = FeatherIcons.Droplet,
+                label = "Water",
+                value = VolumeFormatter.format(
+                    session.waterQuantityMl,
+                    userPreferences.volumeUnit,
+                ),
+            )
+            ParameterRow(
+                icon = FeatherIcons.Thermometer,
+                label = "Temperature",
+                value = TemperatureFormatter.format(
+                    session.temperatureCelsius,
+                    userPreferences.temperatureUnit,
+                ),
+            )
+            ParameterRow(
+                icon = FeatherIcons.Clock,
+                label = "Time",
+                value = formatBrewingTime(session.brewingTime.inWholeSeconds.toInt()),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ParameterRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
     }
 }
 
@@ -549,22 +568,23 @@ private fun SteepCompleteBottomBar(
     onFinishSession: () -> Unit,
 ) {
     Surface(shadowElevation = 8.dp) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Button(
+            OutlinedButton(
                 onClick = onShowNextSteep,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
                 enabled = !isLoading,
             ) {
-                Text("Start Next Steep")
+                Text("Next Steep")
             }
-            OutlinedButton(
+            Button(
                 onClick = onFinishSession,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
                 enabled = !isLoading,
             ) {
                 Text("Finish Session")
@@ -579,6 +599,15 @@ private fun SteepCompleteScreenSingleSteepPreview() {
     LeafLogTheme {
         SteepCompleteContent(
             state = SteepCompleteState(
+                vessel = BrewingVessel(
+                    id = "test",
+                    name = "Teapot",
+                    iconName = "icon",
+                    createdAt = Clock.System.now(),
+                    updatedAt = Clock.System.now(),
+                    isSystemDefault = false,
+                    displayOrder = 0,
+                ),
                 session = TeaSession(
                     id = "session-1",
                     teaId = "tea-1",
@@ -604,6 +633,7 @@ private fun SteepCompleteScreenSingleSteepPreview() {
                 isLoading = false,
             ),
             onIntent = {},
+            imageStorage = null,
         )
     }
 }
@@ -614,6 +644,15 @@ private fun SteepCompleteScreenMultiSteepPreview() {
     LeafLogTheme {
         SteepCompleteContent(
             state = SteepCompleteState(
+                vessel = BrewingVessel(
+                    id = "test",
+                    name = "Teapot",
+                    iconName = "icon",
+                    createdAt = Clock.System.now(),
+                    updatedAt = Clock.System.now(),
+                    isSystemDefault = false,
+                    displayOrder = 0,
+                ),
                 session = TeaSession(
                     id = "session-3",
                     teaId = "tea-1",
@@ -676,6 +715,7 @@ private fun SteepCompleteScreenMultiSteepPreview() {
                 isLoading = false,
             ),
             onIntent = {},
+            imageStorage = null,
         )
     }
 }

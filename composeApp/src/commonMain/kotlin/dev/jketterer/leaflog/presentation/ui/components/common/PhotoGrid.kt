@@ -44,7 +44,7 @@ fun PhotoGrid(
     onRemovePhoto: (String) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    imageStorage: ImageStorage = koinInject(),
+    imageStorage: ImageStorage? = koinInject(),
 ) {
     val scope = rememberCoroutineScope()
     var expandedPhotoIndex by remember { mutableIntStateOf(-1) }
@@ -53,7 +53,7 @@ fun PhotoGrid(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (photos.isNotEmpty()) {
+        if (photos.isNotEmpty() && imageStorage != null) {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(horizontal = 4.dp),
@@ -92,7 +92,7 @@ fun PhotoGrid(
             }
         }
 
-        if (enabled) {
+        if (enabled && imageStorage != null) {
             PhotoPickerButton(
                 onPhotoPicked = { file ->
                     scope.launch { onAddPhoto(file.readBytes()) }
@@ -103,7 +103,7 @@ fun PhotoGrid(
         }
     }
 
-    if (expandedPhotoIndex >= 0) {
+    if (expandedPhotoIndex >= 0 && imageStorage != null) {
         FullscreenImageViewer(
             photos = photos.map { imageStorage.resolveImagePath(it) },
             initialIndex = expandedPhotoIndex,
@@ -120,6 +120,7 @@ private fun PhotoGridEmptyPreview() {
             photos = emptyList(),
             onAddPhoto = {},
             onRemovePhoto = {},
+            imageStorage = null,
         )
     }
 }
@@ -132,6 +133,7 @@ private fun PhotoGridWithPhotosPreview() {
             photos = listOf("/path/to/photo1.jpg", "/path/to/photo2.jpg"),
             onAddPhoto = {},
             onRemovePhoto = {},
+            imageStorage = null,
         )
     }
 }

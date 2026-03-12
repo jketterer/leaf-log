@@ -87,7 +87,8 @@ struct LockScreenLiveActivityView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer()
 
             if isComplete {
                 Image(systemName: "checkmark.circle.fill")

@@ -1,35 +1,84 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Leaf Log
 
-* [/composeApp](shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+A tea brewing tracker for Android and iOS, built with Kotlin Multiplatform and Compose
+Multiplatform.
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Log brewing sessions, time your steeps, manage your tea collection, and analyze your brewing habits.
 
-### Build and Run Android Application
+## Features
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :shared:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :shared:assembleDebug
-  ```
+- **Session Logging** — Record brewing parameters (temperature, water quantity, brewing time, tea
+  quantity) with full pre-fill from saved configurations or previous sessions
+- **Brew Timer** — Countdown timer with circular progress ring, quick-adjust buttons, and
+  pause/resume. Persists across app backgrounding and process death
+- **Multi-Steep Tracking** — Gongfu-style support with per-steep ratings and notes, building a
+  steep-by-steep tasting journal
+- **Quick Timer** — Start a countdown immediately and optionally fill in session details during or
+  after
+- **Tea Collection** — Manage your tea library with search, filters (favorites, by type), and sort
+  options
+- **Brewing Vessels** — Track your teapots, gaiwans, and other vessels with capacity info
+- **Brewing Configurations** — Save and reuse brewing parameters for specific tea + vessel
+  combinations
+- **Session History** — Browse and filter past sessions by tea type, specific tea, date range, or
+  rating
+- **Analytics** — Charts and insights including brewing trends, tea type distribution, top teas,
+  vessel usage, and a brewing activity heatmap (requires 10+ sessions)
+- **iOS Live Activity** — Shows the active brew timer on the Lock Screen and Dynamic Island
+- **Data Export/Import** — Full JSON export and import of all data
 
-### Build and Run iOS Application
+## Tech Stack
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+| Layer        | Technology                         |
+|--------------|------------------------------------|
+| UI           | Compose Multiplatform (Material 3) |
+| Architecture | Clean Architecture + MVI           |
+| Database     | Room (local)                       |
+| DI           | Koin                               |
+| Navigation   | Compose Navigation 3               |
+| Language     | Kotlin Multiplatform               |
 
----
+## Project Structure
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+```
+composeApp/
+├── src/
+│   ├── commonMain/       # Shared code (UI, business logic, data layer)
+│   ├── androidMain/      # Android-specific (notifications, platform services)
+│   └── iosMain/          # iOS-specific (notifications, Live Activity bridge)
+iosApp/                   # iOS app entry point and SwiftUI/Swift code
+```
+
+The shared code in `commonMain` follows Clean Architecture:
+
+```
+presentation/             # MVI pattern: Screen, ViewModel, State, Intent
+domain/                   # Models, repository interfaces, use cases
+data/                     # Room database, DAOs, entities, mappers, repository implementations
+di/                       # Koin dependency injection modules
+```
+
+## Building
+
+### Prerequisites
+
+- JDK 17+
+- Android Studio or IntelliJ IDEA with Kotlin Multiplatform plugin
+- Xcode (for iOS builds)
+
+### Android
+
+```shell
+./gradlew :composeApp:assembleDebug
+```
+
+Or use the run configuration in Android Studio / IntelliJ IDEA.
+
+### iOS
+
+Open the `iosApp/` directory in Xcode and run from there, or use the run configuration in Android
+Studio with the KMP plugin.
+
+## License
+
+All rights reserved.

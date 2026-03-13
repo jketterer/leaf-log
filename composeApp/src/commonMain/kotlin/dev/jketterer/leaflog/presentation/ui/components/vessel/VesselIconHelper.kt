@@ -3,9 +3,9 @@ package dev.jketterer.leaflog.presentation.ui.components.vessel
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import leaflog.composeapp.generated.resources.Res
-import leaflog.composeapp.generated.resources.ic_french_press
-import leaflog.composeapp.generated.resources.ic_teapot
+import leaf_log.composeapp.generated.resources.Res
+import leaf_log.composeapp.generated.resources.ic_french_press
+import leaf_log.composeapp.generated.resources.ic_teapot
 import org.jetbrains.compose.resources.painterResource
 
 object VesselIconHelper {

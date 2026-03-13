@@ -52,8 +52,8 @@ import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsB
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import leaflog.composeapp.generated.resources.Res
-import leaflog.composeapp.generated.resources.ic_tea_leaf
+import leaf_log.composeapp.generated.resources.Res
+import leaf_log.composeapp.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
@@ -155,7 +155,7 @@ private fun HomeContent(
                             vectorResource(Res.drawable.ic_tea_leaf),
                             "Tea leaf",
                             modifier = Modifier.size(36.dp)
-                            )
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Leaf Log")
                     }

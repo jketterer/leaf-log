@@ -1,4 +1,4 @@
-rootProject.name = "LeafLog"
+rootProject.name = "leaf-log"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

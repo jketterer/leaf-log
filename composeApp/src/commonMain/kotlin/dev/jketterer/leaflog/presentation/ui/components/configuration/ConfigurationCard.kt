@@ -34,8 +34,8 @@ import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import leaflog.composeapp.generated.resources.Res
-import leaflog.composeapp.generated.resources.ic_tea_leaf
+import leaf_log.composeapp.generated.resources.Res
+import leaf_log.composeapp.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days

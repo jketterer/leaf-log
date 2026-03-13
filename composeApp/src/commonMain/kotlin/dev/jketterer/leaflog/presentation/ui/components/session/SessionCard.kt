@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,10 +36,10 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
-import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Thermometer
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
@@ -53,15 +52,14 @@ import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import leaflog.composeapp.generated.resources.Res
-import leaflog.composeapp.generated.resources.ic_tea_leaf
+import leaf_log.composeapp.generated.resources.Res
+import leaf_log.composeapp.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
+import org.koin.compose.koinInject
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
 import kotlin.time.toDuration
-import org.koin.compose.koinInject
 
 /**
  * Card component displaying session summary information.
@@ -161,7 +159,10 @@ fun SessionCard(
                     }
                     BrewingParamChip(
                         FeatherIcons.Thermometer,
-                        TemperatureFormatter.format(session.temperatureCelsius, userPrefs.temperatureUnit),
+                        TemperatureFormatter.format(
+                            session.temperatureCelsius,
+                            userPrefs.temperatureUnit
+                        ),
                     )
                     BrewingParamChip(
                         FeatherIcons.Clock,

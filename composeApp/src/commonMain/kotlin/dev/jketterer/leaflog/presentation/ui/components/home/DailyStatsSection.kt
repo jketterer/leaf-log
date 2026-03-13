@@ -17,11 +17,10 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
-import compose.icons.feathericons.Layers
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import leaflog.composeapp.generated.resources.Res
-import leaflog.composeapp.generated.resources.ic_tea_leaf
+import leaf_log.composeapp.generated.resources.Res
+import leaf_log.composeapp.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
 
 /**

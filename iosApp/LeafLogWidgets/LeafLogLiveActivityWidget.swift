@@ -88,25 +88,29 @@ struct LockScreenLiveActivityView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            if isComplete {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title)
-                    .foregroundStyle(.green)
-            } else if state.isPaused {
-                Text(formatTime(state.remainingSeconds))
-                    .font(.title.monospacedDigit().bold())
-                    .foregroundStyle(.secondary)
-                    .fixedSize()
-            } else {
-                Text(state.endDate, style: .timer)
-                    .font(.title.monospacedDigit().bold())
-                    .foregroundStyle(.white)
-                    .fixedSize()
+            Group {
+                if isComplete {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title)
+                        .foregroundStyle(.green)
+                } else if state.isPaused {
+                    Text(formatTime(state.remainingSeconds))
+                        .font(.title.monospacedDigit().bold())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(state.endDate, style: .timer)
+                        .font(.title.monospacedDigit().bold())
+                        .foregroundStyle(.white)
+                        .contentTransition(.numericText(countsDown: true))
+                }
             }
+            .fixedSize()
+            .layoutPriority(1)
         }
-        .padding(.horizontal, 20)
+        .padding(.leading, 24)
+        .padding(.trailing, 20)
         .padding(.vertical, 14)
         .activityBackgroundTint(.black)
         .activitySystemActionForegroundColor(.white)

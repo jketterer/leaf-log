@@ -89,6 +89,9 @@ class TimerViewModel(
             is TimerIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is TimerIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is TimerIntent.RestartTimer -> restartTimer()
+            is TimerIntent.CompleteNow -> _state.update { it.copy(showCompleteNowConfirmation = true) }
+            is TimerIntent.ConfirmCompleteNow -> confirmCompleteNow()
+            is TimerIntent.CancelCompleteNow -> _state.update { it.copy(showCompleteNowConfirmation = false) }
             is TimerIntent.BackClicked -> _navigationEvents.trySend(TimerNavEvent.NavigateBack)
 
             is TimerIntent.EditSession -> openEditSheet()
@@ -473,6 +476,11 @@ class TimerViewModel(
         viewModelScope.launch {
             teaSessionRepository.upsert(updatedSession)
         }
+    }
+
+    private fun confirmCompleteNow() {
+        _state.update { it.copy(showCompleteNowConfirmation = false) }
+        handleTimerComplete()
     }
 
     private fun restartTimer() {

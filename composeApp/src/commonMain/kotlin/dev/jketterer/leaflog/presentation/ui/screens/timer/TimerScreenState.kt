@@ -18,6 +18,7 @@ data class TimerScreenState(
     val session: TeaSession? = null,
     val tea: Tea? = null,
     val vessel: BrewingVessel? = null,
+    val showCompleteNowConfirmation: Boolean = false,
     val showDiscardSessionConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
     val showEditSheet: Boolean = false,

@@ -21,6 +21,9 @@ sealed interface TimerIntent {
     data object ToggleTemperatureUnit : TimerIntent
     data object ToggleVolumeUnit : TimerIntent
     data object RestartTimer : TimerIntent
+    data object CompleteNow : TimerIntent
+    data object ConfirmCompleteNow : TimerIntent
+    data object CancelCompleteNow : TimerIntent
     data object BackClicked : TimerIntent
 
     // Edit session parameters

@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.CheckCircle
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.SessionStatus
@@ -123,6 +124,22 @@ private fun TimerContent(
                     expanded = showOverflowMenu,
                     onDismissRequest = { showOverflowMenu = false },
                 ) {
+                    val timerStatus = state.timerState.status
+                    if (timerStatus == TimerStatus.RUNNING || timerStatus == TimerStatus.PAUSED) {
+                        DropdownMenuItem(
+                            text = { Text("Complete Now") },
+                            onClick = {
+                                showOverflowMenu = false
+                                onIntent(TimerIntent.CompleteNow)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    FeatherIcons.CheckCircle,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
                     DropdownMenuItem(
                         text = {
                             Text(
@@ -163,6 +180,17 @@ private fun TimerContent(
                 )
             }
         }
+    }
+
+    // Complete now confirmation dialog
+    if (state.showCompleteNowConfirmation) {
+        TimerStopConfirmationDialog(
+            title = "Complete Now?",
+            text = "This will skip the remaining brew time and mark the steep as complete.",
+            confirmText = "Complete",
+            onConfirm = { onIntent(TimerIntent.ConfirmCompleteNow) },
+            onDismiss = { onIntent(TimerIntent.CancelCompleteNow) },
+        )
     }
 
     // Discard session confirmation dialog

@@ -289,7 +289,7 @@ private fun HomeContent(
 
                         // Bottom padding for FAB
                         item(key = "bottom_padding") {
-                            Spacer(modifier = Modifier.height(80.dp))
+                            Spacer(modifier = Modifier.height(70.dp))
                         }
                     }
                 }

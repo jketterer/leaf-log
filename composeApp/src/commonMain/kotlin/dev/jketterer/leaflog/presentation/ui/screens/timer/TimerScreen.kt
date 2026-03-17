@@ -124,22 +124,19 @@ private fun TimerContent(
                     expanded = showOverflowMenu,
                     onDismissRequest = { showOverflowMenu = false },
                 ) {
-                    val timerStatus = state.timerState.status
-                    if (timerStatus == TimerStatus.RUNNING || timerStatus == TimerStatus.PAUSED) {
-                        DropdownMenuItem(
-                            text = { Text("Complete Now") },
-                            onClick = {
-                                showOverflowMenu = false
-                                onIntent(TimerIntent.CompleteNow)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    FeatherIcons.CheckCircle,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                    DropdownMenuItem(
+                        text = { Text("Complete Now") },
+                        onClick = {
+                            showOverflowMenu = false
+                            onIntent(TimerIntent.CompleteNow)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                FeatherIcons.CheckCircle,
+                                contentDescription = null,
+                            )
+                        },
+                    )
                     DropdownMenuItem(
                         text = {
                             Text(

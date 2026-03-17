@@ -78,7 +78,7 @@ struct LockScreenLiveActivityView: View {
     }
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(attributes.teaName)
                     .font(.headline)
@@ -87,27 +87,24 @@ struct LockScreenLiveActivityView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Spacer(minLength: 8)
-
-            Group {
-                if isComplete {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title)
-                        .foregroundStyle(.green)
-                } else if state.isPaused {
-                    Text(formatTime(state.remainingSeconds))
-                        .font(.title.monospacedDigit().bold())
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(state.endDate, style: .timer)
-                        .font(.title.monospacedDigit().bold())
-                        .foregroundStyle(.white)
-                        .contentTransition(.numericText(countsDown: true))
-                }
+            if isComplete {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title)
+                    .foregroundStyle(.green)
+            } else if state.isPaused {
+                Text(formatTime(state.remainingSeconds))
+                    .font(.title2.monospacedDigit().bold())
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 56, alignment: .trailing)
+            } else {
+                Text(state.endDate, style: .timer)
+                    .font(.title2.monospacedDigit().bold())
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.trailing)
+                    .frame(minWidth: 56, alignment: .trailing)
             }
-            .fixedSize()
-            .layoutPriority(1)
         }
         .padding(.leading, 24)
         .padding(.trailing, 20)

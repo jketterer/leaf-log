@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.models.SteepInsights
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopRatedTea
 import dev.jketterer.leaflog.domain.models.TopTea
+import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.domain.models.VesselDistribution
 import kotlinx.datetime.LocalDate
@@ -28,6 +29,7 @@ data class AnalyticsState(
     val totalCompletedSessions: Int = 0,
     val showPeriodSelector: Boolean = false,
     val trendPoints: List<TrendPoint> = emptyList(),
+    val trendGranularity: TrendGranularity = TrendGranularity.DAILY,
     val teaTypeDistribution: List<TeaTypeDistribution> = emptyList(),
     val topTeas: List<TopTea> = emptyList(),
 val activityCells: List<ActivityCell> = emptyList(),

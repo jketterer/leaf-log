@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
@@ -37,6 +38,7 @@ import kotlinx.datetime.LocalDate
 @Composable
 fun BrewingTrendsChart(
     trendPoints: List<TrendPoint>,
+    granularity: TrendGranularity,
     onTapPoint: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -71,6 +73,7 @@ fun BrewingTrendsChart(
             } else {
                 BrewingTrendsCanvas(
                     trendPoints = trendPoints,
+                    granularity = granularity,
                     onTapPoint = onTapPoint,
                 )
             }
@@ -81,6 +84,7 @@ fun BrewingTrendsChart(
 @Composable
 private fun BrewingTrendsCanvas(
     trendPoints: List<TrendPoint>,
+    granularity: TrendGranularity,
     onTapPoint: (LocalDate) -> Unit,
 ) {
     val lineColor = MaterialTheme.colorScheme.primary
@@ -88,6 +92,14 @@ private fun BrewingTrendsCanvas(
     val pointColor = MaterialTheme.colorScheme.primary
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
+
+    val monthNames = remember {
+        arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    }
+    val isMultiYear = remember(trendPoints) {
+        if (trendPoints.size < 2) false
+        else trendPoints.first().date.year != trendPoints.last().date.year
+    }
 
     val maxCount = remember(trendPoints) { trendPoints.maxOf { it.sessionCount }.coerceAtLeast(1) }
     val yAxisMax = remember(maxCount) { ((maxCount / 2) + 1) * 2 } // Round up to even number
@@ -217,7 +229,13 @@ private fun BrewingTrendsCanvas(
         labelIndices.forEach { index ->
             if (index < trendPoints.size) {
                 val date = trendPoints[index].date
-                val label = "${date.month.ordinal + 1}/${date.day}"
+                val label = when (granularity) {
+                    TrendGranularity.MONTHLY -> {
+                        val name = monthNames[date.month.ordinal]
+                        if (isMultiYear) "$name '${date.year % 100}" else name
+                    }
+                    else -> "${date.month.ordinal + 1}/${date.day}"
+                }
                 val textResult = textMeasurer.measure(
                     text = label,
                     style = labelStyle,
@@ -249,6 +267,28 @@ private fun BrewingTrendsChartPreview() {
                 TrendPoint(LocalDate(2024, 1, 6), 5),
                 TrendPoint(LocalDate(2024, 1, 7), 2),
             ),
+            granularity = TrendGranularity.DAILY,
+            onTapPoint = {},
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BrewingTrendsChartMonthlyPreview() {
+    LeafLogTheme {
+        BrewingTrendsChart(
+            trendPoints = listOf(
+                TrendPoint(LocalDate(2024, 1, 1), 8),
+                TrendPoint(LocalDate(2024, 2, 1), 12),
+                TrendPoint(LocalDate(2024, 3, 1), 5),
+                TrendPoint(LocalDate(2024, 4, 1), 15),
+                TrendPoint(LocalDate(2024, 5, 1), 10),
+                TrendPoint(LocalDate(2024, 6, 1), 18),
+                TrendPoint(LocalDate(2024, 7, 1), 7),
+            ),
+            granularity = TrendGranularity.MONTHLY,
             onTapPoint = {},
             modifier = Modifier.padding(16.dp),
         )
@@ -264,6 +304,7 @@ private fun BrewingTrendsChartEmptyPreview() {
                 TrendPoint(LocalDate(2024, 1, 1), 0),
                 TrendPoint(LocalDate(2024, 1, 2), 0),
             ),
+            granularity = TrendGranularity.DAILY,
             onTapPoint = {},
             modifier = Modifier.padding(16.dp),
         )

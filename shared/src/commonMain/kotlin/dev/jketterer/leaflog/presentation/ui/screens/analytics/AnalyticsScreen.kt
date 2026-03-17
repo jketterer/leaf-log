@@ -340,6 +340,7 @@ private fun AnalyticsDataContent(
         Spacer(modifier = Modifier.height(24.dp))
         BrewingTrendsChart(
             trendPoints = state.trendPoints,
+            granularity = state.trendGranularity,
             onTapPoint = { date -> onIntent(AnalyticsIntent.TapTrendPoint(date)) },
         )
 

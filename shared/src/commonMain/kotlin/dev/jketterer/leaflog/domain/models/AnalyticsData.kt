@@ -41,6 +41,17 @@ data class TrendPoint(
     val sessionCount: Int,
 )
 
+enum class TrendGranularity {
+    DAILY,
+    WEEKLY,
+    MONTHLY,
+}
+
+data class BrewingTrends(
+    val points: List<TrendPoint>,
+    val granularity: TrendGranularity,
+)
+
 data class TeaTypeDistribution(
     val teaType: TeaType,
     val sessionCount: Int,

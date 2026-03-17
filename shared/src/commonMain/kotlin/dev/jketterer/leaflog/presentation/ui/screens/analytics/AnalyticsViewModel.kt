@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -80,10 +81,19 @@ class AnalyticsViewModel(
             is AnalyticsIntent.SelectCustomRange -> selectCustomRange(intent.start, intent.end)
             is AnalyticsIntent.NavigateToLogTea -> _navEvents.trySend(AnalyticsNavEvent.NavigateToLogTea)
             is AnalyticsIntent.TapTrendPoint -> {
+                val granularity = _state.value.trendGranularity
+                val startDate = intent.date
+                val endDate = when (granularity) {
+                    TrendGranularity.DAILY -> startDate
+                    TrendGranularity.WEEKLY -> startDate.plus(6, DateTimeUnit.DAY)
+                    TrendGranularity.MONTHLY -> {
+                        startDate.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
+                    }
+                }
                 _navEvents.trySend(
                     AnalyticsNavEvent.NavigateToHistory(
-                        filterDateStart = intent.date.toString(),
-                        filterDateEnd = intent.date.toString(),
+                        filterDateStart = startDate.toString(),
+                        filterDateEnd = endDate.toString(),
                     )
                 )
             }
@@ -221,7 +231,9 @@ class AnalyticsViewModel(
                 val formattedTime = formatDuration(currentData.totalBrewingTime)
 
                 // Load chart data
-                val trendPoints = getBrewingTrendsUseCase(start, end)
+                val brewingTrends = getBrewingTrendsUseCase(start, end)
+                val trendPoints = brewingTrends.points
+                val trendGranularity = brewingTrends.granularity
                 val teaTypeDistribution = getTeaTypeDistributionUseCase(start, end)
                 val topTeas = getTopTeasUseCase(start, end)
                 val activityCells =
@@ -252,6 +264,7 @@ class AnalyticsViewModel(
                         hasMinimumData = hasMinimumData,
                         totalCompletedSessions = totalCompleted,
                         trendPoints = trendPoints,
+                        trendGranularity = trendGranularity,
                         teaTypeDistribution = teaTypeDistribution,
                         topTeas = topTeas,
                         activityCells = activityCells,

@@ -77,10 +77,6 @@ class HistoryViewModel(
                     intent.sessionId
                 )
             )
-
-            is HistoryIntent.EditSession -> _navEvents.trySend(
-                HistoryNavEvent.NavigateToEditSession(intent.sessionId)
-            )
         }
     }
 
@@ -301,7 +297,6 @@ class HistoryViewModel(
 
 sealed interface HistoryNavEvent {
     data class NavigateToSession(val sessionId: String) : HistoryNavEvent
-    data class NavigateToEditSession(val sessionId: String) : HistoryNavEvent
     data class NavigateToTimer(val sessionId: String) : HistoryNavEvent
 }
 

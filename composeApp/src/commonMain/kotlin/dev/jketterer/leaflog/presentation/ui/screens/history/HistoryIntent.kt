@@ -17,7 +17,6 @@ sealed interface HistoryIntent {
 
     // Actions
     data class SessionClicked(val sessionId: String) : HistoryIntent
-    data class EditSession(val sessionId: String) : HistoryIntent
     data class DeleteSession(val sessionId: String) : HistoryIntent
     data object ConfirmDeleteSession : HistoryIntent
     data object CancelDeleteSession : HistoryIntent

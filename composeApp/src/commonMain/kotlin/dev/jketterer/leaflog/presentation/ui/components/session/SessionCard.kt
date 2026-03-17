@@ -74,7 +74,6 @@ fun SessionCard(
     userPrefs: UserPreferences,
     onSessionClick: () -> Unit,
     onBrewAgainClick: () -> Unit,
-    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     canBrewAgain: Boolean = true,
     modifier: Modifier = Modifier,
@@ -226,13 +225,6 @@ fun SessionCard(
                         )
                     }
                     DropdownMenuItem(
-                        text = { Text("Edit") },
-                        onClick = {
-                            showMenu = false
-                            onEditClick()
-                        }
-                    )
-                    DropdownMenuItem(
                         text = { Text("Delete") },
                         onClick = {
                             showMenu = false
@@ -284,7 +276,6 @@ private fun SessionCardCompletedPreview() {
             teaPhotoUrl = null,
             userPrefs = UserPreferences.IMPERIAL,
             onSessionClick = {},
-            onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
             imageStorage = null,
@@ -322,7 +313,6 @@ private fun SessionCardInProgressPreview() {
             teaPhotoUrl = null,
             userPrefs = UserPreferences.METRIC,
             onSessionClick = {},
-            onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
             imageStorage = null,
@@ -360,7 +350,6 @@ private fun SessionCardNoRatingPreview() {
             teaPhotoUrl = null,
             userPrefs = UserPreferences.IMPERIAL,
             onSessionClick = {},
-            onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
             imageStorage = null,
@@ -398,7 +387,6 @@ private fun SessionCardFahrenheitPreview() {
             teaPhotoUrl = null,
             userPrefs = UserPreferences.METRIC,
             onSessionClick = {},
-            onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
             imageStorage = null,
@@ -436,7 +424,6 @@ private fun SessionCardLongNamesPreview() {
             teaPhotoUrl = null,
             userPrefs = UserPreferences(),
             onSessionClick = {},
-            onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
             imageStorage = null,

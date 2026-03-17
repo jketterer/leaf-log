@@ -111,15 +111,6 @@ class HomeViewModel(
             is HomeIntent.ConfirmDeleteSession -> confirmDeleteSession()
             is HomeIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
 
-            is HomeIntent.EditSessionClicked -> {
-                _state.update { it.copy(isFabExpanded = false) }
-                _navEvents.trySend(
-                    HomeNavEvent.NavigateToEditSession(
-                        intent.sessionId
-                    )
-                )
-            }
-
             is HomeIntent.SessionClicked -> handleSessionClick(intent.sessionId)
             is HomeIntent.ViewAllSessionsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToHistory())
             is HomeIntent.ViewAllStatsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToAnalytics)
@@ -128,7 +119,12 @@ class HomeViewModel(
             is HomeIntent.DailyStatsTodaySessionsClicked -> {
                 val today = Clock.System.now()
                     .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
-                _navEvents.trySend(HomeNavEvent.NavigateToHistory(filterDateStart = today, filterDateEnd = today))
+                _navEvents.trySend(
+                    HomeNavEvent.NavigateToHistory(
+                        filterDateStart = today,
+                        filterDateEnd = today
+                    )
+                )
             }
 
             is HomeIntent.DailyStatsWaterCardClicked -> toggleVolumeUnit()
@@ -148,7 +144,8 @@ class HomeViewModel(
     }
 
     private fun handleSessionClick(sessionId: String) {
-        val session = _state.value.recentSessionsWithTea.find { it.session.id == sessionId }?.session
+        val session =
+            _state.value.recentSessionsWithTea.find { it.session.id == sessionId }?.session
         if (session?.status == SessionStatus.IN_PROGRESS) {
             viewModelScope.launch {
                 // Find the active child steep to navigate to, if any
@@ -360,9 +357,9 @@ sealed interface HomeNavEvent {
         val filterDateStart: String? = null,
         val filterDateEnd: String? = null,
     ) : HomeNavEvent
+
     data object NavigateToCollection : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
-    data class NavigateToEditSession(val sessionId: String) : HomeNavEvent
     data class NavigateToLogTea(
         val teaId: String? = null,
         val vesselId: String? = null,

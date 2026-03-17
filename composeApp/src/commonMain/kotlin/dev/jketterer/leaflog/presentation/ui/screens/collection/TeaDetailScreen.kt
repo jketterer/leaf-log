@@ -129,10 +129,6 @@ fun TeaDetailScreen(
                     onNavigateToLogTea(teaId, event.vesselId)
                 }
 
-                is TeaDetailNavigationEvent.NavigateToEditSession -> {
-                    onNavigateToEditSession(event.sessionId)
-                }
-
                 is TeaDetailNavigationEvent.NavigateToTimer -> {
                     onNavigateToTimer(event.sessionId)
                 }
@@ -430,9 +426,6 @@ private fun TeaDetailContent(
                                     userPrefs = state.userPreferences,
                                     onSessionClick = {
                                         onIntent(TeaDetailIntent.SessionClicked(session.id))
-                                    },
-                                    onEditClick = {
-                                        onIntent(TeaDetailIntent.EditSessionClicked(session.id))
                                     },
                                     onBrewAgainClick = {
                                         onIntent(TeaDetailIntent.BrewAgainClicked(session.id))

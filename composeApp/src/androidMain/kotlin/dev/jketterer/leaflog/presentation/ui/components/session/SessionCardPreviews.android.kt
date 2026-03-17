@@ -46,7 +46,6 @@ private fun SessionCardWithPhotoPreview() {
             teaPhotoUrl = null,
             userPrefs = UserPreferences.METRIC,
             onSessionClick = {},
-            onEditClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
             imageStorage = imageStorage,

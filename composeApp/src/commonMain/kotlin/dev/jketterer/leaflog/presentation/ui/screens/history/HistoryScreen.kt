@@ -106,11 +106,6 @@ fun HistoryScreen(
                 is HistoryNavEvent.NavigateToSession -> {
                     onNavigateToSession(event.sessionId)
                 }
-
-                is HistoryNavEvent.NavigateToEditSession -> {
-                    onNavigateToEditSession(event.sessionId)
-                }
-
                 is HistoryNavEvent.NavigateToTimer -> {
                     onNavigateToTimer(event.sessionId)
                 }
@@ -298,9 +293,6 @@ private fun HistoryContent(
                                     },
                                     onBrewAgainClick = {
                                         onIntent(HistoryIntent.BrewAgain(session.id))
-                                    },
-                                    onEditClick = {
-                                        onIntent(HistoryIntent.EditSession(session.id))
                                     },
                                     onDeleteClick = {
                                         onIntent(HistoryIntent.DeleteSession(session.id))

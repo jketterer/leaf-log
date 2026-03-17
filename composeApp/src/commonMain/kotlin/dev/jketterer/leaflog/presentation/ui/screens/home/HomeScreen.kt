@@ -91,10 +91,6 @@ fun HomeScreen(
                     onNavigateToSession(event.sessionId)
                 }
 
-                is HomeNavEvent.NavigateToEditSession -> {
-                    onNavigateToEditSession(event.sessionId)
-                }
-
                 is HomeNavEvent.NavigateToHistory -> {
                     onNavigateToHistory(
                         event.filterDateStart,
@@ -273,9 +269,6 @@ private fun HomeContent(
                                 },
                                 onBrewAgainClick = {
                                     onIntent(HomeIntent.BrewAgainClicked(sessionData.session.id))
-                                },
-                                onEditClick = {
-                                    onIntent(HomeIntent.EditSessionClicked(sessionData.session.id))
                                 },
                                 onDeleteClick = {
                                     onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.id))

@@ -5,8 +5,10 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import dev.jketterer.leaflog.domain.models.WaterType
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 @Serializable
 @Entity(
@@ -58,7 +60,7 @@ data class BrewingConfigurationEntity(
     val brewingTime: Duration, // TypeConverter: Duration ↔ Long
 
     @ColumnInfo(name = "water_type")
-    val waterType: String, // TypeConverter: WaterType ↔ String
+    val waterType: WaterType, // TypeConverter: WaterType ↔ String
 
     // Metadata
     @ColumnInfo(name = "source_session_id")
@@ -70,7 +72,7 @@ data class BrewingConfigurationEntity(
     val timesUsed: Int, // How often user has used this config
 
     @ColumnInfo(name = "last_used_at")
-    val lastUsedAt: Long?, // TypeConverter: Instant ↔ Long
+    val lastUsedAt: Instant?, // TypeConverter: Instant ↔ Long
 
     // User customization
     val label: String?, // e.g., "My Gong-fu Method", "Quick Western"
@@ -79,8 +81,8 @@ data class BrewingConfigurationEntity(
     val isActive: Boolean, // User can disable configs without deleting
 
     @ColumnInfo(name = "created_at")
-    val createdAt: Long, // TypeConverter: Instant ↔ Long
+    val createdAt: Instant, // TypeConverter: Instant ↔ Long
 
     @ColumnInfo(name = "updated_at")
-    val updatedAt: Long, // TypeConverter: Instant ↔ Long
+    val updatedAt: Instant, // TypeConverter: Instant ↔ Long
 )

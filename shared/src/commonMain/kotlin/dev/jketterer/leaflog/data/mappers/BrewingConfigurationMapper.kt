@@ -2,8 +2,6 @@ package dev.jketterer.leaflog.data.mappers
 
 import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEntity
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.WaterType
-import kotlin.time.Instant
 
 fun BrewingConfigurationEntity.toBrewingConfiguration(): BrewingConfiguration {
     return BrewingConfiguration(
@@ -14,15 +12,15 @@ fun BrewingConfigurationEntity.toBrewingConfiguration(): BrewingConfiguration {
         waterQuantityMl = waterQuantityMl,
         temperatureCelsius = temperatureCelsius,
         brewingTime = brewingTime,
-        waterType = WaterType.valueOf(waterType),
+        waterType = waterType,
         sourceSessionId = sourceSessionId,
         rating = rating,
         timesUsed = timesUsed,
-        lastUsedAt = lastUsedAt?.let { Instant.fromEpochMilliseconds(it) },
+        lastUsedAt = lastUsedAt,
         label = label,
         isActive = isActive,
-        createdAt = Instant.fromEpochMilliseconds(createdAt),
-        updatedAt = Instant.fromEpochMilliseconds(updatedAt),
+        createdAt = createdAt,
+        updatedAt = updatedAt,
     )
 }
 
@@ -35,14 +33,14 @@ fun BrewingConfiguration.toEntity(): BrewingConfigurationEntity {
         waterQuantityMl = waterQuantityMl,
         temperatureCelsius = temperatureCelsius,
         brewingTime = brewingTime,
-        waterType = waterType.name,
+        waterType = waterType,
         sourceSessionId = sourceSessionId,
         rating = rating,
         timesUsed = timesUsed,
-        lastUsedAt = lastUsedAt?.toEpochMilliseconds(),
+        lastUsedAt = lastUsedAt,
         label = label,
         isActive = isActive,
-        createdAt = createdAt.toEpochMilliseconds(),
-        updatedAt = updatedAt.toEpochMilliseconds(),
+        createdAt = createdAt,
+        updatedAt = updatedAt,
     )
 }

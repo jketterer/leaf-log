@@ -12,6 +12,7 @@ data class BrewingVessel(
     val displayOrder: Int,
 
     val userId: String? = null,
+    val syncStatus: SyncStatus = SyncStatus.LOCAL_ONLY,
     val createdAt: Instant,
     val updatedAt: Instant,
     val deletedAt: Instant? = null,

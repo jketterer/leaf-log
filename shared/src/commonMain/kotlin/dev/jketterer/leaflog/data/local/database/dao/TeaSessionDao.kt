@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.data.local.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
@@ -147,9 +146,6 @@ interface TeaSessionDao {
     """
     )
     suspend fun softDeleteChildSteeps(parentId: String, timestamp: Long)
-
-    @Delete
-    suspend fun delete(teaSession: TeaSessionEntity)
 
     @Query(
         """

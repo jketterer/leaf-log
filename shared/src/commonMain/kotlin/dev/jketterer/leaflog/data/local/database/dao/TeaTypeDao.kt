@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.data.local.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
@@ -40,12 +39,8 @@ interface TeaTypeDao {
     @Upsert
     suspend fun upsertAll(teaTypes: List<TeaTypeEntity>)
 
-    // TODO: i'd rather do this in the repository than here
     @Query("UPDATE tea_type SET deletedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
-
-    @Delete
-    suspend fun delete(teaType: TeaTypeEntity)
 
     @Query(
         """

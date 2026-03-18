@@ -12,8 +12,6 @@ import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigur
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.data.ExportDataUseCase
-import dev.jketterer.leaflog.domain.usecases.data.ImportDataUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
@@ -97,10 +95,6 @@ val useCaseModule = module {
     factoryOf(::CreateBrewingVesselUseCase)
     factoryOf(::DeleteBrewingVesselUseCase)
     factoryOf(::UpdateBrewingVesselUseCase)
-
-    // Data export/import use cases
-    factoryOf(::ExportDataUseCase)
-    factoryOf(::ImportDataUseCase)
 
     // Brewing configuration use cases
     factoryOf(::CheckDuplicateConfigurationUseCase)

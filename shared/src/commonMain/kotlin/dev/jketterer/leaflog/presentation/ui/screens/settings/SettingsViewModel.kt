@@ -2,20 +2,19 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.repositories.DataExportRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
-import dev.jketterer.leaflog.domain.usecases.data.ExportDataUseCase
-import dev.jketterer.leaflog.domain.usecases.data.ImportDataUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val preferencesRepository: PreferencesRepository,
-    private val exportDataUseCase: ExportDataUseCase,
-    private val importDataUseCase: ImportDataUseCase,
+    private val dataExportRepository: DataExportRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
@@ -45,7 +44,7 @@ class SettingsViewModel(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesRepository.getPreferencesFlow()
-                .catch { e -> println("Failed to load preferences: ${e.message}") }
+                .catch { e -> Logger.w("Settings") { "Failed to load preferences: ${e.message}" } }
                 .collect { preferences ->
                     _state.update { it.copy(preferences = preferences, isLoading = false) }
                 }
@@ -88,7 +87,7 @@ class SettingsViewModel(
     private fun exportData() {
         viewModelScope.launch {
             _state.update { it.copy(isExporting = true) }
-            exportDataUseCase()
+            dataExportRepository.exportAll()
                 .onSuccess { filePath ->
                     _state.update { it.copy(exportFilePath = filePath, isExporting = false) }
                 }
@@ -106,7 +105,7 @@ class SettingsViewModel(
     private fun importData(filePath: String) {
         viewModelScope.launch {
             _state.update { it.copy(showImportPicker = false, isImporting = true) }
-            importDataUseCase(filePath)
+            dataExportRepository.importFrom(filePath)
                 .onSuccess { result ->
                     _state.update { it.copy(isImporting = false, importResult = result) }
                 }

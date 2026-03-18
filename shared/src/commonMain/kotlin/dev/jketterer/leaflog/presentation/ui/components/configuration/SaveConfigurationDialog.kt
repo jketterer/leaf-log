@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -39,6 +40,7 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 /**
  * Dialog to save a brewing configuration after a great session
@@ -152,5 +154,25 @@ private fun formatBrewingTime(seconds: Int): String {
         seconds < 60 -> "${seconds}s"
         seconds % 60 == 0 -> "${seconds / 60}m"
         else -> "${seconds / 60}m ${seconds % 60}s"
+    }
+}
+
+@Preview
+@Composable
+private fun SaveConfigurationDialogPreview() {
+    LeafLogTheme {
+        SaveConfigurationDialog(
+            teaName = "Dragon Well",
+            vesselName = "Gaiwan (100ml)",
+            teaQuantityGrams = 5.0f,
+            waterQuantityMl = 200.0,
+            temperatureCelsius = 85.0,
+            brewingTimeSeconds = 45,
+            rating = 4.5f,
+            suggestedLabel = "Gongfu Style",
+            userPreferences = UserPreferences(),
+            onSave = {},
+            onDismiss = {},
+        )
     }
 }

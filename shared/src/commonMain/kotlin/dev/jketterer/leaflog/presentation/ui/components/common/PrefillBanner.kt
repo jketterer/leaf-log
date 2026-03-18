@@ -17,9 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Info
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 /**
  * Banner that shows the source of pre-filled brewing parameters
  */
@@ -86,5 +88,29 @@ fun PrefillBanner(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PrefillBannerSavedConfigPreview() {
+    LeafLogTheme {
+        PrefillBanner(
+            source = PrefillSource.SavedConfig,
+            teaName = "Dragon Well",
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PrefillBannerSameTypePreview() {
+    LeafLogTheme {
+        PrefillBanner(
+            source = PrefillSource.SameTypeConfig(teaName = "Longjing"),
+            teaName = "Bi Luo Chun",
+            hasMultipleMethods = true,
+            onChooseDifferentMethod = {},
+        )
     }
 }

@@ -15,10 +15,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.PlusCircle
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Section showing saved brewing methods for a tea
@@ -75,5 +80,55 @@ fun SavedMethodsSection(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SavedMethodsSectionEmptyPreview() {
+    LeafLogTheme {
+        SavedMethodsSection(
+            configurations = emptyList(),
+            getVesselName = { "Gaiwan" },
+            userPreferences = UserPreferences(),
+            onAdd = {},
+            onEdit = {},
+            onDelete = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SavedMethodsSectionWithItemsPreview() {
+    val now = Clock.System.now()
+    LeafLogTheme {
+        SavedMethodsSection(
+            configurations = listOf(
+                BrewingConfiguration(
+                    id = "1",
+                    teaId = "tea-1",
+                    vesselId = "vessel-1",
+                    teaQuantityGrams = 5.0f,
+                    waterQuantityMl = 200.0,
+                    temperatureCelsius = 95.0,
+                    brewingTime = 3.minutes,
+                    waterType = WaterType.FILTERED,
+                    sourceSessionId = "session-1",
+                    rating = 4.5f,
+                    timesUsed = 12,
+                    lastUsedAt = now,
+                    label = "Morning Gongfu",
+                    isActive = true,
+                    createdAt = now,
+                    updatedAt = now,
+                ),
+            ),
+            getVesselName = { "Gaiwan (100ml)" },
+            userPreferences = UserPreferences(),
+            onAdd = {},
+            onEdit = {},
+            onDelete = {},
+        )
     }
 }

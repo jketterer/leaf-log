@@ -6,8 +6,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
@@ -47,5 +53,17 @@ fun RatingSelector(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RatingSelectorPreview() {
+    var rating by remember { mutableFloatStateOf(3f) }
+    LeafLogTheme {
+        RatingSelector(
+            rating = rating,
+            onRatingChange = { rating = it },
+        )
     }
 }

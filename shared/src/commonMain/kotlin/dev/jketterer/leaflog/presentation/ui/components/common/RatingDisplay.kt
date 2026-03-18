@@ -12,11 +12,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import compose.icons.FontAwesomeIcons
 import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.regular.Star
 import compose.icons.fontawesomeicons.solid.Star
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 @Composable
 fun RatingDisplay(
@@ -47,5 +49,21 @@ fun RatingDisplay(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RatingDisplayPreview() {
+    LeafLogTheme {
+        RatingDisplay(rating = 4.5f)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RatingDisplayIconsOnlyPreview() {
+    LeafLogTheme {
+        RatingDisplay(rating = 3f, iconsOnly = true)
     }
 }

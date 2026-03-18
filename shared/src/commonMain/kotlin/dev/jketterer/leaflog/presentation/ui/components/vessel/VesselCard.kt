@@ -25,10 +25,13 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronRight
+import androidx.compose.ui.tooling.preview.Preview
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import kotlin.time.Clock
 import org.koin.compose.koinInject
 
 @Composable
@@ -106,5 +109,49 @@ fun VesselCard(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselCardPreview() {
+    val now = Clock.System.now()
+    LeafLogTheme {
+        VesselCard(
+            vessel = BrewingVessel(
+                id = "1",
+                name = "Gaiwan",
+                iconName = "gaiwan",
+                capacityMl = 100,
+                isSystemDefault = true,
+                displayOrder = 0,
+                createdAt = now,
+                updatedAt = now,
+            ),
+            volumeUnit = VolumeUnit.MILLILITERS,
+            onClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselCardNoCapacityPreview() {
+    val now = Clock.System.now()
+    LeafLogTheme {
+        VesselCard(
+            vessel = BrewingVessel(
+                id = "2",
+                name = "Travel Mug",
+                iconName = "mug",
+                capacityMl = null,
+                isSystemDefault = false,
+                displayOrder = 1,
+                createdAt = now,
+                updatedAt = now,
+            ),
+            volumeUnit = VolumeUnit.FLUID_OUNCES,
+            onClick = {},
+        )
     }
 }

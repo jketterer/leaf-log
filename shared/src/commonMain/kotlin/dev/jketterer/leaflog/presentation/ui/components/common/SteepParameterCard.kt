@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
@@ -29,6 +30,7 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
@@ -125,6 +127,36 @@ fun SteepParameterCard(
 }
 
 private const val PLACEHOLDER = "---"
+
+@Preview(showBackground = true)
+@Composable
+private fun SteepParameterCardPreview() {
+    LeafLogTheme {
+        SteepParameterCard(
+            steepNumber = 1,
+            teaQuantity = "5g",
+            waterQuantity = "200ml",
+            temperature = "95\u00B0C",
+            brewingTime = "3m 30s",
+            onEditClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SteepParameterCardPartialPreview() {
+    LeafLogTheme {
+        SteepParameterCard(
+            steepNumber = 3,
+            teaQuantity = null,
+            waterQuantity = "150ml",
+            temperature = null,
+            brewingTime = "45s",
+            onEditClick = {},
+        )
+    }
+}
 
 @Composable
 private fun ParameterRow(

@@ -7,7 +7,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Camera
 import io.github.vinceglb.filekit.PlatformFile
@@ -39,5 +41,21 @@ fun PhotoPickerButton(
             text = text,
             modifier = Modifier,
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PhotoPickerButtonPreview() {
+    LeafLogTheme {
+        PhotoPickerButton(onPhotoPicked = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PhotoPickerButtonCustomTextPreview() {
+    LeafLogTheme {
+        PhotoPickerButton(onPhotoPicked = {}, text = "Change Photo")
     }
 }

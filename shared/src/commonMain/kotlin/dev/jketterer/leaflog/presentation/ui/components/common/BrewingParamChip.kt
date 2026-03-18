@@ -13,7 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Clock
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 @Composable
 fun BrewingParamChip(icon: ImageVector, text: String) {
@@ -46,5 +50,13 @@ fun formatBrewingTime(seconds: Int): String {
         seconds < 60 -> "${seconds}s"
         seconds % 60 == 0 -> "${seconds / 60}m"
         else -> "${seconds / 60}m ${seconds % 60}s"
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BrewingParamChipPreview() {
+    LeafLogTheme {
+        BrewingParamChip(icon = FeatherIcons.Clock, text = "3m 30s")
     }
 }

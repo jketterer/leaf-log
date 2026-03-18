@@ -1,8 +1,8 @@
 package dev.jketterer.leaflog.domain.models
 
 data class UserPreferences(
-    val temperatureUnit: TemperatureUnit = TemperatureUnit.CELSIUS,
-    val volumeUnit: VolumeUnit = VolumeUnit.MILLILITERS,
+    val temperatureUnit: TemperatureUnit = TemperatureUnit.FAHRENHEIT,
+    val volumeUnit: VolumeUnit = VolumeUnit.FLUID_OUNCES,
     val teaSortOption: TeaSortOption = TeaSortOption.NAME_ASC,
     val analyticsPeriod: AnalyticsPeriod = AnalyticsPeriod.THIS_WEEK,
     val defaultWaterType: WaterType = WaterType.FILTERED,

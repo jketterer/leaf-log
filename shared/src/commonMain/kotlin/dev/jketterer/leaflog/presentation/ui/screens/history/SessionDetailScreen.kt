@@ -138,37 +138,33 @@ private fun SessionDetailContent(
     state: SessionDetailState,
     onIntent: (SessionDetailIntent) -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-                .padding(bottom = 136.dp),
-        ) {
-            TopAppBar(
-                title = { Text("Session Details") },
-                navigationIcon = {
-                    IconButton(onClick = { onIntent(SessionDetailIntent.BackClicked) }) {
-                        Icon(
-                            imageVector = FeatherIcons.ArrowLeft,
-                            contentDescription = "Back",
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { onIntent(SessionDetailIntent.EditSessionClicked) }) {
-                        Icon(
-                            imageVector = FeatherIcons.Edit2,
-                            contentDescription = "Edit",
-                        )
-                    }
-                    IconButton(onClick = { onIntent(SessionDetailIntent.DeleteSessionClicked) }) {
-                        Icon(
-                            imageVector = FeatherIcons.Trash2,
-                            contentDescription = "Delete",
-                        )
-                    }
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text("Session Details") },
+            navigationIcon = {
+                IconButton(onClick = { onIntent(SessionDetailIntent.BackClicked) }) {
+                    Icon(
+                        imageVector = FeatherIcons.ArrowLeft,
+                        contentDescription = "Back",
+                    )
                 }
-            )
-            // Brew Again button
+            },
+            actions = {
+                IconButton(onClick = { onIntent(SessionDetailIntent.EditSessionClicked) }) {
+                    Icon(
+                        imageVector = FeatherIcons.Edit2,
+                        contentDescription = "Edit",
+                    )
+                }
+                IconButton(onClick = { onIntent(SessionDetailIntent.DeleteSessionClicked) }) {
+                    Icon(
+                        imageVector = FeatherIcons.Trash2,
+                        contentDescription = "Delete",
+                    )
+                }
+            }
+        )
+        Box(modifier = Modifier.weight(1f)) {
             when {
                 state.isLoading -> {
                     Box(
@@ -333,45 +329,42 @@ private fun SessionDetailContent(
                     )
                 }
             }
-        }
 
-        state.error?.let { error ->
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .padding(bottom = 136.dp),
-                action = {
-                    TextButton(onClick = { onIntent(SessionDetailIntent.ClearError) }) {
-                        Text("Dismiss")
-                    }
-                },
-            ) {
-                Text(error)
+            state.error?.let { error ->
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp),
+                    action = {
+                        TextButton(onClick = { onIntent(SessionDetailIntent.ClearError) }) {
+                            Text("Dismiss")
+                        }
+                    },
+                ) {
+                    Text(error)
+                }
             }
         }
 
-        Surface(
-            tonalElevation = 3.dp,
-            modifier = Modifier.align(Alignment.BottomCenter),
-        ) {
-            Column(
+        Surface(shadowElevation = 8.dp) {
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (state.parentSession != null) {
                     OutlinedButton(
                         onClick = { onIntent(SessionDetailIntent.SaveAsConfigurationClicked) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f),
                     ) {
                         Text("Save as Method")
                     }
                 }
                 Button(
                     onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                 ) {
                     Icon(
                         imageVector = FeatherIcons.Coffee,

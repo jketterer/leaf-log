@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -110,7 +111,7 @@ class EditSessionViewModel(
         viewModelScope.launch {
             brewingVesselRepository.getAllFlow()
                 .catch { e ->
-                    println("Failed to load vessels: ${e.message}")
+                    Logger.w("EditSession") { "Failed to load vessels: ${e.message}" }
                 }
                 .collect { vessels ->
                     _state.update { it.copy(availableVessels = vessels) }

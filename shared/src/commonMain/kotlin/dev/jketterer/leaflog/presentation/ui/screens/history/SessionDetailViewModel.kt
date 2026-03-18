@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -54,7 +55,7 @@ class SessionDetailViewModel(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesRepository.getPreferencesFlow()
-                .catch { println("Failed to load preferences") }
+                .catch { e -> Logger.w("SessionDetail") { "Failed to load preferences: ${e.message}" } }
                 .collect { preferences ->
                     _state.update { it.copy(userPreferences = preferences) }
                 }
@@ -176,7 +177,7 @@ class SessionDetailViewModel(
 
     private suspend fun loadRelatedData(teaId: String, vesselId: String) {
         teaRepository.getByIdFlow(teaId)
-            .catch { e -> println("Failed to load tea: ${e.message}") }
+            .catch { e -> Logger.w("SessionDetail") { "Failed to load tea: ${e.message}" } }
             .firstOrNull()
             .let { tea ->
                 _state.update { it.copy(tea = tea) }
@@ -184,7 +185,7 @@ class SessionDetailViewModel(
             }
 
         brewingVesselRepository.getByIdFlow(vesselId)
-            .catch { e -> println("Failed to load vessel: ${e.message}") }
+            .catch { e -> Logger.w("SessionDetail") { "Failed to load vessel: ${e.message}" } }
             .firstOrNull()
             .let { vessel ->
                 _state.update { it.copy(vessel = vessel) }
@@ -193,7 +194,7 @@ class SessionDetailViewModel(
 
     private suspend fun loadTeaType(teaTypeId: String) {
         teaTypeRepository.getByIdFlow(teaTypeId)
-            .catch { e -> println("Failed to load tea type: ${e.message}") }
+            .catch { e -> Logger.w("SessionDetail") { "Failed to load tea type: ${e.message}" } }
             .firstOrNull()
             .let { teaType ->
                 _state.update { it.copy(teaType = teaType) }

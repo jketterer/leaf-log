@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 
@@ -27,7 +28,7 @@ class UpdateTeaStatsUseCase(
                 ?: throw IllegalStateException("Tea with id $teaId not found")
         } catch (e: Exception) {
             // Non-critical - stats update failed but the primary operation was saved
-            println("Failed to update tea stats: ${e.message}")
+            Logger.w("UpdateTeaStats") { "Failed to update tea stats: ${e.message}" }
         }
     }
 }

@@ -21,6 +21,7 @@ composeIcons = "1.1.1"
 koin = "4.2.0-RC2"
 coil = "3.4.0"
 filekit = "0.13.0"
+kermit = "2.0.8"
 lifecycleViewmodel = "2.10.0-beta01"
 
 # Database
@@ -76,6 +77,8 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 
 filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
+
+kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

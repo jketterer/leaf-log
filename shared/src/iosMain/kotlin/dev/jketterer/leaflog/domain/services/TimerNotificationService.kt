@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.services
 
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.presentation.ui.navigation.DeepLinkHandler
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
@@ -35,7 +36,7 @@ class TimerNotificationServiceImpl : NSObject(),
             options = UNAuthorizationOptionAlert or UNAuthorizationOptionSound,
         ) { granted, error ->
             if (!granted) {
-                println("Notification permission denied: ${error?.localizedDescription}")
+                Logger.w("Notification") { "Notification permission denied: ${error?.localizedDescription}" }
             }
         }
     }
@@ -115,7 +116,7 @@ class TimerNotificationServiceImpl : NSObject(),
 
         center.addNotificationRequest(request) { error ->
             error?.let {
-                println("Failed to schedule completion alarm: ${it.localizedDescription}")
+                Logger.w("Notification") { "Failed to schedule completion alarm: ${it.localizedDescription}" }
             }
         }
     }

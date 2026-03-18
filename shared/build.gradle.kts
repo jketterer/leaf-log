@@ -61,6 +61,7 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor3)
             implementation(libs.filekit.dialogs.compose)
+            implementation(libs.kermit)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

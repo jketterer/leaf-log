@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -47,7 +48,7 @@ fun <T> ViewModel.loadPreferences(
 ) {
     viewModelScope.launch {
         preferencesRepository.getPreferencesFlow()
-            .catch { e -> println("Failed to load preferences: ${e.message}") }
+            .catch { e -> Logger.w("Preferences") { "Failed to load preferences: ${e.message}" } }
             .collect { preferences ->
                 stateFlow.update { updateState(it, preferences) }
             }

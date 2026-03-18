@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -66,7 +67,7 @@ class QuickTimerViewModel(
     private fun loadTeasAndVessels() {
         viewModelScope.launch {
             teaRepository.getAllFlow()
-                .catch { e -> println("Failed to load teas: ${e.message}") }
+                .catch { e -> Logger.w("QuickTimer") { "Failed to load teas: ${e.message}" } }
                 .collect { teas ->
                     _state.update { it.copy(availableTeas = teas) }
                 }
@@ -74,7 +75,7 @@ class QuickTimerViewModel(
 
         viewModelScope.launch {
             vesselRepository.getAllFlow()
-                .catch { e -> println("Failed to load vessels: ${e.message}") }
+                .catch { e -> Logger.w("QuickTimer") { "Failed to load vessels: ${e.message}" } }
                 .collect { vessels ->
                     _state.update { it.copy(availableVessels = vessels) }
                 }

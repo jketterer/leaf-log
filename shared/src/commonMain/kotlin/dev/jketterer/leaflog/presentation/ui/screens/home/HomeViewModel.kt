@@ -23,6 +23,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -263,7 +264,7 @@ class HomeViewModel(
     private suspend fun collectInProgressCount(loaded: MutableStateFlow<Boolean>) {
         teaSessionRepository.getInProgressCountFlow()
             .catch { e ->
-                println("Failed to load in-progress count: ${e.message}")
+                Logger.w("Home") { "Failed to load in-progress count: ${e.message}" }
                 loaded.value = true
             }
             .collect { count ->
@@ -288,7 +289,7 @@ class HomeViewModel(
             )
         }
             .catch { e ->
-                println("Failed to load most recent in-progress session: ${e.message}")
+                Logger.w("Home") { "Failed to load most recent in-progress session: ${e.message}" }
                 loaded.value = true
             }
             .collect { inProgressInfo ->

@@ -20,6 +20,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -170,7 +171,7 @@ class LogTeaViewModel(
                 val results = searchTeasUseCase(query)
                 _state.update { it.copy(availableTeas = results) }
             } catch (e: Exception) {
-                println("Search failed: ${e.message}")
+                Logger.w("LogTea") { "Search failed: ${e.message}" }
             }
         }
     }
@@ -577,7 +578,6 @@ class LogTeaViewModel(
     }
 
     override fun onCleared() {
-        println("clearing LogTeaViewModel")
         super.onCleared()
     }
 }

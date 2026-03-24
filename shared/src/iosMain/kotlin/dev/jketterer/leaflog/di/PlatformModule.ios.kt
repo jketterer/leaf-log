@@ -46,6 +46,7 @@ actual fun platformModule() = module {
             override fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?) = impl.scheduleCompletionAlarm(teaName, remainingSeconds, sessionId)
             override fun cancelCompletionAlarm() = impl.cancelCompletionAlarm()
             override fun onTimerStopped() = impl.onTimerStopped()
+            override suspend fun hasNotificationPermission() = impl.hasNotificationPermission()
         }
     }
 

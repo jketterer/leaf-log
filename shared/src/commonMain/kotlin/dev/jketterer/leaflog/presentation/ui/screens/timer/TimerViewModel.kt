@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
@@ -34,6 +35,7 @@ class TimerViewModel(
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val notificationService: TimerNotificationService,
     private val timerService: TimerService,
     private val startTimerUseCase: StartTimerUseCase,
     private val pauseTimerUseCase: PauseTimerUseCase,
@@ -92,6 +94,7 @@ class TimerViewModel(
             is TimerIntent.CompleteNow -> _state.update { it.copy(showCompleteNowConfirmation = true) }
             is TimerIntent.ConfirmCompleteNow -> confirmCompleteNow()
             is TimerIntent.CancelCompleteNow -> _state.update { it.copy(showCompleteNowConfirmation = false) }
+            is TimerIntent.DismissNotificationWarning -> _state.update { it.copy(showNotificationWarning = false) }
             is TimerIntent.BackClicked -> _navigationEvents.trySend(TimerNavEvent.NavigateBack)
 
             is TimerIntent.EditSession -> openEditSheet()
@@ -150,6 +153,7 @@ class TimerViewModel(
 
                 val tea = teaRepository.getById(session.teaId)
                 val vessel = brewingVesselRepository.getById(session.vesselId)
+                val hasNotificationPermission = notificationService.hasNotificationPermission()
 
                 // Prefer live TimerService state if it's already tracking this session
                 // (e.g., navigating back while timer is still running)
@@ -193,6 +197,7 @@ class TimerViewModel(
                         tea = tea,
                         vessel = vessel,
                         timerState = initialTimerState,
+                        showNotificationWarning = !hasNotificationPermission,
                         isLoading = false,
                     )
                 }

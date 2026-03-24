@@ -4,10 +4,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -29,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.AlertTriangle
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.CheckCircle
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
+import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -249,6 +255,13 @@ private fun TimerRunningContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            // Notification permission warning
+            if (state.showNotificationWarning) {
+                NotificationWarningBanner(
+                    onDismiss = { onIntent(TimerIntent.DismissNotificationWarning) },
+                )
+            }
+
             // Brewing parameters card
             if (state.session != null) {
                 SteepParameterCard(
@@ -287,6 +300,53 @@ private fun TimerRunningContent(
                 onResetClick = { onIntent(TimerIntent.ResetTimer) },
             )
         }
+    }
+}
+
+@Composable
+private fun NotificationWarningBanner(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = FeatherIcons.AlertTriangle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = "Notifications are disabled — you won't be alerted when your tea is ready in the background",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = FeatherIcons.X,
+                    contentDescription = "Dismiss",
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun NotificationWarningBannerPreview() {
+    LeafLogTheme {
+        NotificationWarningBanner(onDismiss = {})
     }
 }
 

@@ -24,6 +24,7 @@ sealed interface TimerIntent {
     data object CompleteNow : TimerIntent
     data object ConfirmCompleteNow : TimerIntent
     data object CancelCompleteNow : TimerIntent
+    data object DismissNotificationWarning : TimerIntent
     data object BackClicked : TimerIntent
 
     // Edit session parameters

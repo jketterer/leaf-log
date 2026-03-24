@@ -50,11 +50,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleDeepLink(intent: Intent?) {
-        if (intent?.getStringExtra("destination") == "timer") {
-            val sessionId = intent.getStringExtra("sessionId")
-            if (sessionId != null) {
-                DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
-            }
+        val sessionId = intent?.getStringExtra("sessionId") ?: return
+        when (intent.getStringExtra("destination")) {
+            "timer" -> DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
+            "steep_complete" -> DeepLinkHandler.setRoute(NavRoute.SteepCompleteRoute(sessionId))
         }
     }
 }

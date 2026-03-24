@@ -8,4 +8,11 @@ interface TimerNotificationService {
     fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?)
     fun cancelCompletionAlarm()
     fun onTimerStopped()
+
+    /**
+     * Check whether the app has permission to post notifications.
+     * Returns false if the user has denied notification permission,
+     * meaning background timer alerts will not be delivered.
+     */
+    suspend fun hasNotificationPermission(): Boolean
 }

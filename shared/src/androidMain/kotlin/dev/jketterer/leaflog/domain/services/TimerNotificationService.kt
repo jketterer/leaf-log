@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.services
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,7 +11,10 @@ import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
+import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.R
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
@@ -48,10 +52,13 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         }
     }
 
-    private fun createTimerPendingIntent(sessionId: String? = null): PendingIntent {
+    private fun createTimerPendingIntent(
+        sessionId: String? = null,
+        destination: String = "timer",
+    ): PendingIntent {
         val openIntent = Intent().setClassName(context.packageName, "dev.jketterer.leaflog.MainActivity").apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("destination", "timer")
+            putExtra("destination", destination)
             sessionId?.let { putExtra("sessionId", it) }
         }
         return PendingIntent.getActivity(
@@ -180,7 +187,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
             .setContentTitle("$teaName is ready!")
             .setContentText("Time to enjoy your tea")
             .setAutoCancel(true)
-            .setContentIntent(createTimerPendingIntent(sessionId))
+            .setContentIntent(createTimerPendingIntent(sessionId, destination = "steep_complete"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .build()
@@ -193,29 +200,75 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
     }
 
     /**
-     * No-op on Android — the foreground service keeps the process alive,
-     * so the coroutine-based countdown fires the completion notification directly.
+     * Schedule a backup alarm via AlarmManager. If the foreground service survives
+     * (normal case), [cancelCompletionAlarm] cancels this before it fires. If the
+     * process is killed by aggressive battery optimization, the alarm fires
+     * independently and [TimerCompletionReceiver] posts the completion notification.
      */
     override fun scheduleCompletionAlarm(
         teaName: String,
         remainingSeconds: Double,
-        sessionId: String?
+        sessionId: String?,
     ) {
-        // Intentionally empty
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pendingIntent = buildAlarmPendingIntent(teaName, sessionId)
+        val triggerAtMillis = SystemClock.elapsedRealtime() + (remainingSeconds * 1000).toLong()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+            // Exact alarm permission not granted — use inexact (may be delayed by a few minutes)
+            Logger.w("TimerAlarm") { "Exact alarm permission not granted, using inexact alarm" }
+            alarmManager.setAndAllowWhileIdle(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                triggerAtMillis,
+                pendingIntent,
+            )
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                triggerAtMillis,
+                pendingIntent,
+            )
+        }
     }
 
-    /**
-     * No-op on Android.
-     */
     override fun cancelCompletionAlarm() {
-        // Intentionally empty
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        // AlarmManager.cancel() matches by component + requestCode, not by extras,
+        // so the tea name and sessionId here are irrelevant for cancellation.
+        val pendingIntent = buildAlarmPendingIntent(teaName = "", sessionId = null)
+        alarmManager.cancel(pendingIntent)
     }
 
     /**
-     * No-op on Android — no Live Activity equivalent.
+     * Cancel the backup alarm when the timer is stopped (discard, complete, etc.).
      */
     override fun onTimerStopped() {
-        // Intentionally empty
+        cancelCompletionAlarm()
+    }
+
+    override suspend fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        } else {
+            NotificationManagerCompat.from(context).areNotificationsEnabled()
+        }
+    }
+
+    private fun buildAlarmPendingIntent(teaName: String, sessionId: String?): PendingIntent {
+        val intent = Intent().setClassName(
+            context.packageName,
+            "dev.jketterer.leaflog.services.TimerCompletionReceiver",
+        ).apply {
+            putExtra("tea_name", teaName)
+            sessionId?.let { putExtra("session_id", it) }
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            ALARM_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
     }
 
     companion object {
@@ -223,5 +276,6 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         private const val CHANNEL_ID_COMPLETE = "timer_complete"
         const val NOTIFICATION_ID = 1001
         const val COMPLETION_NOTIFICATION_ID = 1002
+        private const val ALARM_REQUEST_CODE = 2001
     }
 }

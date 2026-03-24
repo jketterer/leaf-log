@@ -89,6 +89,9 @@ class TimerService(
                     )
                     _timerState.update { completedState }
                     lifecycleHandler.onTimerStopped()
+                    // Cancel backup alarm before posting completion notification
+                    // to prevent a duplicate when both the coroutine and alarm fire
+                    notificationService.cancelCompletionAlarm()
                     notificationService.showTimerComplete(state.teaName, state.sessionId)
                     // Persist completion so HomeScreen banner reflects correct state
                     // even if no ViewModel is active (e.g., app backgrounded)

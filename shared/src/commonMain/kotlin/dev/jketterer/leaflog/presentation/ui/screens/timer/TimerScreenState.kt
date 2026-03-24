@@ -27,6 +27,7 @@ data class TimerScreenState(
     val editTeaQuantityGrams: String = "",
     val editIsTeaBag: Boolean = false,
     val editWaterType: WaterType? = null,
+    val showNotificationWarning: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
     val userPreferences: UserPreferences = UserPreferences(),

@@ -4,8 +4,10 @@ import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.presentation.ui.navigation.DeepLinkHandler
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionSound
+import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotification
 import platform.UserNotifications.UNNotificationPresentationOptionBanner
@@ -17,6 +19,7 @@ import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
 import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
 import platform.darwin.NSObject
+import kotlin.coroutines.resume
 
 class TimerNotificationServiceImpl : NSObject(),
     UNUserNotificationCenterDelegateProtocol {
@@ -127,7 +130,10 @@ class TimerNotificationServiceImpl : NSObject(),
         )
         if (isActivityActive) {
             val remaining = lastState?.remainingDuration?.inWholeSeconds?.toDouble() ?: 0.0
-            LiveActivityServiceHolder.instance?.update(remainingSeconds = remaining, isPaused = true)
+            LiveActivityServiceHolder.instance?.update(
+                remainingSeconds = remaining,
+                isPaused = true
+            )
         }
     }
 
@@ -154,6 +160,12 @@ class TimerNotificationServiceImpl : NSObject(),
             DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
         }
         withCompletionHandler()
+    }
+
+    suspend fun hasNotificationPermission(): Boolean = suspendCancellableCoroutine { continuation ->
+        center.getNotificationSettingsWithCompletionHandler { settings ->
+            continuation.resume(settings?.authorizationStatus == UNAuthorizationStatusAuthorized)
+        }
     }
 
     private fun buildUserInfo(sessionId: String?): Map<Any?, Any?> {

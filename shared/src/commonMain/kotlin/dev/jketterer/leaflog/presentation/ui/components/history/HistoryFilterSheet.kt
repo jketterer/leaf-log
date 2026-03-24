@@ -158,6 +158,33 @@ fun HistoryFilterSheetContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Vessel section
+        FilterSectionHeader("Vessel")
+        Spacer(modifier = Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            state.vessels.values
+                .sortedBy { it.displayOrder }
+                .forEach { vessel ->
+                    val selected = state.selectedVesselId == vessel.id
+                    FilterChip(
+                        selected = selected,
+                        onClick = {
+                            if (selected) {
+                                onIntent(HistoryIntent.FilterByVessel(null))
+                            } else {
+                                onIntent(HistoryIntent.FilterByVessel(vessel.id))
+                            }
+                        },
+                        label = { Text(vessel.name) },
+                    )
+                }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Date Range section
         FilterSectionHeader("Date Range")
         Spacer(modifier = Modifier.height(8.dp))

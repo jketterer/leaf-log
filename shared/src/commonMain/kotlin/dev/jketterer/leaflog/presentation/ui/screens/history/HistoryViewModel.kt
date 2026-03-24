@@ -59,6 +59,7 @@ class HistoryViewModel(
             is HistoryIntent.FilterByTea -> filterByTea(intent.teaId)
             is HistoryIntent.FilterByDateRange -> filterByDateRange(intent.start, intent.end)
             is HistoryIntent.FilterByMinRating -> filterByMinRating(intent.minRating)
+            is HistoryIntent.FilterByVessel -> filterByVessel(intent.vesselId)
             is HistoryIntent.ClearFilters -> clearFilters()
             is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is HistoryIntent.ConfirmDeleteSession -> confirmDeleteSession()
@@ -178,6 +179,11 @@ class HistoryViewModel(
             }
         }
 
+        // Filter by vessel
+        if (currentState.selectedVesselId != null) {
+            filtered = filtered.filter { it.vesselId == currentState.selectedVesselId }
+        }
+
         // Filter by search query
         if (currentState.searchQuery.isNotBlank()) {
             val query = currentState.searchQuery.lowercase()
@@ -244,6 +250,11 @@ class HistoryViewModel(
         reapplyFilters()
     }
 
+    private fun filterByVessel(vesselId: String?) {
+        _state.update { it.copy(selectedVesselId = vesselId) }
+        reapplyFilters()
+    }
+
     private fun clearFilters() {
         _state.update {
             it.copy(
@@ -253,6 +264,7 @@ class HistoryViewModel(
                 dateRangeStart = null,
                 dateRangeEnd = null,
                 minRating = null,
+                selectedVesselId = null,
             )
         }
         reapplyFilters()

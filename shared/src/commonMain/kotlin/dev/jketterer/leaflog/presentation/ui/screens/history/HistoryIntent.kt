@@ -13,6 +13,7 @@ sealed interface HistoryIntent {
     data class FilterByTea(val teaId: String?) : HistoryIntent
     data class FilterByDateRange(val start: LocalDate?, val end: LocalDate?) : HistoryIntent
     data class FilterByMinRating(val minRating: Float?) : HistoryIntent
+    data class FilterByVessel(val vesselId: String?) : HistoryIntent
     data object ClearFilters : HistoryIntent
 
     // Actions

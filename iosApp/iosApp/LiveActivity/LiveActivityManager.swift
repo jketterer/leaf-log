@@ -3,6 +3,7 @@ import ComposeApp
 import LeafLogShared
 
 @available(iOS 16.2, *)
+@MainActor
 final class LiveActivityManager: NSObject, LiveActivityService {
     private var activity: Activity<TeaTimerAttributes>?
     /// Automatically ends the Live Activity when the timer completes, even if the app is

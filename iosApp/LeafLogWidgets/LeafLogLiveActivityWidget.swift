@@ -11,9 +11,15 @@ struct LeafLogLiveActivityWidget: Widget {
                 state: context.state
             )
         } dynamicIsland: { context in
+            let isComplete = context.state.remainingSeconds <= 0
+                || (!context.state.isPaused && context.state.endDate <= Date.now)
             DynamicIsland {
                 DynamicIslandExpandedRegion(.trailing) {
-                    if context.state.isPaused {
+                    if isComplete {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.green)
+                    } else if context.state.isPaused {
                         Text(formatTime(context.state.remainingSeconds))
                             .font(.title.monospacedDigit())
                             .foregroundStyle(.secondary)
@@ -35,11 +41,15 @@ struct LeafLogLiveActivityWidget: Widget {
                     }
                 }
             } compactLeading: {
-                Image(systemName: "leaf.fill")
+                Image(systemName: isComplete ? "checkmark.circle.fill" : "leaf.fill")
                     .foregroundStyle(.green)
                     .font(.caption2)
             } compactTrailing: {
-                if context.state.isPaused {
+                if isComplete {
+                    Text("Done")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.green)
+                } else if context.state.isPaused {
                     Text(formatTime(context.state.remainingSeconds))
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
@@ -50,7 +60,8 @@ struct LeafLogLiveActivityWidget: Widget {
                         .contentTransition(.numericText(countsDown: true))
                 }
             } minimal: {
-                Image(systemName: context.state.isPaused ? "pause.circle.fill" : "leaf.fill")
+                Image(systemName: isComplete ? "checkmark.circle.fill"
+                    : context.state.isPaused ? "pause.circle.fill" : "leaf.fill")
                     .foregroundStyle(.green)
             }
         }

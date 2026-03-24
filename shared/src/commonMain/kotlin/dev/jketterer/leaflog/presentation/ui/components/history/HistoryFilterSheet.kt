@@ -6,24 +6,30 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +39,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
@@ -42,6 +52,7 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -62,6 +73,19 @@ private enum class DateRangePreset(val label: String) {
             THIS_MONTH -> today.minus(29, DateTimeUnit.DAY) to today
         }
     }
+}
+
+private fun isCustomDateRange(start: LocalDate?, end: LocalDate?): Boolean {
+    if (start == null && end == null) return false
+    return DateRangePreset.entries.none { preset ->
+        val (presetStart, presetEnd) = preset.toDateRange()
+        start == presetStart && end == presetEnd
+    }
+}
+
+private fun LocalDate.formatDisplay(): String {
+    val monthName = month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
+    return "$monthName $day, $year"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,6 +212,10 @@ fun HistoryFilterSheetContent(
         // Date Range section
         FilterSectionHeader("Date Range")
         Spacer(modifier = Modifier.height(8.dp))
+
+        val isCustom = isCustomDateRange(state.dateRangeStart, state.dateRangeEnd)
+        var showDateRangePicker by remember { mutableStateOf(false) }
+
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -207,6 +235,85 @@ fun HistoryFilterSheetContent(
                     },
                     label = { Text(preset.label) },
                 )
+            }
+            FilterChip(
+                selected = isCustom,
+                onClick = {
+                    if (isCustom) {
+                        onIntent(HistoryIntent.FilterByDateRange(null, null))
+                    } else {
+                        showDateRangePicker = true
+                    }
+                },
+                label = {
+                    if (isCustom) {
+                        val start = state.dateRangeStart?.formatDisplay() ?: ""
+                        val end = state.dateRangeEnd?.formatDisplay() ?: ""
+                        Text("$start – $end")
+                    } else {
+                        Text("Custom")
+                    }
+                },
+            )
+        }
+
+        if (showDateRangePicker) {
+            val dateRangePickerState = rememberDateRangePickerState(
+                initialSelectedStartDateMillis = state.dateRangeStart
+                    ?.atStartOfDayIn(TimeZone.UTC)
+                    ?.toEpochMilliseconds(),
+                initialSelectedEndDateMillis = state.dateRangeEnd
+                    ?.atStartOfDayIn(TimeZone.UTC)
+                    ?.toEpochMilliseconds(),
+            )
+            Dialog(
+                onDismissRequest = { showDateRangePicker = false },
+                properties = DialogProperties(usePlatformDefaultWidth = false),
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.surface,
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 4.dp, end = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            IconButton(onClick = { showDateRangePicker = false }) {
+                                Icon(
+                                    imageVector = FeatherIcons.X,
+                                    contentDescription = "Close",
+                                )
+                            }
+                            TextButton(
+                                onClick = {
+                                    val startMillis = dateRangePickerState.selectedStartDateMillis
+                                    val endMillis = dateRangePickerState.selectedEndDateMillis
+                                    if (startMillis != null && endMillis != null) {
+                                        val start = Instant.fromEpochMilliseconds(startMillis)
+                                            .toLocalDateTime(TimeZone.UTC).date
+                                        val end = Instant.fromEpochMilliseconds(endMillis)
+                                            .toLocalDateTime(TimeZone.UTC).date
+                                        onIntent(HistoryIntent.FilterByDateRange(start, end))
+                                    }
+                                    showDateRangePicker = false
+                                },
+                                enabled = dateRangePickerState.selectedStartDateMillis != null &&
+                                        dateRangePickerState.selectedEndDateMillis != null,
+                            ) {
+                                Text("Save")
+                            }
+                        }
+                        DateRangePicker(
+                            state = dateRangePickerState,
+                            modifier = Modifier.weight(1f),
+                            title = null,
+                        )
+                    }
+                }
             }
         }
 
@@ -331,6 +438,20 @@ private fun HistoryFilterSheetContentPreview() {
                         updatedAt = Instant.fromEpochMilliseconds(0),
                     ),
                 ),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HistoryFilterSheetContentCustomDateRangePreview() {
+    LeafLogTheme {
+        HistoryFilterSheetContent(
+            state = HistoryState(
+                dateRangeStart = LocalDate(2026, 1, 1),
+                dateRangeEnd = LocalDate(2026, 3, 15),
             ),
             onIntent = {},
         )

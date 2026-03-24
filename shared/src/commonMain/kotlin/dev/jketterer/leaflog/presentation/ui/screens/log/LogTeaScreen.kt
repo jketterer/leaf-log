@@ -600,7 +600,7 @@ private fun LogTeaContent(
     // Tea Search Dialog
     if (state.showTeaSearchDialog) {
         TeaSearchDialog(
-            teas = state.availableTeas,
+            teas = if (state.teaSearchQuery.isBlank()) state.suggestedTeas else state.availableTeas,
             searchQuery = state.teaSearchQuery,
             onSearchQueryChanged = { query ->
                 onIntent(LogTeaIntent.TeaSearchQueryChanged(query))
@@ -668,14 +668,21 @@ private fun TeaSearchDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (teas.isEmpty()) {
+                if (teas.isEmpty() && searchQuery.isNotBlank()) {
                     Text(
                         text = "No teas found",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                } else {
+                } else if (teas.isNotEmpty()) {
                     Column {
+                        if (searchQuery.isBlank()) {
+                            Text(
+                                text = "Recently Brewed",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         teas.take(5).forEach { tea ->
                             TextButton(
                                 onClick = { onTeaSelected(tea) },

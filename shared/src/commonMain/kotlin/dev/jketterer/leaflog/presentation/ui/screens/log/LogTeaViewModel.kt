@@ -121,7 +121,15 @@ class LogTeaViewModel(
                 preferencesRepository.getPreferencesFlow(),
                 teaRepository.getAllFlow(),
                 brewingVesselRepository.getAllFlow(),
-            ) { prefs, teas, vessels -> Triple(prefs, teas, vessels) }
+                teaRepository.getRecentlyBrewedFlow(5),
+            ) { prefs, teas, vessels, recentTeas ->
+                object {
+                    val prefs = prefs
+                    val teas = teas
+                    val vessels = vessels
+                    val recentTeas = recentTeas
+                }
+            }
                 .catch { e ->
                     _state.update {
                         it.copy(
@@ -130,14 +138,15 @@ class LogTeaViewModel(
                         )
                     }
                 }
-                .collect { (prefs, teas, vessels) ->
+                .collect { data ->
                     _state.update {
                         it.copy(
-                            userPreferences = prefs,
-                            availableTeas = teas,
-                            availableVessels = vessels,
+                            userPreferences = data.prefs,
+                            availableTeas = data.teas,
+                            suggestedTeas = data.recentTeas,
+                            availableVessels = data.vessels,
                             isLoading = false,
-                            selectedWaterType = prefs.defaultWaterType,
+                            selectedWaterType = data.prefs.defaultWaterType,
                         )
                     }
                 }

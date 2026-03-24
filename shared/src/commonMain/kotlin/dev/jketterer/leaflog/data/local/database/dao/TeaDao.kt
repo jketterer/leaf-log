@@ -82,6 +82,16 @@ interface TeaDao {
     )
     suspend fun deleteSyncedOldItems(cutoffTimestamp: Long): Int
 
+    @Query(
+        """
+        SELECT * FROM tea
+        WHERE deletedAt IS NULL AND lastBrewedAt IS NOT NULL
+        ORDER BY lastBrewedAt DESC
+        LIMIT :limit
+    """
+    )
+    fun getRecentlyBrewedFlow(limit: Int): Flow<List<TeaEntity>>
+
     @Query("SELECT COUNT(*) FROM tea WHERE deletedAt IS NULL")
     suspend fun count(): Int
 

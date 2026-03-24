@@ -10,6 +10,7 @@ interface TeaRepository {
     fun getByIdFlow(id: String): Flow<Tea?>
     fun getByTypeFlow(teaTypeId: String): Flow<List<Tea>>
     fun getFavoritesFlow(): Flow<List<Tea>>
+    fun getRecentlyBrewedFlow(limit: Int): Flow<List<Tea>>
     suspend fun search(query: String): List<Tea>
     suspend fun upsert(tea: Tea)
     suspend fun delete(id: String)

@@ -14,6 +14,7 @@ data class LogTeaState(
     val selectedTea: Tea? = null,
     val selectedTeaType: TeaType? = null,
     val availableTeas: List<Tea> = emptyList(),
+    val suggestedTeas: List<Tea> = emptyList(),
     val teaSearchQuery: String = "",
     val showTeaSearchDialog: Boolean = false,
 

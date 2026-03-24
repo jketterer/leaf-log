@@ -81,12 +81,23 @@ class HomeViewModel(
             is HomeIntent.ClearError -> clearError()
 
             is HomeIntent.LogTeaClicked -> {
+                val hasInProgress = _state.value.inProgressSessionsCount > 0
                 _state.update { it.copy(isFabExpanded = false) }
-                _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+                if (hasInProgress) {
+                    showInProgressSnackbar()
+                } else {
+                    _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+                }
             }
 
             is HomeIntent.QuickTimerClicked -> {
-                _state.update { it.copy(isFabExpanded = false, showDurationSheet = true) }
+                val hasInProgress = _state.value.inProgressSessionsCount > 0
+                _state.update { it.copy(isFabExpanded = false) }
+                if (hasInProgress) {
+                    showInProgressSnackbar()
+                } else {
+                    _state.update { it.copy(showDurationSheet = true) }
+                }
             }
 
             is HomeIntent.StartQuickTimer -> {
@@ -103,9 +114,13 @@ class HomeViewModel(
             }
 
             is HomeIntent.BrewAgainClicked -> {
-                val session = _state.value.recentSessionsWithTea
-                    .find { it.session.id == intent.sessionId }?.session ?: return
-                brewAgain(session)
+                if (_state.value.inProgressSessionsCount > 0) {
+                    showInProgressSnackbar()
+                } else {
+                    val session = _state.value.recentSessionsWithTea
+                        .find { it.session.id == intent.sessionId }?.session ?: return
+                    brewAgain(session)
+                }
             }
 
             is HomeIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
@@ -133,6 +148,12 @@ class HomeViewModel(
             is HomeIntent.DailyStatsTeasCardClicked -> _navEvents.trySend(HomeNavEvent.NavigateToCollection)
 
             is HomeIntent.ResumeInProgressClicked -> handleResumeInProgress()
+
+            is HomeIntent.DismissSnackbar -> dismissSnackbar()
+            is HomeIntent.SnackbarActionClicked -> {
+                dismissSnackbar()
+                handleResumeInProgress()
+            }
         }
     }
 
@@ -142,6 +163,19 @@ class HomeViewModel(
             TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(inProgress.id))
             else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(inProgress.id))
         }
+    }
+
+    private fun showInProgressSnackbar() {
+        _state.update {
+            it.copy(
+                snackbarMessage = "A session is already in progress",
+                snackbarActionLabel = "Resume",
+            )
+        }
+    }
+
+    private fun dismissSnackbar() {
+        _state.update { it.copy(snackbarMessage = null, snackbarActionLabel = null) }
     }
 
     private fun handleSessionClick(sessionId: String) {

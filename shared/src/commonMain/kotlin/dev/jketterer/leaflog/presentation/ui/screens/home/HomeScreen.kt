@@ -273,7 +273,7 @@ private fun HomeContent(
                                 onDeleteClick = {
                                     onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.id))
                                 },
-                                canBrewAgain = state.inProgressSessionsCount == 0,
+                                canBrewAgain = true,
                                 modifier = Modifier
                                     .animateItem()
                                     .padding(horizontal = 16.dp),
@@ -304,25 +304,48 @@ private fun HomeContent(
             onExpandedChange = { onIntent(HomeIntent.FabExpandedChanged(it)) },
             onLogSessionClick = { onIntent(HomeIntent.LogTeaClicked) },
             onQuickTimerClick = { onIntent(HomeIntent.QuickTimerClicked) },
-            visible = state.inProgressSessionsCount == 0,
+            visible = true,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
         )
 
-        state.error?.let { error ->
+        // Show at most one snackbar: in-progress message takes priority over error
+        if (state.snackbarMessage != null) {
             Snackbar(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .padding(bottom = 80.dp),
+                    .padding(16.dp),
                 action = {
-                    TextButton(onClick = { onIntent(HomeIntent.ClearError) }) {
+                    state.snackbarActionLabel?.let { label ->
+                        TextButton(onClick = { onIntent(HomeIntent.SnackbarActionClicked) }) {
+                            Text(label)
+                        }
+                    }
+                },
+                dismissAction = {
+                    TextButton(onClick = { onIntent(HomeIntent.DismissSnackbar) }) {
                         Text("Dismiss")
                     }
                 },
             ) {
-                Text(error)
+                Text(state.snackbarMessage)
+            }
+        } else {
+            state.error?.let { error ->
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                        .padding(bottom = 80.dp),
+                    action = {
+                        TextButton(onClick = { onIntent(HomeIntent.ClearError) }) {
+                            Text("Dismiss")
+                        }
+                    },
+                ) {
+                    Text(error)
+                }
             }
         }
     }

@@ -30,6 +30,8 @@ data class HomeState(
     val isFabExpanded: Boolean = false,
     val showDurationSheet: Boolean = false,
     val sessionPendingDelete: String? = null,
+    val snackbarMessage: String? = null,
+    val snackbarActionLabel: String? = null,
 ) {
     /**
      * Whether to show the empty state (no sessions at all).

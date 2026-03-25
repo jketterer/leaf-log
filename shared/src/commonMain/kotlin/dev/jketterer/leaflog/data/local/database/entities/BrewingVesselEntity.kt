@@ -14,6 +14,7 @@ import kotlin.time.Instant
         Index("displayOrder"),
         Index("userId"),
         Index("deletedAt"),
+        Index("isArchived"),
     ]
 )
 data class BrewingVesselEntity(
@@ -23,6 +24,7 @@ data class BrewingVesselEntity(
     val imagePath: String? = null,
     val capacityMl: Int? = null,
     val isSystemDefault: Boolean,
+    val isArchived: Boolean = false,
     val displayOrder: Int,
 
     val userId: String? = null,

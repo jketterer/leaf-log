@@ -9,6 +9,7 @@ data class BrewingVessel(
     val imagePath: String? = null,
     val capacityMl: Int? = null,
     val isSystemDefault: Boolean,
+    val isArchived: Boolean = false,
     val displayOrder: Int,
 
     val userId: String? = null,

@@ -4,6 +4,7 @@ sealed interface VesselListIntent {
     data object LoadVessels : VesselListIntent
     data class VesselClicked(val vesselId: String) : VesselListIntent
     data object AddVesselClicked : VesselListIntent
+    data object ToggleShowArchived : VesselListIntent
     data object ClearError : VesselListIntent
     data object BackClicked : VesselListIntent
 }

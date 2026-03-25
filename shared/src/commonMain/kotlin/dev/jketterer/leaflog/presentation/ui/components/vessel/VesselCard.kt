@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -45,6 +46,7 @@ fun VesselCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .alpha(if (vessel.isArchived) 0.6f else 1f)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -99,6 +101,14 @@ fun VesselCard(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
+                    if (vessel.isArchived) {
+                        Text(
+                            text = "Archived",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
 
@@ -125,6 +135,29 @@ private fun VesselCardPreview() {
                 capacityMl = 100,
                 isSystemDefault = true,
                 displayOrder = 0,
+                createdAt = now,
+                updatedAt = now,
+            ),
+            volumeUnit = VolumeUnit.MILLILITERS,
+            onClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselCardArchivedPreview() {
+    val now = Clock.System.now()
+    LeafLogTheme {
+        VesselCard(
+            vessel = BrewingVessel(
+                id = "3",
+                name = "Old Gaiwan",
+                iconName = "gaiwan",
+                capacityMl = 60,
+                isSystemDefault = false,
+                isArchived = true,
+                displayOrder = 2,
                 createdAt = now,
                 updatedAt = now,
             ),

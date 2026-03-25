@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,26 +27,35 @@ class VesselListViewModel(
         loadPreferences()
     }
 
+    private var loadVesselsJob: Job? = null
+
     fun onIntent(intent: VesselListIntent) {
         when (intent) {
             is VesselListIntent.LoadVessels -> loadVessels()
             is VesselListIntent.VesselClicked -> navigateToVesselDetail(intent.vesselId)
             is VesselListIntent.AddVesselClicked -> navigateToAddVessel()
+            is VesselListIntent.ToggleShowArchived -> toggleShowArchived()
             is VesselListIntent.ClearError -> clearError()
             is VesselListIntent.BackClicked -> navigateBack()
         }
     }
 
     private fun loadVessels() {
-        viewModelScope.launch {
+        loadVesselsJob?.cancel()
+        loadVesselsJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
-                brewingVesselRepository.getAllFlow().collect { vessels ->
+                val flow = if (_state.value.showArchived) {
+                    brewingVesselRepository.getAllFlow()
+                } else {
+                    brewingVesselRepository.getActiveFlow()
+                }
+                flow.collect { vessels ->
                     _state.update {
                         it.copy(
                             vessels = vessels,
                             isLoading = false,
-                            error = null
+                            error = null,
                         )
                     }
                 }
@@ -53,11 +63,16 @@ class VesselListViewModel(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "Failed to load vessels"
+                        error = e.message ?: "Failed to load vessels",
                     )
                 }
             }
         }
+    }
+
+    private fun toggleShowArchived() {
+        _state.update { it.copy(showArchived = !it.showArchived) }
+        loadVessels()
     }
 
     private fun loadPreferences() = viewModelScope.launch {

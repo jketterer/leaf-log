@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,6 +42,12 @@ class VesselDetailViewModel(
             is VesselDetailIntent.DeleteVesselClicked -> showDeleteConfirmation()
             is VesselDetailIntent.ConfirmDelete -> deleteVessel()
             is VesselDetailIntent.CancelDelete -> hideDeleteConfirmation()
+            is VesselDetailIntent.ArchiveVesselClicked ->
+                _state.update { it.copy(showArchiveConfirmation = true) }
+            is VesselDetailIntent.ConfirmArchive -> archiveVessel()
+            is VesselDetailIntent.CancelArchive ->
+                _state.update { it.copy(showArchiveConfirmation = false) }
+            is VesselDetailIntent.UnarchiveVesselClicked -> unarchiveVessel()
             is VesselDetailIntent.BackClicked -> navigateBack()
         }
     }
@@ -52,8 +59,9 @@ class VesselDetailViewModel(
                 // Load vessel
                 val vessel = brewingVesselRepository.getById(vesselId)
 
-                // Count total vessels
+                // Count total vessels and active vessels
                 val totalVesselCount = brewingVesselRepository.getAll().size
+                val activeVesselCount = brewingVesselRepository.countActive()
 
                 // Count sessions using this vessel
                 val sessionCount = teaSessionRepository.getByVesselId(vesselId).size
@@ -63,8 +71,9 @@ class VesselDetailViewModel(
                         vessel = vessel,
                         sessionCount = sessionCount,
                         totalVesselCount = totalVesselCount,
+                        activeVesselCount = activeVesselCount,
                         isLoading = false,
-                        error = null
+                        error = null,
                     )
                 }
             } catch (e: Exception) {
@@ -104,6 +113,50 @@ class VesselDetailViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    private fun archiveVessel() {
+        val vessel = _state.value.vessel ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(showArchiveConfirmation = false, isLoading = true) }
+            try {
+                val updated = vessel.copy(
+                    isArchived = true,
+                    updatedAt = Clock.System.now(),
+                )
+                brewingVesselRepository.upsert(updated)
+                _navigationEvent.value = VesselDetailNavigationEvent.NavigateBack
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Failed to archive vessel",
+                    )
+                }
+            }
+        }
+    }
+
+    private fun unarchiveVessel() {
+        val vessel = _state.value.vessel ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                val updated = vessel.copy(
+                    isArchived = false,
+                    updatedAt = Clock.System.now(),
+                )
+                brewingVesselRepository.upsert(updated)
+                loadVessel(vessel.id)
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Failed to unarchive vessel",
+                    )
+                }
+            }
         }
     }
 

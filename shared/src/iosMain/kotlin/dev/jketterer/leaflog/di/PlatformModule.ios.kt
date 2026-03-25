@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.database.MIGRATION_1_2
+import dev.jketterer.leaflog.data.local.database.MIGRATION_2_3
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
@@ -22,7 +23,7 @@ actual fun platformModule() = module {
         Room.databaseBuilder<LeafLogDatabase>(
             name = dbFilePath,
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
             .build()

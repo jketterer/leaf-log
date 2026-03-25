@@ -12,8 +12,8 @@ class DeleteBrewingVesselUseCase(
             return Result.failure(IllegalArgumentException("Vessel ID cannot be empty"))
         }
 
-        // Check: at least one vessel must remain
-        val vesselCount = brewingVesselRepository.getAll().size
+        // Check: at least one active (non-archived) vessel must remain
+        val vesselCount = brewingVesselRepository.countActive()
         if (vesselCount <= 1) {
             return Result.failure(
                 IllegalStateException("Cannot delete the last vessel. At least one vessel must remain.")

@@ -69,3 +69,15 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         connection.execSQL("PRAGMA foreign_keys = ON")
     }
 }
+
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(connection: SQLiteConnection) {
+        // Add isArchived column with default value of 0 (false)
+        connection.execSQL(
+            "ALTER TABLE `brewing_vessel` ADD COLUMN `isArchived` INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_brewing_vessel_isArchived` ON `brewing_vessel` (`isArchived`)"
+        )
+    }
+}

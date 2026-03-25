@@ -89,7 +89,7 @@ class CreateBrewingConfigurationViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
-            val vessels = brewingVesselRepository.getAllFlow().first()
+            val vessels = brewingVesselRepository.getActiveFlow().first()
 
             if (configurationId != null) {
                 val config = brewingConfigurationRepository.getById(configurationId)

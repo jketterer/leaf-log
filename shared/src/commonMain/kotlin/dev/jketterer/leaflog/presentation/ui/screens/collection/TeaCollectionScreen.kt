@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,6 +74,7 @@ fun TeaCollectionScreen(
         state = state,
         vesselState = vesselState,
         onIntent = viewModel::onIntent,
+        onVesselIntent = vesselListViewModel::onIntent,
         onNavigateToTeaDetail = onNavigateToTeaDetail,
         onNavigateToAddTea = onNavigateToAddTea,
         onNavigateToVesselDetail = onNavigateToVesselDetail,
@@ -85,6 +88,7 @@ private fun TeaCollectionContent(
     state: TeaCollectionState,
     vesselState: dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState,
     onIntent: (TeaCollectionIntent) -> Unit,
+    onVesselIntent: (dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent) -> Unit,
     onNavigateToTeaDetail: (String) -> Unit,
     onNavigateToAddTea: () -> Unit,
     onNavigateToVesselDetail: (String) -> Unit,
@@ -218,6 +222,7 @@ private fun TeaCollectionContent(
 
                 CollectionTab.VESSELS -> VesselsTabContent(
                     vesselState = vesselState,
+                    onVesselIntent = onVesselIntent,
                     onNavigateToVesselDetail = onNavigateToVesselDetail,
                     onNavigateToAddVessel = onNavigateToAddVessel,
                 )
@@ -351,42 +356,71 @@ private fun TeasTabContent(
 @Composable
 private fun VesselsTabContent(
     vesselState: dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState,
+    onVesselIntent: (dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent) -> Unit,
     onNavigateToVesselDetail: (String) -> Unit,
     onNavigateToAddVessel: () -> Unit,
 ) {
-    when {
-        vesselState.isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-
-        vesselState.vessels.isEmpty() -> {
-            EmptyState(
-                message = "No vessels yet",
-                actionText = "Add Your First Vessel",
-                onActionClick = onNavigateToAddVessel,
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilterChip(
+                selected = !vesselState.showArchived,
+                onClick = {
+                    if (vesselState.showArchived) {
+                        onVesselIntent(dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent.ToggleShowArchived)
+                    }
+                },
+                label = { Text("Active") },
+            )
+            FilterChip(
+                selected = vesselState.showArchived,
+                onClick = {
+                    if (!vesselState.showArchived) {
+                        onVesselIntent(dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent.ToggleShowArchived)
+                    }
+                },
+                label = { Text("All") },
             )
         }
 
-        else -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(
-                    items = vesselState.vessels,
-                    key = { it.id },
-                ) { vessel ->
-                    VesselCard(
-                        vessel = vessel,
-                        volumeUnit = vesselState.userPreferences.volumeUnit,
-                        onClick = { onNavigateToVesselDetail(vessel.id) },
-                    )
+        when {
+            vesselState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            vesselState.vessels.isEmpty() -> {
+                EmptyState(
+                    message = if (vesselState.showArchived) "No vessels yet" else "No active vessels",
+                    actionText = "Add Your First Vessel",
+                    onActionClick = onNavigateToAddVessel,
+                )
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(
+                        items = vesselState.vessels,
+                        key = { it.id },
+                    ) { vessel ->
+                        VesselCard(
+                            vessel = vessel,
+                            volumeUnit = vesselState.userPreferences.volumeUnit,
+                            onClick = { onNavigateToVesselDetail(vessel.id) },
+                        )
+                    }
                 }
             }
         }
@@ -401,6 +435,7 @@ private fun TeaCollectionScreenPreview() {
             state = TeaCollectionState(),
             vesselState = dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState(),
             onIntent = { _ -> },
+            onVesselIntent = { _ -> },
             onNavigateToTeaDetail = { _ -> },
             onNavigateToAddTea = {},
             onNavigateToVesselDetail = { _ -> },

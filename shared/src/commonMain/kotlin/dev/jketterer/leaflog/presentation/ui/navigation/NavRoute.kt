@@ -54,9 +54,6 @@ sealed interface NavRoute : NavKey {
     data object SettingsRoute : NavRoute
 
     @Serializable
-    data object VesselListRoute : NavRoute
-
-    @Serializable
     data class VesselDetailRoute(val vesselId: String) : NavRoute
 
     @Serializable

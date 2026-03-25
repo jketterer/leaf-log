@@ -109,12 +109,22 @@ class EditSessionViewModel(
 
     private fun loadVessels() {
         viewModelScope.launch {
-            brewingVesselRepository.getAllFlow()
+            brewingVesselRepository.getActiveFlow()
                 .catch { e ->
                     Logger.w("EditSession") { "Failed to load vessels: ${e.message}" }
                 }
                 .collect { vessels ->
-                    _state.update { it.copy(availableVessels = vessels) }
+                    // Include the session's current vessel even if archived
+                    val sessionVesselId = _state.value.existingSession?.vesselId
+                    val vesselList = if (sessionVesselId != null &&
+                        vessels.none { it.id == sessionVesselId }
+                    ) {
+                        val currentVessel = brewingVesselRepository.getById(sessionVesselId)
+                        if (currentVessel != null) listOf(currentVessel) + vessels else vessels
+                    } else {
+                        vessels
+                    }
+                    _state.update { it.copy(availableVessels = vesselList) }
                 }
         }
     }
@@ -135,8 +145,19 @@ class EditSessionViewModel(
                     val isParent = editFullSession
 
                     if (_state.value.availableVessels.isEmpty()) {
-                        val vessels = brewingVesselRepository.getAll()
-                        _state.update { it.copy(availableVessels = vessels) }
+                        val vessels = brewingVesselRepository.getActive()
+                        // Include the session's current vessel even if archived
+                        val currentVessel = if (vessels.none { it.id == session.vesselId }) {
+                            brewingVesselRepository.getById(session.vesselId)
+                        } else {
+                            null
+                        }
+                        val vesselList = if (currentVessel != null) {
+                            listOf(currentVessel) + vessels
+                        } else {
+                            vessels
+                        }
+                        _state.update { it.copy(availableVessels = vesselList) }
                     }
                     // Find vessel
                     val vessel =

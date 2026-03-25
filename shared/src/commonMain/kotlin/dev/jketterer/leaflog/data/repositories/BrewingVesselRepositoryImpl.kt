@@ -47,6 +47,20 @@ class BrewingVesselRepositoryImpl(
         brewingVesselDao.upsertAll(defaults.map { it.toEntity() })
     }
 
+    override fun getActiveFlow(): Flow<List<BrewingVessel>> {
+        return brewingVesselDao.getActiveFlow().map { entities ->
+            entities.map { it.toBrewingVessel() }
+        }
+    }
+
+    override suspend fun getActive(): List<BrewingVessel> {
+        return brewingVesselDao.getActive().map { it.toBrewingVessel() }
+    }
+
+    override suspend fun countActive(): Int {
+        return brewingVesselDao.countActive()
+    }
+
     private fun getDefaultVessels(): List<BrewingVessel> {
         val now = Clock.System.now()
         return listOf(

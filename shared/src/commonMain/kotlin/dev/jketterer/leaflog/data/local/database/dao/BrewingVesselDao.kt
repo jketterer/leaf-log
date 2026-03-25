@@ -54,4 +54,25 @@ interface BrewingVesselDao {
 
     @Query("SELECT COUNT(*) FROM brewing_vessel WHERE deletedAt IS NULL")
     suspend fun count(): Int
+
+    @Query(
+        """
+        SELECT * FROM brewing_vessel
+        WHERE deletedAt IS NULL AND isArchived = 0
+        ORDER BY displayOrder ASC, name ASC
+    """
+    )
+    fun getActiveFlow(): Flow<List<BrewingVesselEntity>>
+
+    @Query(
+        """
+        SELECT * FROM brewing_vessel
+        WHERE deletedAt IS NULL AND isArchived = 0
+        ORDER BY displayOrder ASC, name ASC
+    """
+    )
+    suspend fun getActive(): List<BrewingVesselEntity>
+
+    @Query("SELECT COUNT(*) FROM brewing_vessel WHERE deletedAt IS NULL AND isArchived = 0")
+    suspend fun countActive(): Int
 }

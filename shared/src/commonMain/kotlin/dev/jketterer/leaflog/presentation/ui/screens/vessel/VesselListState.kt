@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 data class VesselListState(
     val vessels: List<BrewingVessel> = emptyList(),
     val userPreferences: UserPreferences = UserPreferences(),
+    val showArchived: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
 )

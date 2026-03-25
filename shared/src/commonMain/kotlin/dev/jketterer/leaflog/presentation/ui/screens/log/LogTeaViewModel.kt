@@ -120,7 +120,7 @@ class LogTeaViewModel(
             combine(
                 preferencesRepository.getPreferencesFlow(),
                 teaRepository.getAllFlow(),
-                brewingVesselRepository.getAllFlow(),
+                brewingVesselRepository.getActiveFlow(),
                 teaRepository.getRecentlyBrewedFlow(5),
             ) { prefs, teas, vessels, recentTeas ->
                 object {

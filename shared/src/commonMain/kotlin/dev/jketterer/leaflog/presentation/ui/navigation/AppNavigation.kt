@@ -49,7 +49,6 @@ import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.SteepComplete
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
-import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -287,18 +286,6 @@ fun AppNavigation() {
                 // =========================================================
                 // Vessel Management Destinations
                 // =========================================================
-
-                entry<NavRoute.VesselListRoute> {
-                    VesselListScreen(
-                        onNavigateBack = { backStack.removeLast() },
-                        onNavigateToVesselDetail = { vesselId ->
-                            backStack.add(NavRoute.VesselDetailRoute(vesselId))
-                        },
-                        onNavigateToAddVessel = {
-                            backStack.add(NavRoute.EditVesselRoute())
-                        },
-                    )
-                }
 
                 entry<NavRoute.VesselDetailRoute> { route ->
                     VesselDetailScreen(

@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Archive
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
@@ -95,6 +96,30 @@ fun VesselDetailScreen(
         }
     }
 
+    // Archive confirmation dialog
+    if (state.showArchiveConfirmation) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onIntent(VesselDetailIntent.CancelArchive) },
+            title = { Text("Archive Vessel?") },
+            text = {
+                Text(
+                    "\"${state.vessel?.name}\" will be hidden from vessel selection but will " +
+                        "still appear in your session history. You can unarchive it later."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.onIntent(VesselDetailIntent.ConfirmArchive) }) {
+                    Text("Archive")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onIntent(VesselDetailIntent.CancelArchive) }) {
+                    Text("Cancel")
+                }
+            },
+        )
+    }
+
     // Delete confirmation dialog
     if (state.showDeleteConfirmation) {
         DeleteConfirmationDialog(
@@ -125,8 +150,32 @@ fun VesselDetailScreen(
                     }
                     DropdownMenu(
                         expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
+                        onDismissRequest = { showMenu = false },
                     ) {
+                        if (state.isArchived) {
+                            DropdownMenuItem(
+                                text = { Text("Unarchive") },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.onIntent(VesselDetailIntent.UnarchiveVesselClicked)
+                                },
+                                leadingIcon = {
+                                    Icon(FeatherIcons.Archive, contentDescription = null)
+                                },
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text("Archive") },
+                                onClick = {
+                                    showMenu = false
+                                    viewModel.onIntent(VesselDetailIntent.ArchiveVesselClicked)
+                                },
+                                leadingIcon = {
+                                    Icon(FeatherIcons.Archive, contentDescription = null)
+                                },
+                                enabled = state.canArchive,
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text("Delete") },
                             onClick = {
@@ -136,7 +185,7 @@ fun VesselDetailScreen(
                             leadingIcon = {
                                 Icon(FeatherIcons.Trash2, contentDescription = null)
                             },
-                            enabled = state.canDelete
+                            enabled = state.canDelete,
                         )
                     }
                 }
@@ -162,6 +211,35 @@ fun VesselDetailScreen(
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                        // Archived status banner
+                        if (state.isArchived) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                ),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(
+                                        text = "This vessel is archived",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                    Text(
+                                        text = "It won't appear in vessel selection when logging sessions.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                }
+                            }
+                        }
+
                         // Vessel info card
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -286,7 +364,8 @@ fun VesselDetailScreen(
                                         state.totalVesselCount <= 1 ->
                                             "This is the last vessel. At least one vessel must remain."
                                         state.sessionCount > 0 ->
-                                            "${state.sessionCount} session(s) are using this vessel."
+                                            "${state.sessionCount} session(s) are using this vessel. " +
+                                                "Use Archive to hide it from selection instead."
                                         else -> "Unknown reason"
                                     }
 
@@ -331,7 +410,8 @@ private fun DeleteConfirmationDialog(
                         totalVesselCount <= 1 ->
                             "Cannot delete the last vessel. At least one vessel must remain."
                         sessionCount > 0 ->
-                            "Cannot delete vessel. $sessionCount session(s) are using this vessel."
+                            "Cannot delete vessel. $sessionCount session(s) are using this vessel. " +
+                                "Use Archive to hide it from selection instead."
                         else -> "This vessel cannot be deleted."
                     }
                     Text(reason)

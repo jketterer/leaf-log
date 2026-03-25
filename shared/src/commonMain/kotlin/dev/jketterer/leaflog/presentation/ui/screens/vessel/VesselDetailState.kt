@@ -8,10 +8,18 @@ data class VesselDetailState(
     val volumeUnit: VolumeUnit = VolumeUnit.MILLILITERS,
     val sessionCount: Int = 0,
     val totalVesselCount: Int = 0,
+    val activeVesselCount: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
     val showDeleteConfirmation: Boolean = false,
+    val showArchiveConfirmation: Boolean = false,
 ) {
     val canDelete: Boolean
         get() = totalVesselCount > 1 && sessionCount == 0
+
+    val canArchive: Boolean
+        get() = activeVesselCount > 1
+
+    val isArchived: Boolean
+        get() = vessel?.isArchived == true
 }

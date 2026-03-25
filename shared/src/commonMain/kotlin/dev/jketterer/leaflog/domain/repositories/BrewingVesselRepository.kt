@@ -11,4 +11,7 @@ interface BrewingVesselRepository {
     suspend fun upsert(vessel: BrewingVessel)
     suspend fun delete(id: String)
     suspend fun initializeDefaults()
+    fun getActiveFlow(): Flow<List<BrewingVessel>>
+    suspend fun getActive(): List<BrewingVessel>
+    suspend fun countActive(): Int
 }

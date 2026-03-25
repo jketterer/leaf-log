@@ -74,7 +74,7 @@ class QuickTimerViewModel(
         }
 
         viewModelScope.launch {
-            vesselRepository.getAllFlow()
+            vesselRepository.getActiveFlow()
                 .catch { e -> Logger.w("QuickTimer") { "Failed to load vessels: ${e.message}" } }
                 .collect { vessels ->
                     _state.update { it.copy(availableVessels = vessels) }

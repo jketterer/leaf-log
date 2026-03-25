@@ -22,4 +22,10 @@ sealed interface TeaDetailIntent {
 
     data object AddConfigurationClicked : TeaDetailIntent
     data object ClearError : TeaDetailIntent
+
+    // In-progress session conflict dialog
+    data object ResumeInProgress : TeaDetailIntent
+    data object DismissInProgressDialog : TeaDetailIntent
+    data object CompleteInProgressAndContinue : TeaDetailIntent
+    data object DiscardInProgressAndContinue : TeaDetailIntent
 }

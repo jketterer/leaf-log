@@ -58,6 +58,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
+import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.DurationUnit
@@ -318,6 +319,21 @@ private fun HistoryContent(
                     Text(error)
                 }
             }
+        }
+
+        // In-progress session conflict dialog
+        state.inProgressDialogState?.let { dialogState ->
+            SessionInProgressDialog(
+                teaName = dialogState.teaName,
+                vesselName = dialogState.vesselName,
+                session = dialogState.session,
+                userPreferences = state.userPreferences,
+                isProcessing = dialogState.isProcessing,
+                onResume = { onIntent(HistoryIntent.ResumeInProgress) },
+                onCompleteAndContinue = { onIntent(HistoryIntent.CompleteInProgressAndContinue) },
+                onDiscardAndContinue = { onIntent(HistoryIntent.DiscardInProgressAndContinue) },
+                onDismiss = { onIntent(HistoryIntent.DismissInProgressDialog) },
+            )
         }
 
         // Delete session confirmation dialog

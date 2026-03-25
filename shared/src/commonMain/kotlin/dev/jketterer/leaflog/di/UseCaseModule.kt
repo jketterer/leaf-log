@@ -20,6 +20,7 @@ import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
@@ -66,6 +67,7 @@ val useCaseModule = module {
     factoryOf(::AddSteepUseCase)
     factoryOf(::BrewAgainUseCase)
     factoryOf(::GetBrewingParametersPrefillUseCase)
+    factoryOf(::GetInProgressSessionInfoUseCase)
 
     // Home screen use cases
     factoryOf(::GetDailyStatsUseCase)

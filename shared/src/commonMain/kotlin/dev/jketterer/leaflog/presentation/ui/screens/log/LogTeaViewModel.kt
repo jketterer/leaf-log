@@ -13,8 +13,12 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +43,9 @@ class LogTeaViewModel(
     private val searchTeasUseCase: SearchTeasUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
+    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val deleteSessionUseCase: DeleteSessionUseCase,
+    private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LogTeaState())
@@ -46,6 +53,38 @@ class LogTeaViewModel(
 
     private val _navEvents = Channel<LogTeaNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    private sealed interface PendingAction {
+        data object StartTimer : PendingAction
+        data class SaveAsCompleted(val notes: String?, val rating: Float?) : PendingAction
+    }
+
+    private val inProgressDelegate = createInProgressSessionDelegate<LogTeaState, PendingAction>(
+        getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
+        completeSessionUseCase = completeSessionUseCase,
+        deleteSessionUseCase = deleteSessionUseCase,
+        stateFlow = _state,
+        getDialogState = { it.inProgressDialogState },
+        setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
+        setError = { state, error -> state.copy(error = error) },
+        onResume = { session ->
+            _navEvents.trySend(LogTeaNavigationEvent.NavigateToTimer(session.id))
+        },
+        executePendingAction = { action ->
+            when (action) {
+                is PendingAction.StartTimer -> saveSession(
+                    status = SessionStatus.IN_PROGRESS,
+                    startTimer = true,
+                )
+                is PendingAction.SaveAsCompleted -> saveSession(
+                    status = SessionStatus.COMPLETED,
+                    startTimer = false,
+                    overrideNotes = action.notes,
+                    rating = action.rating,
+                )
+            }
+        },
+    )
 
     init {
         onIntent(LogTeaIntent.LoadData)
@@ -99,10 +138,7 @@ class LogTeaViewModel(
                 it.copy(showCompleteSessionDialog = false)
             }
 
-            is LogTeaIntent.StartTimerClicked -> saveSession(
-                status = SessionStatus.IN_PROGRESS,
-                startTimer = true
-            )
+            is LogTeaIntent.StartTimerClicked -> inProgressDelegate.checkAndProceed(PendingAction.StartTimer)
 
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
             is LogTeaIntent.ClearError -> _state.update { it.copy(error = null) }
@@ -110,6 +146,12 @@ class LogTeaViewModel(
             is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
             is LogTeaIntent.MethodSelected -> selectMethod(intent.configurationId)
             is LogTeaIntent.DismissChooseMethodDialog -> dismissChooseMethodDialog()
+
+            // In-progress session conflict dialog
+            is LogTeaIntent.ResumeInProgress -> inProgressDelegate.resume()
+            is LogTeaIntent.DismissInProgressDialog -> inProgressDelegate.dismissDialog()
+            is LogTeaIntent.CompleteInProgressAndContinue -> inProgressDelegate.completeAndContinue()
+            is LogTeaIntent.DiscardInProgressAndContinue -> inProgressDelegate.discardAndContinue()
         }
     }
 

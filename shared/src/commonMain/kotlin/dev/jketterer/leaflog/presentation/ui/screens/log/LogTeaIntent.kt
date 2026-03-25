@@ -48,4 +48,10 @@ sealed interface LogTeaIntent {
     data object ChooseDifferentMethodClicked : LogTeaIntent
     data class MethodSelected(val configurationId: String?) : LogTeaIntent
     data object DismissChooseMethodDialog : LogTeaIntent
+
+    // In-progress session conflict dialog
+    data object ResumeInProgress : LogTeaIntent
+    data object DismissInProgressDialog : LogTeaIntent
+    data object CompleteInProgressAndContinue : LogTeaIntent
+    data object DiscardInProgressAndContinue : LogTeaIntent
 }

@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -35,6 +36,7 @@ data class HistoryState(
     val showFilterSheet: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
     val sessionPendingDelete: String? = null,
+    val inProgressDialogState: InProgressDialogState? = null,
 ) {
     val hasActiveFilters: Boolean
         get() = selectedTeaTypeId != null ||

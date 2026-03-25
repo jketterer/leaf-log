@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlin.time.Duration
 
 data class LogTeaState(
@@ -64,6 +65,9 @@ data class LogTeaState(
 
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),
+
+    // In-progress session conflict dialog
+    val inProgressDialogState: InProgressDialogState? = null,
 ) {
     val isValid: Boolean
         get() = selectedTea != null &&

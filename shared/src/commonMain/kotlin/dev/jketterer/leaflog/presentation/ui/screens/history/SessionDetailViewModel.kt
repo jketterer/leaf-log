@@ -13,8 +13,11 @@ import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfiguration
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +43,8 @@ class SessionDetailViewModel(
     private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
+    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionDetailState())
@@ -47,6 +52,28 @@ class SessionDetailViewModel(
 
     private val _navEvents = Channel<SessionDetailNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    private sealed interface PendingAction {
+        data object BrewAgain : PendingAction
+    }
+
+    private val inProgressDelegate = createInProgressSessionDelegate<SessionDetailState, PendingAction>(
+        getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
+        completeSessionUseCase = completeSessionUseCase,
+        deleteSessionUseCase = deleteSessionUseCase,
+        stateFlow = _state,
+        getDialogState = { it.inProgressDialogState },
+        setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
+        setError = { state, error -> state.copy(error = error) },
+        onResume = { session ->
+            _navEvents.trySend(SessionDetailNavEvent.NavigateToTimer(session.id))
+        },
+        executePendingAction = { action ->
+            when (action) {
+                is PendingAction.BrewAgain -> brewAgain()
+            }
+        },
+    )
 
     init {
         loadPreferences()
@@ -81,7 +108,7 @@ class SessionDetailViewModel(
             is SessionDetailIntent.DeleteSteepClicked -> showDeleteSteepConfirmation(intent.steepId)
             is SessionDetailIntent.ConfirmDeleteSteep -> confirmDeleteSteep()
             is SessionDetailIntent.CancelDeleteSteep -> cancelDeleteSteep()
-            is SessionDetailIntent.BrewAgainClicked -> brewAgain()
+            is SessionDetailIntent.BrewAgainClicked -> inProgressDelegate.checkAndProceed(PendingAction.BrewAgain)
             is SessionDetailIntent.AddSteepClicked -> showAddSteepDialog()
             is SessionDetailIntent.CancelAddSteep -> cancelAddSteep()
             is SessionDetailIntent.UpdateNextSteepDuration -> _state.update { it.copy(nextSteepDuration = intent.duration) }
@@ -115,6 +142,12 @@ class SessionDetailViewModel(
             is SessionDetailIntent.SaveAsConfigurationClicked -> saveAsConfiguration()
             is SessionDetailIntent.ConfirmSaveConfiguration -> confirmSaveConfiguration(intent.label)
             is SessionDetailIntent.DismissSaveConfiguration -> _state.update { it.copy(showSaveConfigurationDialog = false) }
+
+            // In-progress session conflict dialog
+            is SessionDetailIntent.ResumeInProgress -> inProgressDelegate.resume()
+            is SessionDetailIntent.DismissInProgressDialog -> inProgressDelegate.dismissDialog()
+            is SessionDetailIntent.CompleteInProgressAndContinue -> inProgressDelegate.completeAndContinue()
+            is SessionDetailIntent.DiscardInProgressAndContinue -> inProgressDelegate.discardAndContinue()
         }
     }
 

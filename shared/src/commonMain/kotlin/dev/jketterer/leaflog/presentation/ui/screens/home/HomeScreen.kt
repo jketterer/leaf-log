@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Settings
 import dev.jketterer.leaflog.domain.models.DailyStats
+import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
@@ -51,6 +52,7 @@ import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
 import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
+import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
@@ -310,42 +312,19 @@ private fun HomeContent(
                 .padding(16.dp),
         )
 
-        // Show at most one snackbar: in-progress message takes priority over error
-        if (state.snackbarMessage != null) {
+        state.error?.let { error ->
             Snackbar(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .padding(bottom = 80.dp),
                 action = {
-                    state.snackbarActionLabel?.let { label ->
-                        TextButton(onClick = { onIntent(HomeIntent.SnackbarActionClicked) }) {
-                            Text(label)
-                        }
-                    }
-                },
-                dismissAction = {
-                    TextButton(onClick = { onIntent(HomeIntent.DismissSnackbar) }) {
+                    TextButton(onClick = { onIntent(HomeIntent.ClearError) }) {
                         Text("Dismiss")
                     }
                 },
             ) {
-                Text(state.snackbarMessage)
-            }
-        } else {
-            state.error?.let { error ->
-                Snackbar(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                        .padding(bottom = 80.dp),
-                    action = {
-                        TextButton(onClick = { onIntent(HomeIntent.ClearError) }) {
-                            Text("Dismiss")
-                        }
-                    },
-                ) {
-                    Text(error)
-                }
+                Text(error)
             }
         }
     }
@@ -371,6 +350,21 @@ private fun HomeContent(
                     Text("Cancel")
                 }
             },
+        )
+    }
+
+    // In-progress session conflict dialog
+    state.inProgressDialogState?.let { dialogState ->
+        SessionInProgressDialog(
+            teaName = dialogState.teaName,
+            vesselName = dialogState.vesselName,
+            session = dialogState.session,
+            userPreferences = state.userPreferences,
+            isProcessing = dialogState.isProcessing,
+            onResume = { onIntent(HomeIntent.ResumeInProgressFromDialog) },
+            onCompleteAndContinue = { onIntent(HomeIntent.CompleteInProgressAndContinue) },
+            onDiscardAndContinue = { onIntent(HomeIntent.DiscardInProgressAndContinue) },
+            onDismiss = { onIntent(HomeIntent.DismissInProgressDialog) },
         )
     }
 
@@ -437,7 +431,7 @@ private fun HomeScreenPreview() {
                     ),
                 ),
                 inProgressSessionsCount = 1,
-                mostRecentInProgress = InProgressSessionInfo(
+                mostRecentInProgress = InProgressSessionDetails(
                     session = TeaSession(
                         id = "in-progress-1",
                         teaId = "tea-3",

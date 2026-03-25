@@ -30,7 +30,7 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.presentation.ui.screens.home.InProgressSessionInfo
+import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -40,7 +40,7 @@ import kotlin.time.Duration.Companion.minutes
  */
 @Composable
 fun InProgressSessionsBanner(
-    inProgressInfo: InProgressSessionInfo?,
+    inProgressInfo: InProgressSessionDetails?,
     totalInProgressCount: Int,
     timerProgress: Float? = null,
     onResumeClick: () -> Unit,
@@ -151,7 +151,7 @@ private fun InProgressSessionsBannerPreview() {
         ) {
             // With info - timer paused
             InProgressSessionsBanner(
-                inProgressInfo = InProgressSessionInfo(
+                inProgressInfo = InProgressSessionDetails(
                     session = TeaSession(
                         id = "1",
                         teaId = "tea1",
@@ -178,7 +178,7 @@ private fun InProgressSessionsBannerPreview() {
 
             // With info - timer complete
             InProgressSessionsBanner(
-                inProgressInfo = InProgressSessionInfo(
+                inProgressInfo = InProgressSessionDetails(
                     session = TeaSession(
                         id = "2",
                         teaId = "tea2",
@@ -205,7 +205,7 @@ private fun InProgressSessionsBannerPreview() {
 
             // Without timer state
             InProgressSessionsBanner(
-                inProgressInfo = InProgressSessionInfo(
+                inProgressInfo = InProgressSessionDetails(
                     session = TeaSession(
                         id = "3",
                         teaId = "tea3",

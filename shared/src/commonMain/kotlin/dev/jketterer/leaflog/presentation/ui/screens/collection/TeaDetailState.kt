@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 
 data class TeaDetailState(
     val tea: Tea? = null,
@@ -18,4 +19,5 @@ data class TeaDetailState(
     val showDeleteConfirmation: Boolean = false,
     val sessionPendingDelete: String? = null,
     val userPreferences: UserPreferences = UserPreferences(),
+    val inProgressDialogState: InProgressDialogState? = null,
 )

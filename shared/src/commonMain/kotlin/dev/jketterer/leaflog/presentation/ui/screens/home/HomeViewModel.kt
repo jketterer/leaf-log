@@ -14,9 +14,14 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressSessionDelegate
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -34,6 +39,15 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
+/**
+ * Pending actions that can be deferred when an in-progress session conflict is detected.
+ */
+private sealed interface HomePendingAction {
+    data object NavigateToLogTea : HomePendingAction
+    data object ShowDurationSheet : HomePendingAction
+    data class BrewAgain(val session: TeaSession) : HomePendingAction
+}
+
 class HomeViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
@@ -43,6 +57,8 @@ class HomeViewModel(
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
+    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
     private val timerService: TimerService,
 ) : ViewModel() {
 
@@ -53,6 +69,27 @@ class HomeViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     private var loadJob: Job? = null
+
+    private val inProgressDelegate = createInProgressSessionDelegate<HomeState, HomePendingAction>(
+        getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
+        completeSessionUseCase = completeSessionUseCase,
+        deleteSessionUseCase = deleteSessionUseCase,
+        stateFlow = _state,
+        getDialogState = { it.inProgressDialogState },
+        setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
+        setError = { state, error -> state.copy(error = error) },
+        onResume = { session -> handleResumeSession(session) },
+        executePendingAction = { action ->
+            when (action) {
+                is HomePendingAction.NavigateToLogTea ->
+                    _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+                is HomePendingAction.ShowDurationSheet ->
+                    _state.update { it.copy(showDurationSheet = true) }
+                is HomePendingAction.BrewAgain ->
+                    brewAgain(action.session)
+            }
+        },
+    )
 
     init {
         loadPreferences(
@@ -81,23 +118,13 @@ class HomeViewModel(
             is HomeIntent.ClearError -> clearError()
 
             is HomeIntent.LogTeaClicked -> {
-                val hasInProgress = _state.value.inProgressSessionsCount > 0
                 _state.update { it.copy(isFabExpanded = false) }
-                if (hasInProgress) {
-                    showInProgressSnackbar()
-                } else {
-                    _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
-                }
+                inProgressDelegate.checkAndProceed(HomePendingAction.NavigateToLogTea)
             }
 
             is HomeIntent.QuickTimerClicked -> {
-                val hasInProgress = _state.value.inProgressSessionsCount > 0
                 _state.update { it.copy(isFabExpanded = false) }
-                if (hasInProgress) {
-                    showInProgressSnackbar()
-                } else {
-                    _state.update { it.copy(showDurationSheet = true) }
-                }
+                inProgressDelegate.checkAndProceed(HomePendingAction.ShowDurationSheet)
             }
 
             is HomeIntent.StartQuickTimer -> {
@@ -114,13 +141,9 @@ class HomeViewModel(
             }
 
             is HomeIntent.BrewAgainClicked -> {
-                if (_state.value.inProgressSessionsCount > 0) {
-                    showInProgressSnackbar()
-                } else {
-                    val session = _state.value.recentSessionsWithTea
-                        .find { it.session.id == intent.sessionId }?.session ?: return
-                    brewAgain(session)
-                }
+                val session = _state.value.recentSessionsWithTea
+                    .find { it.session.id == intent.sessionId }?.session ?: return
+                inProgressDelegate.checkAndProceed(HomePendingAction.BrewAgain(session))
             }
 
             is HomeIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
@@ -149,33 +172,24 @@ class HomeViewModel(
 
             is HomeIntent.ResumeInProgressClicked -> handleResumeInProgress()
 
-            is HomeIntent.DismissSnackbar -> dismissSnackbar()
-            is HomeIntent.SnackbarActionClicked -> {
-                dismissSnackbar()
-                handleResumeInProgress()
-            }
+            // In-progress session conflict dialog
+            is HomeIntent.ResumeInProgressFromDialog -> inProgressDelegate.resume()
+            is HomeIntent.DismissInProgressDialog -> inProgressDelegate.dismissDialog()
+            is HomeIntent.CompleteInProgressAndContinue -> inProgressDelegate.completeAndContinue()
+            is HomeIntent.DiscardInProgressAndContinue -> inProgressDelegate.discardAndContinue()
         }
     }
 
     private fun handleResumeInProgress() {
         val inProgress = _state.value.mostRecentInProgress?.session ?: return
-        when (inProgress.timerStatus) {
-            TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(inProgress.id))
-            else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(inProgress.id))
-        }
+        handleResumeSession(inProgress)
     }
 
-    private fun showInProgressSnackbar() {
-        _state.update {
-            it.copy(
-                snackbarMessage = "A session is already in progress",
-                snackbarActionLabel = "Resume",
-            )
+    private fun handleResumeSession(session: TeaSession) {
+        when (session.timerStatus) {
+            TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(session.id))
+            else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(session.id))
         }
-    }
-
-    private fun dismissSnackbar() {
-        _state.update { it.copy(snackbarMessage = null, snackbarActionLabel = null) }
     }
 
     private fun handleSessionClick(sessionId: String) {
@@ -316,7 +330,7 @@ class HomeViewModel(
             val mostRecent = inProgressSessions.firstOrNull() ?: return@combine null
             val tea = teas.find { it.id == mostRecent.teaId }
             val vessel = vessels.find { it.id == mostRecent.vesselId }
-            InProgressSessionInfo(
+            InProgressSessionDetails(
                 session = mostRecent,
                 teaName = tea?.name ?: "Unknown Tea",
                 vesselName = vessel?.name ?: "Unknown Vessel",

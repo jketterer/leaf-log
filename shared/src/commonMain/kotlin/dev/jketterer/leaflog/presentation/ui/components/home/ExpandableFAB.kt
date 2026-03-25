@@ -64,33 +64,6 @@ fun ExpandableFAB(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    // Quick Timer option
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = "Quick Timer",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier
-                                .padding(end = 12.dp)
-                                .padding(vertical = 8.dp, horizontal = 12.dp),
-                        )
-                        SmallFloatingActionButton(
-                            onClick = {
-                                onExpandedChange(false)
-                                onQuickTimerClick()
-                            },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        ) {
-                            Icon(
-                                imageVector = FeatherIcons.Clock,
-                                contentDescription = "Quick Timer",
-                            )
-                        }
-                    }
-
                     // Log Session option
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -114,6 +87,33 @@ fun ExpandableFAB(
                             Icon(
                                 imageVector = FeatherIcons.Edit,
                                 contentDescription = "Log Session",
+                            )
+                        }
+                    }
+
+                    // Quick Timer option
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Quick Timer",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .padding(vertical = 8.dp, horizontal = 12.dp),
+                        )
+                        SmallFloatingActionButton(
+                            onClick = {
+                                onExpandedChange(false)
+                                onQuickTimerClick()
+                            },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        ) {
+                            Icon(
+                                imageVector = FeatherIcons.Clock,
+                                contentDescription = "Quick Timer",
                             )
                         }
                     }

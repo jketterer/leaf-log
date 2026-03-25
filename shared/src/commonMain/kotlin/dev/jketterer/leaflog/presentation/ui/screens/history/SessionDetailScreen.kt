@@ -76,6 +76,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageVi
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
+import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
@@ -376,6 +377,21 @@ private fun SessionDetailContent(
                 }
             }
         }
+    }
+
+    // In-progress session conflict dialog
+    state.inProgressDialogState?.let { dialogState ->
+        SessionInProgressDialog(
+            teaName = dialogState.teaName,
+            vesselName = dialogState.vesselName,
+            session = dialogState.session,
+            userPreferences = state.userPreferences,
+            isProcessing = dialogState.isProcessing,
+            onResume = { onIntent(SessionDetailIntent.ResumeInProgress) },
+            onCompleteAndContinue = { onIntent(SessionDetailIntent.CompleteInProgressAndContinue) },
+            onDiscardAndContinue = { onIntent(SessionDetailIntent.DiscardInProgressAndContinue) },
+            onDismiss = { onIntent(SessionDetailIntent.DismissInProgressDialog) },
+        )
     }
 
     // Delete session confirmation dialog

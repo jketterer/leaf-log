@@ -13,7 +13,10 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +38,8 @@ class HistoryViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
+    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HistoryState())
@@ -44,6 +49,28 @@ class HistoryViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     private var loadDataJob: Job? = null
+
+    private sealed interface PendingAction {
+        data class BrewAgain(val sessionId: String) : PendingAction
+    }
+
+    private val inProgressDelegate = createInProgressSessionDelegate<HistoryState, PendingAction>(
+        getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
+        completeSessionUseCase = completeSessionUseCase,
+        deleteSessionUseCase = deleteSessionUseCase,
+        stateFlow = _state,
+        getDialogState = { it.inProgressDialogState },
+        setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
+        setError = { state, error -> state.copy(error = error) },
+        onResume = { session ->
+            _navEvents.trySend(HistoryNavEvent.NavigateToTimer(session.id))
+        },
+        executePendingAction = { action ->
+            when (action) {
+                is PendingAction.BrewAgain -> brewAgain(action.sessionId)
+            }
+        },
+    )
 
     init {
         onIntent(HistoryIntent.LoadData)
@@ -64,7 +91,7 @@ class HistoryViewModel(
             is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is HistoryIntent.ConfirmDeleteSession -> confirmDeleteSession()
             is HistoryIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
-            is HistoryIntent.BrewAgain -> brewAgain(intent.sessionId)
+            is HistoryIntent.BrewAgain -> inProgressDelegate.checkAndProceed(PendingAction.BrewAgain(intent.sessionId))
             is HistoryIntent.CompleteInProgress -> _navEvents.trySend(
                 HistoryNavEvent.NavigateToTimer(
                     intent.sessionId
@@ -72,6 +99,12 @@ class HistoryViewModel(
             )
 
             is HistoryIntent.ClearError -> clearError()
+
+            // In-progress session conflict dialog
+            is HistoryIntent.ResumeInProgress -> inProgressDelegate.resume()
+            is HistoryIntent.DismissInProgressDialog -> inProgressDelegate.dismissDialog()
+            is HistoryIntent.CompleteInProgressAndContinue -> inProgressDelegate.completeAndContinue()
+            is HistoryIntent.DiscardInProgressAndContinue -> inProgressDelegate.discardAndContinue()
 
             is HistoryIntent.SessionClicked -> _navEvents.trySend(
                 HistoryNavEvent.NavigateToSession(

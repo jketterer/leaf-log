@@ -78,6 +78,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
+import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -524,6 +525,21 @@ private fun TeaDetailContent(
                         Text("Cancel")
                     }
                 },
+            )
+        }
+
+        // In-progress session conflict dialog
+        state.inProgressDialogState?.let { dialogState ->
+            SessionInProgressDialog(
+                teaName = dialogState.teaName,
+                vesselName = dialogState.vesselName,
+                session = dialogState.session,
+                userPreferences = state.userPreferences,
+                isProcessing = dialogState.isProcessing,
+                onResume = { onIntent(TeaDetailIntent.ResumeInProgress) },
+                onCompleteAndContinue = { onIntent(TeaDetailIntent.CompleteInProgressAndContinue) },
+                onDiscardAndContinue = { onIntent(TeaDetailIntent.DiscardInProgressAndContinue) },
+                onDismiss = { onIntent(TeaDetailIntent.DismissInProgressDialog) },
             )
         }
 

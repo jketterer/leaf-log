@@ -22,6 +22,10 @@ sealed interface HomeIntent {
     data object ResumeInProgressClicked : HomeIntent
     data object SettingsClicked : HomeIntent
     data object ClearError : HomeIntent
-    data object DismissSnackbar : HomeIntent
-    data object SnackbarActionClicked : HomeIntent
+
+    // In-progress session conflict dialog
+    data object ResumeInProgressFromDialog : HomeIntent
+    data object DismissInProgressDialog : HomeIntent
+    data object CompleteInProgressAndContinue : HomeIntent
+    data object DiscardInProgressAndContinue : HomeIntent
 }

@@ -55,10 +55,6 @@ class CreateSessionUseCase(
             return validationFailure("Brewing time must be greater than 0")
         }
 
-        if (status == SessionStatus.IN_PROGRESS && teaSessionRepository.hasInProgressSession()) {
-            return validationFailure("A session is already in progress. Please complete it before starting a new one.")
-        }
-
         val now = Clock.System.now()
         val session = TeaSession(
             id = Uuid.random().toString(),

@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlin.time.Duration
 
 data class SessionDetailState(
@@ -30,6 +31,9 @@ data class SessionDetailState(
 
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),
+
+    // In-progress session conflict dialog
+    val inProgressDialogState: InProgressDialogState? = null,
 ) {
     val allSteeps: List<TeaSession>
         get() = if (parentSession != null) {

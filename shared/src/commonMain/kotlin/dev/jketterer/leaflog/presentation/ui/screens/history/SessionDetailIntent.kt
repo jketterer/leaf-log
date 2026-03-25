@@ -25,4 +25,10 @@ sealed interface SessionDetailIntent {
     data object SaveAsConfigurationClicked : SessionDetailIntent
     data class ConfirmSaveConfiguration(val label: String) : SessionDetailIntent
     data object DismissSaveConfiguration : SessionDetailIntent
+
+    // In-progress session conflict dialog
+    data object ResumeInProgress : SessionDetailIntent
+    data object DismissInProgressDialog : SessionDetailIntent
+    data object CompleteInProgressAndContinue : SessionDetailIntent
+    data object DiscardInProgressAndContinue : SessionDetailIntent
 }

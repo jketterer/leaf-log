@@ -6,6 +6,9 @@ import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
@@ -119,5 +122,49 @@ fun <T, NavEvent> ViewModel.createConfigurationSaveDelegate(
         setError = setError,
         createSuccessNavEvent = createSuccessNavEvent,
         sendNavEvent = sendNavEvent,
+    )
+}
+
+/**
+ * Creates an InProgressSessionDelegate for handling in-progress session conflict resolution.
+ *
+ * This factory extension function creates a delegate that handles the common pattern of
+ * checking for in-progress sessions before starting a new one. When a conflict is found,
+ * it shows a dialog with options to resume, complete, or discard the existing session.
+ *
+ * @param T The type of the state
+ * @param PendingAction The ViewModel-specific pending action type
+ * @param getInProgressSessionInfoUseCase Use case to fetch in-progress session info
+ * @param completeSessionUseCase Use case to complete a session
+ * @param deleteSessionUseCase Use case to delete/discard a session
+ * @param stateFlow The state flow to update
+ * @param getDialogState Lambda to extract dialog state from ViewModel state
+ * @param setDialogState Lambda to set dialog state in ViewModel state
+ * @param setError Lambda to set an error message in state
+ * @param onResume Lambda called when user chooses to resume the in-progress session
+ * @param executePendingAction Lambda to execute the deferred action after conflict resolution
+ */
+fun <T, PendingAction> ViewModel.createInProgressSessionDelegate(
+    getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
+    completeSessionUseCase: CompleteSessionUseCase,
+    deleteSessionUseCase: DeleteSessionUseCase,
+    stateFlow: MutableStateFlow<T>,
+    getDialogState: (T) -> InProgressDialogState?,
+    setDialogState: (T, InProgressDialogState?) -> T,
+    setError: (T, String) -> T,
+    onResume: (TeaSession) -> Unit,
+    executePendingAction: suspend (PendingAction) -> Unit,
+): InProgressSessionDelegate<T, PendingAction> {
+    return InProgressSessionDelegate(
+        viewModelScope = viewModelScope,
+        getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
+        completeSessionUseCase = completeSessionUseCase,
+        deleteSessionUseCase = deleteSessionUseCase,
+        stateFlow = stateFlow,
+        getDialogState = getDialogState,
+        setDialogState = setDialogState,
+        setError = setError,
+        onResume = onResume,
+        executePendingAction = executePendingAction,
     )
 }

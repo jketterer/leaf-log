@@ -26,4 +26,10 @@ sealed interface HistoryIntent {
 
     // In-progress completion - navigates to timer screen
     data class CompleteInProgress(val sessionId: String) : HistoryIntent
+
+    // In-progress session conflict dialog
+    data object ResumeInProgress : HistoryIntent
+    data object DismissInProgressDialog : HistoryIntent
+    data object CompleteInProgressAndContinue : HistoryIntent
+    data object DiscardInProgressAndContinue : HistoryIntent
 }

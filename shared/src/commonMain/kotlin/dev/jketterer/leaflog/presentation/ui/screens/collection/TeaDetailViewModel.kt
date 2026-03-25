@@ -12,8 +12,12 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
@@ -41,6 +45,8 @@ class TeaDetailViewModel(
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val deleteBrewingConfigurationUseCase: DeleteBrewingConfigurationUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
+    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaDetailState())
@@ -50,6 +56,32 @@ class TeaDetailViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     private var teaId: String? = null
+
+    private sealed interface PendingAction {
+        data class BrewThisTea(val vesselId: String?) : PendingAction
+        data class BrewAgain(val sessionId: String) : PendingAction
+    }
+
+    private val inProgressDelegate = createInProgressSessionDelegate<TeaDetailState, PendingAction>(
+        getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
+        completeSessionUseCase = completeSessionUseCase,
+        deleteSessionUseCase = deleteSessionUseCase,
+        stateFlow = _state,
+        getDialogState = { it.inProgressDialogState },
+        setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
+        setError = { state, error -> state.copy(error = error) },
+        onResume = { session ->
+            _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(session.id))
+        },
+        executePendingAction = { action ->
+            when (action) {
+                is PendingAction.BrewThisTea ->
+                    _navEvents.trySend(NavigateToLogTea(action.vesselId))
+                is PendingAction.BrewAgain ->
+                    brewAgain(action.sessionId)
+            }
+        },
+    )
 
     init {
         loadPreferences()
@@ -75,8 +107,8 @@ class TeaDetailViewModel(
 
             is TeaDetailIntent.EditTeaClicked -> _navEvents.trySend(NavigateToEditTea)
             is TeaDetailIntent.SessionClicked -> handleSessionClick(intent.sessionId)
-            is TeaDetailIntent.BrewThisTeaClicked -> _navEvents.trySend(NavigateToLogTea(intent.vesselId))
-            is TeaDetailIntent.BrewAgainClicked -> brewAgain(intent.sessionId)
+            is TeaDetailIntent.BrewThisTeaClicked -> inProgressDelegate.checkAndProceed(PendingAction.BrewThisTea(intent.vesselId))
+            is TeaDetailIntent.BrewAgainClicked -> inProgressDelegate.checkAndProceed(PendingAction.BrewAgain(intent.sessionId))
             is TeaDetailIntent.ViewAllSessionsClicked -> {
                 val teaId = _state.value.tea?.id ?: return
                 _navEvents.trySend(TeaDetailNavigationEvent.NavigateToHistory(teaId))
@@ -99,6 +131,12 @@ class TeaDetailViewModel(
             is TeaDetailIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
 
             is TeaDetailIntent.ClearError -> _state.update { it.copy(error = null) }
+
+            // In-progress session conflict dialog
+            is TeaDetailIntent.ResumeInProgress -> inProgressDelegate.resume()
+            is TeaDetailIntent.DismissInProgressDialog -> inProgressDelegate.dismissDialog()
+            is TeaDetailIntent.CompleteInProgressAndContinue -> inProgressDelegate.completeAndContinue()
+            is TeaDetailIntent.DiscardInProgressAndContinue -> inProgressDelegate.discardAndContinue()
         }
     }
 

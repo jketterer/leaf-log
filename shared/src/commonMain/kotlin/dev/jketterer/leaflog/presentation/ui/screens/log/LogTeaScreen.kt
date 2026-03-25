@@ -79,6 +79,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
+import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -612,6 +613,21 @@ private fun LogTeaContent(
             }
         }
     } // end Box
+
+    // In-progress session conflict dialog
+    state.inProgressDialogState?.let { dialogState ->
+        SessionInProgressDialog(
+            teaName = dialogState.teaName,
+            vesselName = dialogState.vesselName,
+            session = dialogState.session,
+            userPreferences = state.userPreferences,
+            isProcessing = dialogState.isProcessing,
+            onResume = { onIntent(LogTeaIntent.ResumeInProgress) },
+            onCompleteAndContinue = { onIntent(LogTeaIntent.CompleteInProgressAndContinue) },
+            onDiscardAndContinue = { onIntent(LogTeaIntent.DiscardInProgressAndContinue) },
+            onDismiss = { onIntent(LogTeaIntent.DismissInProgressDialog) },
+        )
+    }
 
     // Tea Search Dialog
     if (state.showTeaSearchDialog) {

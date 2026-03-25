@@ -40,6 +40,7 @@ fun BrewingParamChip(icon: ImageVector, text: String) {
                 text = text,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
+                maxLines = 1,
             )
         }
     }

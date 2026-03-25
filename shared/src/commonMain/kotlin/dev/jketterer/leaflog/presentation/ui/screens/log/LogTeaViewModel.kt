@@ -338,11 +338,6 @@ class LogTeaViewModel(
                         )
                     }
 
-                    // Increment usage counter
-                    brewingConfigurationRepository.incrementTimesUsed(
-                        configurationId,
-                        Clock.System.now()
-                    )
                 }
             }
         }

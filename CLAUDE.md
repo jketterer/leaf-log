@@ -99,7 +99,6 @@ di/ (Dependency Injection)
 
 - Entities in `data/local/database/entities/`
 - DAOs in `data/local/database/dao/`
-- When adding fields to entities, don't worry about modifying database versions
 
 **Key Entities**
 

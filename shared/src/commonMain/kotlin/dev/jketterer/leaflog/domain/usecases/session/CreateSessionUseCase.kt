@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -13,6 +14,7 @@ import kotlin.uuid.Uuid
 
 class CreateSessionUseCase(
     private val teaSessionRepository: TeaSessionRepository,
+    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val updateTeaStatsUseCase: UpdateTeaStatsUseCase,
 ) {
     @OptIn(ExperimentalUuidApi::class)
@@ -82,6 +84,9 @@ class CreateSessionUseCase(
             teaSessionRepository.upsert(session)
             if (status == SessionStatus.COMPLETED) {
                 updateTeaStatsUseCase(teaId)
+                if (usedConfigurationId != null) {
+                    brewingConfigurationRepository.incrementTimesUsed(usedConfigurationId, now)
+                }
             }
             Result.success(session)
         } catch (e: Exception) {

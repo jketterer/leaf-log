@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -35,6 +36,7 @@ class SteepCompleteViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val imageStorage: ImageStorage,
     private val timerService: TimerService,
@@ -291,6 +293,12 @@ class SteepCompleteViewModel(
                 timerRemainingMs = null,
             )
             teaSessionRepository.upsert(updatedSession)
+            if (updatedSession.usedConfigurationId != null) {
+                brewingConfigurationRepository.incrementTimesUsed(
+                    updatedSession.usedConfigurationId,
+                    updatedSession.updatedAt,
+                )
+            }
 
             session.parentSessionId?.let { parentId ->
                 updateAverageRatingUseCase(parentId)
@@ -341,6 +349,12 @@ class SteepCompleteViewModel(
                 timerRemainingMs = null,
             )
             teaSessionRepository.upsert(updatedSession)
+            if (updatedSession.usedConfigurationId != null) {
+                brewingConfigurationRepository.incrementTimesUsed(
+                    updatedSession.usedConfigurationId,
+                    updatedSession.updatedAt,
+                )
+            }
             // Reset TimerService singleton state so the next Timer screen starts clean
             timerService.stop()
 

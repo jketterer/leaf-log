@@ -114,7 +114,7 @@ private fun QuickBrewSectionPreview() {
                         teaQuantityGrams = 2f,
                         waterQuantityMl = 350.0,
                         temperatureCelsius = 80.0,
-                        brewingTime = 3.minutes,
+                        brewingTime = 3.5.minutes,
                         waterType = WaterType.FILTERED,
                         sourceSessionId = null,
                         rating = null,

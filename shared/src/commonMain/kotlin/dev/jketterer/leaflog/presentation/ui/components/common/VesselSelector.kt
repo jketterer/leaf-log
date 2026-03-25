@@ -50,7 +50,7 @@ fun VesselSelector(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
-    imageStorage: ImageStorage = koinInject(),
+    imageStorage: ImageStorage? = koinInject(),
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -91,7 +91,7 @@ fun VesselSelector(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                if (vessel.imagePath != null) {
+                                if (vessel.imagePath != null && imageStorage != null) {
                                     AsyncImage(
                                         model = imageStorage.resolveImagePath(vessel.imagePath),
                                         contentDescription = null,

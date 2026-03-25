@@ -58,7 +58,7 @@ fun TeaCard(
     teaTypeColorHex: String? = null,
     onFavoriteClick: (() -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
-    imageStorage: ImageStorage = koinInject(),
+    imageStorage: ImageStorage? = koinInject(),
 ) {
     val accentColor = teaTypeColorHex?.hexToColor()
 
@@ -90,7 +90,7 @@ fun TeaCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Tea photo
-                if (tea.photos.isNotEmpty()) {
+                if (tea.photos.isNotEmpty() && imageStorage != null) {
                     AsyncImage(
                         model = imageStorage.resolveImagePath(tea.photos.first()),
                         contentDescription = tea.name,
@@ -213,6 +213,7 @@ private fun TeaCardPreview() {
             teaTypeName = "Black Tea",
             onTeaClick = {},
             onFavoriteClick = {},
+            imageStorage = null,
         )
     }
 }
@@ -236,6 +237,7 @@ private fun TeaCardWithBorderPreview() {
             teaTypeColorHex = "#4CAF50",
             onTeaClick = {},
             onFavoriteClick = {},
+            imageStorage = null,
         )
     }
 }

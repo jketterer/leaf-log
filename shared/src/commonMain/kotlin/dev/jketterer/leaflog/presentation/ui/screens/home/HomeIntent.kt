@@ -9,6 +9,11 @@ sealed interface HomeIntent {
     data object DismissDurationSheet : HomeIntent
     data class FabExpandedChanged(val expanded: Boolean) : HomeIntent
     data class BrewAgainClicked(val sessionId: String) : HomeIntent
+    data class QuickBrewClicked(
+        val configurationId: String,
+        val teaId: String,
+        val vesselId: String,
+    ) : HomeIntent
 
     data class DeleteSessionClicked(val sessionId: String) : HomeIntent
     data object ConfirmDeleteSession : HomeIntent

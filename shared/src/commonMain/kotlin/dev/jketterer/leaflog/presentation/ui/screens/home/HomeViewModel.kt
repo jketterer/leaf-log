@@ -8,6 +8,8 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -46,6 +48,11 @@ private sealed interface HomePendingAction {
     data object NavigateToLogTea : HomePendingAction
     data object ShowDurationSheet : HomePendingAction
     data class BrewAgain(val session: TeaSession) : HomePendingAction
+    data class QuickBrew(
+        val teaId: String,
+        val vesselId: String,
+        val configurationId: String,
+    ) : HomePendingAction
 }
 
 class HomeViewModel(
@@ -53,6 +60,7 @@ class HomeViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val vesselRepository: BrewingVesselRepository,
+    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
@@ -87,6 +95,14 @@ class HomeViewModel(
                     _state.update { it.copy(showDurationSheet = true) }
                 is HomePendingAction.BrewAgain ->
                     brewAgain(action.session)
+                is HomePendingAction.QuickBrew ->
+                    _navEvents.trySend(
+                        HomeNavEvent.NavigateToLogTea(
+                            teaId = action.teaId,
+                            vesselId = action.vesselId,
+                            configurationId = action.configurationId,
+                        )
+                    )
             }
         },
     )
@@ -144,6 +160,16 @@ class HomeViewModel(
                 val session = _state.value.recentSessionsWithTea
                     .find { it.session.id == intent.sessionId }?.session ?: return
                 inProgressDelegate.checkAndProceed(HomePendingAction.BrewAgain(session))
+            }
+
+            is HomeIntent.QuickBrewClicked -> {
+                inProgressDelegate.checkAndProceed(
+                    HomePendingAction.QuickBrew(
+                        teaId = intent.teaId,
+                        vesselId = intent.vesselId,
+                        configurationId = intent.configurationId,
+                    )
+                )
             }
 
             is HomeIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
@@ -221,11 +247,13 @@ class HomeViewModel(
                 val sessionsLoaded = MutableStateFlow(false)
                 val inProgressCountLoaded = MutableStateFlow(false)
                 val inProgressRecentLoaded = MutableStateFlow(false)
+                val configsLoaded = MutableStateFlow(false)
 
                 launch { collectDailyStats(statsLoaded) }
                 launch { collectRecentSessions(sessionsLoaded) }
                 launch { collectInProgressCount(inProgressCountLoaded) }
                 launch { collectMostRecentInProgress(inProgressRecentLoaded) }
+                launch { collectQuickBrewConfigurations(configsLoaded) }
 
                 // Clear loading state once all collectors have emitted at least once
                 launch {
@@ -234,7 +262,8 @@ class HomeViewModel(
                         sessionsLoaded,
                         inProgressCountLoaded,
                         inProgressRecentLoaded,
-                    ) { s, r, c, m -> s && r && c && m }
+                        configsLoaded,
+                    ) { loaded -> loaded.all { it } }
                         .first { it }
                     _state.update { it.copy(isLoading = false) }
                 }
@@ -346,6 +375,39 @@ class HomeViewModel(
             }
     }
 
+    private suspend fun collectQuickBrewConfigurations(loaded: MutableStateFlow<Boolean>) {
+        combine(
+            brewingConfigurationRepository.getMostUsedFlow(limit = 6),
+            teaRepository.getAllFlow(),
+            teaTypeRepository.getAllFlow(),
+            vesselRepository.getAllFlow(),
+        ) { configs, teas, types, vessels ->
+            val teaMap = teas.associateBy { it.id }
+            val typeMap = types.associateBy { it.id }
+            val vesselMap = vessels.associateBy { it.id }
+            configs.mapNotNull { config ->
+                val tea = teaMap[config.teaId] ?: return@mapNotNull null
+                val type = typeMap[tea.teaTypeId]
+                val vessel = vesselMap[config.vesselId] ?: return@mapNotNull null
+                QuickBrewCardData(
+                    configuration = config,
+                    teaName = tea.name,
+                    teaTypeName = type?.name ?: "Unknown",
+                    teaTypeColorHex = type?.colorHex,
+                    vesselName = vessel.name,
+                )
+            }
+        }
+            .catch { e ->
+                Logger.w("Home") { "Failed to load quick brew configs: ${e.message}" }
+                loaded.value = true
+            }
+            .collect { configs ->
+                _state.update { it.copy(quickBrewConfigurations = configs) }
+                loaded.value = true
+            }
+    }
+
     private fun refresh() {
         loadData()
     }
@@ -399,6 +461,14 @@ data class SessionWithTeaData(
     val teaTypeName: String = "Unknown Type",
     val teaPhotoUrl: String? = null,
     val vesselName: String = "Unknown Vessel",
+)
+
+data class QuickBrewCardData(
+    val configuration: BrewingConfiguration,
+    val teaName: String,
+    val teaTypeName: String,
+    val teaTypeColorHex: String?,
+    val vesselName: String,
 )
 
 sealed interface HomeNavEvent {

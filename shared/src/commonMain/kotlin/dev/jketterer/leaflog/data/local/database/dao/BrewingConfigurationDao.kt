@@ -43,4 +43,7 @@ interface BrewingConfigurationDao {
 
     @Query("UPDATE brewing_configurations SET is_active = :isActive WHERE id = :id")
     suspend fun setActive(id: String, isActive: Boolean)
+
+    @Query("SELECT * FROM brewing_configurations WHERE is_active = 1 AND times_used > 0 ORDER BY times_used DESC, last_used_at DESC LIMIT :limit")
+    fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfigurationEntity>>
 }

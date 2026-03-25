@@ -93,15 +93,19 @@ import kotlin.time.Duration.Companion.seconds
 fun LogTeaScreen(
     teaId: String?,
     vesselId: String?,
+    configurationId: String? = null,
     onNavigateBack: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
     viewModel: LogTeaViewModel,
 ) {
     val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(teaId, vesselId) {
+    LaunchedEffect(teaId, vesselId, configurationId) {
         viewModel.onIntent(LogTeaIntent.TeaSelected(teaId))
         viewModel.onIntent(LogTeaIntent.VesselSelected(vesselId))
+        if (configurationId != null) {
+            viewModel.onIntent(LogTeaIntent.MethodSelected(configurationId))
+        }
     }
 
     LaunchedEffect(Unit) {

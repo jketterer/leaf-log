@@ -10,6 +10,7 @@ data class HomeState(
     val greeting: String = "Good day",
     val dailyStats: DailyStats = DailyStats(),
     val recentSessionsWithTea: List<SessionWithTeaData> = emptyList(),
+    val quickBrewConfigurations: List<QuickBrewCardData> = emptyList(),
     val inProgressSessionsCount: Int = 0,
     val mostRecentInProgress: InProgressSessionDetails? = null,
     val liveTimerState: TimerState? = null, // Live timer progress from TimerService

@@ -117,14 +117,11 @@ fun AppNavigation() {
             entryProvider = entryProvider {
                 entry<NavRoute.HomeRoute> {
                     HomeScreen(
-                        onNavigateToLogTea = { teaId, vesselId ->
-                            backStack.add(NavRoute.LogTeaRoute(teaId, vesselId))
+                        onNavigateToLogTea = { teaId, vesselId, configurationId ->
+                            backStack.add(NavRoute.LogTeaRoute(teaId, vesselId, configurationId))
                         },
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
-                        },
-                        onNavigateToEditSession = { sessionId ->
-                            backStack.add(NavRoute.EditSessionRoute(sessionId, true))
                         },
                         onNavigateToHistory = { filterDateStart, filterDateEnd ->
                             backStack.add(
@@ -312,6 +309,7 @@ fun AppNavigation() {
                     LogTeaScreen(
                         teaId = route.teaId,
                         vesselId = route.vesselId,
+                        configurationId = route.configurationId,
                         onNavigateBack = { backStack.removeLast() },
                         onNavigateToTimer = { sessionId ->
                             backStack.clear()

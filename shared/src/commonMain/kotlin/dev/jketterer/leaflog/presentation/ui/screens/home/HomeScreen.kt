@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
@@ -38,6 +38,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Settings
+import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
@@ -50,6 +52,7 @@ import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
 import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
 import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
+import dev.jketterer.leaflog.presentation.ui.components.home.QuickBrewSection
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
@@ -57,6 +60,7 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -69,9 +73,8 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Composable
 fun HomeScreen(
-    onNavigateToLogTea: (String?, String?) -> Unit,
+    onNavigateToLogTea: (teaId: String?, vesselId: String?, configurationId: String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
-    onNavigateToEditSession: (String) -> Unit,
     onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
     onNavigateToCollection: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -86,7 +89,7 @@ fun HomeScreen(
         viewModel.navEvents.collect { event ->
             when (event) {
                 is HomeNavEvent.NavigateToLogTea -> {
-                    onNavigateToLogTea(event.teaId, event.vesselId)
+                    onNavigateToLogTea(event.teaId, event.vesselId, event.configurationId)
                 }
 
                 is HomeNavEvent.NavigateToSession -> {
@@ -131,6 +134,7 @@ fun HomeScreen(
     HomeContent(
         state = state,
         onIntent = viewModel::onIntent,
+        imageStorage = koinInject()
     )
 }
 
@@ -139,6 +143,7 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
+    imageStorage: ImageStorage? = null,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -194,6 +199,7 @@ private fun HomeContent(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 80.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         // Greeting
@@ -228,6 +234,25 @@ private fun HomeContent(
                                 onTeasCardClick = { onIntent(HomeIntent.DailyStatsTeasCardClicked) },
                                 onViewAllClick = { onIntent(HomeIntent.ViewAllStatsClicked) },
                             )
+                        }
+
+                        // Quick brew configurations
+                        if (state.quickBrewConfigurations.size >= 2) {
+                            item(key = "quick_brew") {
+                                QuickBrewSection(
+                                    configurations = state.quickBrewConfigurations,
+                                    userPreferences = state.userPreferences,
+                                    onConfigClick = { data ->
+                                        onIntent(
+                                            HomeIntent.QuickBrewClicked(
+                                                configurationId = data.configuration.id,
+                                                teaId = data.configuration.teaId,
+                                                vesselId = data.configuration.vesselId,
+                                            )
+                                        )
+                                    },
+                                )
+                            }
                         }
 
                         // Recent sessions header
@@ -279,13 +304,10 @@ private fun HomeContent(
                                 modifier = Modifier
                                     .animateItem()
                                     .padding(horizontal = 16.dp),
+                                imageStorage = imageStorage,
                             )
                         }
 
-                        // Bottom padding for FAB
-                        item(key = "bottom_padding") {
-                            Spacer(modifier = Modifier.height(70.dp))
-                        }
                     }
                 }
             }
@@ -391,6 +413,80 @@ private fun HomeScreenPreview() {
                     sessionCount = 3,
                     formattedWaterQuantity = "32 fl oz",
                     differentTeasCount = 2,
+                ),
+                quickBrewConfigurations = listOf(
+                    QuickBrewCardData(
+                        configuration = BrewingConfiguration(
+                            id = "config-1",
+                            teaId = "tea-1",
+                            vesselId = "gaiwan",
+                            teaQuantityGrams = 5f,
+                            waterQuantityMl = 100.0,
+                            temperatureCelsius = 95.0,
+                            brewingTime = 30.seconds,
+                            waterType = WaterType.FILTERED,
+                            sourceSessionId = null,
+                            rating = null,
+                            label = "Gaiwan · Gong-fu",
+                            isActive = true,
+                            timesUsed = 24,
+                            lastUsedAt = null,
+                            createdAt = now,
+                            updatedAt = now,
+                        ),
+                        teaName = "Tie Guan Yin",
+                        teaTypeName = "Oolong",
+                        teaTypeColorHex = "#FF9800",
+                        vesselName = "Gaiwan",
+                    ),
+                    QuickBrewCardData(
+                        configuration = BrewingConfiguration(
+                            id = "config-2",
+                            teaId = "tea-2",
+                            vesselId = "mug",
+                            teaQuantityGrams = 2f,
+                            waterQuantityMl = 350.0,
+                            temperatureCelsius = 80.0,
+                            brewingTime = 3.minutes,
+                            waterType = WaterType.FILTERED,
+                            sourceSessionId = null,
+                            rating = null,
+                            label = "Mug · Western",
+                            isActive = true,
+                            timesUsed = 8,
+                            lastUsedAt = null,
+                            createdAt = now,
+                            updatedAt = now,
+                        ),
+                        teaName = "Sencha",
+                        teaTypeName = "Green",
+                        teaTypeColorHex = "#4CAF50",
+                        vesselName = "Mug",
+                    ),
+                    QuickBrewCardData(
+                        configuration = BrewingConfiguration(
+                            id = "config-3",
+                            teaId = "tea-3",
+                            vesselId = "kyusu",
+                            teaQuantityGrams = null,
+                            waterQuantityMl = 250.0,
+                            temperatureCelsius = 100.0,
+                            brewingTime = 5.minutes,
+                            waterType = WaterType.SPRING,
+                            sourceSessionId = null,
+                            rating = null,
+                            label = "Kyusu · Bag Method",
+                            isActive = true,
+                            timesUsed = 3,
+                            lastUsedAt = null,
+                            createdAt = now,
+                            updatedAt = now,
+                        ),
+                        teaName = "English Breakfast",
+                        teaTypeName = "Black",
+                        teaTypeColorHex = "#795548",
+                        vesselName = "Kyusu",
+                    ),
                 ),
                 recentSessionsWithTea = listOf(
                     SessionWithTeaData(

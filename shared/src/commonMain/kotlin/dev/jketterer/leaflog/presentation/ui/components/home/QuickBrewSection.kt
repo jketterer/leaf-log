@@ -4,12 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -31,17 +34,28 @@ fun QuickBrewSection(
     configurations: List<QuickBrewCardData>,
     userPreferences: UserPreferences,
     onConfigClick: (QuickBrewCardData) -> Unit,
+    onManageClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = "QUICK BREW",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(16.dp),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "QUICK BREW",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            TextButton(onClick = onManageClick) {
+                Text("Manage")
+            }
+        }
 
         val horizontalPadding = 16.dp
         val cardSpacing = 8.dp
@@ -133,6 +147,7 @@ private fun QuickBrewSectionPreview() {
             ),
             userPreferences = UserPreferences(temperatureUnit = TemperatureUnit.CELSIUS),
             onConfigClick = {},
+            onManageClick = {},
         )
     }
 }

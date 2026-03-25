@@ -11,6 +11,7 @@ data class HomeState(
     val dailyStats: DailyStats = DailyStats(),
     val recentSessionsWithTea: List<SessionWithTeaData> = emptyList(),
     val quickBrewConfigurations: List<QuickBrewCardData> = emptyList(),
+    val allBrewingConfigurations: List<QuickBrewCardData> = emptyList(),
     val inProgressSessionsCount: Int = 0,
     val mostRecentInProgress: InProgressSessionDetails? = null,
     val liveTimerState: TimerState? = null, // Live timer progress from TimerService
@@ -22,6 +23,7 @@ data class HomeState(
     // FAB menu state
     val isFabExpanded: Boolean = false,
     val showDurationSheet: Boolean = false,
+    val showManageQuickBrewSheet: Boolean = false,
     val sessionPendingDelete: String? = null,
     // In-progress session conflict dialog
     val inProgressDialogState: InProgressDialogState? = null,

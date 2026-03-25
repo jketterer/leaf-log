@@ -17,6 +17,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
+import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
@@ -67,6 +68,7 @@ class HomeViewModel(
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val completeSessionUseCase: CompleteSessionUseCase,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
+    private val pinBrewingConfigurationUseCase: PinBrewingConfigurationUseCase,
     private val timerService: TimerService,
 ) : ViewModel() {
 
@@ -171,6 +173,16 @@ class HomeViewModel(
                     )
                 )
             }
+
+            is HomeIntent.ManageQuickBrewClicked ->
+                _state.update { it.copy(showManageQuickBrewSheet = true) }
+
+            is HomeIntent.DismissManageQuickBrewSheet ->
+                _state.update { it.copy(showManageQuickBrewSheet = false) }
+
+            is HomeIntent.PinConfigurationToggled -> pinConfiguration(intent.configurationId, intent.isPinned)
+
+            is HomeIntent.PinnedConfigurationsReordered -> reorderPinnedConfigurations(intent.orderedIds)
 
             is HomeIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is HomeIntent.ConfirmDeleteSession -> confirmDeleteSession()
@@ -377,7 +389,7 @@ class HomeViewModel(
 
     private suspend fun collectQuickBrewConfigurations(loaded: MutableStateFlow<Boolean>) {
         combine(
-            brewingConfigurationRepository.getMostUsedFlow(limit = 6),
+            brewingConfigurationRepository.getAllActiveFlow(),
             teaRepository.getAllFlow(),
             teaTypeRepository.getAllFlow(),
             vesselRepository.getAllFlow(),
@@ -402,9 +414,30 @@ class HomeViewModel(
                 Logger.w("Home") { "Failed to load quick brew configs: ${e.message}" }
                 loaded.value = true
             }
-            .collect { configs ->
-                _state.update { it.copy(quickBrewConfigurations = configs) }
+            .collect { allConfigs ->
+                _state.update {
+                    it.copy(
+                        allBrewingConfigurations = allConfigs,
+                        quickBrewConfigurations = allConfigs.filter { data ->
+                            data.configuration.isPinned || data.configuration.timesUsed > 0
+                        },
+                    )
+                }
                 loaded.value = true
+            }
+    }
+
+    private fun pinConfiguration(configId: String, isPinned: Boolean) = viewModelScope.launch {
+        pinBrewingConfigurationUseCase(configId, isPinned)
+            .onFailure { e ->
+                _state.update { it.copy(error = "Failed to update pin: ${e.message}") }
+            }
+    }
+
+    private fun reorderPinnedConfigurations(orderedIds: List<String>) = viewModelScope.launch {
+        runCatching { brewingConfigurationRepository.reorderPinnedConfigurations(orderedIds) }
+            .onFailure { e ->
+                _state.update { it.copy(error = "Failed to reorder: ${e.message}") }
             }
     }
 

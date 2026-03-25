@@ -81,3 +81,18 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         )
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(connection: SQLiteConnection) {
+        // Add pin fields to brewing_configurations
+        connection.execSQL(
+            "ALTER TABLE `brewing_configurations` ADD COLUMN `is_pinned` INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execSQL(
+            "ALTER TABLE `brewing_configurations` ADD COLUMN `pinned_sort_order` INTEGER NOT NULL DEFAULT 0"
+        )
+        connection.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_is_pinned` ON `brewing_configurations` (`is_pinned`)"
+        )
+    }
+}

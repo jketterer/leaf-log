@@ -62,4 +62,31 @@ interface BrewingConfigurationRepository {
      * Get the most frequently used active configurations as a reactive flow
      */
     fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfiguration>>
+
+    /**
+     * Get all active configurations as a reactive flow, sorted by pinned first (in pinned order),
+     * then by usage frequency
+     */
+    fun getAllActiveFlow(): Flow<List<BrewingConfiguration>>
+
+    /**
+     * Get the highest pinnedSortOrder value among currently pinned active configs
+     */
+    suspend fun getMaxPinnedSortOrder(): Int?
+
+    /**
+     * Set or clear the pinned status of a configuration
+     */
+    suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int)
+
+    /**
+     * Update the pinned sort order for a single configuration
+     */
+    suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int)
+
+    /**
+     * Reorder all pinned configurations. orderedIds defines the new order
+     * (index 0 = first, index 1 = second, etc.)
+     */
+    suspend fun reorderPinnedConfigurations(orderedIds: List<String>)
 }

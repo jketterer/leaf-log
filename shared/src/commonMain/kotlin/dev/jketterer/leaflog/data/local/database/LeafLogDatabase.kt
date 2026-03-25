@@ -28,7 +28,7 @@ expect object LeafLogDatabaseConstructor : RoomDatabaseConstructor<LeafLogDataba
         BrewingVesselEntity::class,
         BrewingConfigurationEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @ConstructedBy(LeafLogDatabaseConstructor::class)

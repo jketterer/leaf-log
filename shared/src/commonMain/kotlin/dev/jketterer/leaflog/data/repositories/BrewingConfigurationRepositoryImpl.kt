@@ -72,4 +72,27 @@ class BrewingConfigurationRepositoryImpl(
         return brewingConfigurationDao.getMostUsedFlow(limit)
             .map { entities -> entities.map { it.toBrewingConfiguration() } }
     }
+
+    override fun getAllActiveFlow(): Flow<List<BrewingConfiguration>> {
+        return brewingConfigurationDao.getAllActiveFlow()
+            .map { entities -> entities.map { it.toBrewingConfiguration() } }
+    }
+
+    override suspend fun getMaxPinnedSortOrder(): Int? {
+        return brewingConfigurationDao.getMaxPinnedSortOrder()
+    }
+
+    override suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int) {
+        brewingConfigurationDao.setPinned(id, isPinned, pinnedSortOrder)
+    }
+
+    override suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int) {
+        brewingConfigurationDao.updatePinnedSortOrder(id, pinnedSortOrder)
+    }
+
+    override suspend fun reorderPinnedConfigurations(orderedIds: List<String>) {
+        orderedIds.forEachIndexed { index, id ->
+            brewingConfigurationDao.updatePinnedSortOrder(id, index)
+        }
+    }
 }

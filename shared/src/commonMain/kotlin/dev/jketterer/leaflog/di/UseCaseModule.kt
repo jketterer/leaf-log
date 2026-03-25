@@ -10,6 +10,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigu
 import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
@@ -105,4 +106,5 @@ val useCaseModule = module {
     factoryOf(::CreateBrewingConfigurationUseCase)
     factoryOf(::UpdateBrewingConfigurationUseCase)
     factoryOf(::DeleteBrewingConfigurationUseCase)
+    factoryOf(::PinBrewingConfigurationUseCase)
 }

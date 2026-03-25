@@ -15,6 +15,11 @@ sealed interface HomeIntent {
         val vesselId: String,
     ) : HomeIntent
 
+    data object ManageQuickBrewClicked : HomeIntent
+    data object DismissManageQuickBrewSheet : HomeIntent
+    data class PinConfigurationToggled(val configurationId: String, val isPinned: Boolean) : HomeIntent
+    data class PinnedConfigurationsReordered(val orderedIds: List<String>) : HomeIntent
+
     data class DeleteSessionClicked(val sessionId: String) : HomeIntent
     data object ConfirmDeleteSession : HomeIntent
     data object CancelDeleteSession : HomeIntent

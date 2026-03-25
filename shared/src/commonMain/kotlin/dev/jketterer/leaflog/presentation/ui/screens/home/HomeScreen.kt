@@ -52,6 +52,7 @@ import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
 import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
 import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
+import dev.jketterer.leaflog.presentation.ui.components.home.ManageQuickBrewSheet
 import dev.jketterer.leaflog.presentation.ui.components.home.QuickBrewSection
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
@@ -237,7 +238,7 @@ private fun HomeContent(
                         }
 
                         // Quick brew configurations
-                        if (state.quickBrewConfigurations.size >= 2) {
+                        if (state.quickBrewConfigurations.isNotEmpty()) {
                             item(key = "quick_brew") {
                                 QuickBrewSection(
                                     configurations = state.quickBrewConfigurations,
@@ -251,6 +252,7 @@ private fun HomeContent(
                                             )
                                         )
                                     },
+                                    onManageClick = { onIntent(HomeIntent.ManageQuickBrewClicked) },
                                 )
                             }
                         }
@@ -397,6 +399,20 @@ private fun HomeContent(
             onStartTimer = { durationSeconds ->
                 onIntent(HomeIntent.StartQuickTimer(durationSeconds))
             },
+        )
+    }
+
+    // Manage Quick Brew Sheet
+    if (state.showManageQuickBrewSheet) {
+        ManageQuickBrewSheet(
+            configurations = state.allBrewingConfigurations,
+            onPinToggled = { id, isPinned ->
+                onIntent(HomeIntent.PinConfigurationToggled(id, isPinned))
+            },
+            onReorder = { orderedIds ->
+                onIntent(HomeIntent.PinnedConfigurationsReordered(orderedIds))
+            },
+            onDismiss = { onIntent(HomeIntent.DismissManageQuickBrewSheet) },
         )
     }
 }

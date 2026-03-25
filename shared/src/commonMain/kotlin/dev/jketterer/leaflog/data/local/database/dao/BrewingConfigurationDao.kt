@@ -46,4 +46,22 @@ interface BrewingConfigurationDao {
 
     @Query("SELECT * FROM brewing_configurations WHERE is_active = 1 AND times_used > 0 ORDER BY times_used DESC, last_used_at DESC LIMIT :limit")
     fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfigurationEntity>>
+
+    @Query("""
+        SELECT * FROM brewing_configurations
+        WHERE is_active = 1
+        ORDER BY is_pinned DESC,
+                 CASE WHEN is_pinned = 1 THEN pinned_sort_order END ASC,
+                 times_used DESC, last_used_at DESC
+    """)
+    fun getAllActiveFlow(): Flow<List<BrewingConfigurationEntity>>
+
+    @Query("SELECT MAX(pinned_sort_order) FROM brewing_configurations WHERE is_pinned = 1 AND is_active = 1")
+    suspend fun getMaxPinnedSortOrder(): Int?
+
+    @Query("UPDATE brewing_configurations SET is_pinned = :isPinned, pinned_sort_order = :pinnedSortOrder WHERE id = :id")
+    suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int)
+
+    @Query("UPDATE brewing_configurations SET pinned_sort_order = :pinnedSortOrder WHERE id = :id")
+    suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int)
 }

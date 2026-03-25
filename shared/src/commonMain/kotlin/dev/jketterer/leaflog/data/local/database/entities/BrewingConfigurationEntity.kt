@@ -34,6 +34,7 @@ import kotlin.time.Instant
         Index("rating"),
         Index("times_used"),
         Index("last_used_at"),
+        Index("is_pinned"),
     ],
 )
 data class BrewingConfigurationEntity(
@@ -79,6 +80,12 @@ data class BrewingConfigurationEntity(
 
     @ColumnInfo(name = "is_active")
     val isActive: Boolean, // User can disable configs without deleting
+
+    @ColumnInfo(name = "is_pinned", defaultValue = "0")
+    val isPinned: Boolean = false, // User can pin configs to the top of the Quick Brew section
+
+    @ColumnInfo(name = "pinned_sort_order", defaultValue = "0")
+    val pinnedSortOrder: Int = 0, // Order of pinned configs (lower = first)
 
     @ColumnInfo(name = "created_at")
     val createdAt: Instant, // TypeConverter: Instant ↔ Long

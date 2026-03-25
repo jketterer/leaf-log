@@ -19,6 +19,8 @@ fun BrewingConfigurationEntity.toBrewingConfiguration(): BrewingConfiguration {
         lastUsedAt = lastUsedAt,
         label = label,
         isActive = isActive,
+        isPinned = isPinned,
+        pinnedSortOrder = pinnedSortOrder,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
@@ -40,6 +42,8 @@ fun BrewingConfiguration.toEntity(): BrewingConfigurationEntity {
         lastUsedAt = lastUsedAt,
         label = label,
         isActive = isActive,
+        isPinned = isPinned,
+        pinnedSortOrder = pinnedSortOrder,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )

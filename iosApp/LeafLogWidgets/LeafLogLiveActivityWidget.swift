@@ -13,7 +13,7 @@ struct LeafLogLiveActivityWidget: Widget {
         } dynamicIsland: { context in
             let isComplete = context.state.remainingSeconds <= 0
                 || (!context.state.isPaused && context.state.endDate <= Date.now)
-            DynamicIsland {
+            return DynamicIsland {
                 DynamicIslandExpandedRegion(.trailing) {
                     if isComplete {
                         Image(systemName: "checkmark.circle.fill")

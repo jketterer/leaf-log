@@ -21,6 +21,14 @@ sealed interface QuickTimerIntent {
     data object CancelStop : QuickTimerIntent
     data object BackClicked : QuickTimerIntent
 
+    // Completion prompt (timer done, no details filled)
+    data object AddSessionDetails : QuickTimerIntent
+    data object DiscardCompletedSession : QuickTimerIntent
+
+    // Back from complete without saved session
+    data object ConfirmDiscardComplete : QuickTimerIntent
+    data object CancelDiscardComplete : QuickTimerIntent
+
     // Details sheet
     data object ShowDetailsSheet : QuickTimerIntent
     data object HideDetailsSheet : QuickTimerIntent

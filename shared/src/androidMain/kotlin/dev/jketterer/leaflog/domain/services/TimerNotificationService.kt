@@ -137,7 +137,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID_RUNNING)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(state.teaName)
+            .setContentTitle(state.teaName.ifEmpty { "Your tea" })
             .setSubText("Steep ${state.steepNumber}")
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -184,7 +184,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
     override fun showTimerComplete(teaName: String, sessionId: String?) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_COMPLETE)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("$teaName is ready!")
+            .setContentTitle("${teaName.ifEmpty { "Your tea" }} is ready!")
             .setContentText("Time to enjoy your tea")
             .setAutoCancel(true)
             .setContentIntent(createTimerPendingIntent(sessionId, destination = "steep_complete"))

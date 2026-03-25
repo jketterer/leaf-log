@@ -96,6 +96,10 @@ class QuickTimerViewModel(
             is QuickTimerIntent.ConfirmStop -> confirmStop()
             is QuickTimerIntent.CancelStop -> cancelStop()
             is QuickTimerIntent.BackClicked -> handleBackClicked()
+            is QuickTimerIntent.AddSessionDetails -> handleAddSessionDetails()
+            is QuickTimerIntent.DiscardCompletedSession -> handleDiscardCompletedSession()
+            is QuickTimerIntent.ConfirmDiscardComplete -> handleConfirmDiscardComplete()
+            is QuickTimerIntent.CancelDiscardComplete -> handleCancelDiscardComplete()
 
             // Details sheet
             is QuickTimerIntent.ShowDetailsSheet -> showDetailsSheet()
@@ -150,7 +154,7 @@ class QuickTimerViewModel(
         }
         val current = _state.value
         notificationService.scheduleCompletionAlarm(
-            teaName = current.selectedTea?.name ?: "",
+            teaName = effectiveTeaName(),
             remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
             sessionId = current.inProgressSession?.id,
         )
@@ -178,7 +182,7 @@ class QuickTimerViewModel(
         }
         val current = _state.value
         notificationService.scheduleCompletionAlarm(
-            teaName = current.selectedTea?.name ?: "",
+            teaName = effectiveTeaName(),
             remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
             sessionId = current.inProgressSession?.id,
         )
@@ -206,7 +210,7 @@ class QuickTimerViewModel(
         // Reschedule completion alarm so notification fires at the correct (adjusted) time
         if (current.status == TimerStatus.RUNNING) {
             notificationService.scheduleCompletionAlarm(
-                teaName = current.selectedTea?.name ?: "",
+                teaName = effectiveTeaName(),
                 remainingSeconds = newRemaining.inWholeMilliseconds / 1000.0,
                 sessionId = current.inProgressSession?.id,
             )
@@ -260,16 +264,22 @@ class QuickTimerViewModel(
 
     private fun handleBackClicked() {
         val current = _state.value
-        // If timer is running or paused, show stop confirmation
-        when (current.status) {
-            TimerStatus.RUNNING, TimerStatus.PAUSED -> {
+        when {
+            current.status == TimerStatus.RUNNING || current.status == TimerStatus.PAUSED -> {
                 showStopConfirmation()
             }
-            TimerStatus.COMPLETE if current.inProgressSession != null -> {
+            current.status == TimerStatus.COMPLETE && current.inProgressSession != null -> {
                 // Navigate to SteepComplete so the user can rate/finish
-                _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSteepComplete(current.inProgressSession.id))
+                _navigationEvents.trySend(
+                    QuickTimerNavEvent.NavigateToSteepComplete(current.inProgressSession.id),
+                )
+            }
+            current.status == TimerStatus.COMPLETE && current.inProgressSession == null -> {
+                // Timer finished but session not saved — warn before discarding
+                _state.update { it.copy(showDiscardCompleteConfirmation = true) }
             }
             else -> {
+                notificationService.onTimerStopped()
                 _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
             }
         }
@@ -309,12 +319,14 @@ class QuickTimerViewModel(
                         )
                     }
                     notificationService.showTimerComplete(
-                        teaName = current.selectedTea?.name ?: "",
+                        teaName = effectiveTeaName(),
                         sessionId = current.inProgressSession?.id,
                     )
                     // Auto-save as IN_PROGRESS if we have the required details
                     if (_state.value.hasRequiredDetails) {
                         autoSaveCompleted()
+                    } else if (!_state.value.showDetailsSheet) {
+                        _state.update { it.copy(showCompletionPrompt = true) }
                     }
                     break
                 }
@@ -325,7 +337,7 @@ class QuickTimerViewModel(
     private fun buildTimerState(state: QuickTimerState): TimerState {
         return TimerState(
             sessionId = state.inProgressSession?.id,
-            teaName = state.selectedTea?.name ?: "",
+            teaName = effectiveTeaName(),
             steepNumber = 1,
             totalDuration = state.totalDuration,
             remainingDuration = state.remainingDuration,
@@ -351,10 +363,14 @@ class QuickTimerViewModel(
                 teaSearchQuery = "",
             )
         }
-        // If the timer already completed and we now have details, auto-save
+        // If the timer already completed, auto-save or re-prompt based on details
         val current = _state.value
         if (current.status == TimerStatus.COMPLETE && current.inProgressSession == null) {
-            autoSaveCompleted()
+            if (current.hasRequiredDetails) {
+                autoSaveCompleted()
+            } else {
+                _state.update { it.copy(showCompletionPrompt = true) }
+            }
         }
     }
 
@@ -488,6 +504,30 @@ class QuickTimerViewModel(
 
     private fun updateNotes(notes: String) {
         _state.update { it.copy(notes = notes) }
+    }
+
+    private fun effectiveTeaName(): String =
+        _state.value.selectedTea?.name?.takeIf { it.isNotBlank() } ?: "Your tea"
+
+    private fun handleAddSessionDetails() {
+        _state.update { it.copy(showCompletionPrompt = false) }
+        showDetailsSheet()
+    }
+
+    private fun handleDiscardCompletedSession() {
+        _state.update { it.copy(showCompletionPrompt = false) }
+        notificationService.onTimerStopped()
+        _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
+    }
+
+    private fun handleConfirmDiscardComplete() {
+        _state.update { it.copy(showDiscardCompleteConfirmation = false) }
+        notificationService.onTimerStopped()
+        _navigationEvents.trySend(QuickTimerNavEvent.NavigateBack)
+    }
+
+    private fun handleCancelDiscardComplete() {
+        _state.update { it.copy(showDiscardCompleteConfirmation = false) }
     }
 
     private fun autoSaveCompleted() {

@@ -13,7 +13,7 @@ import org.koin.core.context.GlobalContext
 class TimerCompletionReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val teaName = intent.getStringExtra(EXTRA_TEA_NAME) ?: return
+        val teaName = intent.getStringExtra(EXTRA_TEA_NAME)?.ifEmpty { "Your tea" } ?: "Your tea"
         val sessionId = intent.getStringExtra(EXTRA_SESSION_ID)
 
         val notificationService = GlobalContext.get().get<TimerNotificationService>()

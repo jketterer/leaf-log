@@ -45,6 +45,8 @@ data class QuickTimerState(
     val showNextSteepDialog: Boolean = false,
     val showStopConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
+    val showCompletionPrompt: Boolean = false,
+    val showDiscardCompleteConfirmation: Boolean = false,
 
     // Next session details
     val nextSteepDuration: Duration? = null,

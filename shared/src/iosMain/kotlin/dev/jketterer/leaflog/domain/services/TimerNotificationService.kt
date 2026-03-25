@@ -100,7 +100,7 @@ class TimerNotificationServiceImpl : NSObject(),
         if (remainingSeconds <= 0) return
 
         val content = UNMutableNotificationContent().apply {
-            setTitle("$teaName is ready!")
+            setTitle("${teaName.ifEmpty { "Your tea" }} is ready!")
             setBody("Time to enjoy your tea")
             setSound(UNNotificationSound.defaultSound())
             setUserInfo(buildUserInfo(sessionId))

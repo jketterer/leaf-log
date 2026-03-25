@@ -137,6 +137,32 @@ private fun QuickTimerContent(
         )
     }
 
+    // Completion prompt — timer done but session details not filled
+    if (state.showCompletionPrompt) {
+        TimerStopConfirmationDialog(
+            title = "Timer Complete",
+            text = "Your tea is done! Add session details to save this brew, or discard it.",
+            confirmText = "Discard",
+            dismissText = "Add Details",
+            isDestructive = true,
+            onConfirm = { onIntent(QuickTimerIntent.DiscardCompletedSession) },
+            onDismiss = { onIntent(QuickTimerIntent.AddSessionDetails) },
+        )
+    }
+
+    // Discard guard — user pressed back while timer complete but nothing saved
+    if (state.showDiscardCompleteConfirmation) {
+        TimerStopConfirmationDialog(
+            title = "Discard Session?",
+            text = "The timer is complete but your session hasn't been saved. Your brewing data will be lost.",
+            confirmText = "Discard",
+            dismissText = "Stay",
+            isDestructive = true,
+            onConfirm = { onIntent(QuickTimerIntent.ConfirmDiscardComplete) },
+            onDismiss = { onIntent(QuickTimerIntent.CancelDiscardComplete) },
+        )
+    }
+
     // Details sheet
     if (state.showDetailsSheet) {
         QuickTimerDetailsSheet(

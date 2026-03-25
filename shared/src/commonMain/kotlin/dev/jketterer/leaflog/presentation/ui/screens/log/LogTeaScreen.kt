@@ -654,12 +654,13 @@ private fun LogTeaContent(
         ChooseMethodDialog(
             configurations = state.availableConfigurations,
             selectedConfigurationId = state.usedConfigurationId,
+            userPreferences = state.userPreferences,
             onSelect = { configId ->
                 onIntent(LogTeaIntent.MethodSelected(configId))
             },
             onDismiss = {
                 onIntent(LogTeaIntent.DismissChooseMethodDialog)
-            }
+            },
         )
     }
 

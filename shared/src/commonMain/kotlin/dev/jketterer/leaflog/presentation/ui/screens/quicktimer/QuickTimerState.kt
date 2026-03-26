@@ -17,6 +17,7 @@ data class QuickTimerState(
     val totalDuration: Duration = Duration.ZERO,
     val remainingDuration: Duration = Duration.ZERO,
     val status: TimerStatus = TimerStatus.NOT_STARTED,
+    val originalDuration: Duration? = null, // Locked in when timer starts; unaffected by mid-brew adjustments
 
     // Progressive details
     val selectedTea: Tea? = null,

@@ -32,7 +32,7 @@ class RestoreTimerStateUseCase(
                     val startedAt = session.timerStartedAt
                     if (startedAt != null) {
                         val elapsedSinceStart = now - startedAt
-                        val totalDurationMs = session.brewingTime.inWholeMilliseconds
+                        val totalDurationMs = session.timerTotalMs ?: session.brewingTime.inWholeMilliseconds
                         val newRemaining = totalDurationMs - elapsedSinceStart.inWholeMilliseconds
 
                         if (newRemaining <= 0) {
@@ -68,7 +68,7 @@ class RestoreTimerStateUseCase(
                 teaId = session.teaId,
                 teaName = "", // Will be populated by caller
                 steepNumber = session.steepNumber,
-                totalDuration = session.brewingTime,
+                totalDuration = session.timerTotalMs?.milliseconds ?: session.brewingTime,
                 remainingDuration = newRemainingMs.milliseconds,
                 status = newStatus,
                 startedAt = session.timerStartedAt,

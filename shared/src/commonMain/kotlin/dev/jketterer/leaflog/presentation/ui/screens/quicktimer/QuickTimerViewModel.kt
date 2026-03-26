@@ -150,7 +150,10 @@ class QuickTimerViewModel(
     private fun startTimer() {
         startedAt = Clock.System.now()
         _state.update {
-            it.copy(status = TimerStatus.RUNNING)
+            it.copy(
+                status = TimerStatus.RUNNING,
+                originalDuration = it.originalDuration ?: it.totalDuration,
+            )
         }
         val current = _state.value
         notificationService.scheduleCompletionAlarm(
@@ -231,11 +234,13 @@ class QuickTimerViewModel(
         timerJob = null
         startedAt = null
         notificationService.onTimerStopped()
-        val total = _state.value.totalDuration
+        val resetTo = _state.value.originalDuration ?: _state.value.totalDuration
         _state.update {
             it.copy(
-                remainingDuration = total,
+                totalDuration = resetTo,
+                remainingDuration = resetTo,
                 status = TimerStatus.NOT_STARTED,
+                originalDuration = null,
                 showResetConfirmation = false,
                 inProgressSession = null,
             )
@@ -558,7 +563,7 @@ class QuickTimerViewModel(
                     teaQuantityGrams = teaQuantityGrams,
                     vesselId = vessel.id,
                     waterType = current.waterType,
-                    brewingTime = current.totalDuration,
+                    brewingTime = current.originalDuration ?: current.totalDuration,
                     temperatureCelsius = temperatureCelsius,
                     waterQuantityMl = waterQuantityMl,
                     status = SessionStatus.IN_PROGRESS,

@@ -62,7 +62,7 @@ fun InProgressSessionsBanner(
             if (inProgressInfo != null) {
                 val timerStatus = inProgressInfo.session.timerStatus
                 val timerRemainingMs = inProgressInfo.session.timerRemainingMs
-                val totalDurationMs = inProgressInfo.session.brewingTime.inWholeMilliseconds
+                val totalDurationMs = inProgressInfo.session.timerTotalMs ?: inProgressInfo.session.brewingTime.inWholeMilliseconds
 
                 // Determine if timer is complete (either from status or from progress)
                 val isTimerComplete = timerStatus == TimerStatus.COMPLETE ||

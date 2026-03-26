@@ -37,4 +37,5 @@ data class TeaSession(
     val timerStartedAt: Instant? = null,
     val timerPausedAt: Instant? = null,
     val timerRemainingMs: Long? = null,
+    val timerTotalMs: Long? = null,
 )

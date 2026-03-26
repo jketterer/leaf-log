@@ -23,7 +23,6 @@ class SaveTimerStateUseCase(
 
             val now = Clock.System.now()
             val updatedSession = session.copy(
-                brewingTime = timerState.totalDuration,
                 timerStatus = timerState.status,
                 timerStartedAt = timerState.startedAt,
                 timerPausedAt = when (timerState.status) {
@@ -31,6 +30,7 @@ class SaveTimerStateUseCase(
                     else -> timerState.pausedAt
                 },
                 timerRemainingMs = timerState.remainingDuration.inWholeMilliseconds,
+                timerTotalMs = timerState.totalDuration.inWholeMilliseconds,
                 updatedAt = now,
             )
 
@@ -54,6 +54,7 @@ class SaveTimerStateUseCase(
                 timerStartedAt = null,
                 timerPausedAt = null,
                 timerRemainingMs = null,
+                timerTotalMs = null,
                 updatedAt = Clock.System.now(),
             )
 

@@ -131,7 +131,7 @@ private fun QuickTimerContent(
     // Reset confirmation dialog
     if (state.showResetConfirmation) {
         TimerResetConfirmationDialog(
-            durationText = "${state.totalDuration}",
+            durationText = "${state.originalDuration ?: state.totalDuration}",
             onConfirm = { onIntent(QuickTimerIntent.ConfirmReset) },
             onDismiss = { onIntent(QuickTimerIntent.CancelReset) },
         )
@@ -220,7 +220,7 @@ private fun QuickTimerRunningContent(
                     ?.let { "$it ${state.userPreferences.volumeUnit.symbol}" },
                 temperature = state.temperatureDisplay.takeIf { it.isNotBlank() }
                     ?.let { "$it${state.userPreferences.temperatureUnit.symbol}" },
-                brewingTime = formatBrewingTime(state.totalDuration.inWholeSeconds.toInt()),
+                brewingTime = formatBrewingTime((state.originalDuration ?: state.totalDuration).inWholeSeconds.toInt()),
                 onEditClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
             )
 

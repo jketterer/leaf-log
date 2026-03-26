@@ -238,8 +238,8 @@ class HomeViewModel(
                 // Find the active child steep to navigate to, if any
                 val activeChildSteep = teaSessionRepository.getChildSteeps(sessionId)
                     .find { it.status == SessionStatus.IN_PROGRESS }
-                val targetSessionId = activeChildSteep?.id ?: sessionId
-                _navEvents.trySend(HomeNavEvent.NavigateToTimer(targetSessionId))
+                val targetSession = activeChildSteep ?: session
+                handleResumeSession(targetSession)
             }
         } else {
             _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))

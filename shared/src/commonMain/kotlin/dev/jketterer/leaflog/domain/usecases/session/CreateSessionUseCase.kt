@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.domain.usecases.session
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -31,6 +32,7 @@ class CreateSessionUseCase(
         rating: Float? = null,
         photos: List<String> = emptyList(),
         status: SessionStatus = SessionStatus.IN_PROGRESS,
+        timerStatus: TimerStatus? = null,
         usedConfigurationId: String? = null,
     ): Result<TeaSession> {
         if (teaId.isBlank()) {
@@ -75,6 +77,7 @@ class CreateSessionUseCase(
             notes = notes?.takeIf { it.isNotBlank() }?.trim(),
             rating = rating,
             photos = photos,
+            timerStatus = timerStatus,
             syncStatus = SyncStatus.LOCAL_ONLY,
             createdAt = now,
             updatedAt = now,

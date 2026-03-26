@@ -567,6 +567,7 @@ class QuickTimerViewModel(
                     temperatureCelsius = temperatureCelsius,
                     waterQuantityMl = waterQuantityMl,
                     status = SessionStatus.IN_PROGRESS,
+                    timerStatus = TimerStatus.COMPLETE,
                 ).onSuccess { session ->
                     _state.update { it.copy(inProgressSession = session) }
                     _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSteepComplete(session.id))

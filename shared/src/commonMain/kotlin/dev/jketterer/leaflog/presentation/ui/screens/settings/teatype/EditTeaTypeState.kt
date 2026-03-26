@@ -30,7 +30,7 @@ data class EditTeaTypeState(
     val hasChanges: Boolean
         get() = if (isEditMode && existingTeaType != null) {
             val existingTemp = existingTeaType.defaultTemperatureCelsius?.let {
-                UnitConverter.celsiusToDisplayTemperature(it.toDouble(), userPreferences.temperatureUnit)
+                UnitConverter.celsiusToDisplayTemperature(it, userPreferences.temperatureUnit)
             }?.toString() ?: ""
             name != existingTeaType.name ||
                     colorHex != existingTeaType.colorHex ||

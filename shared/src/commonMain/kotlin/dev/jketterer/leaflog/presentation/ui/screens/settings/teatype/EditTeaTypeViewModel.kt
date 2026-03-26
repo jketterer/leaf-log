@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.settings.teatype
 
 import androidx.lifecycle.ViewModel
-import kotlin.math.roundToInt
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UnitConverter
@@ -52,6 +51,7 @@ class EditTeaTypeViewModel(
             is EditTeaTypeIntent.DeleteClicked -> onDeleteClicked()
             is EditTeaTypeIntent.ConfirmDelete -> confirmDelete()
             is EditTeaTypeIntent.CancelDelete -> _state.update { it.copy(showDeleteConfirmation = false) }
+            is EditTeaTypeIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
         }
     }
 
@@ -68,7 +68,7 @@ class EditTeaTypeViewModel(
                 val prefs = preferencesRepository.getPreferences()
                 if (teaType != null) {
                     val displayTemp = teaType.defaultTemperatureCelsius?.let {
-                        UnitConverter.celsiusToDisplayTemperature(it.toDouble(), prefs.temperatureUnit)
+                        UnitConverter.celsiusToDisplayTemperature(it, prefs.temperatureUnit)
                     }
                     val teaCount = teaRepository.getByTypeFlow(teaTypeId).first().size
                     _state.update {
@@ -114,6 +114,13 @@ class EditTeaTypeViewModel(
         _state.update { it.copy(colorHex = colorHex) }
     }
 
+    private fun toggleTemperatureUnit() {
+        viewModelScope.launch {
+            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
+            _state.update { it.copy(temperature = "") }
+        }
+    }
+
     private fun onTemperatureChanged(temperature: String) {
         _state.update {
             it.copy(temperature = temperature, temperatureError = validateTemperature(temperature))
@@ -150,7 +157,7 @@ class EditTeaTypeViewModel(
             try {
                 val tempUnit = currentState.userPreferences.temperatureUnit
                 val temperatureCelsius = currentState.temperature.toIntOrNull()?.let {
-                    UnitConverter.inputTemperatureToCelsius(it, tempUnit).roundToInt()
+                    UnitConverter.inputTemperatureToCelsius(it, tempUnit)
                 }
 
                 val now = Instant.fromEpochMilliseconds(

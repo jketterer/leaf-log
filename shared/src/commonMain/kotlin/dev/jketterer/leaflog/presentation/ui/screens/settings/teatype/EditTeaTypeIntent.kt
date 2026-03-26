@@ -12,4 +12,5 @@ sealed interface EditTeaTypeIntent {
     data object DeleteClicked : EditTeaTypeIntent
     data object ConfirmDelete : EditTeaTypeIntent
     data object CancelDelete : EditTeaTypeIntent
+    data object ToggleTemperatureUnit : EditTeaTypeIntent
 }

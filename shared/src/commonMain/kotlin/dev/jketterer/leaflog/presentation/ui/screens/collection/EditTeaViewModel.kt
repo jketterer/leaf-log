@@ -251,7 +251,7 @@ class EditTeaViewModel(
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toIntOrNull(),
+                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toDoubleOrNull(),
                     description = currentState.description.takeIf { it.isNotBlank() },
                     photos = currentState.photos,
                 )
@@ -266,7 +266,7 @@ class EditTeaViewModel(
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toIntOrNull(),
+                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toDoubleOrNull(),
                     description = currentState.description.takeIf { it.isNotBlank() },
                     photos = currentState.photos
                 )

@@ -39,7 +39,7 @@ data class TeaEntity(
     val purchaseDate: LocalDate? = null,
     val purchasePrice: Double? = null,
     val stockAmount: Int? = null,
-    val defaultTemperatureCelsius: Int? = null,
+    val defaultTemperatureCelsius: Double? = null,
     val description: String? = null,
     val photos: List<String> = emptyList(),
     val isFavorite: Boolean = false,

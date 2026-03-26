@@ -18,7 +18,7 @@ class CreateTeaUseCase(
         origin: String? = null,
         producer: String? = null,
         purchaseDate: LocalDate? = null,
-        defaultTemperatureCelsius: Int? = null,
+        defaultTemperatureCelsius: Double? = null,
         description: String? = null,
         photos: List<String> = emptyList()
     ): Result<Tea> {
@@ -31,7 +31,7 @@ class CreateTeaUseCase(
             return Result.failure(IllegalArgumentException("Tea type must be selected"))
         }
 
-        if (defaultTemperatureCelsius != null && (defaultTemperatureCelsius !in 0..100)) {
+        if (defaultTemperatureCelsius != null && (defaultTemperatureCelsius !in 0.0..100.0)) {
             return Result.failure(IllegalArgumentException("Temperature must be between 0°C and 100°C"))
         }
 

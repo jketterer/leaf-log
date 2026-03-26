@@ -5,7 +5,7 @@ import kotlin.time.Instant
 data class TeaType(
     val id: String,
     val name: String,
-    val defaultTemperatureCelsius: Int? = null,
+    val defaultTemperatureCelsius: Double? = null,
     val colorHex: String = "",
     val isSystemDefault: Boolean = false,
     val displayOrder: Int = 0,

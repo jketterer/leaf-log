@@ -327,7 +327,7 @@ private fun TeaDetailContent(
                                         DetailRow(
                                             label = "Temperature",
                                             value = TemperatureFormatter.format(
-                                                state.tea.defaultTemperatureCelsius.toDouble(),
+                                                state.tea.defaultTemperatureCelsius,
                                                 state.userPreferences.temperatureUnit
                                             ),
                                         )
@@ -641,7 +641,7 @@ private fun TeaDetailScreenPreview() {
                     teaTypeId = "green",
                     origin = "Hangzhou, China",
                     producer = "West Lake Tea Company",
-                    defaultTemperatureCelsius = 80,
+                    defaultTemperatureCelsius = 80.0,
                     description = "Premium Dragon Well green tea with a sweet, nutty flavor and chesnut aroma.",
                     isFavorite = true,
                     totalSessions = 12,
@@ -653,7 +653,7 @@ private fun TeaDetailScreenPreview() {
                 teaType = TeaType(
                     id = "green",
                     name = "Green",
-                    defaultTemperatureCelsius = 75,
+                    defaultTemperatureCelsius = 75.0,
                     colorHex = "#4CAF50",
                     isSystemDefault = true,
                     displayOrder = 0,

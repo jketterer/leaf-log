@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -211,18 +212,16 @@ private fun EditTeaTypeContent(
                     }
 
                     // Temperature
-                    OutlinedTextField(
+                    TemperatureInputField(
                         value = state.temperature,
                         onValueChange = { onIntent(EditTeaTypeIntent.TemperatureChanged(it)) },
+                        currentUnit = state.userPreferences.temperatureUnit,
+                        onToggleUnit = { onIntent(EditTeaTypeIntent.ToggleTemperatureUnit) },
                         label = { Text("Default Temperature") },
-                        suffix = { Text(state.userPreferences.temperatureUnit.symbol) },
                         isError = state.temperatureError != null,
                         supportingText = state.temperatureError?.let { { Text(it) } }
                             ?: { Text("Optional") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         enabled = !state.isSaving,
                     )
 

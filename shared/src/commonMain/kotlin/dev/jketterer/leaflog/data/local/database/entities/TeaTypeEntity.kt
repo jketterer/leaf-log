@@ -18,7 +18,7 @@ import kotlin.time.Instant
 data class TeaTypeEntity(
     @PrimaryKey val id: String,
     val name: String,
-    val defaultTemperatureCelsius: Int?,
+    val defaultTemperatureCelsius: Double?,
     val colorHex: String,
     val isSystemDefault: Boolean,
     val displayOrder: Int,

@@ -326,7 +326,7 @@ private fun EditTeaScreenAddModePreview() {
                     TeaType(
                         id = "green",
                         name = "Green",
-                        defaultTemperatureCelsius = 75,
+                        defaultTemperatureCelsius = 75.0,
                         colorHex = "#4CAF50",
                         isSystemDefault = true,
                         displayOrder = 0,
@@ -336,7 +336,7 @@ private fun EditTeaScreenAddModePreview() {
                     TeaType(
                         id = "black",
                         name = "Black",
-                        defaultTemperatureCelsius = 95,
+                        defaultTemperatureCelsius = 95.0,
                         colorHex = "#795548",
                         isSystemDefault = true,
                         displayOrder = 1,
@@ -368,7 +368,7 @@ private fun EditTeaScreenEditModePreview() {
                     TeaType(
                         id = "green",
                         name = "Green",
-                        defaultTemperatureCelsius = 75,
+                        defaultTemperatureCelsius = 75.0,
                         colorHex = "#4CAF50",
                         isSystemDefault = true,
                         displayOrder = 0,

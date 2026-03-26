@@ -53,7 +53,7 @@ class TeaTypeRepositoryImpl(
             TeaType(
                 id = "green",
                 name = "Green",
-                defaultTemperatureCelsius = 75,
+                defaultTemperatureCelsius = 75.0,
                 colorHex = "#4CAF50",
                 isSystemDefault = true,
                 displayOrder = 0,
@@ -63,7 +63,7 @@ class TeaTypeRepositoryImpl(
             TeaType(
                 id = "black",
                 name = "Black",
-                defaultTemperatureCelsius = 95,
+                defaultTemperatureCelsius = 95.0,
                 colorHex = "#795548",
                 isSystemDefault = true,
                 displayOrder = 1,
@@ -73,7 +73,7 @@ class TeaTypeRepositoryImpl(
             TeaType(
                 id = "white",
                 name = "White",
-                defaultTemperatureCelsius = 72,
+                defaultTemperatureCelsius = 72.0,
                 colorHex = "#FFFDE7",
                 isSystemDefault = true,
                 displayOrder = 2,
@@ -83,7 +83,7 @@ class TeaTypeRepositoryImpl(
             TeaType(
                 id = "oolong",
                 name = "Oolong",
-                defaultTemperatureCelsius = 90,
+                defaultTemperatureCelsius = 90.0,
                 colorHex = "#FF9800",
                 isSystemDefault = true,
                 displayOrder = 3,
@@ -93,7 +93,7 @@ class TeaTypeRepositoryImpl(
             TeaType(
                 id = "puerh",
                 name = "Pu-erh",
-                defaultTemperatureCelsius = 98,
+                defaultTemperatureCelsius = 98.0,
                 colorHex = "#8D6E63",
                 isSystemDefault = true,
                 displayOrder = 4,
@@ -103,7 +103,7 @@ class TeaTypeRepositoryImpl(
             TeaType(
                 id = "herbal",
                 name = "Herbal",
-                defaultTemperatureCelsius = 100,
+                defaultTemperatureCelsius = 100.0,
                 colorHex = "#9C27B0",
                 isSystemDefault = true,
                 displayOrder = 5,

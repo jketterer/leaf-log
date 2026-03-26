@@ -14,7 +14,7 @@ class EditTeaUseCase(
         origin: String? = null,
         producer: String? = null,
         purchaseDate: kotlinx.datetime.LocalDate? = null,
-        defaultTemperatureCelsius: Int? = null,
+        defaultTemperatureCelsius: Double? = null,
         description: String? = null,
         photos: List<String>? = null,
         isFavorite: Boolean? = null
@@ -31,7 +31,7 @@ class EditTeaUseCase(
         }
 
         val newTemp = defaultTemperatureCelsius ?: existingTea.defaultTemperatureCelsius
-        if (newTemp != null && (newTemp !in 0..100)) {
+        if (newTemp != null && (newTemp !in 0.0..100.0)) {
             return Result.failure(IllegalArgumentException("Temperature must be between 0°C and 100°C"))
         }
 

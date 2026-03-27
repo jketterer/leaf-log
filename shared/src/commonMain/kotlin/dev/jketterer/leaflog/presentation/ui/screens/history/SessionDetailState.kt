@@ -14,6 +14,7 @@ data class SessionDetailState(
     val tea: Tea? = null,
     val teaType: TeaType? = null,
     val vessel: BrewingVessel? = null,
+    val usedConfigurationLabel: String? = null,
 
     // UI state
     val isLoading: Boolean = false,

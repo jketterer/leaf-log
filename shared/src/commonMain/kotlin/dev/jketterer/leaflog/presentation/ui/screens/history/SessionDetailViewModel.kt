@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -34,6 +35,7 @@ class SessionDetailViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val imageStorage: ImageStorage,
     private val deleteSessionUseCase: DeleteSessionUseCase,
@@ -187,6 +189,11 @@ class SessionDetailViewModel(
 
                                 // Load related data
                                 loadRelatedData(parentSession.teaId, parentSession.vesselId)
+
+                                // Load brewing method label if session used a saved configuration
+                                parentSession.usedConfigurationId?.let { configId ->
+                                    loadConfigurationLabel(configId)
+                                }
                             }
                         } else {
                             _state.update {
@@ -232,6 +239,15 @@ class SessionDetailViewModel(
             .let { teaType ->
                 _state.update { it.copy(teaType = teaType) }
             }
+    }
+
+    private suspend fun loadConfigurationLabel(configurationId: String) {
+        try {
+            val config = brewingConfigurationRepository.getById(configurationId)
+            _state.update { it.copy(usedConfigurationLabel = config?.label) }
+        } catch (e: Exception) {
+            Logger.w("SessionDetail") { "Failed to load configuration: ${e.message}" }
+        }
     }
 
     private fun showDeleteConfirmation() {

@@ -254,6 +254,13 @@ private fun SessionDetailContent(
 
                                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
+                                    if (state.usedConfigurationLabel != null) {
+                                        BrewingParameterDisplay(
+                                            label = "Method",
+                                            value = state.usedConfigurationLabel,
+                                        )
+                                    }
+
                                     if (state.parentSession.teaQuantityGrams != null) {
                                         BrewingParameterDisplay(
                                             label = "Tea Amount",
@@ -355,7 +362,7 @@ private fun SessionDetailContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (state.parentSession != null) {
+                if (state.parentSession != null && state.usedConfigurationLabel == null) {
                     OutlinedButton(
                         onClick = { onIntent(SessionDetailIntent.SaveAsConfigurationClicked) },
                         modifier = Modifier.weight(1f),

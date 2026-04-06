@@ -140,6 +140,9 @@ fun AppNavigation() {
                             backStack.add(NavRoute.QuickTimerRoute(durationSeconds))
                         },
                         onNavigateToAnalytics = { backStack.add(NavRoute.AnalyticsRoute) },
+                        onNavigateToEditBrewingMethod = { teaId, configId ->
+                            backStack.add(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
+                        }
                     )
                 }
 

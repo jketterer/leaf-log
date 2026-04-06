@@ -2,13 +2,15 @@ package dev.jketterer.leaflog.presentation.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
+import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
@@ -16,14 +18,12 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
-import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
-import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressSessionDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
@@ -31,7 +31,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -93,10 +92,13 @@ class HomeViewModel(
             when (action) {
                 is HomePendingAction.NavigateToLogTea ->
                     _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+
                 is HomePendingAction.ShowDurationSheet ->
                     _state.update { it.copy(showDurationSheet = true) }
+
                 is HomePendingAction.BrewAgain ->
                     brewAgain(action.session)
+
                 is HomePendingAction.QuickBrew ->
                     _navEvents.trySend(
                         HomeNavEvent.NavigateToLogTea(
@@ -174,13 +176,25 @@ class HomeViewModel(
                 )
             }
 
+            is HomeIntent.EditQuickBrewClicked -> {
+                _navEvents.trySend(
+                    HomeNavEvent.NavigateToEditBrewingMethod(
+                        intent.teaId,
+                        intent.configurationId
+                    )
+                )
+            }
+
             is HomeIntent.ManageQuickBrewClicked ->
                 _state.update { it.copy(showManageQuickBrewSheet = true) }
 
             is HomeIntent.DismissManageQuickBrewSheet ->
                 _state.update { it.copy(showManageQuickBrewSheet = false) }
 
-            is HomeIntent.PinConfigurationToggled -> pinConfiguration(intent.configurationId, intent.isPinned)
+            is HomeIntent.PinConfigurationToggled -> pinConfiguration(
+                intent.configurationId,
+                intent.isPinned
+            )
 
             is HomeIntent.PinnedConfigurationsReordered -> reorderPinnedConfigurations(intent.orderedIds)
 
@@ -524,6 +538,8 @@ sealed interface HomeNavEvent {
     data class NavigateToTimer(val sessionId: String) : HomeNavEvent
     data class NavigateToQuickTimer(val durationSeconds: Int) : HomeNavEvent
     data object NavigateToAnalytics : HomeNavEvent
+    data class NavigateToEditBrewingMethod(val teaId: String, val configurationId: String) :
+        HomeNavEvent
 }
 
 private data class HomeSessionData(

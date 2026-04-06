@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.components.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,14 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,6 +45,7 @@ fun QuickBrewCard(
     data: QuickBrewCardData,
     userPreferences: UserPreferences,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     cardWidth: Dp = 160.dp,
 ) {
@@ -53,8 +53,13 @@ fun QuickBrewCard(
         ?: MaterialTheme.colorScheme.primaryContainer
 
     Card(
-        onClick = onClick,
-        modifier = modifier.widthIn(min = cardWidth),
+        modifier = modifier
+            .widthIn(min = cardWidth)
+            .combinedClickable(
+                enabled = true,
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
@@ -155,6 +160,7 @@ private fun QuickBrewCardPreview() {
             ),
             userPreferences = UserPreferences(temperatureUnit = TemperatureUnit.CELSIUS),
             onClick = {},
+            onLongClick = {},
         )
     }
 }

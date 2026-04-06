@@ -30,6 +30,7 @@ class GetBrewingParametersPrefillUseCase(
                 brewingTime = exactConfig.brewingTime,
                 waterType = exactConfig.waterType,
                 source = PrefillSource.SavedConfig,
+                rating = exactConfig.rating,
             )
         }
 
@@ -39,7 +40,8 @@ class GetBrewingParametersPrefillUseCase(
             val sameTypeTeas = teaRepository.getAll()
                 .filter { it.teaTypeId == tea.teaTypeId && it.id != tea.id }
             for (otherTea in sameTypeTeas) {
-                val typeConfig = brewingConfigurationRepository.getBestByTeaAndVessel(otherTea.id, vessel.id)
+                val typeConfig =
+                    brewingConfigurationRepository.getBestByTeaAndVessel(otherTea.id, vessel.id)
                 if (typeConfig != null) {
                     return BrewingParametersPrefill(
                         teaQuantityGrams = typeConfig.teaQuantityGrams,
@@ -48,6 +50,7 @@ class GetBrewingParametersPrefillUseCase(
                         brewingTime = typeConfig.brewingTime,
                         waterType = typeConfig.waterType,
                         source = PrefillSource.SameTypeConfig(teaName = otherTea.name),
+                        rating = typeConfig.rating,
                     )
                 }
             }
@@ -60,6 +63,7 @@ class GetBrewingParametersPrefillUseCase(
             temperatureCelsius = null,
             brewingTime = null,
             waterType = null,
+            rating = null,
             source = PrefillSource.None,
         )
     }

@@ -13,6 +13,7 @@ data class BrewingParametersPrefill(
     val brewingTime: Duration?,
     val waterType: WaterType?,
     val source: PrefillSource,
+    val rating: Float?,
 ) {
     /**
      * True if any parameters were pre-filled

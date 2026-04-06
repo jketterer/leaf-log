@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -18,20 +19,18 @@ import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
-import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import kotlin.time.Duration
 
 class LogTeaViewModel(
@@ -76,6 +75,7 @@ class LogTeaViewModel(
                     status = SessionStatus.IN_PROGRESS,
                     startTimer = true,
                 )
+
                 is PendingAction.SaveAsCompleted -> saveSession(
                     status = SessionStatus.COMPLETED,
                     startTimer = false,
@@ -285,6 +285,7 @@ class LogTeaViewModel(
                     prefillSource = prefill.source,
                     availableConfigurations = configurations,
                     usedConfigurationId = configurations.firstOrNull()?.id,
+                    completionRating = prefill.rating ?: 0f,
                 )
             }
         }
@@ -547,7 +548,6 @@ class LogTeaViewModel(
             it.copy(
                 showCompleteSessionDialog = true,
                 completionDialogNotes = "",
-                completionRating = 0f,
             )
         }
     }

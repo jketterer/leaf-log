@@ -3,7 +3,9 @@ package dev.jketterer.leaflog.presentation.ui.navigation
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
@@ -96,6 +98,7 @@ fun AppNavigation() {
             backStack = backStack,
             modifier = Modifier
                 .padding(bottom = paddingValues.calculateBottomPadding())
+                .consumeWindowInsets(PaddingValues(bottom = paddingValues.calculateBottomPadding()))
                 .imePadding()
                 .fillMaxSize(),
             entryDecorators = listOf(

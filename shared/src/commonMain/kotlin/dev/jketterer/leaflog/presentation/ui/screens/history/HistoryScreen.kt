@@ -49,6 +49,7 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Filter
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.X
+import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import kotlinx.datetime.LocalDate
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -60,6 +61,7 @@ import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterShe
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
@@ -75,7 +77,6 @@ fun HistoryScreen(
     filterDateStart: String? = null,
     filterDateEnd: String? = null,
     onNavigateToSession: (String) -> Unit,
-    onNavigateToEditSession: (String) -> Unit = {},
     onNavigateToTimer: (String) -> Unit,
     viewModel: HistoryViewModel = koinViewModel()
 ) {
@@ -117,6 +118,7 @@ fun HistoryScreen(
     HistoryContent(
         state = state,
         onIntent = viewModel::onIntent,
+        imageStorage = koinInject(),
     )
 }
 
@@ -125,6 +127,7 @@ fun HistoryScreen(
 private fun HistoryContent(
     state: HistoryState,
     onIntent: (HistoryIntent) -> Unit,
+    imageStorage: ImageStorage? = null,
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
     val filterSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -235,8 +238,7 @@ private fun HistoryContent(
                         state.hasActiveFilters -> Triple(
                             "No sessions match filters",
                             "Clear Filters",
-                            { onIntent(HistoryIntent.ClearFilters) },
-                        )
+                        ) { onIntent(HistoryIntent.ClearFilters) }
 
                         else -> Triple(
                             "No sessions logged yet",
@@ -298,6 +300,7 @@ private fun HistoryContent(
                                     onDeleteClick = {
                                         onIntent(HistoryIntent.DeleteSession(session.id))
                                     },
+                                    imageStorage = imageStorage,
                                     modifier = Modifier.animateItem(),
                                 )
                             }

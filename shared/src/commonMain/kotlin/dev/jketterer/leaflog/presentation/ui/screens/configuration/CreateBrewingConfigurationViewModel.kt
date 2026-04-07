@@ -48,7 +48,11 @@ class CreateBrewingConfigurationViewModel(
 
     fun onIntent(intent: CreateBrewingConfigurationIntent) {
         when (intent) {
-            is CreateBrewingConfigurationIntent.LoadData -> loadData(intent.teaId, intent.configurationId)
+            is CreateBrewingConfigurationIntent.LoadData -> loadData(
+                intent.teaId,
+                intent.configurationId
+            )
+
             is CreateBrewingConfigurationIntent.SelectVessel -> {
                 val vessel = _state.value.vessels.firstOrNull { it.id == intent.vesselId }
                 _state.update { it.copy(selectedVessel = vessel) }
@@ -133,7 +137,7 @@ class CreateBrewingConfigurationViewModel(
                     prefillWaterType = prefill.waterType
                     prefillTeaQty = prefill.teaQuantityGrams?.toString() ?: ""
                 } else if (tea != null) {
-                    prefillTemp = tea.defaultTemperatureCelsius?.toDouble()?.toString() ?: ""
+                    prefillTemp = tea.defaultTemperatureCelsius?.toString() ?: ""
                 }
 
                 _state.update {
@@ -224,7 +228,12 @@ class CreateBrewingConfigurationViewModel(
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
                 }.onFailure { e ->
-                    _state.update { it.copy(isSaving = false, error = "Failed to save: ${e.message}") }
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            error = "Failed to save: ${e.message}"
+                        )
+                    }
                 }
             } else {
                 createBrewingConfigurationUseCase(
@@ -239,7 +248,12 @@ class CreateBrewingConfigurationViewModel(
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
                 }.onFailure { e ->
-                    _state.update { it.copy(isSaving = false, error = "Failed to save: ${e.message}") }
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            error = "Failed to save: ${e.message}"
+                        )
+                    }
                 }
             }
         }

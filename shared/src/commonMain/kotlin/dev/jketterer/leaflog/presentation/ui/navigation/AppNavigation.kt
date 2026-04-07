@@ -172,9 +172,6 @@ fun AppNavigation() {
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
-                        onNavigateToEditSession = { sessionId ->
-                            backStack.add(NavRoute.EditSessionRoute(sessionId, false))
-                        },
                         onNavigateToTimer = { sessionId ->
                             backStack.add(NavRoute.TimerRoute(sessionId))
                         },

@@ -198,7 +198,7 @@ private fun TeaTypeCard(
                 val details = buildList {
                     teaType.defaultTemperatureCelsius?.let { celsius ->
                         val displayTemp = UnitConverter.celsiusToDisplayTemperature(
-                            celsius.toDouble(),
+                            celsius,
                             userPreferences.temperatureUnit,
                         )
                         add("$displayTemp${userPreferences.temperatureUnit.symbol}")

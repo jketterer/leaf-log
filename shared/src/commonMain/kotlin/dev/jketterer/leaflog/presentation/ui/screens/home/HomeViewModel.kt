@@ -21,6 +21,7 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
@@ -64,6 +65,7 @@ class HomeViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
     private val brewAgainUseCase: BrewAgainUseCase,
+    private val createSessionUseCase: CreateSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val completeSessionUseCase: CompleteSessionUseCase,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
@@ -100,13 +102,7 @@ class HomeViewModel(
                     brewAgain(action.session)
 
                 is HomePendingAction.QuickBrew ->
-                    _navEvents.trySend(
-                        HomeNavEvent.NavigateToLogTea(
-                            teaId = action.teaId,
-                            vesselId = action.vesselId,
-                            configurationId = action.configurationId,
-                        )
-                    )
+                    quickBrew(action.configurationId)
             }
         },
     )
@@ -481,6 +477,20 @@ class HomeViewModel(
             .onFailure { e ->
                 _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
             }
+    }
+
+    private fun quickBrew(configurationId: String) = viewModelScope.launch {
+        brewingConfigurationRepository.getById(configurationId)?.let {
+            createSessionUseCase.invoke(it)
+        }?.onSuccess {
+            _navEvents.trySend(
+                HomeNavEvent.NavigateToTimer(
+                    sessionId = it.id
+                )
+            )
+        }?.onFailure { e ->
+            _state.update { it.copy(error = "Failed to create a new session: ${e.message}") }
+        }
     }
 
     private fun confirmDeleteSession() = viewModelScope.launch {

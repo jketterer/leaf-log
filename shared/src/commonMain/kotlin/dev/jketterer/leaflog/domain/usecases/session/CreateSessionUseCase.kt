@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
@@ -95,6 +96,24 @@ class CreateSessionUseCase(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend operator fun invoke(
+        config: BrewingConfiguration,
+    ): Result<TeaSession> {
+        return invoke(
+            teaId = config.teaId,
+            teaQuantityGrams = config.teaQuantityGrams,
+            vesselId = config.vesselId,
+            waterType = config.waterType,
+            location = null,
+            brewingTime = config.brewingTime,
+            temperatureCelsius = config.temperatureCelsius,
+            waterQuantityMl = config.waterQuantityMl,
+            notes = null,
+            rating = config.rating,
+            photos = emptyList(),
+        )
     }
 
     private fun validationFailure(message: String): Result<TeaSession> {

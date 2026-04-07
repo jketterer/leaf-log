@@ -119,15 +119,40 @@ class SteepCompleteViewModel(
             is SteepCompleteIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is SteepCompleteIntent.BackClicked -> _navigationEvents.trySend(SteepCompleteNavEvent.NavigateBack)
             is SteepCompleteIntent.ShowEditParametersSheet -> openEditParametersSheet()
-            is SteepCompleteIntent.DismissEditParametersSheet -> _state.update { it.copy(showEditParametersSheet = false) }
+            is SteepCompleteIntent.DismissEditParametersSheet -> _state.update {
+                it.copy(
+                    showEditParametersSheet = false
+                )
+            }
+
             is SteepCompleteIntent.EditBrewingTimeChanged -> _state.update { it.copy(editBrewingTime = intent.duration) }
-            is SteepCompleteIntent.EditTemperatureChanged -> _state.update { it.copy(editTemperatureCelsius = intent.value) }
-            is SteepCompleteIntent.EditWaterQuantityChanged -> _state.update { it.copy(editWaterQuantityMl = intent.value) }
-            is SteepCompleteIntent.EditTeaQuantityChanged -> _state.update { it.copy(editTeaQuantityGrams = intent.value) }
+            is SteepCompleteIntent.EditTemperatureChanged -> _state.update {
+                it.copy(
+                    editTemperatureCelsius = intent.value
+                )
+            }
+
+            is SteepCompleteIntent.EditWaterQuantityChanged -> _state.update {
+                it.copy(
+                    editWaterQuantityMl = intent.value
+                )
+            }
+
+            is SteepCompleteIntent.EditTeaQuantityChanged -> _state.update {
+                it.copy(
+                    editTeaQuantityGrams = intent.value
+                )
+            }
+
             is SteepCompleteIntent.EditTeaBagModeChanged -> _state.update { it.copy(editIsTeaBag = intent.isTeaBag) }
             is SteepCompleteIntent.EditWaterTypeChanged -> _state.update { it.copy(editWaterType = intent.waterType) }
             is SteepCompleteIntent.ConfirmEditParameters -> confirmEditParameters()
-            is SteepCompleteIntent.CancelEditParameters -> _state.update { it.copy(showEditParametersSheet = false) }
+            is SteepCompleteIntent.CancelEditParameters -> _state.update {
+                it.copy(
+                    showEditParametersSheet = false
+                )
+            }
+
             is SteepCompleteIntent.ToggleVolumeUnit -> toggleVolumeUnit()
         }
     }
@@ -391,7 +416,6 @@ class SteepCompleteViewModel(
             return
         }
         val label = generateConfigurationLabelUseCase(
-            vesselName = _state.value.vessel?.name ?: "",
             teaQuantityGrams = session.teaQuantityGrams,
             waterQuantityMl = session.waterQuantityMl,
             brewingTime = session.brewingTime,
@@ -499,7 +523,8 @@ class SteepCompleteViewModel(
             it.copy(
                 showEditParametersSheet = true,
                 editBrewingTime = session.brewingTime,
-                editTemperatureCelsius = tempUnit.fromCelsius(session.temperatureCelsius).toString(),
+                editTemperatureCelsius = tempUnit.fromCelsius(session.temperatureCelsius)
+                    .toString(),
                 editWaterQuantityMl = volUnit.fromMilliliters(session.waterQuantityMl).toString(),
                 editTeaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
                 editIsTeaBag = session.teaQuantityGrams == null,
@@ -519,7 +544,7 @@ class SteepCompleteViewModel(
         val waterQuantityMl = currentState.editWaterQuantityMl.toIntOrNull()
             ?.let { volUnit.toMilliliters(it) } ?: session.waterQuantityMl
         val teaQuantityGrams = if (currentState.editIsTeaBag) null
-            else currentState.editTeaQuantityGrams.toFloatOrNull()
+        else currentState.editTeaQuantityGrams.toFloatOrNull()
         val waterType = currentState.editWaterType ?: session.waterType
         val brewingTime = currentState.editBrewingTime.takeIf { it > Duration.ZERO }
             ?: session.brewingTime

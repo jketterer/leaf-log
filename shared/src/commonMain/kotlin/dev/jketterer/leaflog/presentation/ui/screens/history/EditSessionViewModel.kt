@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -19,7 +20,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -88,6 +88,7 @@ class EditSessionViewModel(
                     teaQuantityError = null,
                 )
             }
+
             is EditSessionIntent.LocationChanged -> updateLocation(intent.location)
             is EditSessionIntent.RatingChanged -> updateRating(intent.rating)
             is EditSessionIntent.NotesChanged -> updateNotes(intent.notes)
@@ -393,7 +394,7 @@ class EditSessionViewModel(
                     waterType = currentState.selectedWaterType,
                     waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull(),
                     teaQuantityGrams = if (currentState.isTeaBag) null
-                        else currentState.teaQuantityGrams.toFloatOrNull(),
+                    else currentState.teaQuantityGrams.toFloatOrNull(),
                     location = currentState.location.takeIf { it.isNotBlank() },
                 )
             } else {
@@ -451,7 +452,6 @@ class EditSessionViewModel(
             return
         }
         val label = generateConfigurationLabelUseCase(
-            vesselName = _state.value.selectedVessel?.name ?: "",
             teaQuantityGrams = session.teaQuantityGrams,
             waterQuantityMl = session.waterQuantityMl,
             brewingTime = session.brewingTime,

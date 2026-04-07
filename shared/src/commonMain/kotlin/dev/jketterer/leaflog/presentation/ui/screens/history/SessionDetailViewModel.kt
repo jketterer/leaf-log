@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -23,7 +24,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -59,23 +59,24 @@ class SessionDetailViewModel(
         data object BrewAgain : PendingAction
     }
 
-    private val inProgressDelegate = createInProgressSessionDelegate<SessionDetailState, PendingAction>(
-        getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
-        completeSessionUseCase = completeSessionUseCase,
-        deleteSessionUseCase = deleteSessionUseCase,
-        stateFlow = _state,
-        getDialogState = { it.inProgressDialogState },
-        setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
-        setError = { state, error -> state.copy(error = error) },
-        onResume = { session ->
-            _navEvents.trySend(SessionDetailNavEvent.NavigateToTimer(session.id))
-        },
-        executePendingAction = { action ->
-            when (action) {
-                is PendingAction.BrewAgain -> brewAgain()
-            }
-        },
-    )
+    private val inProgressDelegate =
+        createInProgressSessionDelegate<SessionDetailState, PendingAction>(
+            getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
+            completeSessionUseCase = completeSessionUseCase,
+            deleteSessionUseCase = deleteSessionUseCase,
+            stateFlow = _state,
+            getDialogState = { it.inProgressDialogState },
+            setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
+            setError = { state, error -> state.copy(error = error) },
+            onResume = { session ->
+                _navEvents.trySend(SessionDetailNavEvent.NavigateToTimer(session.id))
+            },
+            executePendingAction = { action ->
+                when (action) {
+                    is PendingAction.BrewAgain -> brewAgain()
+                }
+            },
+        )
 
     init {
         loadPreferences()
@@ -110,11 +111,24 @@ class SessionDetailViewModel(
             is SessionDetailIntent.DeleteSteepClicked -> showDeleteSteepConfirmation(intent.steepId)
             is SessionDetailIntent.ConfirmDeleteSteep -> confirmDeleteSteep()
             is SessionDetailIntent.CancelDeleteSteep -> cancelDeleteSteep()
-            is SessionDetailIntent.BrewAgainClicked -> inProgressDelegate.checkAndProceed(PendingAction.BrewAgain)
+            is SessionDetailIntent.BrewAgainClicked -> inProgressDelegate.checkAndProceed(
+                PendingAction.BrewAgain
+            )
+
             is SessionDetailIntent.AddSteepClicked -> showAddSteepDialog()
             is SessionDetailIntent.CancelAddSteep -> cancelAddSteep()
-            is SessionDetailIntent.UpdateNextSteepDuration -> _state.update { it.copy(nextSteepDuration = intent.duration) }
-            is SessionDetailIntent.UpdateNextSteepTemperature -> _state.update { it.copy(nextSteepTemperature = intent.temperature) }
+            is SessionDetailIntent.UpdateNextSteepDuration -> _state.update {
+                it.copy(
+                    nextSteepDuration = intent.duration
+                )
+            }
+
+            is SessionDetailIntent.UpdateNextSteepTemperature -> _state.update {
+                it.copy(
+                    nextSteepTemperature = intent.temperature
+                )
+            }
+
             is SessionDetailIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is SessionDetailIntent.ConfirmAddSteep -> confirmAddSteep()
 
@@ -143,7 +157,11 @@ class SessionDetailViewModel(
             is SessionDetailIntent.ClearError -> _state.update { it.copy(error = null) }
             is SessionDetailIntent.SaveAsConfigurationClicked -> saveAsConfiguration()
             is SessionDetailIntent.ConfirmSaveConfiguration -> confirmSaveConfiguration(intent.label)
-            is SessionDetailIntent.DismissSaveConfiguration -> _state.update { it.copy(showSaveConfigurationDialog = false) }
+            is SessionDetailIntent.DismissSaveConfiguration -> _state.update {
+                it.copy(
+                    showSaveConfigurationDialog = false
+                )
+            }
 
             // In-progress session conflict dialog
             is SessionDetailIntent.ResumeInProgress -> inProgressDelegate.resume()
@@ -437,7 +455,6 @@ class SessionDetailViewModel(
             }
 
             val label = generateConfigurationLabelUseCase(
-                vesselName = _state.value.vessel?.name ?: "",
                 teaQuantityGrams = session.teaQuantityGrams,
                 waterQuantityMl = session.waterQuantityMl,
                 brewingTime = session.brewingTime,

@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.configuration
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
@@ -126,7 +127,7 @@ class CreateBrewingConfigurationViewModel(
                 var prefillTemp = ""
                 var prefillWater = ""
                 var prefillTime: kotlin.time.Duration? = null
-                var prefillWaterType = null as dev.jketterer.leaflog.domain.models.WaterType?
+                var prefillWaterType = null as WaterType?
                 var prefillTeaQty = ""
 
                 if (tea != null && firstVessel != null) {
@@ -149,8 +150,7 @@ class CreateBrewingConfigurationViewModel(
                         waterQuantityMl = prefillWater,
                         waterQuantityDisplay = "",
                         brewingTime = prefillTime,
-                        waterType = prefillWaterType
-                            ?: dev.jketterer.leaflog.domain.models.WaterType.FILTERED,
+                        waterType = prefillWaterType ?: WaterType.FILTERED,
                         teaQuantityGrams = prefillTeaQty,
                         isEditMode = false,
                         editingConfigId = null,

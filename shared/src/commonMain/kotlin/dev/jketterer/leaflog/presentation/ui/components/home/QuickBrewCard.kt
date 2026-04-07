@@ -81,18 +81,18 @@ fun QuickBrewCard(
                 modifier = Modifier.padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                // Config label
+                // Tea name
                 Text(
-                    text = data.configuration.label ?: "Unnamed Method",
+                    text = data.teaName,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
 
-                // Tea name
+                // Config label
                 Text(
-                    text = data.teaName,
+                    text = data.configuration.label ?: "Unnamed Method",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

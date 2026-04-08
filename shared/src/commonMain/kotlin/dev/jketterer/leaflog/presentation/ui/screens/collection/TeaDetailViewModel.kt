@@ -119,7 +119,9 @@ class TeaDetailViewModel(
                 val teaId = _state.value.tea?.id ?: return
                 _navEvents.trySend(TeaDetailNavigationEvent.NavigateToEditConfig(intent.configId, teaId))
             }
-            is TeaDetailIntent.DeleteConfigurationClicked -> deleteConfiguration(intent.configId)
+            is TeaDetailIntent.DeleteConfigurationClicked -> _state.update { it.copy(configurationPendingDelete = intent.configId) }
+            is TeaDetailIntent.ConfirmDeleteConfiguration -> confirmDeleteConfiguration()
+            is TeaDetailIntent.CancelDeleteConfiguration -> _state.update { it.copy(configurationPendingDelete = null) }
 
             is TeaDetailIntent.AddConfigurationClicked -> {
                 val teaId = _state.value.tea?.id ?: return
@@ -260,8 +262,10 @@ class TeaDetailViewModel(
         }
     }
 
-    private fun deleteConfiguration(configId: String) {
+    private fun confirmDeleteConfiguration() {
         viewModelScope.launch {
+            val configId = _state.value.configurationPendingDelete ?: return@launch
+            _state.update { it.copy(configurationPendingDelete = null) }
             deleteBrewingConfigurationUseCase(configId)
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to delete configuration: ${e.message}") }

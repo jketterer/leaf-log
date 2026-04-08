@@ -528,6 +528,30 @@ private fun TeaDetailContent(
             )
         }
 
+        // Delete configuration confirmation dialog
+        if (state.configurationPendingDelete != null) {
+            AlertDialog(
+                onDismissRequest = { onIntent(TeaDetailIntent.CancelDeleteConfiguration) },
+                title = { Text("Delete Brewing Method?") },
+                text = { Text("This will permanently delete the saved brewing method. This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = { onIntent(TeaDetailIntent.ConfirmDeleteConfiguration) },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { onIntent(TeaDetailIntent.CancelDeleteConfiguration) }) {
+                        Text("Cancel")
+                    }
+                },
+            )
+        }
+
         // In-progress session conflict dialog
         state.inProgressDialogState?.let { dialogState ->
             SessionInProgressDialog(

@@ -184,14 +184,36 @@ class AnalyticsViewModel(
 
                 val currentData = getAnalyticsUseCase(start, end)
 
-                // Calculate previous period for comparison
-                val periodDuration = end - start
-                val previousStart = start - periodDuration
-                val previousData = getAnalyticsUseCase(previousStart, start)
+                // Calculate previous period for comparison.
+                // For calendar-based windows (week/month/year), compare against the equivalent
+                // elapsed portion of the previous period rather than the full previous period.
+                // e.g. if today is Monday, compare this week's data against last Monday only.
+                val now = Clock.System.now()
+                val tz = TimeZone.currentSystemDefault()
+                val (previousStart, previousEnd) = when (currentState.selectedPeriod) {
+                    AnalyticsPeriod.THIS_WEEK ->
+                        start.minus(7, DateTimeUnit.DAY, tz) to now.minus(7, DateTimeUnit.DAY, tz)
+
+                    AnalyticsPeriod.THIS_MONTH ->
+                        start.minus(1, DateTimeUnit.MONTH, tz) to now.minus(
+                            1,
+                            DateTimeUnit.MONTH,
+                            tz
+                        )
+
+                    AnalyticsPeriod.THIS_YEAR ->
+                        start.minus(1, DateTimeUnit.YEAR, tz) to now.minus(1, DateTimeUnit.YEAR, tz)
+
+                    else -> {
+                        val periodDuration = end - start
+                        (start - periodDuration) to start
+                    }
+                }
+                val previousData = getAnalyticsUseCase(previousStart, previousEnd)
 
                 // Fetch steep insights for both periods (needed for comparison)
                 val steepInsights = getSteepInsightsUseCase(start, end)
-                val previousSteepInsights = getSteepInsightsUseCase(previousStart, start)
+                val previousSteepInsights = getSteepInsightsUseCase(previousStart, previousEnd)
 
                 fun pctChange(current: Double, previous: Double): Float? =
                     if (previous == 0.0) null else ((current - previous) / previous * 100.0).toFloat()

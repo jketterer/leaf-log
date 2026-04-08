@@ -596,7 +596,7 @@ private fun LogTeaContent(
                             modifier = Modifier.size(18.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Start Timer")
+                        Text("Begin Session")
                     }
                 }
             }

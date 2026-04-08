@@ -7,6 +7,8 @@ import dev.jketterer.leaflog.domain.models.Insight
 import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.domain.models.SteepInsights
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
+import dev.jketterer.leaflog.domain.models.TimeInsights
+import dev.jketterer.leaflog.domain.models.TimeOfDay
 import dev.jketterer.leaflog.domain.models.TopRatedTea
 import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.domain.models.VesselDistribution
@@ -22,6 +24,7 @@ class GenerateInsightsUseCase {
         vesselDistribution: List<VesselDistribution>,
         activityCells: List<ActivityCell>,
         period: AnalyticsPeriod,
+        timeInsights: TimeInsights? = null,
     ): List<Insight> {
         val insights = mutableListOf<Insight>()
 
@@ -97,7 +100,8 @@ class GenerateInsightsUseCase {
         }
 
         // Brewing consistency (streak)
-        val useWeekly = period == AnalyticsPeriod.LAST_90_DAYS || period == AnalyticsPeriod.THIS_YEAR
+        val useWeekly =
+            period == AnalyticsPeriod.LAST_90_DAYS || period == AnalyticsPeriod.THIS_YEAR
         val maxStreak = computeMaxStreak(activityCells.sortedBy { it.date })
         if (maxStreak >= 3) {
             val unit = if (useWeekly) "week" else "day"
@@ -105,6 +109,35 @@ class GenerateInsightsUseCase {
                 Insight(
                     type = InsightType.CONSISTENCY,
                     text = "Your longest brewing streak was $maxStreak ${unit}s in a row",
+                )
+            )
+        }
+
+        // Time of day preference
+        val dominantTod = timeInsights?.dominantTimeOfDay
+        if (dominantTod != null) {
+            val timeLabel = when (dominantTod) {
+                TimeOfDay.MORNING -> "in the morning"
+                TimeOfDay.AFTERNOON -> "in the afternoon"
+                TimeOfDay.EVENING -> "in the evening"
+                TimeOfDay.NIGHT -> "late at night"
+            }
+            insights.add(
+                Insight(
+                    type = InsightType.TIME_OF_DAY,
+                    text = "You tend to brew most often $timeLabel",
+                )
+            )
+        }
+
+        // Peak day of week
+        val peakDay = timeInsights?.peakDayOfWeek
+        if (peakDay != null && (timeInsights.sessionCount ?: 0) >= 7) {
+            val dayName = peakDay.name.lowercase().replaceFirstChar(Char::uppercaseChar)
+            insights.add(
+                Insight(
+                    type = InsightType.PEAK_DAY,
+                    text = "Your most active brewing day is $dayName",
                 )
             )
         }

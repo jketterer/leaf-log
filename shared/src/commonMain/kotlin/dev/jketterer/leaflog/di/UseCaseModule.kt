@@ -27,6 +27,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTimeInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
@@ -83,6 +84,7 @@ val useCaseModule = module {
     factoryOf(::GetSteepInsightsUseCase)
     factoryOf(::GetTopRatedTeasUseCase)
     factoryOf(::GetVesselDistributionUseCase)
+    factoryOf(::GetTimeInsightsUseCase)
 
     // Timer use cases
     factoryOf(::StartTimerUseCase)

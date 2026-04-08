@@ -17,12 +17,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Award
+import compose.icons.feathericons.Calendar
+import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Heart
 import compose.icons.feathericons.PieChart
 import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Star
-import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Zap
 import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -62,6 +63,8 @@ private val InsightType.icon: ImageVector
         InsightType.RE_STEEP -> FeatherIcons.RefreshCw
         InsightType.TOP_RATED -> FeatherIcons.Award
         InsightType.PREFERRED_VESSEL -> FeatherIcons.Heart
+        InsightType.TIME_OF_DAY -> FeatherIcons.Clock
+        InsightType.PEAK_DAY -> FeatherIcons.Calendar
     }
 
 @Preview(showBackground = true)

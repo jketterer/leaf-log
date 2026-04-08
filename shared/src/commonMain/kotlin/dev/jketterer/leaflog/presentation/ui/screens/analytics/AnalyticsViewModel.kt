@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetTimeInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
@@ -49,6 +50,7 @@ class AnalyticsViewModel(
     private val getSteepInsightsUseCase: GetSteepInsightsUseCase,
     private val getTopRatedTeasUseCase: GetTopRatedTeasUseCase,
     private val getVesselDistributionUseCase: GetVesselDistributionUseCase,
+    private val getTimeInsightsUseCase: GetTimeInsightsUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnalyticsState())
@@ -185,12 +187,11 @@ class AnalyticsViewModel(
                 // Calculate previous period for comparison
                 val periodDuration = end - start
                 val previousStart = start - periodDuration
-                val previousEnd = start
-                val previousData = getAnalyticsUseCase(previousStart, previousEnd)
+                val previousData = getAnalyticsUseCase(previousStart, start)
 
                 // Fetch steep insights for both periods (needed for comparison)
                 val steepInsights = getSteepInsightsUseCase(start, end)
-                val previousSteepInsights = getSteepInsightsUseCase(previousStart, previousEnd)
+                val previousSteepInsights = getSteepInsightsUseCase(previousStart, start)
 
                 fun pctChange(current: Double, previous: Double): Float? =
                     if (previous == 0.0) null else ((current - previous) / previous * 100.0).toFloat()
@@ -241,6 +242,7 @@ class AnalyticsViewModel(
                         .getOrElse { emptyList() }
                 val topRatedTeas = getTopRatedTeasUseCase(start, end)
                 val vesselDistribution = getVesselDistributionUseCase(start, end)
+                val timeInsights = getTimeInsightsUseCase(start, end)
 
                 val insights = generateInsightsUseCase(
                     current = currentData,
@@ -251,6 +253,7 @@ class AnalyticsViewModel(
                     vesselDistribution = vesselDistribution,
                     activityCells = activityCells,
                     period = currentState.selectedPeriod,
+                    timeInsights = timeInsights,
                 )
 
                 _state.update {

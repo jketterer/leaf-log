@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.models
 
+import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlin.time.Duration
 
@@ -34,7 +35,17 @@ enum class InsightType {
     RE_STEEP,
     TOP_RATED,
     PREFERRED_VESSEL,
+    TIME_OF_DAY,
+    PEAK_DAY,
 }
+
+enum class TimeOfDay { MORNING, AFTERNOON, EVENING, NIGHT }
+
+data class TimeInsights(
+    val dominantTimeOfDay: TimeOfDay?,
+    val peakDayOfWeek: DayOfWeek?,
+    val sessionCount: Int,
+)
 
 data class TrendPoint(
     val date: LocalDate,

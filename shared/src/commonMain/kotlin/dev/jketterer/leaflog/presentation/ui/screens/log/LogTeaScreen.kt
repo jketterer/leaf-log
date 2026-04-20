@@ -343,7 +343,7 @@ private fun LogTeaContent(
                                     isError = state.teaQuantityError != null,
                                     supportingText = state.teaQuantityError?.let { { Text(it) } },
                                     keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Number,
+                                        keyboardType = KeyboardType.Decimal,
                                         imeAction = ImeAction.Done
                                     ),
                                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),

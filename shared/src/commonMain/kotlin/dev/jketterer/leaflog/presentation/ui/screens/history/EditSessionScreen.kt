@@ -271,7 +271,7 @@ private fun EditSessionContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 singleLine = true,
                                 suffix = { Text("g") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
                                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                             )
                         }

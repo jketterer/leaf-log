@@ -23,7 +23,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +54,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -664,6 +669,17 @@ private fun LogTeaContent(
         )
     }
 
+    // Quick Add Tea Dialog
+    if (state.showQuickAddTeaDialog) {
+        QuickAddTeaDialog(
+            teaTypes = state.availableTeaTypes,
+            onSave = { name, teaTypeId ->
+                onIntent(LogTeaIntent.QuickAddTeaSaved(name, teaTypeId))
+            },
+            onDismiss = { onIntent(LogTeaIntent.DismissQuickAddTeaDialog) },
+        )
+    }
+
     // Complete Session Dialog
     if (state.showCompleteSessionDialog) {
         CompleteSessionDialog(
@@ -688,14 +704,23 @@ private fun TeaSearchDialog(
     onDismiss: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    var textFieldValue by remember { mutableStateOf(TextFieldValue(searchQuery)) }
+    LaunchedEffect(searchQuery) {
+        if (textFieldValue.text != searchQuery) {
+            textFieldValue = textFieldValue.copy(text = searchQuery)
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Select Tea") },
         text = {
             Column {
                 OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = onSearchQueryChanged,
+                    value = textFieldValue,
+                    onValueChange = { newValue ->
+                        textFieldValue = newValue
+                        onSearchQueryChanged(newValue.text)
+                    },
                     label = { Text("Search teas") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -799,6 +824,92 @@ private fun CompleteSessionDialog(
                 onClick = onDismiss,
                 enabled = !isSaving,
             ) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun QuickAddTeaDialog(
+    teaTypes: List<TeaType>,
+    onSave: (name: String, teaTypeId: String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val focusManager = LocalFocusManager.current
+    var name by remember { mutableStateOf("") }
+    var selectedTeaTypeId by remember { mutableStateOf(teaTypes.firstOrNull()?.id ?: "") }
+    var showTypeMenu by remember { mutableStateOf(false) }
+    var nameError by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add New Tea") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        nameError = if (it.isBlank()) "Name is required" else null
+                    },
+                    label = { Text("Tea Name *") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    isError = nameError != null,
+                    supportingText = nameError?.let { { Text(it) } },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                )
+                ExposedDropdownMenuBox(
+                    expanded = showTypeMenu,
+                    onExpandedChange = { showTypeMenu = it },
+                ) {
+                    OutlinedTextField(
+                        value = teaTypes.find { it.id == selectedTeaTypeId }?.name ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Tea Type *") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(showTypeMenu) },
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    )
+                    ExposedDropdownMenu(
+                        expanded = showTypeMenu,
+                        onDismissRequest = { showTypeMenu = false },
+                    ) {
+                        teaTypes.forEach { teaType ->
+                            DropdownMenuItem(
+                                text = { Text(teaType.name) },
+                                onClick = {
+                                    selectedTeaTypeId = teaType.id
+                                    showTypeMenu = false
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isBlank()) {
+                        nameError = "Name is required"
+                    } else {
+                        onSave(name.trim(), selectedTeaTypeId)
+                    }
+                },
+                enabled = selectedTeaTypeId.isNotBlank(),
+            ) {
+                Text("Add Tea")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
         },

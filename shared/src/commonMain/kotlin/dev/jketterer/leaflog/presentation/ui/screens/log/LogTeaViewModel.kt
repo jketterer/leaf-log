@@ -13,6 +13,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
@@ -40,6 +41,7 @@ class LogTeaViewModel(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val searchTeasUseCase: SearchTeasUseCase,
+    private val createTeaUseCase: CreateTeaUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
     private val completeSessionUseCase: CompleteSessionUseCase,
@@ -98,7 +100,8 @@ class LogTeaViewModel(
             is LogTeaIntent.TeaSearchQueryChanged -> updateTeaSearchQuery(intent.query)
             is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
             is LogTeaIntent.QuickAddTeaClicked -> showQuickAddTeaDialog()
-            is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.tea)
+            is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.name, intent.teaTypeId)
+            is LogTeaIntent.DismissQuickAddTeaDialog -> dismissQuickAddTeaDialog()
             is LogTeaIntent.TeaBagModeChanged -> updateTeaBagMode(intent.isTeaBag)
             is LogTeaIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
             is LogTeaIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
@@ -164,12 +167,14 @@ class LogTeaViewModel(
                 teaRepository.getAllFlow(),
                 brewingVesselRepository.getActiveFlow(),
                 teaRepository.getRecentlyBrewedFlow(5),
-            ) { prefs, teas, vessels, recentTeas ->
+                teaTypeRepository.getAllFlow(),
+            ) { prefs, teas, vessels, recentTeas, teaTypes ->
                 object {
                     val prefs = prefs
                     val teas = teas
                     val vessels = vessels
                     val recentTeas = recentTeas
+                    val teaTypes = teaTypes
                 }
             }
                 .catch { e ->
@@ -187,6 +192,7 @@ class LogTeaViewModel(
                             availableTeas = data.teas,
                             suggestedTeas = data.recentTeas,
                             availableVessels = data.vessels,
+                            availableTeaTypes = data.teaTypes,
                             isLoading = false,
                             selectedWaterType = data.prefs.defaultWaterType,
                         )
@@ -345,12 +351,38 @@ class LogTeaViewModel(
     }
 
     private fun showQuickAddTeaDialog() {
-        _state.update { it.copy(showQuickAddTeaDialog = true) }
+        _state.update { it.copy(showTeaSearchDialog = false, showQuickAddTeaDialog = true) }
     }
 
-    private fun handleQuickAddTeaSaved(tea: Tea) {
-        _state.update { it.copy(showQuickAddTeaDialog = false) }
-        selectTea(tea.id)
+    private fun dismissQuickAddTeaDialog() {
+        _state.update { it.copy(showQuickAddTeaDialog = false, showTeaSearchDialog = true) }
+    }
+
+    private fun handleQuickAddTeaSaved(name: String, teaTypeId: String) {
+        viewModelScope.launch {
+            createTeaUseCase(name = name, teaTypeId = teaTypeId)
+                .onSuccess { tea ->
+                    val teaType = teaTypeRepository.getById(tea.teaTypeId)
+                    _state.update {
+                        it.copy(
+                            showQuickAddTeaDialog = false,
+                            selectedTea = tea,
+                            selectedTeaType = teaType,
+                            teaError = null,
+                            showTeaSearchDialog = false,
+                            teaSearchQuery = "",
+                            hasUnsavedChanges = true,
+                        )
+                    }
+                    val vessel = _state.value.selectedVessel
+                    if (vessel != null) {
+                        loadConfigurationsAndPrefill(tea, vessel)
+                    }
+                }
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to add tea: ${e.message}") }
+                }
+        }
     }
 
     private fun updateTeaBagMode(isTeaBag: Boolean) {

@@ -18,6 +18,7 @@ data class LogTeaState(
     val suggestedTeas: List<Tea> = emptyList(),
     val teaSearchQuery: String = "",
     val showTeaSearchDialog: Boolean = false,
+    val availableTeaTypes: List<TeaType> = emptyList(),
 
     // Brewing parameters
     val teaQuantityGrams: String = "",

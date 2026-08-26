@@ -363,7 +363,7 @@ class HomeViewModel(
     private suspend fun collectInProgressCount(loaded: MutableStateFlow<Boolean>) {
         teaSessionRepository.getInProgressCountFlow()
             .catch { e ->
-                Logger.w("Home") { "Failed to load in-progress count: ${e.message}" }
+                Logger.w(tag = "Home") { "Failed to load in-progress count: ${e.message}" }
                 loaded.value = true
             }
             .collect { count ->
@@ -388,7 +388,7 @@ class HomeViewModel(
             )
         }
             .catch { e ->
-                Logger.w("Home") { "Failed to load most recent in-progress session: ${e.message}" }
+                Logger.w(tag = "Home") { "Failed to load most recent in-progress session: ${e.message}" }
                 loaded.value = true
             }
             .collect { inProgressInfo ->
@@ -421,7 +421,7 @@ class HomeViewModel(
             }
         }
             .catch { e ->
-                Logger.w("Home") { "Failed to load quick brew configs: ${e.message}" }
+                Logger.w(tag = "Home") { "Failed to load quick brew configs: ${e.message}" }
                 loaded.value = true
             }
             .collect { allConfigs ->

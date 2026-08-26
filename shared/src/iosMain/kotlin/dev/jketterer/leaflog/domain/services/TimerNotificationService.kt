@@ -39,7 +39,7 @@ class TimerNotificationServiceImpl : NSObject(),
             options = UNAuthorizationOptionAlert or UNAuthorizationOptionSound,
         ) { granted, error ->
             if (!granted) {
-                Logger.w("Notification") { "Notification permission denied: ${error?.localizedDescription}" }
+                Logger.w(tag = "Notification") { "Notification permission denied: ${error?.localizedDescription}" }
             }
         }
     }
@@ -119,7 +119,7 @@ class TimerNotificationServiceImpl : NSObject(),
 
         center.addNotificationRequest(request) { error ->
             error?.let {
-                Logger.w("Notification") { "Failed to schedule completion alarm: ${it.localizedDescription}" }
+                Logger.w(tag = "Notification") { "Failed to schedule completion alarm: ${it.localizedDescription}" }
             }
         }
     }

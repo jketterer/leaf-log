@@ -132,7 +132,7 @@ class GenerateInsightsUseCase {
 
         // Peak day of week
         val peakDay = timeInsights?.peakDayOfWeek
-        if (peakDay != null && (timeInsights.sessionCount ?: 0) >= 7) {
+        if (peakDay != null && timeInsights.sessionCount >= 7) {
             val dayName = peakDay.name.lowercase().replaceFirstChar(Char::uppercaseChar)
             insights.add(
                 Insight(

@@ -85,7 +85,7 @@ class SessionDetailViewModel(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesRepository.getPreferencesFlow()
-                .catch { e -> Logger.w("SessionDetail") { "Failed to load preferences: ${e.message}" } }
+                .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load preferences: ${e.message}" } }
                 .collect { preferences ->
                     _state.update { it.copy(userPreferences = preferences) }
                 }
@@ -235,7 +235,7 @@ class SessionDetailViewModel(
 
     private suspend fun loadRelatedData(teaId: String, vesselId: String) {
         teaRepository.getByIdFlow(teaId)
-            .catch { e -> Logger.w("SessionDetail") { "Failed to load tea: ${e.message}" } }
+            .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load tea: ${e.message}" } }
             .firstOrNull()
             .let { tea ->
                 _state.update { it.copy(tea = tea) }
@@ -243,7 +243,7 @@ class SessionDetailViewModel(
             }
 
         brewingVesselRepository.getByIdFlow(vesselId)
-            .catch { e -> Logger.w("SessionDetail") { "Failed to load vessel: ${e.message}" } }
+            .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load vessel: ${e.message}" } }
             .firstOrNull()
             .let { vessel ->
                 _state.update { it.copy(vessel = vessel) }
@@ -252,7 +252,7 @@ class SessionDetailViewModel(
 
     private suspend fun loadTeaType(teaTypeId: String) {
         teaTypeRepository.getByIdFlow(teaTypeId)
-            .catch { e -> Logger.w("SessionDetail") { "Failed to load tea type: ${e.message}" } }
+            .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load tea type: ${e.message}" } }
             .firstOrNull()
             .let { teaType ->
                 _state.update { it.copy(teaType = teaType) }
@@ -264,7 +264,7 @@ class SessionDetailViewModel(
             val config = brewingConfigurationRepository.getById(configurationId)
             _state.update { it.copy(usedConfigurationLabel = config?.label) }
         } catch (e: Exception) {
-            Logger.w("SessionDetail") { "Failed to load configuration: ${e.message}" }
+            Logger.w(tag = "SessionDetail") { "Failed to load configuration: ${e.message}" }
         }
     }
 

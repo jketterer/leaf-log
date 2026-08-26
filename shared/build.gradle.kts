@@ -51,7 +51,8 @@ kotlin {
             implementation(libs.kotlinx.serializationJson)
             implementation(libs.androidx.room.runtime)
             implementation(libs.androidx.sqlite.bundled)
-            implementation(libs.androidx.navigation3.ui)
+            // api: NavRoute is public and extends NavKey, so consumers need it on their classpath
+            api(libs.androidx.navigation3.ui)
             implementation(libs.androidx.lifecycle.viewmodel.nav3)
 
             implementation(libs.composeIcons.feather)

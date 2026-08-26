@@ -51,7 +51,7 @@ fun <T> ViewModel.loadPreferences(
 ) {
     viewModelScope.launch {
         preferencesRepository.getPreferencesFlow()
-            .catch { e -> Logger.w("Preferences") { "Failed to load preferences: ${e.message}" } }
+            .catch { e -> Logger.w(tag = "Preferences") { "Failed to load preferences: ${e.message}" } }
             .collect { preferences ->
                 stateFlow.update { updateState(it, preferences) }
             }

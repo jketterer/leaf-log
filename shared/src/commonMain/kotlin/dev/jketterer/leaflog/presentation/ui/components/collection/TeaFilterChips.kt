@@ -98,7 +98,7 @@ private fun TeaFilterChipsPreview() {
             ),
             selectedFilter = FilterType.ALL,
             selectedTypeId = null,
-            onFilterSelected = { _, ignore -> Unit }
+            onFilterSelected = { _, _ -> },
         )
     }
 }

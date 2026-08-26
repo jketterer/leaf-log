@@ -112,7 +112,7 @@ class EditSessionViewModel(
         viewModelScope.launch {
             brewingVesselRepository.getActiveFlow()
                 .catch { e ->
-                    Logger.w("EditSession") { "Failed to load vessels: ${e.message}" }
+                    Logger.w(tag = "EditSession") { "Failed to load vessels: ${e.message}" }
                 }
                 .collect { vessels ->
                     // Include the session's current vessel even if archived

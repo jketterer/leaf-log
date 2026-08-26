@@ -44,7 +44,7 @@ class SettingsViewModel(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesRepository.getPreferencesFlow()
-                .catch { e -> Logger.w("Settings") { "Failed to load preferences: ${e.message}" } }
+                .catch { e -> Logger.w(tag = "Settings") { "Failed to load preferences: ${e.message}" } }
                 .collect { preferences ->
                     _state.update { it.copy(preferences = preferences, isLoading = false) }
                 }

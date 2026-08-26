@@ -216,7 +216,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
             // Exact alarm permission not granted — use inexact (may be delayed by a few minutes)
-            Logger.w("TimerAlarm") { "Exact alarm permission not granted, using inexact alarm" }
+            Logger.w(tag = "TimerAlarm") { "Exact alarm permission not granted, using inexact alarm" }
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.ELAPSED_REALTIME_WAKEUP,
                 triggerAtMillis,

@@ -228,7 +228,7 @@ class LogTeaViewModel(
                 val results = searchTeasUseCase(query)
                 _state.update { it.copy(availableTeas = results) }
             } catch (e: Exception) {
-                Logger.w("LogTea") { "Search failed: ${e.message}" }
+                Logger.w(tag = "LogTea") { "Search failed: ${e.message}" }
             }
         }
     }

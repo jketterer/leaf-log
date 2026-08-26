@@ -67,7 +67,7 @@ class QuickTimerViewModel(
     private fun loadTeasAndVessels() {
         viewModelScope.launch {
             teaRepository.getAllFlow()
-                .catch { e -> Logger.w("QuickTimer") { "Failed to load teas: ${e.message}" } }
+                .catch { e -> Logger.w(tag = "QuickTimer") { "Failed to load teas: ${e.message}" } }
                 .collect { teas ->
                     _state.update { it.copy(availableTeas = teas) }
                 }
@@ -75,7 +75,7 @@ class QuickTimerViewModel(
 
         viewModelScope.launch {
             vesselRepository.getActiveFlow()
-                .catch { e -> Logger.w("QuickTimer") { "Failed to load vessels: ${e.message}" } }
+                .catch { e -> Logger.w(tag = "QuickTimer") { "Failed to load vessels: ${e.message}" } }
                 .collect { vessels ->
                     _state.update { it.copy(availableVessels = vessels) }
                 }

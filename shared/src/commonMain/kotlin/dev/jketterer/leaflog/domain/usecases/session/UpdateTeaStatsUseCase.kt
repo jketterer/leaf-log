@@ -28,7 +28,7 @@ class UpdateTeaStatsUseCase(
                 ?: throw IllegalStateException("Tea with id $teaId not found")
         } catch (e: Exception) {
             // Non-critical - stats update failed but the primary operation was saved
-            Logger.w("UpdateTeaStats") { "Failed to update tea stats: ${e.message}" }
+            Logger.w(tag = "UpdateTeaStats") { "Failed to update tea stats: ${e.message}" }
         }
     }
 }

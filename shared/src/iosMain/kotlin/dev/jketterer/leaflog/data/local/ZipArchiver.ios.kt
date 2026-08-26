@@ -23,7 +23,6 @@ actual class ZipArchiver actual constructor() {
             NSData.create(bytes = allocArrayOf(zipBytes), length = zipBytes.size.toULong())
         }
         nsData.writeToFile(zipPath, atomically = true)
-        Unit
     }
 
     actual suspend fun extractZip(zipPath: String): List<ZipEntry> = withContext(Dispatchers.IO) {

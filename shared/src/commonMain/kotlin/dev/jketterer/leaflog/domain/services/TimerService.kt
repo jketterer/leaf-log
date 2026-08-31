@@ -89,10 +89,6 @@ class TimerService(
                     )
                     _timerState.update { completedState }
                     lifecycleHandler.onTimerStopped()
-                    // End live activity first so that the subsequent alarm
-                    // cancellation does not send a spurious "paused" update
-                    // (cancelCompletionAlarm skips the update when the activity
-                    // is already inactive, avoiding a race with end()).
                     notificationService.showTimerComplete(state.teaName, state.sessionId)
                     notificationService.cancelCompletionAlarm()
                     // Persist completion so HomeScreen banner reflects correct state
@@ -104,10 +100,14 @@ class TimerService(
         }
     }
 
+    /**
+     * Stop the countdown but leave the timer on screen, holding at its current remaining time.
+     */
     fun cancelCountdown() {
         timerJob?.cancel()
         timerJob = null
         notificationService.cancelCompletionAlarm()
+        notificationService.showTimerPaused(_timerState.value)
     }
 
     fun stop() {

@@ -179,6 +179,14 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
     }
 
     /**
+     * Repost the ongoing notification in its paused form. [buildRunningNotification] swaps the
+     * self-updating Chronometer for static text, which would otherwise keep ticking after a pause.
+     */
+    override fun showTimerPaused(state: TimerState) {
+        notificationManager.notify(NOTIFICATION_ID, buildRunningNotification(state))
+    }
+
+    /**
      * Show completion notification when timer finishes.
      */
     override fun showTimerComplete(teaName: String, sessionId: String?) {

@@ -46,6 +46,7 @@ actual fun platformModule() = module {
         val impl = TimerNotificationServiceImpl()
         object : TimerNotificationService {
             override fun showTimerRunning(state: TimerState) = impl.showTimerRunning(state)
+            override fun showTimerPaused(state: TimerState) = impl.showTimerPaused(state)
             override fun showTimerComplete(teaName: String, sessionId: String?) = impl.showTimerComplete(teaName, sessionId)
             override fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?) = impl.scheduleCompletionAlarm(teaName, remainingSeconds, sessionId)
             override fun cancelCompletionAlarm() = impl.cancelCompletionAlarm()

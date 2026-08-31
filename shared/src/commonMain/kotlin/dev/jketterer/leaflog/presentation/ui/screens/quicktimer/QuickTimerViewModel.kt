@@ -171,6 +171,7 @@ class QuickTimerViewModel(
             it.copy(status = TimerStatus.PAUSED)
         }
         notificationService.cancelCompletionAlarm()
+        notificationService.showTimerPaused(buildTimerState(_state.value))
     }
 
     private fun resumeTimer() {

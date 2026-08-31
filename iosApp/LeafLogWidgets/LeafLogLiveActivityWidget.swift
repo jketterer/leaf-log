@@ -24,7 +24,11 @@ struct LeafLogLiveActivityWidget: Widget {
                             .font(.title.monospacedDigit())
                             .foregroundStyle(.secondary)
                     } else {
-                        Text(context.state.endDate, style: .timer)
+                        Text(
+                            timerInterval: countdownRange(context),
+                            countsDown: true,
+                            showsHours: false
+                        )
                             .font(.title.monospacedDigit())
                             .foregroundStyle(.primary)
                             .contentTransition(.numericText(countsDown: true))
@@ -54,7 +58,11 @@ struct LeafLogLiveActivityWidget: Widget {
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
                 } else {
-                    Text(context.state.endDate, style: .timer)
+                    Text(
+                        timerInterval: countdownRange(context),
+                        countsDown: true,
+                        showsHours: false
+                    )
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText(countsDown: true))
@@ -110,7 +118,12 @@ struct LockScreenLiveActivityView: View {
                     .foregroundStyle(.secondary)
                     .frame(minWidth: 56, alignment: .trailing)
             } else {
-                Text(state.endDate, style: .timer)
+                Text(
+                    timerInterval: countdownRange(endDate: state.endDate,
+                                                  totalSeconds: attributes.totalSeconds),
+                    countsDown: true,
+                    showsHours: false
+                )
                     .font(.title2.monospacedDigit().bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.trailing)
@@ -130,4 +143,17 @@ struct LockScreenLiveActivityView: View {
 private func formatTime(_ seconds: Double) -> String {
     let total = max(0, Int(ceil(seconds)))
     return String(format: "%d:%02d", total / 60, total % 60)
+}
+
+/// Bounds the countdown to the brew so it holds at 0:00 once the end date passes.
+/// `Text(_:style:.timer)` counts upward past its date instead of stopping, and the
+/// activity's body is not guaranteed to re-render at the moment the timer elapses,
+/// so a render-time completion check cannot be relied on to hide it.
+private func countdownRange(endDate: Date, totalSeconds: Double) -> ClosedRange<Date> {
+    endDate.addingTimeInterval(-max(totalSeconds, 1))...endDate
+}
+
+private func countdownRange(_ context: ActivityViewContext<TeaTimerAttributes>) -> ClosedRange<Date> {
+    countdownRange(endDate: context.state.endDate,
+                   totalSeconds: context.attributes.totalSeconds)
 }

@@ -68,6 +68,16 @@ class TimerNotificationServiceImpl : NSObject(),
         }
     }
 
+    fun showTimerPaused(state: TimerState) {
+        lastState = state
+        if (isActivityActive) {
+            LiveActivityServiceHolder.instance?.update(
+                remainingSeconds = state.remainingDuration.inWholeSeconds.toDouble(),
+                isPaused = true,
+            )
+        }
+    }
+
     fun showTimerComplete(teaName: String, sessionId: String?) {
         // The UNTimeIntervalNotificationTrigger scheduled in scheduleCompletionAlarm()
         // fires independently and is shown via willPresentNotification (even in foreground).
@@ -124,17 +134,16 @@ class TimerNotificationServiceImpl : NSObject(),
         }
     }
 
+    /**
+     * Only withdraws the pending completion notification. This must not touch the Live
+     * Activity: rescheduling the alarm cancels first, so pausing the activity here froze
+     * a still-running timer every time the countdown restarted or the time was adjusted.
+     * Pausing is [showTimerPaused]'s job.
+     */
     fun cancelCompletionAlarm() {
         center.removePendingNotificationRequestsWithIdentifiers(
             listOf(SCHEDULED_COMPLETION_ID),
         )
-        if (isActivityActive) {
-            val remaining = lastState?.remainingDuration?.inWholeSeconds?.toDouble() ?: 0.0
-            LiveActivityServiceHolder.instance?.update(
-                remainingSeconds = remaining,
-                isPaused = true
-            )
-        }
     }
 
     // Required to display notifications while the app is in the foreground.

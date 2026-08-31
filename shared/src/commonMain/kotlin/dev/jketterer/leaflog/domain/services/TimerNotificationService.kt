@@ -4,6 +4,13 @@ import dev.jketterer.leaflog.domain.models.TimerState
 
 interface TimerNotificationService {
     fun showTimerRunning(state: TimerState)
+
+    /**
+     * Show the timer as paused, holding at the state's remaining time.
+     * Callers must pass the already-paused state, not the last running one.
+     */
+    fun showTimerPaused(state: TimerState)
+
     fun showTimerComplete(teaName: String, sessionId: String?)
     fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?)
     fun cancelCompletionAlarm()

@@ -39,6 +39,22 @@ data class TimerState(
 
     val isComplete: Boolean
         get() = status == TimerStatus.COMPLETE
+
+    /**
+     * Re-derives the timer against wall-clock time, bringing a [remainingDuration]
+     * captured earlier up to date. A RUNNING state whose duration has already elapsed
+     * resolves to COMPLETE.
+     */
+    fun resolvedAt(now: Instant): TimerState {
+        if (status != TimerStatus.RUNNING || startedAt == null) return this
+
+        val remaining = (totalDuration - (now - startedAt)).coerceAtLeast(Duration.ZERO)
+        return if (remaining == Duration.ZERO) {
+            copy(status = TimerStatus.COMPLETE, remainingDuration = Duration.ZERO)
+        } else {
+            copy(remainingDuration = remaining)
+        }
+    }
 }
 
 /**

@@ -176,18 +176,23 @@ class TimerViewModel(
                         )
                 }
 
+                // The live TimerService state above can be stale (its countdown loop stops
+                // advancing while the app is backgrounded), so re-derive against the clock
+                // before deciding whether the timer has finished.
+                val resolvedTimerState = initialTimerState.resolvedAt(Clock.System.now())
+
                 // If timer was already complete (e.g., app killed during SteepComplete),
                 // redirect to SteepComplete immediately
-                if (initialTimerState.status == TimerStatus.COMPLETE) {
+                if (resolvedTimerState.status == TimerStatus.COMPLETE) {
                     _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(sessionId))
                     return@launch
                 }
 
                 // Update timer service with restored/initial state
-                timerService.updateState(initialTimerState)
+                timerService.updateState(resolvedTimerState)
 
                 // If timer was running, restart the countdown
-                if (initialTimerState.status == TimerStatus.RUNNING) {
+                if (resolvedTimerState.status == TimerStatus.RUNNING) {
                     timerService.startCountdown()
                 }
 
@@ -196,7 +201,7 @@ class TimerViewModel(
                         session = session,
                         tea = tea,
                         vessel = vessel,
-                        timerState = initialTimerState,
+                        timerState = resolvedTimerState,
                         showNotificationWarning = !hasNotificationPermission,
                         isLoading = false,
                     )

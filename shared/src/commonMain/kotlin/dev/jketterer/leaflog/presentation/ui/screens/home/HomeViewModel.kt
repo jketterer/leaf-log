@@ -234,7 +234,7 @@ class HomeViewModel(
     }
 
     private fun handleResumeSession(session: TeaSession) {
-        when (session.timerStatus) {
+        when (session.resolvedTimerStatus(Clock.System.now())) {
             TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(session.id))
             else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(session.id))
         }
@@ -392,7 +392,13 @@ class HomeViewModel(
                 loaded.value = true
             }
             .collect { inProgressInfo ->
-                _state.update { it.copy(mostRecentInProgress = inProgressInfo) }
+                val resolvedStatus = inProgressInfo?.session?.resolvedTimerStatus(Clock.System.now())
+                _state.update {
+                    it.copy(
+                        mostRecentInProgress = inProgressInfo,
+                        inProgressTimerStatus = resolvedStatus,
+                    )
+                }
                 loaded.value = true
             }
     }

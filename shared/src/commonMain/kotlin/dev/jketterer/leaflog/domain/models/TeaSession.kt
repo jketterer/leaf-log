@@ -38,4 +38,22 @@ data class TeaSession(
     val timerPausedAt: Instant? = null,
     val timerRemainingMs: Long? = null,
     val timerTotalMs: Long? = null,
-)
+) {
+    /**
+     * The timer status as of [now], rather than as of the last time it was written.
+     *
+     * [timerStatus] is only persisted at start, pause, adjust and completion, so a session
+     * whose brew ran out while the app was closed is still stored as RUNNING. Every
+     * in-progress indicator should resolve through here so the label, the button and the
+     * screen it opens all agree on whether the brew is finished.
+     */
+    fun resolvedTimerStatus(now: Instant): TimerStatus? {
+        if (timerStatus != TimerStatus.RUNNING) return timerStatus
+
+        val startedAt = timerStartedAt ?: return timerStatus
+        val totalMs = timerTotalMs ?: brewingTime.inWholeMilliseconds
+        val elapsedMs = (now - startedAt).inWholeMilliseconds
+
+        return if (elapsedMs >= totalMs) TimerStatus.COMPLETE else TimerStatus.RUNNING
+    }
+}

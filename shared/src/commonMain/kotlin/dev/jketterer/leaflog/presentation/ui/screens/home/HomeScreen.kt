@@ -222,7 +222,8 @@ private fun HomeContent(
                                 InProgressSessionsBanner(
                                     inProgressInfo = state.mostRecentInProgress,
                                     totalInProgressCount = state.inProgressSessionsCount,
-                                    timerProgress = state.liveTimerState?.progress,
+                                    resolvedTimerStatus = state.inProgressTimerStatus,
+                                    timerProgress = state.inProgressTimerProgress,
                                     onResumeClick = {
                                         onIntent(HomeIntent.ResumeInProgressClicked)
                                     },

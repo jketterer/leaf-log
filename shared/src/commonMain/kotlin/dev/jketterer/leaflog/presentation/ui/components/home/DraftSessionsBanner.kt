@@ -42,6 +42,7 @@ import kotlin.time.Duration.Companion.minutes
 fun InProgressSessionsBanner(
     inProgressInfo: InProgressSessionDetails?,
     totalInProgressCount: Int,
+    resolvedTimerStatus: TimerStatus? = null,
     timerProgress: Float? = null,
     onResumeClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -60,14 +61,14 @@ fun InProgressSessionsBanner(
                 .padding(12.dp),
         ) {
             if (inProgressInfo != null) {
-                val timerStatus = inProgressInfo.session.timerStatus
+                // Caller resolves the status against the clock so this label and the screen the
+                // button opens cannot disagree. Falling back to the stored status keeps previews
+                // and any caller that has not resolved yet rendering something sensible.
+                val timerStatus = resolvedTimerStatus ?: inProgressInfo.session.timerStatus
                 val timerRemainingMs = inProgressInfo.session.timerRemainingMs
                 val totalDurationMs = inProgressInfo.session.timerTotalMs ?: inProgressInfo.session.brewingTime.inWholeMilliseconds
 
-                // Determine if timer is complete (either from status or from progress)
-                val isTimerComplete = timerStatus == TimerStatus.COMPLETE ||
-                    (timerProgress != null && timerProgress >= 1f) ||
-                    (timerRemainingMs != null && timerRemainingMs <= 0)
+                val isTimerComplete = timerStatus == TimerStatus.COMPLETE
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -99,8 +100,12 @@ fun InProgressSessionsBanner(
                 // Show progress bar if timer has state
                 if (timerStatus != null && timerRemainingMs != null && totalDurationMs > 0) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    val targetProgress =
-                        timerProgress ?: (1f - (timerRemainingMs.toFloat() / totalDurationMs))
+                    // A brew that ran out while the app was closed still has a stale remaining
+                    // time stored, so fill the bar from the resolved status rather than from it.
+                    val targetProgress = when {
+                        isTimerComplete -> 1f
+                        else -> timerProgress ?: (1f - (timerRemainingMs.toFloat() / totalDurationMs))
+                    }
                     val animatedProgress by animateFloatAsState(
                         targetValue = targetProgress.coerceIn(0f, 1f),
                         animationSpec = tween(durationMillis = 300),

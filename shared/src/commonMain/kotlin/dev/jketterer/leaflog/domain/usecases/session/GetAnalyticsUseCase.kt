@@ -30,6 +30,12 @@ class GetAnalyticsUseCase(
             null
         }
 
+        // Parent sessions only: a steep re-uses the leaves it was given, and AddSteepUseCase
+        // copies the parent's quantity onto each child, so summing every steep would report the
+        // same leaf once per steep. Water is summed across all steeps because each one is fresh.
+        val weighedSessions = parentSessions.mapNotNull { it.teaQuantityGrams }
+        val totalTeaGrams = weighedSessions.sumOf { it.toDouble() }
+
         return AnalyticsData(
             totalSessions = parentSessions.size,
             totalBrewingTime = totalBrewingTime,
@@ -37,6 +43,8 @@ class GetAnalyticsUseCase(
             uniqueTeasCount = uniqueTeasCount,
             averageRating = averageRating,
             ratedSessionsCount = ratedSessions.size,
+            totalTeaGrams = totalTeaGrams,
+            weighedSessionsCount = weighedSessions.size,
         )
     }
 }

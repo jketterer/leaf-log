@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlinx.coroutines.flow.Flow
 
 interface PreferencesRepository {
@@ -13,6 +14,7 @@ interface PreferencesRepository {
     suspend fun getPreferences(): UserPreferences
     suspend fun updateTemperatureUnit(unit: TemperatureUnit): Result<Unit>
     suspend fun updateVolumeUnit(unit: VolumeUnit): Result<Unit>
+    suspend fun updateWeightUnit(unit: WeightUnit): Result<Unit>
     suspend fun updateTeaSortOption(option: TeaSortOption): Result<Unit>
     suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod): Result<Unit>
     suspend fun updateDefaultWaterType(waterType: WaterType): Result<Unit>

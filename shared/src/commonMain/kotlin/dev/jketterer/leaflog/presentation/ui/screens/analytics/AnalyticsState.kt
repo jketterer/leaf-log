@@ -22,6 +22,8 @@ data class AnalyticsState(
     val insights: List<Insight> = emptyList(),
     val formattedWaterQuantity: String = "",
     val formattedBrewingTime: String = "",
+    val formattedTeaQuantity: String = "",
+    val formattedAverageTeaQuantity: String = "",
     val periodLabel: String = "This Week",
     val isLoading: Boolean = true,
     val error: String? = null,

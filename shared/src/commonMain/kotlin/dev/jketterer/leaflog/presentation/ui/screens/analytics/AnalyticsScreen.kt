@@ -36,7 +36,9 @@ import compose.icons.feathericons.BarChart2
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
+import compose.icons.feathericons.Feather
 import compose.icons.feathericons.Layers
+import compose.icons.feathericons.Package
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.Star
 import compose.icons.feathericons.Sunrise
@@ -294,6 +296,37 @@ private fun AnalyticsDataContent(
             }
         }
 
+        // Leaf usage cards. Hidden entirely when nothing in the period recorded a weight,
+        // since "0.0 g" would read as a real measurement rather than an absent one.
+        if (analytics != null && analytics.weighedSessionsCount > 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SummaryCard(
+                    value = state.formattedTeaQuantity,
+                    label = "Tea Used",
+                    icon = FeatherIcons.Package,
+                    percentageChange = state.comparison?.percentageChangeTeaUsed,
+                    supportingText = if (analytics.weighedSessionsCount < analytics.totalSessions) {
+                        "from ${analytics.weighedSessionsCount} of ${analytics.totalSessions} sessions"
+                    } else {
+                        null
+                    },
+                    onClick = { onIntent(AnalyticsIntent.ToggleWeightUnit) },
+                    modifier = Modifier.weight(1f),
+                )
+                SummaryCard(
+                    value = state.formattedAverageTeaQuantity,
+                    label = "Avg per Session",
+                    icon = FeatherIcons.Feather,
+                    onClick = { onIntent(AnalyticsIntent.ToggleWeightUnit) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
         // Steep insights cards
         val steepInsights = state.steepInsights
         if (steepInsights != null) {
@@ -402,7 +435,11 @@ private fun AnalyticsDataContentPreview() {
                     uniqueTeasCount = 8,
                     averageRating = 4.2f,
                     ratedSessionsCount = 35,
+                    totalTeaGrams = 218.5,
+                    weighedSessionsCount = 31,
                 ),
+                formattedTeaQuantity = "218.5 g",
+                formattedAverageTeaQuantity = "7.0 g",
                 comparison = PeriodComparison(
                     percentageChangeSessions = 10.5f,
                     percentageChangeBrewTime = 8.0f,
@@ -410,6 +447,7 @@ private fun AnalyticsDataContentPreview() {
                     percentageChangeUniqueTeas = 25.0f,
                     percentageChangeAverageSteeps = -5.0f,
                     percentageChangeNewTeas = 33.0f,
+                    percentageChangeTeaUsed = 12.0f,
                 ),
                 steepInsights = SteepInsights(
                     averageSteepsPerSession = 2.3f,

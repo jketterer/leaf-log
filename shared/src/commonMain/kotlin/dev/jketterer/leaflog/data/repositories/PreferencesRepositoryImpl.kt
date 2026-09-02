@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -62,6 +63,15 @@ class PreferencesRepositoryImpl(
     override suspend fun updateDefaultWaterType(waterType: WaterType): Result<Unit> {
         return try {
             preferencesDataStore.updateDefaultWaterType(waterType)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateWeightUnit(unit: WeightUnit): Result<Unit> {
+        return try {
+            preferencesDataStore.updateWeightUnit(unit)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

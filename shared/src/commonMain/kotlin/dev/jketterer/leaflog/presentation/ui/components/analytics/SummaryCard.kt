@@ -41,6 +41,7 @@ fun SummaryCard(
     percentageChange: Float? = null,
     icon: ImageVector? = null,
     onClick: (() -> Unit)? = null,
+    supportingText: String? = null,
 ) {
     val cardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     val cardElevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -82,6 +83,15 @@ fun SummaryCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            if (supportingText != null) {
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                )
+            }
             if (percentageChange != null && percentageChange.absoluteValue > 0.5f) {
                 Spacer(modifier = Modifier.height(4.dp))
                 val isPositive = percentageChange > 0

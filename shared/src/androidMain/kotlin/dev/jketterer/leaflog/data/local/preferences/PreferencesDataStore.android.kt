@@ -13,6 +13,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -23,6 +24,7 @@ actual class PreferencesDataStore(private val context: Context) {
     companion object {
         val TEMPERATURE_UNIT_KEY = stringPreferencesKey("temperature_unit")
         val VOLUME_UNIT_KEY = stringPreferencesKey("volume_unit")
+        val WEIGHT_UNIT_KEY = stringPreferencesKey("weight_unit")
         val TEA_SORT_OPTION_KEY = stringPreferencesKey("tea_sort_option")
         val ANALYTICS_PERIOD_KEY = stringPreferencesKey("analytics_period")
         val DEFAULT_WATER_TYPE_KEY = stringPreferencesKey("default_water_type")
@@ -49,6 +51,13 @@ actual class PreferencesDataStore(private val context: Context) {
                         VolumeUnit.MILLILITERS
                     }
                 } ?: VolumeUnit.MILLILITERS,
+                weightUnit = prefs[WEIGHT_UNIT_KEY]?.let {
+                    try {
+                        WeightUnit.valueOf(it)
+                    } catch (e: IllegalArgumentException) {
+                        WeightUnit.GRAMS
+                    }
+                } ?: WeightUnit.GRAMS,
                 teaSortOption = prefs[TEA_SORT_OPTION_KEY]?.let {
                     try {
                         TeaSortOption.valueOf(it)
@@ -66,7 +75,7 @@ actual class PreferencesDataStore(private val context: Context) {
                 defaultWaterType = prefs[DEFAULT_WATER_TYPE_KEY]?.let {
                     try {
                         WaterType.valueOf(it)
-                    } catch (e: IllegalArgumentException) {
+                    } catch (_: IllegalArgumentException) {
                         WaterType.FILTERED
                     }
                 } ?: WaterType.FILTERED,
@@ -87,6 +96,12 @@ actual class PreferencesDataStore(private val context: Context) {
     actual suspend fun updateVolumeUnit(unit: VolumeUnit) {
         context.dataStore.edit { prefs ->
             prefs[VOLUME_UNIT_KEY] = unit.name
+        }
+    }
+
+    actual suspend fun updateWeightUnit(unit: WeightUnit) {
+        context.dataStore.edit { prefs ->
+            prefs[WEIGHT_UNIT_KEY] = unit.name
         }
     }
 

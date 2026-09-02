@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.domain.models.WeightFormatter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
@@ -118,6 +119,8 @@ class AnalyticsViewModel(
             }
 
             is AnalyticsIntent.ToggleWaterUnit -> toggleWaterUnit()
+
+            is AnalyticsIntent.ToggleWeightUnit -> toggleWeightUnit()
         }
     }
 
@@ -129,6 +132,23 @@ class AnalyticsViewModel(
             val currentWaterMl = _state.value.analytics?.totalWaterMl ?: return@launch
             _state.update {
                 it.copy(formattedWaterQuantity = VolumeFormatter.format(currentWaterMl, newUnit))
+            }
+        }
+    }
+
+    private fun toggleWeightUnit() {
+        viewModelScope.launch {
+            val prefs = preferencesRepository.getPreferences()
+            val newUnit = prefs.weightUnit.toggle()
+            preferencesRepository.updateWeightUnit(newUnit)
+            val analytics = _state.value.analytics ?: return@launch
+            _state.update {
+                it.copy(
+                    formattedTeaQuantity = WeightFormatter.format(analytics.totalTeaGrams, newUnit),
+                    formattedAverageTeaQuantity = analytics.averageTeaGrams
+                        ?.let { avg -> WeightFormatter.format(avg, newUnit) }
+                        .orEmpty(),
+                )
             }
         }
     }
@@ -244,6 +264,10 @@ class AnalyticsViewModel(
                             steepInsights.newTeaDiscoveries.toDouble(),
                             previousSteepInsights.newTeaDiscoveries.toDouble(),
                         ),
+                        percentageChangeTeaUsed = pctChange(
+                            currentData.totalTeaGrams,
+                            previousData.totalTeaGrams,
+                        ),
                     )
                 } else {
                     null
@@ -252,6 +276,11 @@ class AnalyticsViewModel(
                 val formattedWater =
                     VolumeFormatter.format(currentData.totalWaterMl, prefs.volumeUnit)
                 val formattedTime = formatDuration(currentData.totalBrewingTime)
+                val formattedTea =
+                    WeightFormatter.format(currentData.totalTeaGrams, prefs.weightUnit)
+                val formattedAverageTea = currentData.averageTeaGrams
+                    ?.let { WeightFormatter.format(it, prefs.weightUnit) }
+                    .orEmpty()
 
                 // Load chart data
                 val brewingTrends = getBrewingTrendsUseCase(start, end)
@@ -285,6 +314,8 @@ class AnalyticsViewModel(
                         insights = insights,
                         formattedWaterQuantity = formattedWater,
                         formattedBrewingTime = formattedTime,
+                        formattedTeaQuantity = formattedTea,
+                        formattedAverageTeaQuantity = formattedAverageTea,
                         isLoading = false,
                         hasMinimumData = hasMinimumData,
                         totalCompletedSessions = totalCompleted,

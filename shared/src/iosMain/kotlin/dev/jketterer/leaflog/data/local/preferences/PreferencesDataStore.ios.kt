@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +20,7 @@ actual class PreferencesDataStore {
     companion object {
         private const val TEMPERATURE_UNIT_KEY = "temperature_unit"
         private const val VOLUME_UNIT_KEY = "volume_unit"
+        private const val WEIGHT_UNIT_KEY = "weight_unit"
         private const val TEA_SORT_OPTION_KEY = "tea_sort_option"
         private const val ANALYTICS_PERIOD_KEY = "analytics_period"
         private const val DEFAULT_WATER_TYPE_KEY = "default_water_type"
@@ -42,6 +44,12 @@ actual class PreferencesDataStore {
         userDefaults.setObject(unit.name, VOLUME_UNIT_KEY)
         userDefaults.synchronize()
         _preferencesFlow.update { it.copy(volumeUnit = unit) }
+    }
+
+    actual suspend fun updateWeightUnit(unit: WeightUnit) {
+        userDefaults.setObject(unit.name, WEIGHT_UNIT_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(weightUnit = unit) }
     }
 
     actual suspend fun updateTeaSortOption(option: TeaSortOption) {
@@ -103,6 +111,13 @@ actual class PreferencesDataStore {
                     VolumeUnit.MILLILITERS
                 }
             } ?: VolumeUnit.MILLILITERS,
+            weightUnit = userDefaults.stringForKey(WEIGHT_UNIT_KEY)?.let {
+                try {
+                    WeightUnit.valueOf(it)
+                } catch (e: IllegalArgumentException) {
+                    WeightUnit.GRAMS
+                }
+            } ?: WeightUnit.GRAMS,
             teaSortOption = teaSortOptionString?.let {
                 try {
                     TeaSortOption.valueOf(it)

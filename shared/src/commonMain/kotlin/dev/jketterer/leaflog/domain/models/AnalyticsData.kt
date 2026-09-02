@@ -11,7 +11,13 @@ data class AnalyticsData(
     val uniqueTeasCount: Int,
     val averageRating: Float?,
     val ratedSessionsCount: Int,
-)
+    val totalTeaGrams: Double,
+    val weighedSessionsCount: Int,
+) {
+    /** Mean dry leaf per brew, over the sessions that recorded a weight. */
+    val averageTeaGrams: Double?
+        get() = if (weighedSessionsCount > 0) totalTeaGrams / weighedSessionsCount else null
+}
 
 data class PeriodComparison(
     val percentageChangeSessions: Float?,
@@ -20,6 +26,7 @@ data class PeriodComparison(
     val percentageChangeUniqueTeas: Float?,
     val percentageChangeAverageSteeps: Float?,
     val percentageChangeNewTeas: Float?,
+    val percentageChangeTeaUsed: Float?,
 )
 
 data class Insight(

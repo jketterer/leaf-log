@@ -6,12 +6,14 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlinx.coroutines.flow.Flow
 
 expect class PreferencesDataStore {
     fun getPreferencesFlow(): Flow<UserPreferences>
     suspend fun updateTemperatureUnit(unit: TemperatureUnit)
     suspend fun updateVolumeUnit(unit: VolumeUnit)
+    suspend fun updateWeightUnit(unit: WeightUnit)
     suspend fun updateTeaSortOption(option: TeaSortOption)
     suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod)
     suspend fun updateDefaultWaterType(waterType: WaterType)

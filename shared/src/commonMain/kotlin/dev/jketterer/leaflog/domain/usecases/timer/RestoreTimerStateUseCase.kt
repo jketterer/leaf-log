@@ -73,6 +73,7 @@ class RestoreTimerStateUseCase(
                 status = newStatus,
                 startedAt = session.timerStartedAt,
                 pausedAt = session.timerPausedAt,
+                brewingTemperatureCelsius = session.temperatureCelsius,
             )
 
             Result.success(timerState)

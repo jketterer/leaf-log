@@ -13,6 +13,8 @@ data class TimerState(
     val status: TimerStatus = TimerStatus.NOT_STARTED,
     val startedAt: Instant? = null,
     val pausedAt: Instant? = null,
+    // Drives how long after the steep to remind the user to finish the session
+    val brewingTemperatureCelsius: Double? = null,
 ) {
     /**
      * Progress from 0.0 (start) to 1.0 (complete).

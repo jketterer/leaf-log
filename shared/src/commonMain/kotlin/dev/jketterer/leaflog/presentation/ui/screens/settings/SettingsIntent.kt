@@ -8,6 +8,8 @@ sealed interface SettingsIntent {
     data class UpdateTemperatureUnit(val unit: TemperatureUnit) : SettingsIntent
     data class UpdateVolumeUnit(val unit: VolumeUnit) : SettingsIntent
     data class UpdateDefaultWaterType(val waterType: WaterType) : SettingsIntent
+    data class UpdateTimerCompletionNotifications(val enabled: Boolean) : SettingsIntent
+    data class UpdateSessionReminderNotifications(val enabled: Boolean) : SettingsIntent
     data object ClearError : SettingsIntent
     data object ExportData : SettingsIntent
     data object ExportCompleted : SettingsIntent

@@ -15,4 +15,6 @@ expect class PreferencesDataStore {
     suspend fun updateTeaSortOption(option: TeaSortOption)
     suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod)
     suspend fun updateDefaultWaterType(waterType: WaterType)
+    suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean)
+    suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean)
 }

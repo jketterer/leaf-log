@@ -27,6 +27,10 @@
             android:name="dev.jketterer.leaflog.services.TimerCompletionReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name="dev.jketterer.leaflog.services.SessionReminderReceiver"
+            android:exported="false" />
+
         <activity
             android:exported="true"
             android:launchMode="singleTask"

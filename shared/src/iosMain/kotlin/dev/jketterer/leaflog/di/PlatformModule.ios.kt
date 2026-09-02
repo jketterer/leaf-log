@@ -50,6 +50,8 @@ actual fun platformModule() = module {
             override fun showTimerComplete(teaName: String, sessionId: String?) = impl.showTimerComplete(teaName, sessionId)
             override fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?) = impl.scheduleCompletionAlarm(teaName, remainingSeconds, sessionId)
             override fun cancelCompletionAlarm() = impl.cancelCompletionAlarm()
+            override fun scheduleSessionReminder(teaName: String, sessionId: String, delaySeconds: Double) = impl.scheduleSessionReminder(teaName, sessionId, delaySeconds)
+            override fun cancelSessionReminder() = impl.cancelSessionReminder()
             override fun onTimerStopped() = impl.onTimerStopped()
             override suspend fun hasNotificationPermission() = impl.hasNotificationPermission()
         }

@@ -37,6 +37,7 @@ val appModule = module {
             notificationService = get(),
             saveTimerStateUseCase = get(),
             lifecycleHandler = get(),
+            preferencesRepository = get(),
         )
     }
 

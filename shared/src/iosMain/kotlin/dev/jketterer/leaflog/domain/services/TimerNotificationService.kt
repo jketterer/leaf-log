@@ -134,6 +134,41 @@ class TimerNotificationServiceImpl : NSObject(),
         }
     }
 
+    fun scheduleSessionReminder(teaName: String, sessionId: String, delaySeconds: Double) {
+        cancelSessionReminder()
+
+        if (delaySeconds <= 0) return
+
+        val content = UNMutableNotificationContent().apply {
+            setTitle("How was your ${teaName.ifEmpty { "tea" }}?")
+            setBody("Tap to rate and finish this session")
+            setSound(UNNotificationSound.defaultSound())
+            setUserInfo(buildUserInfo(sessionId, DESTINATION_STEEP_COMPLETE))
+        }
+
+        val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(
+            timeInterval = delaySeconds,
+            repeats = false,
+        )
+
+        val request = UNNotificationRequest.requestWithIdentifier(
+            identifier = SESSION_REMINDER_ID,
+            content = content,
+            trigger = trigger,
+        )
+
+        center.addNotificationRequest(request) { error ->
+            error?.let {
+                Logger.w(tag = "Notification") { "Failed to schedule session reminder: ${it.localizedDescription}" }
+            }
+        }
+    }
+
+    fun cancelSessionReminder() {
+        center.removePendingNotificationRequestsWithIdentifiers(listOf(SESSION_REMINDER_ID))
+        center.removeDeliveredNotificationsWithIdentifiers(listOf(SESSION_REMINDER_ID))
+    }
+
     /**
      * Only withdraws the pending completion notification. This must not touch the Live
      * Activity: rescheduling the alarm cancels first, so pausing the activity here froze
@@ -197,5 +232,6 @@ class TimerNotificationServiceImpl : NSObject(),
 }
 
 private const val SCHEDULED_COMPLETION_ID = "timer_scheduled_complete"
+private const val SESSION_REMINDER_ID = "session_finish_reminder"
 private const val DESTINATION_TIMER = "timer"
 private const val DESTINATION_STEEP_COMPLETE = "steep_complete"

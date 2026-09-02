@@ -47,8 +47,16 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
             ).apply {
                 description = "Alert when your tea is done brewing"
             }
+            val reminderChannel = NotificationChannel(
+                CHANNEL_ID_REMINDER,
+                "Unfinished Sessions",
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = "Reminder to rate and finish a session you left open"
+            }
             notificationManager.createNotificationChannel(runningChannel)
             notificationManager.createNotificationChannel(completeChannel)
+            notificationManager.createNotificationChannel(reminderChannel)
         }
     }
 
@@ -239,6 +247,47 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         }
     }
 
+    override fun scheduleSessionReminder(
+        teaName: String,
+        sessionId: String,
+        delaySeconds: Double,
+    ) {
+        if (delaySeconds <= 0) return
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerAtMillis = SystemClock.elapsedRealtime() + (delaySeconds * 1000).toLong()
+
+        // Inexact is fine here: a nudge a few minutes either way makes no difference, and it
+        // avoids spending the exact-alarm budget on something this soft.
+        alarmManager.setAndAllowWhileIdle(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            triggerAtMillis,
+            buildReminderPendingIntent(teaName, sessionId),
+        )
+    }
+
+    override fun cancelSessionReminder() {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.cancel(buildReminderPendingIntent(teaName = "", sessionId = ""))
+        notificationManager.cancel(REMINDER_NOTIFICATION_ID)
+    }
+
+    /**
+     * Post the reminder itself. Called from [SessionReminderReceiver] when the alarm fires.
+     */
+    fun showSessionReminder(teaName: String, sessionId: String) {
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID_REMINDER)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("How was your ${teaName.ifEmpty { "tea" }}?")
+            .setContentText("Tap to rate and finish this session")
+            .setAutoCancel(true)
+            .setContentIntent(createTimerPendingIntent(sessionId, destination = "steep_complete"))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+
+        notificationManager.notify(REMINDER_NOTIFICATION_ID, notification)
+    }
+
     override fun cancelCompletionAlarm() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         // AlarmManager.cancel() matches by component + requestCode, not by extras,
@@ -279,11 +328,30 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         )
     }
 
+    private fun buildReminderPendingIntent(teaName: String, sessionId: String): PendingIntent {
+        val intent = Intent().setClassName(
+            context.packageName,
+            "dev.jketterer.leaflog.services.SessionReminderReceiver",
+        ).apply {
+            putExtra("tea_name", teaName)
+            putExtra("session_id", sessionId)
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            REMINDER_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
     companion object {
         private const val CHANNEL_ID_RUNNING = "timer_running"
         private const val CHANNEL_ID_COMPLETE = "timer_complete"
+        private const val CHANNEL_ID_REMINDER = "session_reminder"
         const val NOTIFICATION_ID = 1001
         const val COMPLETION_NOTIFICATION_ID = 1002
+        const val REMINDER_NOTIFICATION_ID = 1003
         private const val ALARM_REQUEST_CODE = 2001
+        private const val REMINDER_REQUEST_CODE = 2002
     }
 }

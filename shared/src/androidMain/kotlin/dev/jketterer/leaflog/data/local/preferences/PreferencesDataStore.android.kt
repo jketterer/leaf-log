@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.data.local.preferences
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -25,6 +26,10 @@ actual class PreferencesDataStore(private val context: Context) {
         val TEA_SORT_OPTION_KEY = stringPreferencesKey("tea_sort_option")
         val ANALYTICS_PERIOD_KEY = stringPreferencesKey("analytics_period")
         val DEFAULT_WATER_TYPE_KEY = stringPreferencesKey("default_water_type")
+        val TIMER_COMPLETION_NOTIFICATIONS_KEY =
+            booleanPreferencesKey("timer_completion_notifications_enabled")
+        val SESSION_REMINDER_NOTIFICATIONS_KEY =
+            booleanPreferencesKey("session_reminder_notifications_enabled")
     }
 
     actual fun getPreferencesFlow(): Flow<UserPreferences> {
@@ -65,6 +70,10 @@ actual class PreferencesDataStore(private val context: Context) {
                         WaterType.FILTERED
                     }
                 } ?: WaterType.FILTERED,
+                timerCompletionNotificationsEnabled =
+                    prefs[TIMER_COMPLETION_NOTIFICATIONS_KEY] ?: true,
+                sessionReminderNotificationsEnabled =
+                    prefs[SESSION_REMINDER_NOTIFICATIONS_KEY] ?: true,
             )
         }
     }
@@ -96,6 +105,18 @@ actual class PreferencesDataStore(private val context: Context) {
     actual suspend fun updateDefaultWaterType(waterType: WaterType) {
         context.dataStore.edit { prefs ->
             prefs[DEFAULT_WATER_TYPE_KEY] = waterType.name
+        }
+    }
+
+    actual suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[TIMER_COMPLETION_NOTIFICATIONS_KEY] = enabled
+        }
+    }
+
+    actual suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[SESSION_REMINDER_NOTIFICATIONS_KEY] = enabled
         }
     }
 }

@@ -22,6 +22,8 @@ actual class PreferencesDataStore {
         private const val TEA_SORT_OPTION_KEY = "tea_sort_option"
         private const val ANALYTICS_PERIOD_KEY = "analytics_period"
         private const val DEFAULT_WATER_TYPE_KEY = "default_water_type"
+        private const val TIMER_COMPLETION_NOTIFICATIONS_KEY = "timer_completion_notifications_enabled"
+        private const val SESSION_REMINDER_NOTIFICATIONS_KEY = "session_reminder_notifications_enabled"
     }
 
     private val _preferencesFlow = MutableStateFlow(loadPreferences())
@@ -59,6 +61,25 @@ actual class PreferencesDataStore {
         userDefaults.synchronize()
         _preferencesFlow.update { it.copy(defaultWaterType = waterType) }
     }
+
+    actual suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, TIMER_COMPLETION_NOTIFICATIONS_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(timerCompletionNotificationsEnabled = enabled) }
+    }
+
+    actual suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) {
+        userDefaults.setBool(enabled, SESSION_REMINDER_NOTIFICATIONS_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(sessionReminderNotificationsEnabled = enabled) }
+    }
+
+    /**
+     * Reads a flag that defaults to on. [NSUserDefaults.boolForKey] cannot express "unset", so
+     * the key's presence is checked first to avoid reading an untouched setting as disabled.
+     */
+    private fun boolOrDefault(key: String, default: Boolean): Boolean =
+        if (userDefaults.objectForKey(key) != null) userDefaults.boolForKey(key) else default
 
     private fun loadPreferences(): UserPreferences {
         val temperatureUnitString = userDefaults.stringForKey(TEMPERATURE_UNIT_KEY)
@@ -103,6 +124,10 @@ actual class PreferencesDataStore {
                     WaterType.FILTERED
                 }
             } ?: WaterType.FILTERED,
+            timerCompletionNotificationsEnabled =
+                boolOrDefault(TIMER_COMPLETION_NOTIFICATIONS_KEY, default = true),
+            sessionReminderNotificationsEnabled =
+                boolOrDefault(SESSION_REMINDER_NOTIFICATIONS_KEY, default = true),
         )
     }
 }

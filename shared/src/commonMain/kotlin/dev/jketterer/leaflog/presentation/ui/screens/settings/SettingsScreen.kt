@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -91,6 +92,11 @@ private fun SettingsContent(
                 .verticalScroll(rememberScrollState())
         ) {
             PreferencesSection(
+                state = state,
+                onIntent = onIntent
+            )
+
+            NotificationsSection(
                 state = state,
                 onIntent = onIntent
             )
@@ -184,6 +190,43 @@ private fun PreferencesSection(
             currentWaterType = state.preferences.defaultWaterType,
             onWaterTypeChange = { onIntent(SettingsIntent.UpdateDefaultWaterType(it)) }
         )
+    }
+}
+
+@Composable
+private fun NotificationsSection(
+    state: SettingsState,
+    onIntent: (SettingsIntent) -> Unit
+) {
+    Column {
+        Spacer(modifier = Modifier.height(8.dp))
+        SectionHeader(title = "Notifications")
+
+        SettingRow(
+            title = "Brew complete",
+            subtitle = "Alert when the steep timer finishes. Turning this off means no alert when your tea is ready.",
+        ) {
+            Switch(
+                checked = state.preferences.timerCompletionNotificationsEnabled,
+                onCheckedChange = {
+                    onIntent(SettingsIntent.UpdateTimerCompletionNotifications(it))
+                },
+            )
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+        SettingRow(
+            title = "Finish your session",
+            subtitle = "Remind you to rate and finish a session you left open, shortly after the tea has cooled.",
+        ) {
+            Switch(
+                checked = state.preferences.sessionReminderNotificationsEnabled,
+                onCheckedChange = {
+                    onIntent(SettingsIntent.UpdateSessionReminderNotifications(it))
+                },
+            )
+        }
     }
 }
 
@@ -496,6 +539,22 @@ private fun DefaultWaterTypeSettingPreview() {
         DefaultWaterTypeSetting(
             currentWaterType = WaterType.FILTERED,
             onWaterTypeChange = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun NotificationsSectionPreview() {
+    LeafLogTheme {
+        NotificationsSection(
+            state = SettingsState(
+                preferences = UserPreferences(
+                    timerCompletionNotificationsEnabled = true,
+                    sessionReminderNotificationsEnabled = false,
+                ),
+            ),
+            onIntent = {},
         )
     }
 }

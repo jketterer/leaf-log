@@ -2,6 +2,9 @@ package dev.jketterer.leaflog.domain.services
 
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.usecases.session.SessionReminderDelay
 import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -14,6 +17,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Domain service that manages brewing timer countdown.
@@ -28,11 +32,49 @@ class TimerService(
     private val notificationService: TimerNotificationService,
     private val saveTimerStateUseCase: SaveTimerStateUseCase,
     private val lifecycleHandler: TimerLifecycleHandler,
+    preferencesRepository: PreferencesRepository,
 ) {
     private val _timerState = MutableStateFlow(TimerState())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
 
     private var timerJob: Job? = null
+
+    // Mirrored from preferences so the countdown loop can check them without suspending
+    private val notificationPreferences = MutableStateFlow(UserPreferences())
+
+    init {
+        coroutineScope.launch {
+            preferencesRepository.getPreferencesFlow().collect { prefs ->
+                notificationPreferences.value = prefs
+                applyNotificationPreferences(prefs)
+            }
+        }
+    }
+
+    /**
+     * Withdraw or restore scheduled alerts so a toggle takes effect on the brew already running,
+     * not just the next one.
+     */
+    private fun applyNotificationPreferences(prefs: UserPreferences) {
+        val state = _timerState.value
+        val isRunning = state.status == TimerStatus.RUNNING
+
+        if (!prefs.timerCompletionNotificationsEnabled) {
+            notificationService.cancelCompletionAlarm()
+        } else if (isRunning) {
+            notificationService.scheduleCompletionAlarm(
+                teaName = state.teaName,
+                remainingSeconds = state.remainingDuration.inWholeMilliseconds / 1000.0,
+                sessionId = state.sessionId,
+            )
+        }
+
+        if (!prefs.sessionReminderNotificationsEnabled) {
+            notificationService.cancelSessionReminder()
+        } else if (isRunning) {
+            scheduleSessionReminder(state)
+        }
+    }
 
     /**
      * Update timer state (called by ViewModel after use case execution).
@@ -48,17 +90,20 @@ class TimerService(
     fun startCountdown() {
         val current = _timerState.value
         lifecycleHandler.onTimerStarted()
-        notificationService.scheduleCompletionAlarm(
-            teaName = current.teaName,
-            remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
-            sessionId = current.sessionId,
-        )
+        if (notificationPreferences.value.timerCompletionNotificationsEnabled) {
+            notificationService.scheduleCompletionAlarm(
+                teaName = current.teaName,
+                remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
+                sessionId = current.sessionId,
+            )
+        }
+        scheduleSessionReminder(current)
 
         timerJob?.cancel()
         var lastNotificationSecond = -1L
         timerJob = coroutineScope.launch {
             while (isActive) {
-                delay(100)  // Update every 100ms for smooth UI
+                delay(100.milliseconds)  // Update every 100ms for smooth UI
 
                 val state = _timerState.value
                 if (state.status != TimerStatus.RUNNING || state.startedAt == null) {
@@ -89,7 +134,9 @@ class TimerService(
                     )
                     _timerState.update { completedState }
                     lifecycleHandler.onTimerStopped()
-                    notificationService.showTimerComplete(state.teaName, state.sessionId)
+                    if (notificationPreferences.value.timerCompletionNotificationsEnabled) {
+                        notificationService.showTimerComplete(state.teaName, state.sessionId)
+                    }
                     notificationService.cancelCompletionAlarm()
                     // Persist completion so HomeScreen banner reflects correct state
                     // even if no ViewModel is active (e.g., app backgrounded)
@@ -107,6 +154,7 @@ class TimerService(
         timerJob?.cancel()
         timerJob = null
         notificationService.cancelCompletionAlarm()
+        notificationService.cancelSessionReminder()
         notificationService.showTimerPaused(_timerState.value)
     }
 
@@ -115,7 +163,27 @@ class TimerService(
         timerJob = null
         lifecycleHandler.onTimerStopped()
         notificationService.onTimerStopped()
+        notificationService.cancelSessionReminder()
         _timerState.value = TimerState()
+    }
+
+    /**
+     * Schedule the finish-your-session nudge for after the steep has run and the tea has cooled.
+     * Deliberately not canceled when the timer completes: that is the point at which the session
+     * starts waiting for review.
+     */
+    private fun scheduleSessionReminder(state: TimerState) {
+        if (!notificationPreferences.value.sessionReminderNotificationsEnabled) return
+
+        val sessionId = state.sessionId ?: return
+        val coolDown = SessionReminderDelay.forBrewingTemperature(state.brewingTemperatureCelsius)
+        val delay = state.remainingDuration + coolDown
+
+        notificationService.scheduleSessionReminder(
+            teaName = state.teaName,
+            sessionId = sessionId,
+            delaySeconds = delay.inWholeMilliseconds / 1000.0,
+        )
     }
 
     /**
@@ -128,6 +196,7 @@ class TimerService(
                 remainingSeconds = state.remainingDuration.inWholeMilliseconds / 1000.0,
                 sessionId = state.sessionId,
             )
+            scheduleSessionReminder(state)
         }
     }
 

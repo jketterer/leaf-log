@@ -67,4 +67,22 @@ class PreferencesRepositoryImpl(
             Result.failure(e)
         }
     }
+
+    override suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean): Result<Unit> {
+        return try {
+            preferencesDataStore.updateTimerCompletionNotificationsEnabled(enabled)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean): Result<Unit> {
+        return try {
+            preferencesDataStore.updateSessionReminderNotificationsEnabled(enabled)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

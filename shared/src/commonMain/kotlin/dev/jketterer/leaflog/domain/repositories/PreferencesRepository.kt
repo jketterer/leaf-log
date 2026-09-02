@@ -16,4 +16,6 @@ interface PreferencesRepository {
     suspend fun updateTeaSortOption(option: TeaSortOption): Result<Unit>
     suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod): Result<Unit>
     suspend fun updateDefaultWaterType(waterType: WaterType): Result<Unit>
+    suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean): Result<Unit>
+    suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean): Result<Unit>
 }

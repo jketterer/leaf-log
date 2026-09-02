@@ -173,6 +173,7 @@ class TimerViewModel(
                             steepNumber = session.steepNumber,
                             totalDuration = session.brewingTime,
                             remainingDuration = session.brewingTime,
+                            brewingTemperatureCelsius = session.temperatureCelsius,
                         )
                 }
 

@@ -6,6 +6,8 @@ data class UserPreferences(
     val teaSortOption: TeaSortOption = TeaSortOption.NAME_ASC,
     val analyticsPeriod: AnalyticsPeriod = AnalyticsPeriod.THIS_WEEK,
     val defaultWaterType: WaterType = WaterType.FILTERED,
+    val timerCompletionNotificationsEnabled: Boolean = true,
+    val sessionReminderNotificationsEnabled: Boolean = true,
 ) {
     companion object {
         val IMPERIAL = UserPreferences(

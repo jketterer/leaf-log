@@ -29,6 +29,13 @@ class SettingsViewModel(
             is SettingsIntent.UpdateTemperatureUnit -> updateTemperatureUnit(intent.unit)
             is SettingsIntent.UpdateVolumeUnit -> updateVolumeUnit(intent.unit)
             is SettingsIntent.UpdateDefaultWaterType -> updateDefaultWaterType(intent.waterType)
+
+            is SettingsIntent.UpdateTimerCompletionNotifications ->
+                updateTimerCompletionNotifications(intent.enabled)
+
+            is SettingsIntent.UpdateSessionReminderNotifications ->
+                updateSessionReminderNotifications(intent.enabled)
+
             is SettingsIntent.ClearError -> clearError()
             is SettingsIntent.ExportData -> exportData()
             is SettingsIntent.ExportCompleted -> _state.update {
@@ -79,6 +86,28 @@ class SettingsViewModel(
                 .onFailure { error ->
                     _state.update {
                         it.copy(error = error.message ?: "Failed to update default water type")
+                    }
+                }
+        }
+    }
+
+    private fun updateTimerCompletionNotifications(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.updateTimerCompletionNotificationsEnabled(enabled)
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(error = error.message ?: "Failed to update notification setting")
+                    }
+                }
+        }
+    }
+
+    private fun updateSessionReminderNotifications(enabled: Boolean) {
+        viewModelScope.launch {
+            preferencesRepository.updateSessionReminderNotificationsEnabled(enabled)
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(error = error.message ?: "Failed to update notification setting")
                     }
                 }
         }

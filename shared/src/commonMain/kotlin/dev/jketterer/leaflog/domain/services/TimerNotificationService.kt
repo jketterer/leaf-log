@@ -14,6 +14,14 @@ interface TimerNotificationService {
     fun showTimerComplete(teaName: String, sessionId: String?)
     fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?)
     fun cancelCompletionAlarm()
+
+    /**
+     * Schedule the nudge to come back and finish an unreviewed session, [delaySeconds] from now.
+     * Scheduled when the steep starts rather than when it ends so it still fires if the process
+     * is killed mid-brew. Cancel it whenever the session stops needing review.
+     */
+    fun scheduleSessionReminder(teaName: String, sessionId: String, delaySeconds: Double)
+    fun cancelSessionReminder()
     fun onTimerStopped()
 
     /**

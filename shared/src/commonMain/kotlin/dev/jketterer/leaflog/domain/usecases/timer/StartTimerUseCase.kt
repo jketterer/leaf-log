@@ -41,6 +41,7 @@ class StartTimerUseCase(
                 status = TimerStatus.RUNNING,
                 startedAt = now,
                 pausedAt = null,
+                brewingTemperatureCelsius = session.temperatureCelsius,
             )
 
             Result.success(timerState)

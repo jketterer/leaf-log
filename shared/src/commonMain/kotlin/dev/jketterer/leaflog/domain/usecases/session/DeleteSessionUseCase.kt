@@ -19,6 +19,7 @@ class DeleteSessionUseCase(
             if (session?.timerStatus == TimerStatus.RUNNING) {
                 timerService.stop()
             }
+            timerService.onSessionResolved(sessionId)
             teaSessionRepository.delete(sessionId)
             session?.let { updateTeaStatsUseCase(it.teaId) }
             Result.success(Unit)

@@ -158,13 +158,28 @@ class TimerService(
         notificationService.showTimerPaused(_timerState.value)
     }
 
+    /**
+     * Tear down the countdown and reset state. Deliberately leaves the session reminder alone:
+     * this runs when a steep finishes, which is when the session *starts* waiting for review.
+     * Use [onSessionResolved] for the case where review is no longer needed.
+     */
     fun stop() {
         timerJob?.cancel()
         timerJob = null
         lifecycleHandler.onTimerStopped()
         notificationService.onTimerStopped()
-        notificationService.cancelSessionReminder()
         _timerState.value = TimerState()
+    }
+
+    /**
+     * The session has been finished or discarded, so withdraw its finish-your-session reminder.
+     * Skipped when a different session's timer is live, since that brew's reminder is still owed.
+     */
+    fun onSessionResolved(sessionId: String) {
+        val activeSessionId = _timerState.value.sessionId
+        if (activeSessionId == null || activeSessionId == sessionId) {
+            notificationService.cancelSessionReminder()
+        }
     }
 
     /**

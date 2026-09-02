@@ -354,6 +354,7 @@ class TimerViewModel(
 
                     // 3. Stop countdown
                     timerService.stop()
+                    timerService.onSessionResolved(session.id)
 
                     // 4. Clear persisted timer state
                     saveTimerStateUseCase.clear(session.id)

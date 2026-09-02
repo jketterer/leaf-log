@@ -31,11 +31,13 @@ class CompleteSessionUseCase(
         )
 
         return try {
-            // Withdraws the pending finish-your-session reminder along with the timer. Guarded on
-            // the session id so completing an older session leaves a live brew's reminder alone.
             if (timerService.getCurrentState().sessionId == session.id) {
                 timerService.stop()
             }
+            // Withdraw the finish-your-session reminder. Kept separate from the stop above: by the
+            // time a session is completed the timer has usually already been stopped and its state
+            // cleared, so the id check above no longer matches.
+            timerService.onSessionResolved(session.id)
 
             teaSessionRepository.upsert(completedSession)
             updateTeaStatsUseCase(session.teaId)

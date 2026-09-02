@@ -382,6 +382,7 @@ class SteepCompleteViewModel(
             }
             // Reset TimerService singleton state so the next Timer screen starts clean
             timerService.stop()
+            timerService.onSessionResolved(session.id)
 
             session.parentSessionId?.let { parentId ->
                 updateAverageRatingUseCase(parentId)

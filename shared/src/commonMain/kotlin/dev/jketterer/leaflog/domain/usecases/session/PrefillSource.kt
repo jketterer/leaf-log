@@ -10,6 +10,12 @@ sealed interface PrefillSource {
     data object SavedConfig : PrefillSource
 
     /**
+     * Pre-filled from the highest-rated past session of this tea + vessel. This is what makes
+     * rating a steep worth doing: the parameters of a brew you liked come back next time.
+     */
+    data class BestRatedSession(val rating: Float) : PrefillSource
+
+    /**
      * Pre-filled from a saved brewing configuration for the same tea type + vessel
      */
     data class SameTypeConfig(val teaName: String) : PrefillSource

@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlin.time.Duration
 
@@ -16,8 +17,9 @@ data class LogTeaState(
     val selectedTeaType: TeaType? = null,
     val availableTeas: List<Tea> = emptyList(),
     val suggestedTeas: List<Tea> = emptyList(),
-    val teaSearchQuery: String = "",
-    val showTeaSearchDialog: Boolean = false,
+    val teaPickerQuery: String = "",
+    val showTeaPicker: Boolean = false,
+    val teaPickerFilter: TeaPickerFilter = TeaPickerFilter.All,
     val availableTeaTypes: List<TeaType> = emptyList(),
 
     // Brewing parameters

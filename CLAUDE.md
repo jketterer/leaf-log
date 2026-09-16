@@ -166,6 +166,35 @@ Example: Rating calculations, session completion flows, steep management.
 - Use sealed interfaces for Intents and Navigation Events
 - State should be immutable data classes
 
+### Composable Organization
+
+A screen file holds the screen: the scaffold, state wiring, and the list of sections it renders. It
+should NOT accumulate private composables until it becomes unreadable.
+
+When a screen grows past a few hundred lines, extract:
+
+- **Dialogs and widgets that aren't specific to one screen** into
+  `presentation/ui/components/[area]/Name.kt` as public composables, each with a
+  `modifier: Modifier = Modifier` parameter and its own @Preview
+- **Sections that only make sense for one feature** into `screens/[feature]/[Feature]Sections.kt` as
+  `internal` composables (top-level `private` is file-scoped and won't cross files)
+- **Dialog call-sites** into a single private `[Feature]Dialogs(state, onIntent)` composable
+
+Guidelines:
+
+- Sections take the specific values they render, not the whole State - this keeps them previewable
+  and avoids recomposing on unrelated state changes
+- Derivations that depend on `userPreferences` (unit conversion, formatting) stay in the screen;
+  pass display-ready values down
+- Presets, `remember` blocks, and `LocalFocusManager` belong to the section that uses them
+- Extraction should be a pure move - behavior does not change
+- A preview of an `AlertDialog` renders blank, because the dialog is hosted in its own window that
+  the preview renderer does not capture. Put the dialog body in a private `[Name]DialogContent`
+  composable and preview that inside `DialogPreviewContainer` (`components/common/`)
+
+Example: `screens/log/` splits into `LogTeaScreen.kt` (scaffold + dialogs) and `LogTeaSections.kt`
+(form sections), with the tea search, quick-add, and completion dialogs living in `components/`.
+
 ### Database Changes
 
 When modifying entities:

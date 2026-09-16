@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -14,13 +13,13 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
-import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +39,6 @@ class LogTeaViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
-    private val searchTeasUseCase: SearchTeasUseCase,
     private val createTeaUseCase: CreateTeaUseCase,
     private val createSessionUseCase: CreateSessionUseCase,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
@@ -95,9 +93,10 @@ class LogTeaViewModel(
     fun onIntent(intent: LogTeaIntent) {
         when (intent) {
             is LogTeaIntent.LoadData -> loadData()
-            is LogTeaIntent.ShowTeaSearchDialog -> showTeaSearchDialog()
-            is LogTeaIntent.HideTeaSearchDialog -> hideTeaSearchDialog()
-            is LogTeaIntent.TeaSearchQueryChanged -> updateTeaSearchQuery(intent.query)
+            is LogTeaIntent.ShowTeaPicker -> showTeaPicker()
+            is LogTeaIntent.HideTeaPicker -> hideTeaPicker()
+            is LogTeaIntent.TeaPickerQueryChanged -> updateTeaPickerQuery(intent.query)
+            is LogTeaIntent.TeaPickerFilterChanged -> updateTeaPickerFilter(intent.filter)
             is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
             is LogTeaIntent.QuickAddTeaClicked -> showQuickAddTeaDialog()
             is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.name, intent.teaTypeId)
@@ -201,37 +200,26 @@ class LogTeaViewModel(
         }
     }
 
-    private fun showTeaSearchDialog() {
-        _state.update { it.copy(showTeaSearchDialog = true) }
+    private fun showTeaPicker() {
+        _state.update { it.copy(showTeaPicker = true) }
     }
 
-    private fun hideTeaSearchDialog() {
-        _state.update {
-            it.copy(
-                showTeaSearchDialog = false,
-                teaSearchQuery = ""
-            )
-        }
+    private fun hideTeaPicker() {
+        _state.update { it.copy(showTeaPicker = false).withPickerReset() }
     }
 
-    private fun updateTeaSearchQuery(query: String) {
-        _state.update { it.copy(teaSearchQuery = query) }
-
-        if (query.isBlank()) {
-            loadData()
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                // Use the use case - it has business logic (trim, validation)
-                val results = searchTeasUseCase(query)
-                _state.update { it.copy(availableTeas = results) }
-            } catch (e: Exception) {
-                Logger.w(tag = "LogTea") { "Search failed: ${e.message}" }
-            }
-        }
+    private fun updateTeaPickerQuery(query: String) {
+        _state.update { it.copy(teaPickerQuery = query) }
     }
+
+    private fun updateTeaPickerFilter(filter: TeaPickerFilter) {
+        _state.update { it.copy(teaPickerFilter = filter) }
+    }
+
+    private fun LogTeaState.withPickerReset() = copy(
+        teaPickerQuery = "",
+        teaPickerFilter = TeaPickerFilter.All,
+    )
 
     private fun selectTea(teaId: String?) = viewModelScope.launch {
         if (teaId == null) {
@@ -240,10 +228,9 @@ class LogTeaViewModel(
                     selectedTea = null,
                     selectedTeaType = null,
                     teaError = null,
-                    showTeaSearchDialog = false,
-                    teaSearchQuery = "",
+                    showTeaPicker = false,
                     hasUnsavedChanges = true,
-                )
+                ).withPickerReset()
             }
             return@launch
         }
@@ -258,10 +245,9 @@ class LogTeaViewModel(
                 selectedTea = tea,
                 selectedTeaType = teaType,
                 teaError = null,
-                showTeaSearchDialog = false,
-                teaSearchQuery = "",
+                showTeaPicker = false,
                 hasUnsavedChanges = true,
-            )
+            ).withPickerReset()
         }
 
         // Load configurations and optionally pre-fill if vessel is also selected
@@ -351,11 +337,11 @@ class LogTeaViewModel(
     }
 
     private fun showQuickAddTeaDialog() {
-        _state.update { it.copy(showTeaSearchDialog = false, showQuickAddTeaDialog = true) }
+        _state.update { it.copy(showTeaPicker = false, showQuickAddTeaDialog = true) }
     }
 
     private fun dismissQuickAddTeaDialog() {
-        _state.update { it.copy(showQuickAddTeaDialog = false, showTeaSearchDialog = true) }
+        _state.update { it.copy(showQuickAddTeaDialog = false, showTeaPicker = true) }
     }
 
     private fun handleQuickAddTeaSaved(name: String, teaTypeId: String) {
@@ -369,10 +355,9 @@ class LogTeaViewModel(
                             selectedTea = tea,
                             selectedTeaType = teaType,
                             teaError = null,
-                            showTeaSearchDialog = false,
-                            teaSearchQuery = "",
+                            showTeaPicker = false,
                             hasUnsavedChanges = true,
-                        )
+                        ).withPickerReset()
                     }
                     val vessel = _state.value.selectedVessel
                     if (vessel != null) {

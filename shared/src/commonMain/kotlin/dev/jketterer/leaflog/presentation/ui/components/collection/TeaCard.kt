@@ -190,7 +190,7 @@ fun TeaCard(
     }
 }
 
-private fun Float.formatOneDecimal(): String {
+internal fun Float.formatOneDecimal(): String {
     val tenths = (this * 10).toInt()
     return "${tenths / 10}.${tenths % 10}"
 }

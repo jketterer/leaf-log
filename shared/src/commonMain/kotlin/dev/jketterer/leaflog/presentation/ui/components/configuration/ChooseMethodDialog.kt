@@ -64,7 +64,9 @@ fun ChooseMethodDialog(
     onSelect: (String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var selectedId by remember { mutableStateOf(selectedConfigurationId) }
+    var selectedId by remember(selectedConfigurationId) {
+        mutableStateOf(selectedConfigurationId)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,

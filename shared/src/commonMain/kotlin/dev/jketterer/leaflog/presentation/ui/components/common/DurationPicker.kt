@@ -24,6 +24,27 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
+ * Parses the two text fields into a duration.
+ *
+ * An empty field counts as zero, seconds are clamped to a single minute, and anything that isn't a
+ * number — or two empty fields — yields null.
+ */
+internal fun parseDurationFields(minutesText: String, secondsText: String): Duration? {
+    if (minutesText.isEmpty() && secondsText.isEmpty()) return null
+    val minutes = if (minutesText.isEmpty()) 0 else minutesText.toIntOrNull() ?: return null
+    val seconds = if (secondsText.isEmpty()) {
+        0
+    } else {
+        secondsText.toIntOrNull()?.coerceIn(0, 59) ?: return null
+    }
+    return minutes.minutes + seconds.seconds
+}
+
+/** Splits a duration into the minutes and seconds text the fields display. */
+internal fun durationToFields(duration: Duration): Pair<String, String> =
+    duration.inWholeMinutes.toString() to (duration.inWholeSeconds % 60).toString()
+
+/**
  * Duration picker for brewing time (minutes and seconds).
  */
 @Composable
@@ -34,14 +55,9 @@ fun DurationPicker(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
-    syncKey: Any? = null,
 ) {
-    // Track whether we've synced from the initial duration prop
-    // This prevents re-syncing after user edits while allowing initial async load
-    var initialDurationSynced by remember { mutableStateOf(duration != null) }
-
-    // Initialize field values from duration only on first composition
-    // After that, fields maintain their own independent state
+    // Field text, not the duration itself: "" and "0" are different to a typist but not to a
+    // Duration, so the text has to survive a round trip the duration cannot represent.
     var minutesFieldValue by remember {
         mutableStateOf(TextFieldValue(duration?.inWholeMinutes?.toString() ?: ""))
     }
@@ -49,29 +65,15 @@ fun DurationPicker(
         mutableStateOf(TextFieldValue((duration?.inWholeSeconds?.rem(60))?.toString() ?: ""))
     }
 
-    // Sync from prop when duration changes externally (async load or slider)
+    // Re-seed only when the incoming duration disagrees with what the fields already say, so an
+    // async load or a preset lands but ordinary typing is left alone.
     LaunchedEffect(duration) {
-        if (duration != null) {
-            val currentMin = if (minutesFieldValue.text.isEmpty()) 0
-                else minutesFieldValue.text.toIntOrNull()
-            val currentSec = if (secondsFieldValue.text.isEmpty()) 0
-                else secondsFieldValue.text.toIntOrNull()?.coerceIn(0, 59)
-            val currentDuration = if (currentMin != null && currentSec != null) {
-                currentMin.minutes + currentSec.seconds
-            } else null
-            if (currentDuration != duration) {
-                minutesFieldValue = TextFieldValue(duration.inWholeMinutes.toString())
-                secondsFieldValue = TextFieldValue((duration.inWholeSeconds % 60).toString())
-            }
-            initialDurationSynced = true
-        }
-    }
-
-    // Force sync when syncKey changes (e.g., preset button clicked)
-    LaunchedEffect(syncKey) {
-        if (syncKey != null && duration != null) {
-            minutesFieldValue = TextFieldValue(duration.inWholeMinutes.toString())
-            secondsFieldValue = TextFieldValue((duration.inWholeSeconds % 60).toString())
+        if (duration != null &&
+            parseDurationFields(minutesFieldValue.text, secondsFieldValue.text) != duration
+        ) {
+            val (minutesText, secondsText) = durationToFields(duration)
+            minutesFieldValue = TextFieldValue(minutesText)
+            secondsFieldValue = TextFieldValue(secondsText)
         }
     }
 
@@ -116,23 +118,9 @@ fun DurationPicker(
                 value = minutesFieldValue,
                 onValueChange = { newValue ->
                     minutesFieldValue = newValue
-                    val minText = newValue.text
-                    val secText = secondsFieldValue.text
-
-                    // If both fields are empty, return null
-                    if (minText.isEmpty() && secText.isEmpty()) {
-                        onDurationChange(null)
-                    } else {
-                        // Treat empty as 0, but validate non-empty values
-                        val min = if (minText.isEmpty()) 0 else minText.toIntOrNull()
-                        val sec = if (secText.isEmpty()) 0 else secText.toIntOrNull()?.coerceIn(0, 59)
-
-                        if (min != null && sec != null) {
-                            onDurationChange(min.minutes + sec.seconds)
-                        } else {
-                            onDurationChange(null)
-                        }
-                    }
+                    onDurationChange(
+                        parseDurationFields(newValue.text, secondsFieldValue.text),
+                    )
                 },
                 label = { Text("Min") },
                 modifier = Modifier.weight(1f),
@@ -148,23 +136,9 @@ fun DurationPicker(
                 value = secondsFieldValue,
                 onValueChange = { newValue ->
                     secondsFieldValue = newValue
-                    val minText = minutesFieldValue.text
-                    val secText = newValue.text
-
-                    // If both fields are empty, return null
-                    if (minText.isEmpty() && secText.isEmpty()) {
-                        onDurationChange(null)
-                    } else {
-                        // Treat empty as 0, but validate non-empty values
-                        val min = if (minText.isEmpty()) 0 else minText.toIntOrNull()
-                        val sec = if (secText.isEmpty()) 0 else secText.toIntOrNull()?.coerceIn(0, 59)
-
-                        if (min != null && sec != null) {
-                            onDurationChange(min.minutes + sec.seconds)
-                        } else {
-                            onDurationChange(null)
-                        }
-                    }
+                    onDurationChange(
+                        parseDurationFields(minutesFieldValue.text, newValue.text),
+                    )
                 },
                 label = { Text("Sec") },
                 modifier = Modifier.weight(1f),

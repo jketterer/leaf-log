@@ -58,8 +58,8 @@ fun CompleteInProgressDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var rating by remember { mutableFloatStateOf(session.rating ?: 0f) }
-    var notes by remember { mutableStateOf(session.notes ?: "") }
+    var rating by remember(session.id) { mutableFloatStateOf(session.rating ?: 0f) }
+    var notes by remember(session.id) { mutableStateOf(session.notes ?: "") }
     val focusManager = LocalFocusManager.current
 
     AlertDialog(

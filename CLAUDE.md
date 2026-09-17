@@ -195,6 +195,34 @@ Guidelines:
 Example: `screens/log/` splits into `LogTeaScreen.kt` (scaffold + dialogs) and `LogTeaSections.kt`
 (form sections), with the tea search, quick-add, and completion dialogs living in `components/`.
 
+### State Ownership in Composables
+
+**A composable may own state it originates. It may not own state seeded from a parameter.**
+
+*Originated* state - a menu's expanded flag, a search bar's visibility, an animation trigger, a
+sheet's current mode - has no correct value other than what the user just did, and nothing outside
+the composable can observe it. Keep it local with `remember`. Hoisting it into a ViewModel buys a
+state field, an intent, and a `when` branch in exchange for nothing.
+
+*Derived* state - `remember { mutableStateOf(someParameter) }` - has two sources of truth that
+silently diverge, because the local copy cannot track the parameter after first composition. Fix it
+one of two ways:
+
+1. **Key the remember** so it re-seeds: `remember(source) { mutableStateOf(source) }`. Pick the key
+   by identity, not by the field being edited - `remember(session.id)`, NOT `remember(session.notes)`,
+   or a re-emit of the same session wipes what the user is typing
+2. **Hoist** to the owner: take `value` + `onValueChange` and let the caller hold it
+
+Prefer keying. Hoist when the state is genuinely the caller's.
+
+Do NOT hoist text-field state that a domain type cannot round-trip. `""` and `"0"` are different to
+a typist but identical as a `Duration`, so `DurationPicker` keeps its field text local and exposes
+the parsing as pure `internal` functions (`parseDurationFields`, `durationToFields`) instead.
+Extract the logic, not the state - the pure functions are the part worth testing.
+
+Symptoms that this rule is being broken: a `syncKey` parameter, a `...Synced` latch, or a
+`LaunchedEffect` whose only job is copying a parameter into local state.
+
 ### Database Changes
 
 When modifying entities:

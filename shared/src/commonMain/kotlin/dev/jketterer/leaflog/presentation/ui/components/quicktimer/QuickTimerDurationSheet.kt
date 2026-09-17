@@ -73,9 +73,6 @@ private fun QuickTimerDurationSheetContent(
 ) {
     val isValid = duration != null && duration > Duration.ZERO
 
-    // Track preset clicks to force DurationPicker sync
-    var presetSyncKey by remember { mutableStateOf(0) }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -109,7 +106,6 @@ private fun QuickTimerDurationSheetContent(
             } else {
                 null
             },
-            syncKey = presetSyncKey,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -131,49 +127,42 @@ private fun QuickTimerDurationSheetContent(
                 text = "10s",
                 onClick = {
                     onDurationChange(10.seconds)
-                    presetSyncKey++
                 },
             )
             PresetButton(
                 text = "15s",
                 onClick = {
                     onDurationChange(15.seconds)
-                    presetSyncKey++
                 },
             )
             PresetButton(
                 text = "30s",
                 onClick = {
                     onDurationChange(30.seconds)
-                    presetSyncKey++
                 },
             )
             PresetButton(
                 text = "1m",
                 onClick = {
                     onDurationChange(1.minutes)
-                    presetSyncKey++
                 },
             )
             PresetButton(
                 text = "2m",
                 onClick = {
                     onDurationChange(2.minutes)
-                    presetSyncKey++
                 },
             )
             PresetButton(
                 text = "3m",
                 onClick = {
                     onDurationChange(3.minutes)
-                    presetSyncKey++
                 },
             )
             PresetButton(
                 text = "5m",
                 onClick = {
                     onDurationChange(5.minutes)
-                    presetSyncKey++
                 },
             )
         }

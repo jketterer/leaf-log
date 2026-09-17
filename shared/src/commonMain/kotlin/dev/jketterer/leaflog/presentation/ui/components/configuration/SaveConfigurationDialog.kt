@@ -60,7 +60,7 @@ fun SaveConfigurationDialog(
     onSave: (label: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var label by remember { mutableStateOf(suggestedLabel) }
+    var label by remember(suggestedLabel) { mutableStateOf(suggestedLabel) }
     val focusManager = LocalFocusManager.current
 
     AlertDialog(

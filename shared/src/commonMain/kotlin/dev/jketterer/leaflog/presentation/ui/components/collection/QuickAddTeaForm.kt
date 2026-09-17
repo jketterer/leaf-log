@@ -58,10 +58,10 @@ internal fun QuickAddTeaForm(
     val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
     // TextFieldValue rather than String so a prefilled name puts the cursor after it, not before.
-    var name by remember {
+    var name by remember(initialName) {
         mutableStateOf(TextFieldValue(initialName, TextRange(initialName.length)))
     }
-    var selectedTeaTypeId by rememberSaveable(teaTypes) {
+    var selectedTeaTypeId by rememberSaveable(teaTypes.firstOrNull()?.id) {
         mutableStateOf(teaTypes.firstOrNull()?.id ?: "")
     }
 

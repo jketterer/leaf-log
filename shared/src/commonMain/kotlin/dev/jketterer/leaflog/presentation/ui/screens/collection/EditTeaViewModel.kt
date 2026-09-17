@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -68,6 +67,7 @@ class EditTeaViewModel(
             is EditTeaIntent.BackClicked -> handleBack()
             is EditTeaIntent.ConfirmDiscard -> confirmDiscard()
             is EditTeaIntent.CancelDiscard -> cancelDiscard()
+            is EditTeaIntent.ErrorShown -> _state.update { it.copy(error = null) }
         }
     }
 
@@ -135,16 +135,31 @@ class EditTeaViewModel(
     }
 
     private fun updateName(name: String) {
-        _state.update {
-            it.copy(
-                name = name,
-                nameError = if (name.isBlank()) "Name is required" else null
-            )
-        }
+        _state.update { it.copy(name = name, nameError = validateTeaName(name)) }
     }
 
     private fun updateTeaType(teaTypeId: String) {
-        _state.update { it.copy(selectedTeaTypeId = teaTypeId, teaTypeError = null) }
+        _state.update { state ->
+            val seed = seedTemperatureForTeaType(
+                currentCelsius = state.defaultTemperatureCelsius,
+                currentFromTeaTypeId = state.temperatureFromTeaTypeId,
+                newTeaTypeId = teaTypeId,
+                newTypeDefaultCelsius = state.availableTeaTypes
+                    .find { it.id == teaTypeId }
+                    ?.defaultTemperatureCelsius,
+            )
+            val reseeded = seed.celsius != state.defaultTemperatureCelsius
+
+            state.copy(
+                selectedTeaTypeId = teaTypeId,
+                teaTypeError = null,
+                defaultTemperatureCelsius = seed.celsius,
+                temperatureFromTeaTypeId = seed.fromTeaTypeId,
+                // Cleared so the screen reconverts the new value into the user's display unit.
+                defaultTemperatureDisplay = if (reseeded) "" else state.defaultTemperatureDisplay,
+                temperatureError = if (reseeded) null else state.temperatureError,
+            )
+        }
     }
 
     private fun updateOrigin(origin: String) {
@@ -168,29 +183,14 @@ class EditTeaViewModel(
             tempUnit.toCelsius(displayValue).toString()
         } ?: temperature
 
-        // Validate in display unit for user-friendly error messages
-        val error = when {
-            temperature.isBlank() -> "Temperature is required"
-            temperature.toIntOrNull() == null -> "Invalid temperature"
-            else -> {
-                val value = temperature.toInt()
-                when (tempUnit) {
-                    TemperatureUnit.CELSIUS -> {
-                        if (value !in 0..100) "Temperature must be 0-100°C" else null
-                    }
-
-                    TemperatureUnit.FAHRENHEIT -> {
-                        if (value !in 32..212) "Temperature must be 32-212°F" else null
-                    }
-                }
-            }
-        }
-
         _state.update {
             it.copy(
                 defaultTemperatureCelsius = storageValue,
                 defaultTemperatureDisplay = temperature,
-                temperatureError = error,
+                // Typing makes the value theirs, so a later tea type change leaves it alone.
+                temperatureFromTeaTypeId = null,
+                // Validated in the display unit so the message quotes bounds the user recognises.
+                temperatureError = validateTemperature(temperature, tempUnit),
             )
         }
     }
@@ -232,8 +232,8 @@ class EditTeaViewModel(
         if (!currentState.isValid) {
             _state.update {
                 it.copy(
-                    nameError = if (it.name.isBlank()) "Name is required" else it.nameError,
-                    teaTypeError = if (it.selectedTeaTypeId == null) "Tea type is required" else it.teaTypeError
+                    nameError = validateTeaName(it.name),
+                    teaTypeError = if (it.selectedTeaTypeId == null) "Tea type is required" else it.teaTypeError,
                 )
             }
             return
@@ -247,7 +247,7 @@ class EditTeaViewModel(
                 val editResult = editTeaUseCase(
                     existingTea = currentState.existingTea,
                     name = currentState.name,
-                    teaTypeId = currentState.selectedTeaTypeId,
+                    teaTypeId = currentState.selectedTeaTypeId!!,
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,

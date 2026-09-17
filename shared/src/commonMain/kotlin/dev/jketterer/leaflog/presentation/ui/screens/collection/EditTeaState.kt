@@ -17,6 +17,9 @@ data class EditTeaState(
     val purchaseDate: LocalDate? = null,
     val defaultTemperatureCelsius: String = "",
     val defaultTemperatureDisplay: String = "", // User's input in display unit (preserves exact value)
+    // Which tea type seeded the temperature, or null if the user typed it. Lets a mis-tapped type
+    // be corrected without stranding its default, while never overwriting a chosen value.
+    val temperatureFromTeaTypeId: String? = null,
     val description: String = "",
     val photos: List<String> = emptyList(),
 
@@ -34,7 +37,6 @@ data class EditTeaState(
     val isSaving: Boolean = false,
     val error: String? = null,
     val showDiscardDialog: Boolean = false,
-    val showBrewingParams: Boolean = false,
 
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),
@@ -59,6 +61,19 @@ data class EditTeaState(
                     defaultTemperatureCelsius.isNotBlank() ||
                     description.isNotBlank() ||
                     photos.isNotEmpty()
+        }
+
+    /**
+     * The temperature as the field should show it.
+     *
+     * Prefers exactly what the user typed; falls back to converting the stored Celsius into their
+     * preferred unit, which is how a loaded tea - or a value seeded from the tea type - gets shown.
+     */
+    val temperatureDisplayValue: String
+        get() = defaultTemperatureDisplay.ifEmpty {
+            defaultTemperatureCelsius.toDoubleOrNull()
+                ?.let { userPreferences.temperatureUnit.fromCelsius(it).toString() }
+                ?: defaultTemperatureCelsius
         }
 
     val isValid: Boolean

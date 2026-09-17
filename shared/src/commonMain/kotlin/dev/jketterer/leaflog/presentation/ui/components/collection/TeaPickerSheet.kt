@@ -28,23 +28,31 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Check
 import compose.icons.feathericons.Plus
@@ -116,6 +124,7 @@ internal fun buildTeaPickerSections(
             val typeName = teaTypes.firstOrNull { it.id == filter.teaTypeId }?.name
             if (typeName != null) "$typeName teas" else "Results"
         }
+
         else -> "Results"
     }
     return listOf(TeaPickerSection(title, matches))
@@ -149,34 +158,56 @@ fun TeaPickerSheet(
     onQueryChanged: (String) -> Unit,
     onFilterChanged: (TeaPickerFilter) -> Unit,
     onTeaSelected: (Tea) -> Unit,
-    onAddTeaClicked: () -> Unit,
+    onTeaCreated: (name: String, teaTypeId: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+    )
     val scope = rememberCoroutineScope()
     val hideThen: (() -> Unit) -> Unit = { action ->
         scope.launch { sheetState.hide() }.invokeOnCompletion { action() }
     }
+    var addingTea by rememberSaveable { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
         sheetState = sheetState,
     ) {
-        TeaPickerContent(
-            teas = teas,
-            recentTeas = recentTeas,
-            teaTypes = teaTypes,
-            query = query,
-            filter = filter,
-            selectedTeaId = selectedTeaId,
-            onQueryChanged = onQueryChanged,
-            onFilterChanged = onFilterChanged,
-            onTeaSelected = { tea -> hideThen { onTeaSelected(tea) } },
-            onAddTeaClicked = { hideThen(onAddTeaClicked) },
-            modifier = Modifier.fillMaxHeight(),
+        // Must live inside the sheet's own window, or the sheet consumes back before this sees it.
+        // Back returns to the list; swipe-down and scrim tap still close the sheet outright.
+        val backState = rememberNavigationEventState(NavigationEventInfo.None)
+        NavigationBackHandler(
+            state = backState,
+            isBackEnabled = addingTea,
+            onBackCompleted = { addingTea = false },
         )
+
+        if (addingTea) {
+            QuickAddTeaForm(
+                teaTypes = teaTypes,
+                initialName = query.trim(),
+                onCancel = { addingTea = false },
+                onSave = { name, teaTypeId -> hideThen { onTeaCreated(name, teaTypeId) } },
+            )
+        } else {
+            TeaPickerContent(
+                teas = teas,
+                recentTeas = recentTeas,
+                teaTypes = teaTypes,
+                query = query,
+                filter = filter,
+                selectedTeaId = selectedTeaId,
+                onQueryChanged = onQueryChanged,
+                onFilterChanged = onFilterChanged,
+                onTeaSelected = { tea -> hideThen { onTeaSelected(tea) } },
+                onAddTeaClicked = { addingTea = true },
+                modifier = Modifier.fillMaxHeight(),
+            )
+        }
     }
 }
 
@@ -337,7 +368,7 @@ private fun TeaPickerSectionHeader(
     title: String,
     modifier: Modifier = Modifier,
 ) {
-    // Matches the sheet's own container colour so a pinned header reads as a label, not a band.
+    // Matches the sheet's own container color so a pinned header reads as a label, not a band.
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceContainerLow,

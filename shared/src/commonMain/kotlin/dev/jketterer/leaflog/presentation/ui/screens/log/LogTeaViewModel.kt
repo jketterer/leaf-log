@@ -98,9 +98,7 @@ class LogTeaViewModel(
             is LogTeaIntent.TeaPickerQueryChanged -> updateTeaPickerQuery(intent.query)
             is LogTeaIntent.TeaPickerFilterChanged -> updateTeaPickerFilter(intent.filter)
             is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
-            is LogTeaIntent.QuickAddTeaClicked -> showQuickAddTeaDialog()
             is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.name, intent.teaTypeId)
-            is LogTeaIntent.DismissQuickAddTeaDialog -> dismissQuickAddTeaDialog()
             is LogTeaIntent.TeaBagModeChanged -> updateTeaBagMode(intent.isTeaBag)
             is LogTeaIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
             is LogTeaIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
@@ -336,14 +334,6 @@ class LogTeaViewModel(
         }
     }
 
-    private fun showQuickAddTeaDialog() {
-        _state.update { it.copy(showTeaPicker = false, showQuickAddTeaDialog = true) }
-    }
-
-    private fun dismissQuickAddTeaDialog() {
-        _state.update { it.copy(showQuickAddTeaDialog = false, showTeaPicker = true) }
-    }
-
     private fun handleQuickAddTeaSaved(name: String, teaTypeId: String) {
         viewModelScope.launch {
             createTeaUseCase(name = name, teaTypeId = teaTypeId)
@@ -351,7 +341,6 @@ class LogTeaViewModel(
                     val teaType = teaTypeRepository.getById(tea.teaTypeId)
                     _state.update {
                         it.copy(
-                            showQuickAddTeaDialog = false,
                             selectedTea = tea,
                             selectedTeaType = teaType,
                             teaError = null,

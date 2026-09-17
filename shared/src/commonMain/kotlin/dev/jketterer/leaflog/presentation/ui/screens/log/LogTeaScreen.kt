@@ -43,7 +43,6 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
-import dev.jketterer.leaflog.presentation.ui.components.collection.QuickAddTeaDialog
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
@@ -359,7 +358,9 @@ private fun LogTeaDialogs(
             onTeaSelected = { tea ->
                 onIntent(LogTeaIntent.TeaSelected(tea.id))
             },
-            onAddTeaClicked = { onIntent(LogTeaIntent.QuickAddTeaClicked) },
+            onTeaCreated = { name, teaTypeId ->
+                onIntent(LogTeaIntent.QuickAddTeaSaved(name, teaTypeId))
+            },
             onDismiss = { onIntent(LogTeaIntent.HideTeaPicker) },
         )
     }
@@ -375,17 +376,6 @@ private fun LogTeaDialogs(
             onDismiss = {
                 onIntent(LogTeaIntent.DismissChooseMethodDialog)
             },
-        )
-    }
-
-    if (state.showQuickAddTeaDialog) {
-        QuickAddTeaDialog(
-            teaTypes = state.availableTeaTypes,
-            initialName = state.teaPickerQuery.trim(),
-            onSave = { name, teaTypeId ->
-                onIntent(LogTeaIntent.QuickAddTeaSaved(name, teaTypeId))
-            },
-            onDismiss = { onIntent(LogTeaIntent.DismissQuickAddTeaDialog) },
         )
     }
 

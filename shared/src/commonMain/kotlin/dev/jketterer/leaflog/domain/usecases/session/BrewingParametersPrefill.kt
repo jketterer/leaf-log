@@ -14,13 +14,4 @@ data class BrewingParametersPrefill(
     val waterType: WaterType?,
     val source: PrefillSource,
     val rating: Float?,
-) {
-    /**
-     * True if any parameters were pre-filled
-     */
-    val hasParameters: Boolean
-        get() = teaQuantityGrams != null ||
-                waterQuantityMl != null ||
-                temperatureCelsius != null ||
-                brewingTime != null
-}
+)

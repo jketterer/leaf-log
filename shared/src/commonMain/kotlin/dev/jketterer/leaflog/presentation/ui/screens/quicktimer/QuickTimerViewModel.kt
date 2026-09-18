@@ -13,6 +13,7 @@ import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -446,7 +447,7 @@ class QuickTimerViewModel(
             _state.update {
                 it.copy(
                     teaQuantityGrams = teaQuantityGrams,
-                    isTeaBag = prefill.teaQuantityGrams == null,
+                    isTeaBag = prefill.source.isCompleteMethod && prefill.teaQuantityGrams == null,
                     temperatureDisplay = temperatureInPreferredUnit,
                     waterQuantityDisplay = waterQuantityDisplay,
                     waterType = prefill.waterType ?: current.userPreferences.defaultWaterType,

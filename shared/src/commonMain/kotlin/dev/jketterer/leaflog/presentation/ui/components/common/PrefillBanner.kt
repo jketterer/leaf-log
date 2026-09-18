@@ -47,6 +47,14 @@ fun PrefillBanner(
             "Suggested parameters based on how you brew ${source.teaName}"
         }
 
+        is PrefillSource.TeaDefault -> {
+            "Starting from your usual temperature for $teaName"
+        }
+
+        is PrefillSource.TypeDefault -> {
+            "Starting from your usual temperature for ${source.typeName} tea"
+        }
+
         PrefillSource.None -> return // Don't show banner if no pre-fill
     }
 
@@ -133,6 +141,28 @@ private fun PrefillBannerSameTypePreview() {
             teaName = "Bi Luo Chun",
             hasMultipleMethods = true,
             onChooseDifferentMethod = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PrefillBannerTeaDefaultPreview() {
+    LeafLogTheme {
+        PrefillBanner(
+            source = PrefillSource.TeaDefault,
+            teaName = "Dragon Well",
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PrefillBannerTypeDefaultPreview() {
+    LeafLogTheme {
+        PrefillBanner(
+            source = PrefillSource.TypeDefault(typeName = "Green"),
+            teaName = "Dragon Well",
         )
     }
 }

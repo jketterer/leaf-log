@@ -16,7 +16,12 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
  * 1. Saved brewing configuration for this exact tea + vessel (an explicit choice, so it wins)
  * 2. The highest-rated past session of this tea + vessel
  * 3. Saved brewing configuration for another tea of the same type + vessel
- * 4. No pre-fill
+ * 4. This tea's own default temperature
+ * 5. Its tea type's default temperature
+ * 6. No pre-fill
+ *
+ * Steps 1-3 carry a whole method; 4 and 5 only a temperature. See [isCompleteMethod] - callers
+ * infer things from a pre-fill having happened, and a bare temperature must not read as a method.
  */
 class GetBrewingParametersPrefillUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
@@ -53,8 +58,9 @@ class GetBrewingParametersPrefillUseCase(
             )
         }
 
-        // 3. Saved brewing configuration for another tea of the same type + this vessel
         val teaType = teaTypeRepository.getById(tea.teaTypeId)
+
+        // 3. Saved brewing configuration for another tea of the same type + this vessel
         if (teaType != null) {
             val sameTypeTeas = teaRepository.getAll()
                 .filter { it.teaTypeId == tea.teaTypeId && it.id != tea.id }
@@ -75,17 +81,31 @@ class GetBrewingParametersPrefillUseCase(
             }
         }
 
-        // 4. No pre-fill available
-        return BrewingParametersPrefill(
+        // 4./5. A default temperature, from the tea or failing that its type. Temperature only:
+        // nothing here knows a brewing time or a quantity, so the rest stays null.
+        val default = tea.defaultTemperatureCelsius?.let { it to PrefillSource.TeaDefault }
+            ?: teaType?.defaultTemperatureCelsius?.let {
+                it to PrefillSource.TypeDefault(teaType.name)
+            }
+        if (default != null) {
+            val (temperature, source) = default
+            return temperatureOnlyPrefill(temperature, source)
+        }
+
+        // 6. No pre-fill available
+        return temperatureOnlyPrefill(temperature = null, source = PrefillSource.None)
+    }
+
+    private fun temperatureOnlyPrefill(temperature: Double?, source: PrefillSource) =
+        BrewingParametersPrefill(
             teaQuantityGrams = null,
             waterQuantityMl = null,
-            temperatureCelsius = null,
+            temperatureCelsius = temperature,
             brewingTime = null,
             waterType = null,
             rating = null,
-            source = PrefillSource.None,
+            source = source,
         )
-    }
 
     /**
      * The best completed brew of this tea in this vessel, or null if none clears [MINIMUM_RATING].

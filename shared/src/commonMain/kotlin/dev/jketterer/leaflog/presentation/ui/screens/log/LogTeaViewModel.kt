@@ -19,6 +19,7 @@ import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
@@ -263,7 +264,9 @@ class LogTeaViewModel(
             val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
             _state.update { state ->
                 state.copy(
-                    isTeaBag = prefill.source != PrefillSource.None && prefill.teaQuantityGrams == null,
+                    // A method that named no tea quantity means a bag. A bare default temperature is not a
+                    // method, so it must not be read as one.
+                    isTeaBag = prefill.source.isCompleteMethod && prefill.teaQuantityGrams == null,
                     teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
                     waterQuantityMl = prefill.waterQuantityMl?.toString()
                         ?: vessel.capacityMl?.toString() ?: "",
@@ -366,7 +369,12 @@ class LogTeaViewModel(
                 teaQuantityGrams = if (isTeaBag) "" else it.teaQuantityGrams,
                 teaQuantityError = null,
                 hasUnsavedChanges = true,
-                prefillSource = if (isTeaBag) PrefillSource.None else it.prefillSource,
+                // Switching to a bag retires a saved method, but a default temperature still applies.
+                prefillSource = if (isTeaBag && it.prefillSource.isCompleteMethod) {
+                    PrefillSource.None
+                } else {
+                    it.prefillSource
+                },
                 usedConfigurationId = if (isTeaBag) null else it.usedConfigurationId,
             )
         }

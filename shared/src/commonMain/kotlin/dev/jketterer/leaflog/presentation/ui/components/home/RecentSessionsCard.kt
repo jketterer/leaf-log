@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,7 +50,8 @@ fun RecentSessionCard(
     onSessionClick: () -> Unit,
     temperatureUnit: TemperatureUnit,
     modifier: Modifier = Modifier,
-    imageStorage: ImageStorage = koinInject(),
+    // Null in a preview, where no Koin application is running and resolving would throw.
+    imageStorage: ImageStorage? = if (LocalInspectionMode.current) null else koinInject(),
 ) {
     Card(
         modifier = modifier
@@ -64,7 +66,7 @@ fun RecentSessionCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Tea photo thumbnail
-            if (session.photos.isNotEmpty()) {
+            if (session.photos.isNotEmpty() && imageStorage != null) {
                 AsyncImage(
                     model = imageStorage.resolveImagePath(session.photos.first()),
                     contentDescription = teaName,
@@ -74,7 +76,7 @@ fun RecentSessionCard(
                     contentScale = ContentScale.Crop,
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-            } else if (teaPhotoUrl != null) {
+            } else if (teaPhotoUrl != null && imageStorage != null) {
                 AsyncImage(
                     model = imageStorage.resolveImagePath(teaPhotoUrl),
                     contentDescription = teaName,

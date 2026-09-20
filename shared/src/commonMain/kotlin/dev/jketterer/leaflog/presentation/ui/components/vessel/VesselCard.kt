@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -41,7 +42,8 @@ fun VesselCard(
     volumeUnit: VolumeUnit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    imageStorage: ImageStorage = koinInject(),
+    // Null in a preview, where no Koin application is running and resolving would throw.
+    imageStorage: ImageStorage? = if (LocalInspectionMode.current) null else koinInject(),
 ) {
     Card(
         modifier = modifier
@@ -62,7 +64,7 @@ fun VesselCard(
                 modifier = Modifier.weight(1f)
             ) {
                 // Vessel image or icon
-                if (vessel.imagePath != null) {
+                if (vessel.imagePath != null && imageStorage != null) {
                     AsyncImage(
                         model = imageStorage.resolveImagePath(vessel.imagePath),
                         contentDescription = null,

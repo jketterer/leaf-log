@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -77,7 +78,8 @@ fun SessionCard(
     onDeleteClick: () -> Unit,
     canBrewAgain: Boolean = true,
     modifier: Modifier = Modifier,
-    imageStorage: ImageStorage? = koinInject(),
+    // Null in a preview, where no Koin application is running and resolving would throw.
+    imageStorage: ImageStorage? = if (LocalInspectionMode.current) null else koinInject(),
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var showPhotoViewer by remember { mutableStateOf(false) }

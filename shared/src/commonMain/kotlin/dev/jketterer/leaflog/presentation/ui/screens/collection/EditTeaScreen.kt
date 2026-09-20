@@ -76,6 +76,20 @@ fun EditTeaScreen(
         }
     }
 
+    // System back has to reach the same guard as the toolbar arrow, or a swipe back silently
+    // discards edits and orphans any photos already written to disk. Enabled only when there is
+    // something to lose, so predictive back keeps its peek animation on a pristine form.
+    //
+    // Lives out here with the rest of the navigation wiring rather than in the content: it needs a
+    // NavigationEventDispatcher from the nav host, and a @Preview has none, so calling it inside
+    // the previewable composable makes every preview of this screen throw.
+    val backState = rememberNavigationEventState(NavigationEventInfo.None)
+    NavigationBackHandler(
+        state = backState,
+        isBackEnabled = state.hasChanges,
+        onBackCompleted = { viewModel.onIntent(EditTeaIntent.BackClicked) },
+    )
+
     EditTeaContent(
         state = state,
         onIntent = viewModel::onIntent,
@@ -100,16 +114,6 @@ private fun EditTeaContent(
     val originFocusRequester = remember { FocusRequester() }
     val producerFocusRequester = remember { FocusRequester() }
     val descriptionFocusRequester = remember { FocusRequester() }
-
-    // System back has to reach the same guard as the toolbar arrow, or a swipe back silently
-    // discards edits and orphans any photos already written to disk. Enabled only when there is
-    // something to lose, so predictive back keeps its peek animation on a pristine form.
-    val backState = rememberNavigationEventState(NavigationEventInfo.None)
-    NavigationBackHandler(
-        state = backState,
-        isBackEnabled = state.hasChanges,
-        onBackCompleted = { onIntent(EditTeaIntent.BackClicked) },
-    )
 
     // Keyboard up and ready when the user came here to type. Never in edit mode - that would throw
     // the keyboard over a form they opened to read.

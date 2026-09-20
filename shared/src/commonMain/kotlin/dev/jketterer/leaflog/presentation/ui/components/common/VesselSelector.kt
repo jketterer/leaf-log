@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
+import androidx.compose.ui.platform.LocalInspectionMode
 import coil3.compose.AsyncImage
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
@@ -50,7 +51,8 @@ fun VesselSelector(
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
-    imageStorage: ImageStorage? = koinInject(),
+    // Null in a preview, where no Koin application is running and resolving would throw.
+    imageStorage: ImageStorage? = if (LocalInspectionMode.current) null else koinInject(),
 ) {
     var expanded by remember { mutableStateOf(false) }
 

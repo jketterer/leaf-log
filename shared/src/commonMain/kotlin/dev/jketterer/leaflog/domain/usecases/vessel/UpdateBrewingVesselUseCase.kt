@@ -10,41 +10,35 @@ import kotlin.time.Clock
 class UpdateBrewingVesselUseCase(
     private val brewingVesselRepository: BrewingVesselRepository,
 ) {
+    /**
+     * Replaces the editable fields of [existingVessel] with the values given.
+     *
+     * Every field is required, and null means the field is empty, not "leave it alone". Callers
+     * pass the vessel's full intended state, so treating null as "unchanged" would make clearing
+     * an optional field impossible: the old value would silently come back on save.
+     */
     suspend operator fun invoke(
         existingVessel: BrewingVessel,
-        name: String? = null,
-        iconName: String? = null,
-        imagePath: String? = null,
-        clearImage: Boolean = false,
-        capacityMl: Int? = null,
+        name: String,
+        iconName: String,
+        imagePath: String?,
+        capacityMl: Int?,
     ): Result<BrewingVessel> {
-        val newName = name ?: existingVessel.name
-
-        if (newName.isBlank()) {
+        if (name.isBlank()) {
             return Result.failure(IllegalArgumentException("Vessel name cannot be empty"))
         }
 
-        // Use explicit null check to distinguish between "not provided" and "set to null"
-        val newCapacity = when {
-            capacityMl != null && capacityMl == -1 -> null // -1 means "clear capacity"
-            capacityMl != null && capacityMl <= 0 -> return Result.failure(
-                IllegalArgumentException("Capacity must be greater than 0")
+        if (capacityMl != null && capacityMl <= 0) {
+            return Result.failure(
+                IllegalArgumentException("Capacity must be greater than 0"),
             )
-            capacityMl != null -> capacityMl
-            else -> existingVessel.capacityMl
-        }
-
-        val newImagePath = when {
-            clearImage -> null
-            imagePath != null -> imagePath
-            else -> existingVessel.imagePath
         }
 
         val updatedVessel = existingVessel.copy(
-            name = newName.trim(),
-            iconName = iconName ?: existingVessel.iconName,
-            imagePath = newImagePath,
-            capacityMl = newCapacity,
+            name = name.trim(),
+            iconName = iconName,
+            imagePath = imagePath,
+            capacityMl = capacityMl,
             updatedAt = Clock.System.now(),
         )
 

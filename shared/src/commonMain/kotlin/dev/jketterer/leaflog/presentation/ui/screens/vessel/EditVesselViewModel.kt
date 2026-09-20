@@ -3,15 +3,16 @@ package dev.jketterer.leaflog.presentation.ui.screens.vessel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.UpdateBrewingVesselUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.uuid.ExperimentalUuidApi
@@ -28,14 +29,26 @@ class EditVesselViewModel(
     private val _state = MutableStateFlow(EditVesselState())
     val state: StateFlow<EditVesselState> = _state.asStateFlow()
 
-    private val _navigationEvent = MutableStateFlow<EditVesselNavigationEvent?>(null)
-    val navigationEvent: StateFlow<EditVesselNavigationEvent?> = _navigationEvent.asStateFlow()
+    private val _navEvents = Channel<EditVesselNavEvent>()
+    val navEvents = _navEvents.receiveAsFlow()
 
     init {
         loadPreferences(
             preferencesRepository = preferencesRepository,
             stateFlow = _state,
-            updateState = { state, prefs -> state.copy(userPreferences = prefs) },
+            // The capacity field holds what the user typed in whatever unit was current, so a unit
+            // change has to rewrite it. Doing it here rather than in the toggle handler covers the
+            // first emission too, which can land after an edited vessel has already been seeded.
+            updateState = { state, prefs ->
+                state.copy(
+                    userPreferences = prefs,
+                    capacity = convertCapacity(
+                        input = state.capacity,
+                        from = state.userPreferences.volumeUnit,
+                        to = prefs.volumeUnit,
+                    ),
+                )
+            },
         )
     }
 
@@ -52,77 +65,64 @@ class EditVesselViewModel(
             is EditVesselIntent.BackClicked -> onBackClicked()
             is EditVesselIntent.ConfirmDiscard -> confirmDiscard()
             is EditVesselIntent.CancelDiscard -> cancelDiscard()
+            is EditVesselIntent.ErrorShown -> _state.update { it.copy(error = null) }
         }
     }
 
     private fun loadVessel(vesselId: String?) {
         if (vesselId == null) {
-            // Add mode - set default icon
-            _state.update {
-                it.copy(
-                    isEditMode = false,
-                    selectedIconName = "generic"
-                )
-            }
+            _state.update { it.copy(isEditMode = false) }
             return
         }
 
-        // Edit mode
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             try {
                 val vessel = brewingVesselRepository.getById(vesselId)
-                // Capacity is already in mL (storage unit), store it directly
-                if (vessel != null) {
-                    _state.update {
-                        it.copy(
-                            isEditMode = true,
-                            existingVessel = vessel,
-                            name = vessel.name,
-                            selectedIconName = vessel.iconName ?: "generic",
-                            imagePath = vessel.imagePath,
-                            capacity = vessel.capacityMl?.toString() ?: "",
-                            isLoading = false,
-                        )
-                    }
-                } else {
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = "Vessel not found"
-                        )
-                    }
+                if (vessel == null) {
+                    _state.update { it.copy(isLoading = false, error = "Vessel not found") }
+                    return@launch
+                }
+                _state.update {
+                    it.copy(
+                        isEditMode = true,
+                        existingVessel = vessel,
+                        name = vessel.name,
+                        selectedIconName = vessel.iconName ?: DEFAULT_ICON_NAME,
+                        imagePath = vessel.imagePath,
+                        capacity = capacityFromMl(
+                            capacityMl = vessel.capacityMl,
+                            unit = it.userPreferences.volumeUnit,
+                        ),
+                        isLoading = false,
+                    )
                 }
             } catch (e: Exception) {
                 _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to load vessel"
-                    )
+                    it.copy(isLoading = false, error = e.message ?: "Failed to load vessel")
                 }
             }
         }
     }
 
     private fun onNameChanged(name: String) {
-        _state.update {
-            it.copy(
-                name = name,
-                nameError = validateName(name)
-            )
-        }
-    }
-
-    private fun validateName(name: String): String? {
-        return when {
-            name.isBlank() -> "Name is required"
-            name.length > 50 -> "Name must be 50 characters or less"
-            else -> null
-        }
+        _state.update { it.copy(name = name, nameError = validateVesselName(name)) }
     }
 
     private fun onIconSelected(iconName: String) {
         _state.update { it.copy(selectedIconName = iconName) }
+    }
+
+    private fun onCapacityChanged(capacity: String) {
+        _state.update {
+            it.copy(capacity = capacity, capacityError = validateCapacity(capacity))
+        }
+    }
+
+    private fun toggleVolumeUnit() {
+        viewModelScope.launch {
+            preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
+        }
     }
 
     @OptIn(ExperimentalUuidApi::class)
@@ -151,66 +151,22 @@ class EditVesselViewModel(
         _state.update { it.copy(imagePath = null) }
     }
 
-    private fun onCapacityChanged(capacity: String) {
-        // Convert from display unit to storage unit (mL)
-        val storageValue = capacity.toIntOrNull()?.let { displayValue ->
-            _state.value.userPreferences.volumeUnit.toMilliliters(displayValue).toInt().toString()
-        } ?: capacity
-
-        _state.update {
-            it.copy(
-                capacity = storageValue,
-                capacityError = validateCapacity(capacity),
-            )
-        }
-    }
-
-    private fun validateCapacity(capacity: String): String? {
-        if (capacity.isBlank()) {
-            return null // Capacity is optional
-        }
-        val value = capacity.toIntOrNull()
-        return when {
-            value == null -> "Must be a valid number"
-            value <= 0 -> "Capacity must be greater than 0"
-            else -> null
-        }
-    }
-
-    private fun toggleVolumeUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
-        }
-    }
-
     private fun saveVessel() {
         val currentState = _state.value
 
-        // Validate
-        val nameError = validateName(currentState.name)
+        val nameError = validateVesselName(currentState.name)
         val capacityError = validateCapacity(currentState.capacity)
-
-        if (nameError != null || capacityError != null || currentState.selectedIconName == null) {
-            _state.update {
-                it.copy(
-                    nameError = nameError,
-                    capacityError = capacityError
-                )
-            }
+        if (nameError != null || capacityError != null) {
+            _state.update { it.copy(nameError = nameError, capacityError = capacityError) }
             return
         }
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, error = null) }
 
-            // Capacity is already in mL (storage unit), use directly
-            val capacityValue = currentState.capacity.toIntOrNull()
-
-            // Image is already persisted to internal storage by onPhotoSelected
+            // The image is already on disk - onPhotoSelected persists it as soon as it is picked.
             val existingImagePath = currentState.existingVessel?.imagePath
             val imagePath = currentState.imagePath
-
-            // Delete old image file if it was replaced or removed
             if (existingImagePath != null && existingImagePath != imagePath) {
                 try {
                     imageStorage.deleteImage(existingImagePath)
@@ -219,33 +175,30 @@ class EditVesselViewModel(
                 }
             }
 
-            val result = if (currentState.isEditMode && currentState.existingVessel != null) {
+            val result = if (currentState.existingVessel != null) {
                 updateBrewingVesselUseCase(
                     existingVessel = currentState.existingVessel,
                     name = currentState.name,
                     iconName = currentState.selectedIconName,
                     imagePath = imagePath,
-                    clearImage = imagePath == null && existingImagePath != null,
-                    capacityMl = capacityValue,
+                    capacityMl = currentState.capacityMl,
                 )
             } else {
                 createBrewingVesselUseCase(
                     name = currentState.name,
                     iconName = currentState.selectedIconName,
                     imagePath = imagePath,
-                    capacityMl = capacityValue,
+                    capacityMl = currentState.capacityMl,
                 )
             }
 
             result
-                .onSuccess {
-                    _navigationEvent.value = EditVesselNavigationEvent.NavigateBackAfterSave
-                }
+                .onSuccess { _navEvents.send(EditVesselNavEvent.NavigateBack) }
                 .onFailure { error ->
                     _state.update {
                         it.copy(
                             isSaving = false,
-                            error = error.message ?: "Failed to save vessel"
+                            error = error.message ?: "Failed to save vessel",
                         )
                     }
                 }
@@ -256,36 +209,32 @@ class EditVesselViewModel(
         if (_state.value.hasChanges) {
             _state.update { it.copy(showDiscardDialog = true) }
         } else {
-            _navigationEvent.value = EditVesselNavigationEvent.NavigateBack
+            viewModelScope.launch { _navEvents.send(EditVesselNavEvent.NavigateBack) }
         }
     }
 
     private fun confirmDiscard() {
-        // Clean up any newly saved image that won't be used
+        // A photo is written to disk the moment it is picked, so abandoning the form has to take
+        // the file with it or it is orphaned for good.
         val currentImagePath = _state.value.imagePath
         val existingImagePath = _state.value.existingVessel?.imagePath
-        if (currentImagePath != null && currentImagePath != existingImagePath) {
-            viewModelScope.launch {
+        _state.update { it.copy(showDiscardDialog = false) }
+        viewModelScope.launch {
+            if (currentImagePath != null && currentImagePath != existingImagePath) {
                 try {
                     imageStorage.deleteImage(currentImagePath)
                 } catch (_: Exception) {
                 }
             }
+            _navEvents.send(EditVesselNavEvent.NavigateBack)
         }
-        _state.update { it.copy(showDiscardDialog = false) }
-        _navigationEvent.value = EditVesselNavigationEvent.NavigateBack
     }
 
     private fun cancelDiscard() {
         _state.update { it.copy(showDiscardDialog = false) }
     }
-
-    fun onNavigationEventHandled() {
-        _navigationEvent.value = null
-    }
 }
 
-sealed interface EditVesselNavigationEvent {
-    data object NavigateBack : EditVesselNavigationEvent
-    data object NavigateBackAfterSave : EditVesselNavigationEvent
+sealed interface EditVesselNavEvent {
+    data object NavigateBack : EditVesselNavEvent
 }

@@ -12,4 +12,5 @@ sealed interface EditVesselIntent {
     data object BackClicked : EditVesselIntent
     data object ConfirmDiscard : EditVesselIntent
     data object CancelDiscard : EditVesselIntent
+    data object ErrorShown : EditVesselIntent
 }

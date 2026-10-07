@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.minutes
 object SessionReminderDelay {
 
     private val MIN_DELAY = 5.minutes
-    private val MAX_DELAY = 15.minutes
+    private val MAX_DELAY = 30.minutes
 
     private const val COOLEST_BREW_CELSIUS = 70.0
     private const val HOTTEST_BREW_CELSIUS = 95.0

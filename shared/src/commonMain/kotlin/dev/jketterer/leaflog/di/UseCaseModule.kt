@@ -20,11 +20,12 @@ import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetSessionReminderDelayUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTimeInsightsUseCase
@@ -70,6 +71,7 @@ val useCaseModule = module {
     factoryOf(::BrewAgainUseCase)
     factoryOf(::GetBrewingParametersPrefillUseCase)
     factoryOf(::GetInProgressSessionInfoUseCase)
+    factoryOf(::GetSessionReminderDelayUseCase)
 
     // Home screen use cases
     factoryOf(::GetDailyStatsUseCase)

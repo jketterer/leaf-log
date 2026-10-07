@@ -4,7 +4,7 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
-import dev.jketterer.leaflog.domain.usecases.session.SessionReminderDelay
+import dev.jketterer.leaflog.domain.usecases.session.GetSessionReminderDelayUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,6 +31,7 @@ class TimerService(
     private val coroutineScope: CoroutineScope,
     private val notificationService: TimerNotificationService,
     private val saveTimerStateUseCase: SaveTimerStateUseCase,
+    private val sessionReminderDelayUseCase: GetSessionReminderDelayUseCase,
     private val lifecycleHandler: TimerLifecycleHandler,
     preferencesRepository: PreferencesRepository,
 ) {
@@ -191,7 +192,7 @@ class TimerService(
         if (!notificationPreferences.value.sessionReminderNotificationsEnabled) return
 
         val sessionId = state.sessionId ?: return
-        val coolDown = SessionReminderDelay.forBrewingTemperature(state.brewingTemperatureCelsius)
+        val coolDown = sessionReminderDelayUseCase(state.brewingTemperatureCelsius)
         val delay = state.remainingDuration + coolDown
 
         notificationService.scheduleSessionReminder(

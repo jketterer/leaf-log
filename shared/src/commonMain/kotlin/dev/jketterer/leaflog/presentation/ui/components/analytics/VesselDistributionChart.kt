@@ -28,6 +28,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,9 +37,7 @@ import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.VesselDistribution
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.sqrt
+import kotlin.math.roundToInt
 import kotlin.time.Instant
 
 @Composable
@@ -165,40 +165,27 @@ private fun VesselDonutCanvas(
         }
     }
 
+    val summary = remember(distribution) {
+        distribution.joinToString(prefix = "Sessions by vessel: ") {
+            "${it.vessel.name} ${it.percentage.roundToInt()}%"
+        }
+    }
+
     Canvas(
         modifier = Modifier
             .size(160.dp)
+            .semantics { contentDescription = summary }
             .pointerInput(distribution) {
                 detectTapGestures { offset ->
-                    val centerX = size.width / 2f
-                    val centerY = size.height / 2f
-                    val dx = offset.x - centerX
-                    val dy = offset.y - centerY
-                    val distance = sqrt(dx * dx + dy * dy)
-
                     val outerRadius = size.width / 2f
-                    val innerRadius = outerRadius - 30.dp.toPx()
-
-                    if (distance in innerRadius..outerRadius) {
-                        var angle = atan2(dy, dx) * (180f / PI.toFloat())
-                        angle = (angle + 360) % 360
-
-                        for (segment in segments) {
-                            val normalizedStart = (segment.startAngle + 90 + 360) % 360
-                            val normalizedEnd = (normalizedStart + segment.sweepAngle) % 360
-
-                            val inSegment = if (normalizedEnd > normalizedStart) {
-                                angle in normalizedStart..normalizedEnd
-                            } else {
-                                angle >= normalizedStart || angle <= normalizedEnd
-                            }
-
-                            if (inSegment) {
-                                onTapSegment(segment.vesselId)
-                                break
-                            }
-                        }
-                    }
+                    val index = donutSegmentAt(
+                        dx = offset.x - size.width / 2f,
+                        dy = offset.y - size.height / 2f,
+                        innerRadius = outerRadius - 30.dp.toPx(),
+                        outerRadius = outerRadius,
+                        sweeps = segments.map { it.sweepAngle },
+                    )
+                    if (index != null) onTapSegment(segments[index].vesselId)
                 }
             },
     ) {

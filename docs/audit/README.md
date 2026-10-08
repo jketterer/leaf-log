@@ -53,7 +53,7 @@ Ordered by damage. None of these needs design; all are small.
 | 11 | **Backups can't be fully restored after deleting a tea** — its sessions export with a dangling `teaId` → FK failure on a fresh device. Import is non-transactional, so it half-applies. | `DataExportRepositoryImpl.kt:43-47,191-218` | 4 |
 | 12 | **Importing an older backup reverts edits and un-deletes rows** (blind upsert, `deletedAt` not carried). Roadmap calls this "merge". | `DataExportRepositoryImpl.kt:192-218` | 4 |
 | 13 | ~~**Analytics "This Week" excludes today on Sundays.** ✔~~ | `AnalyticsViewModel.kt:369-370` | 2 |
-| 14 | **Donut taps open the wrong segment** (90° offset); trend taps pick the left neighbour. | `TeaTypeDistributionChart.kt:185`, `BrewingTrendsChart.kt:142` | 2 |
+| 14 | ~~**Donut taps open the wrong segment** (90° offset); trend taps pick the left neighbour.~~ | `TeaTypeDistributionChart.kt:185`, `BrewingTrendsChart.kt:142` | 2 |
 | 15 | **Timer edit sheet wipes persisted timer state** (saves stale row with `timerStatus = null`); reset while paused is never persisted. | `TimerViewModel.kt:321-334,454-490` | 1 |
 | 16 | **Quick Timer leaves an undismissable ongoing notification** and ignores the completion-notification setting. *(device)* | `QuickTimerViewModel.kt:160-221,314-331` | 1 |
 | 17 | **Steep Complete discard doesn't withdraw the reminder**; the reminder then reopens the deleted session as reviewable. | `SteepCompleteViewModel.kt:434-474` | 1 |

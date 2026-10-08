@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -121,6 +123,21 @@ private fun BrewingTrendsCanvas(
         }
     }
 
+    val summary = remember(trendPoints, granularity) {
+        fun label(date: LocalDate) = when (granularity) {
+            TrendGranularity.MONTHLY -> "${monthNames[date.month.ordinal]} ${date.year}"
+            else -> "${monthNames[date.month.ordinal]} ${date.day}"
+        }
+        val unit = when (granularity) {
+            TrendGranularity.DAILY -> "day"
+            TrendGranularity.WEEKLY -> "week"
+            TrendGranularity.MONTHLY -> "month"
+        }
+        val peak = trendPoints.maxBy { it.sessionCount }
+        "Sessions per $unit from ${label(trendPoints.first().date)} to " +
+            "${label(trendPoints.last().date)}, peaking at ${peak.sessionCount} on ${label(peak.date)}"
+    }
+
     val labelStyle = TextStyle(
         fontSize = 10.sp,
         color = labelColor,
@@ -131,6 +148,7 @@ private fun BrewingTrendsCanvas(
         modifier = Modifier
             .fillMaxWidth()
             .height(200.dp)
+            .semantics { contentDescription = summary }
             .pointerInput(trendPoints) {
                 detectTapGestures { offset ->
                     val leftPadding = 30.dp.toPx()
@@ -139,15 +157,8 @@ private fun BrewingTrendsCanvas(
                     if (trendPoints.size < 2) return@detectTapGestures
 
                     val stepX = chartWidth / (trendPoints.size - 1)
-                    val tappedIndex = ((offset.x - leftPadding) / stepX)
-                        .toInt()
-                        .coerceIn(0, trendPoints.size - 1)
-
-                    // Check proximity
-                    val pointX = leftPadding + tappedIndex * stepX
-                    if (kotlin.math.abs(offset.x - pointX) < stepX / 2 + 20.dp.toPx()) {
-                        onTapPoint(trendPoints[tappedIndex].date)
-                    }
+                    val index = nearestPointIndex(offset.x, leftPadding, stepX, trendPoints.size)
+                    onTapPoint(trendPoints[index].date)
                 }
             },
     ) {

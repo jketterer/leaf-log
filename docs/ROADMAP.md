@@ -219,7 +219,7 @@ closes.
   `ordinal` copies (Analytics `THIS_WEEK`, trend buckets, activity). Heatmap grid and labels go
   Monday-first. History's "This Week" filter is renamed "Last 7 Days" — that's what it does.
   `calculateDateRange` takes `now` and `tz`. Test: Sunday, Monday, month and year edges.
-- [ ] **Chart taps** (#14). Donut segment and trend point hit-testing become pure functions. Each
+- [x] **Chart taps** (#14). Donut segment and trend point hit-testing become pure functions. Each
   Canvas gets a `contentDescription` summary (definition of done). Test: angle offset, nearest-point
   rounding.
 - [ ] **Timer edit sheet** (#15). Re-read the session inside the launch, copy the edited fields onto

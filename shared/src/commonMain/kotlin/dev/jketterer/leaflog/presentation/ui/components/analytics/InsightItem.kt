@@ -24,7 +24,6 @@ import compose.icons.feathericons.Heart
 import compose.icons.feathericons.PieChart
 import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Star
-import compose.icons.feathericons.Zap
 import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
@@ -58,7 +57,6 @@ private val InsightType.icon: ImageVector
     get() = when (this) {
         InsightType.MOST_BREWED -> FeatherIcons.Coffee
         InsightType.AVERAGE_RATING -> FeatherIcons.Star
-        InsightType.CONSISTENCY -> FeatherIcons.Zap
         InsightType.FAVORITE_TYPE -> FeatherIcons.PieChart
         InsightType.RE_STEEP -> FeatherIcons.RefreshCw
         InsightType.TOP_RATED -> FeatherIcons.Award

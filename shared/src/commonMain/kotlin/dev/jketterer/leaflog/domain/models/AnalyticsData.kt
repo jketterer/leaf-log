@@ -40,7 +40,6 @@ data class Insight(
 enum class InsightType {
     MOST_BREWED,
     AVERAGE_RATING,
-    CONSISTENCY,
     FAVORITE_TYPE,
     RE_STEEP,
     TOP_RATED,

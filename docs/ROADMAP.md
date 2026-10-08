@@ -233,7 +233,7 @@ closes.
     - Timer, Brewing Method, Edit Session, Vessels: render `state.error` in a `SnackbarHost`.
     - Settings: export and import picker failures get their own intents instead of
       `ExportCompleted` / `ImportCancelled`.
-- [ ] **Remove the streak insight** (#20): the block, `computeMaxStreak`,
+- [x] **Remove the streak insight** (#20): the block, `computeMaxStreak`,
   `InsightType.CONSISTENCY` if otherwise unused, the preview string.
 - [ ] **`removeLast()` → `removeAt(lastIndex)`** in `AppNavigation.kt` (18 sites). Safe whether or
   not the API < 35 crash is real; move the Hard-won facts entry from "unverified" to a rule.

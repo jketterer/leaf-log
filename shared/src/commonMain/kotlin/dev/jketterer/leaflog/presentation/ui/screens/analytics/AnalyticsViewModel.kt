@@ -278,8 +278,6 @@ class AnalyticsViewModel(
                     teaTypeDistribution = teaTypeDistribution,
                     topRatedTeas = topRatedTeas,
                     vesselDistribution = vesselDistribution,
-                    activityCells = activityCells,
-                    period = currentState.selectedPeriod,
                     timeInsights = timeInsights,
                 )
 

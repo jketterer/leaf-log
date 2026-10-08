@@ -1,8 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
-import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsData
-import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.Insight
 import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.domain.models.SteepInsights
@@ -22,8 +20,6 @@ class GenerateInsightsUseCase {
         teaTypeDistribution: List<TeaTypeDistribution>,
         topRatedTeas: List<TopRatedTea>,
         vesselDistribution: List<VesselDistribution>,
-        activityCells: List<ActivityCell>,
-        period: AnalyticsPeriod,
         timeInsights: TimeInsights? = null,
     ): List<Insight> {
         val insights = mutableListOf<Insight>()
@@ -99,20 +95,6 @@ class GenerateInsightsUseCase {
             )
         }
 
-        // Brewing consistency (streak)
-        val useWeekly =
-            period == AnalyticsPeriod.LAST_90_DAYS || period == AnalyticsPeriod.THIS_YEAR
-        val maxStreak = computeMaxStreak(activityCells.sortedBy { it.date })
-        if (maxStreak >= 3) {
-            val unit = if (useWeekly) "week" else "day"
-            insights.add(
-                Insight(
-                    type = InsightType.CONSISTENCY,
-                    text = "Your longest brewing streak was $maxStreak ${unit}s in a row",
-                )
-            )
-        }
-
         // Time of day preference
         val dominantTod = timeInsights?.dominantTimeOfDay
         if (dominantTod != null) {
@@ -143,19 +125,5 @@ class GenerateInsightsUseCase {
         }
 
         return insights
-    }
-
-    private fun computeMaxStreak(cells: List<ActivityCell>): Int {
-        var maxStreak = 0
-        var currentStreak = 0
-        for (cell in cells) {
-            if (cell.sessionCount > 0) {
-                currentStreak++
-                if (currentStreak > maxStreak) maxStreak = currentStreak
-            } else {
-                currentStreak = 0
-            }
-        }
-        return maxStreak
     }
 }

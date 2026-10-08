@@ -485,10 +485,6 @@ private fun AnalyticsDataContentPreview() {
                         InsightType.PREFERRED_VESSEL,
                         "Gaiwan is your go-to vessel, used in 60% of sessions",
                     ),
-                    Insight(
-                        InsightType.CONSISTENCY,
-                        "Your longest brewing streak was 5 days in a row",
-                    ),
                 ),
                 formattedWaterQuantity = "5.2L",
                 formattedBrewingTime = "2h 30m",

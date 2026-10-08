@@ -222,7 +222,7 @@ closes.
 - [x] **Chart taps** (#14). Donut segment and trend point hit-testing become pure functions. Each
   Canvas gets a `contentDescription` summary (definition of done). Test: angle offset, nearest-point
   rounding.
-- [ ] **Timer edit sheet** (#15). Re-read the session inside the launch, copy the edited fields onto
+- [x] **Timer edit sheet** (#15). Re-read the session inside the launch, copy the edited fields onto
   it, then upsert. Reset while paused persists via `saveTimerStateUseCase`.
 - [ ] **Steep Complete discard withdraws the reminder** (#17). `timerService.onSessionResolved`.
 - [ ] **Live Activity deployment target** 26.2 → 18.2 (#18). Exit: an Xcode Cloud build; a Track B

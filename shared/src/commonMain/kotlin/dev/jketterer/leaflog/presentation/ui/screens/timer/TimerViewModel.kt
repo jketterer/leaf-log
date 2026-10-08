@@ -331,6 +331,9 @@ class TimerViewModel(
             pausedAt = null,
         )
         timerService.updateState(resetState)
+
+        // Persist so leaving the screen or losing the process doesn't restore the paused timer
+        viewModelScope.launch { saveTimerStateUseCase(resetState) }
     }
 
     private fun showDiscardSessionConfirmation() {
@@ -470,23 +473,21 @@ class TimerViewModel(
 
         val waterType = currentState.editWaterType ?: session.waterType
 
-        val updatedSession = session.copy(
-            temperatureCelsius = temperatureCelsius,
-            waterQuantityMl = waterQuantityMl,
-            teaQuantityGrams = teaQuantityGrams,
-            waterType = waterType,
-            updatedAt = Clock.System.now(),
-        )
-
-        _state.update {
-            it.copy(
-                showEditSheet = false,
-                session = updatedSession,
-            )
-        }
+        _state.update { it.copy(showEditSheet = false) }
 
         viewModelScope.launch {
+            // Re-read rather than copy state.session: the timer fields have been saved since it
+            // was loaded, and writing the stale copy back would wipe them
+            val latest = teaSessionRepository.getById(session.id) ?: return@launch
+            val updatedSession = latest.copy(
+                temperatureCelsius = temperatureCelsius,
+                waterQuantityMl = waterQuantityMl,
+                teaQuantityGrams = teaQuantityGrams,
+                waterType = waterType,
+                updatedAt = Clock.System.now(),
+            )
             teaSessionRepository.upsert(updatedSession)
+            _state.update { it.copy(session = updatedSession) }
         }
     }
 

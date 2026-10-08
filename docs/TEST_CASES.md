@@ -32,6 +32,10 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       original end time.
 - [ ] ±adjust during a running timer. The ongoing notification and Live Activity show the new end
       time, and the alert fires at the new time.
+- [ ] Running timer → edit parameters → force-stop → relaunch. Still running with the correct
+      remaining time, and the edits kept. The Home banner keeps its progress bar throughout.
+- [ ] Pause → Reset → leave the timer and come back, then force-stop and relaunch. Both times the
+      timer is at full duration and not started.
 
 ## 2. Notifications
 

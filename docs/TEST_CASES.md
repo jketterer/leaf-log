@@ -81,6 +81,8 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Complete, discard, or tap the completion alert → the activity ends.
 - [ ] Force-quit with an activity showing → relaunch. Stale activities are cleaned up.
 - [ ] Live Activities disabled in Settings → the timer still works and nothing errors.
+- [ ] On an iOS 18 device, start a timer. The Live Activity appears (the widget extension's
+      deployment target matches the app's).
 
 ## 5. Permissions
 

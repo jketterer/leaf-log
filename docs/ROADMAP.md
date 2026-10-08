@@ -225,7 +225,7 @@ closes.
 - [x] **Timer edit sheet** (#15). Re-read the session inside the launch, copy the edited fields onto
   it, then upsert. Reset while paused persists via `saveTimerStateUseCase`.
 - [x] **Steep Complete discard withdraws the reminder** (#17). `timerService.onSessionResolved`.
-- [ ] **Live Activity deployment target** 26.2 → 18.2 (#18). Exit: an Xcode Cloud build; a Track B
+- [x] **Live Activity deployment target** 26.2 → 18.2 (#18). Exit: an Xcode Cloud build; a Track B
   line for the Live Activity on an iOS 18 device.
 - [x] **Errors you can see** (#19). Minimal visibility only — Bet 1 replaces the source, not the
   placement:
@@ -235,7 +235,7 @@ closes.
       `ExportCompleted` / `ImportCancelled`.
 - [x] **Remove the streak insight** (#20): the block, `computeMaxStreak`,
   `InsightType.CONSISTENCY` if otherwise unused, the preview string.
-- [ ] **`removeLast()` → `removeAt(lastIndex)`** in `AppNavigation.kt` (18 sites). Safe whether or
+- [x] **`removeLast()` → `removeAt(lastIndex)`** in `AppNavigation.kt` (18 sites). Safe whether or
   not the API < 35 crash is real; move the Hard-won facts entry from "unverified" to a rule.
 - [ ] **Release `0.1.1`**: CHANGELOG entry, tag `v0.1.1`.
 
@@ -636,8 +636,8 @@ Things that cost real debugging time and would cost it again. Not history — tr
   Intent all route to whichever was built last (suspected; confirm on device).
 - **A `Snackbar` placed after a `fillMaxSize()` sibling in a `Column` gets zero height** and is
   never seen. Use `SnackbarHost` in a `Scaffold`.
-- **`backStack.removeLast()` with compileSdk ≥ 35** may bind to JDK 21's `List.removeLast()`, absent
-  below API 35 (unverified — check on an API 34 emulator; `removeAt(lastIndex)` is safe).
+- **Never call `MutableList.removeLast()` / `removeFirst()`.** With compileSdk ≥ 35 they may bind to
+  JDK 21's `List.removeLast()`, absent below API 35. Use `removeAt(lastIndex)` / `removeAt(0)`.
 
 ---
 

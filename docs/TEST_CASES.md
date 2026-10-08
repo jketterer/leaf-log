@@ -124,8 +124,6 @@ the Activity is portrait-locked.
 - [ ] **[iOS]** Back-swipe on a screen pushed inside a tab returns to the previous screen, not out
       of the tab.
 - [ ] **[A]** System back from a tab's root returns Home, then exits.
-- [ ] **[A]** API 34 or lower: back out of a pushed screen. No `NoSuchMethodError` from
-      `removeLast()` (see Hard-won facts).
 
 ## 9. Quick Timer
 

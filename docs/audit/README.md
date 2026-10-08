@@ -61,9 +61,9 @@ Ordered by damage. None of these needs design; all are small.
 | 19 | ~~**Errors that can never be seen**: inline `Snackbar` after a `fillMaxSize` sibling (Collection, History); `state.error` never rendered (Timer, Brewing Method, Edit Session, Vessels); export/import failures mapped to "completed"/"cancelled".~~ | see §3E | 3, 4 |
 | 20 | ~~**A streak insight ships** despite "No streaks" in Decisions. ✔~~ | `GenerateInsightsUseCase.kt:102` | 2 |
 
-Also worth a device check soon: `backStack.removeLast()` (18 sites) with compileSdk 37 / minSdk 24
+~~Also worth a device check soon: `backStack.removeLast()` (18 sites) with compileSdk 37 / minSdk 24
 may bind to the JDK 21 `List.removeLast()` and throw `NoSuchMethodError` below API 35 —
-*unverified*, trivially testable on an API 34 emulator.
+*unverified*, trivially testable on an API 34 emulator.~~ Replaced with `removeAt(lastIndex)`.
 
 ---
 
@@ -270,7 +270,7 @@ This is the raw material for choosing big bets in the vision interview — not a
 
 ## 7. Needs a device to confirm
 
-`removeLast()` below API 35 · shared `PendingIntent` requestCode routing · Quick Timer ongoing
+Shared `PendingIntent` requestCode routing · Quick Timer ongoing
 notification and double alert · Quick Timer and edit-form behaviour on dark-mode/font-scale
 recreation · deep-link replay after process death · Quick Brew card width with long names · Timer
 ring and Quick Timer step 2 at large font scale · iOS back-swipe on pushed tab screens ·

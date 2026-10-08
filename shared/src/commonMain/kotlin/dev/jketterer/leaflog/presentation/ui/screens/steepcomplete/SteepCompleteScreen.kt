@@ -260,7 +260,7 @@ private fun SteepCompleteContent(
                 waterQuantityMl = session.waterQuantityMl,
                 temperatureCelsius = session.temperatureCelsius,
                 brewingTimeSeconds = session.brewingTime.inWholeSeconds.toInt(),
-                rating = session.rating ?: 5f,
+                rating = session.rating,
                 suggestedLabel = state.suggestedConfigurationLabel,
                 userPreferences = state.userPreferences,
                 onSave = { label ->

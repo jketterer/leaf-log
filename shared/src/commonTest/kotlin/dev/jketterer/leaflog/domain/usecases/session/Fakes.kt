@@ -63,7 +63,7 @@ class FakeTeaSessionRepository(
     override fun getInProgressFlow(): Flow<List<TeaSession>> = TODO("unused by these tests")
     override fun getInProgressCountFlow(): Flow<Int> = TODO("unused by these tests")
     override suspend fun getByDateRange(start: Instant, end: Instant): List<TeaSession> = TODO("unused by these tests")
-    override suspend fun upsert(session: TeaSession) = TODO("unused by these tests")
+    override suspend fun upsert(session: TeaSession) {}
     override suspend fun delete(id: String) = TODO("unused by these tests")
     override suspend fun countByDateRange(start: Instant, end: Instant): Int = TODO("unused by these tests")
     override suspend fun hasInProgressSession(): Boolean = TODO("unused by these tests")

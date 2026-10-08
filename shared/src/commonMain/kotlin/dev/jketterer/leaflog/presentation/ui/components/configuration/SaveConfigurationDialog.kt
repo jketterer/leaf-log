@@ -54,7 +54,7 @@ fun SaveConfigurationDialog(
     waterQuantityMl: Double,
     temperatureCelsius: Double,
     brewingTimeSeconds: Int,
-    rating: Float,
+    rating: Float?,
     suggestedLabel: String,
     userPreferences: UserPreferences,
     onSave: (label: String) -> Unit,
@@ -94,7 +94,7 @@ fun SaveConfigurationDialog(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
-                    if (rating > 0f) {
+                    if (rating != null && rating > 0f) {
                         RatingDisplay(rating = rating, iconsOnly = true)
                     }
                 }

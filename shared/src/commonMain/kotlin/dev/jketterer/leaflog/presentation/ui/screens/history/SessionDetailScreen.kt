@@ -451,7 +451,7 @@ private fun SessionDetailContent(
             waterQuantityMl = state.parentSession.waterQuantityMl,
             temperatureCelsius = state.parentSession.temperatureCelsius,
             brewingTimeSeconds = state.parentSession.brewingTime.inWholeSeconds.toInt(),
-            rating = state.parentSession.rating ?: 0f,
+            rating = state.parentSession.rating,
             suggestedLabel = state.suggestedConfigurationLabel,
             userPreferences = state.userPreferences,
             onSave = { label -> onIntent(SessionDetailIntent.ConfirmSaveConfiguration(label)) },

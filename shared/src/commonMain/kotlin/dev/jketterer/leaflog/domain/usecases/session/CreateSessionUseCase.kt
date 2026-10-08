@@ -10,7 +10,6 @@ import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 
@@ -19,7 +18,6 @@ class CreateSessionUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val updateTeaStatsUseCase: UpdateTeaStatsUseCase,
 ) {
-    @OptIn(ExperimentalUuidApi::class)
     suspend operator fun invoke(
         teaId: String,
         teaQuantityGrams: Float? = null,
@@ -111,8 +109,8 @@ class CreateSessionUseCase(
             temperatureCelsius = config.temperatureCelsius,
             waterQuantityMl = config.waterQuantityMl,
             notes = null,
-            rating = config.rating,
             photos = emptyList(),
+            usedConfigurationId = config.id,
         )
     }
 

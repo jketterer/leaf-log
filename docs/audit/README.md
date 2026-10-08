@@ -41,8 +41,8 @@ Ordered by damage. None of these needs design; all are small.
 | # | Bug | Where | Report |
 |---|---|---|---|
 | 1 | **Staged file breaks the next commit.** `EditVesselFormLogic.kt` is staged (`AD`) and redefines the 5 `internal` functions that now live in `EditVesselState.kt`. `git commit` without `-a` produces a non-compiling commit. ✔ | git index | 4 |
-| 2 | **Steep Complete writes a guessed rating on open.** An unrated steep gets `round(tea.averageRating)` persisted immediately; skip the review and the guess stays, then feeds the tea average and the prefill — self-reinforcing. ✔ | `SteepCompleteViewModel.kt:179-190` | 1 |
-| 3 | **Quick Brew pre-rates sessions and never counts usage.** Session is created with `rating = config.rating` and no `usedConfigurationId`, so `timesUsed`/`lastUsedAt` never rise for the feature built on them. ✔ | `CreateSessionUseCase.kt:101-117` | 1 |
+| 2 | ~~**Steep Complete writes a guessed rating on open.** An unrated steep gets `round(tea.averageRating)` persisted immediately; skip the review and the guess stays, then feeds the tea average and the prefill — self-reinforcing. ✔~~ | `SteepCompleteViewModel.kt:179-190` | 1 |
+| 3 | ~~**Quick Brew pre-rates sessions and never counts usage.** Session is created with `rating = config.rating` and no `usedConfigurationId`, so `timesUsed`/`lastUsedAt` never rise for the feature built on them. ✔~~ | `CreateSessionUseCase.kt:101-117` | 1 |
 | 4 | **Steep Complete auto-saves revert each other.** Each field saves `staleSnapshot.copy(oneField)`; rate then type a note → rating reverts. | `SteepCompleteViewModel.kt:228-282` | 1 |
 | 5 | **Edit Session can't clear anything.** Blank notes/rating/location or Loose→Bag is a silent no-op, because `null` means "unchanged". | `UpdateSessionUseCase.kt:35-64` | 2 |
 | 6 | **Rating edits never recompute averages** (session `averageRating`, tea stats). Only Steep Complete does. | `EditSessionViewModel` | 2 |

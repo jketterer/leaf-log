@@ -227,7 +227,7 @@ closes.
 - [x] **Steep Complete discard withdraws the reminder** (#17). `timerService.onSessionResolved`.
 - [ ] **Live Activity deployment target** 26.2 → 18.2 (#18). Exit: an Xcode Cloud build; a Track B
   line for the Live Activity on an iOS 18 device.
-- [ ] **Errors you can see** (#19). Minimal visibility only — Bet 1 replaces the source, not the
+- [x] **Errors you can see** (#19). Minimal visibility only — Bet 1 replaces the source, not the
   placement:
     - Collection, History: inline `Snackbar` → `Scaffold` `snackbarHost`.
     - Timer, Brewing Method, Edit Session, Vessels: render `state.error` in a `SnackbarHost`.

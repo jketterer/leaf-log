@@ -77,6 +77,7 @@ class TimerViewModel(
 
     fun onIntent(intent: TimerIntent) {
         when (intent) {
+            is TimerIntent.ErrorShown -> _state.update { it.copy(error = null) }
             is TimerIntent.Initialize -> initialize(intent.sessionId)
             is TimerIntent.StartTimer -> startTimer()
             is TimerIntent.PauseTimer -> pauseTimer()

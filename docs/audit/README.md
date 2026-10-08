@@ -58,7 +58,7 @@ Ordered by damage. None of these needs design; all are small.
 | 16 | **Quick Timer leaves an undismissable ongoing notification** and ignores the completion-notification setting. *(device)* | `QuickTimerViewModel.kt:160-221,314-331` | 1 |
 | 17 | ~~**Steep Complete discard doesn't withdraw the reminder**; the reminder then reopens the deleted session as reviewable.~~ | `SteepCompleteViewModel.kt:434-474` | 1 |
 | 18 | ~~**iOS Live Activity extension requires iOS 26.2**, app requires 18.2. ✔~~ | `project.pbxproj:312,345` | 4 |
-| 19 | **Errors that can never be seen**: inline `Snackbar` after a `fillMaxSize` sibling (Collection, History); `state.error` never rendered (Timer, Brewing Method, Edit Session, Vessels); export/import failures mapped to "completed"/"cancelled". | see §3E | 3, 4 |
+| 19 | ~~**Errors that can never be seen**: inline `Snackbar` after a `fillMaxSize` sibling (Collection, History); `state.error` never rendered (Timer, Brewing Method, Edit Session, Vessels); export/import failures mapped to "completed"/"cancelled".~~ | see §3E | 3, 4 |
 | 20 | **A streak insight ships** despite "No streaks" in Decisions. ✔ | `GenerateInsightsUseCase.kt:102` | 2 |
 
 Also worth a device check soon: `backStack.removeLast()` (18 sites) with compileSdk 37 / minSdk 24

@@ -23,10 +23,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +55,7 @@ import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaFilterChips
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselCard
+import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListViewModel
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
@@ -88,7 +90,7 @@ private fun TeaCollectionContent(
     state: TeaCollectionState,
     vesselState: dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState,
     onIntent: (TeaCollectionIntent) -> Unit,
-    onVesselIntent: (dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent) -> Unit,
+    onVesselIntent: (VesselListIntent) -> Unit,
     onNavigateToTeaDetail: (String) -> Unit,
     onNavigateToAddTea: () -> Unit,
     onNavigateToVesselDetail: (String) -> Unit,
@@ -97,121 +99,160 @@ private fun TeaCollectionContent(
     var showSearchBar by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            if (showSearchBar && state.selectedTab == CollectionTab.TEAS) {
-                val focusRequester = remember { FocusRequester() }
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
-                }
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            showSearchBar = false
-                            onIntent(TeaCollectionIntent.SearchQueryChanged(""))
-                        }) {
-                            Icon(
-                                imageVector = FeatherIcons.ArrowLeft,
-                                contentDescription = "Close search",
-                            )
-                        }
-                    },
-                    title = {
-                        TextField(
-                            value = state.searchQuery,
-                            onValueChange = { query ->
-                                onIntent(TeaCollectionIntent.SearchQueryChanged(query))
-                            },
-                            placeholder = { Text("Search teas...") },
-                            singleLine = true,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester),
-                        )
-                    },
-                    actions = {
-                        if (state.searchQuery.isNotEmpty()) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onIntent(TeaCollectionIntent.ClearError)
+        }
+    }
+
+    LaunchedEffect(vesselState.error) {
+        vesselState.error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onVesselIntent(VesselListIntent.ClearError)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            Column {
+                if (showSearchBar && state.selectedTab == CollectionTab.TEAS) {
+                    val focusRequester = remember { FocusRequester() }
+                    LaunchedEffect(Unit) {
+                        focusRequester.requestFocus()
+                    }
+                    TopAppBar(
+                        navigationIcon = {
                             IconButton(onClick = {
+                                showSearchBar = false
                                 onIntent(TeaCollectionIntent.SearchQueryChanged(""))
                             }) {
                                 Icon(
-                                    imageVector = FeatherIcons.X,
-                                    contentDescription = "Clear search",
+                                    imageVector = FeatherIcons.ArrowLeft,
+                                    contentDescription = "Close search",
                                 )
                             }
-                        }
-                    },
-                )
-            } else {
-                TopAppBar(
-                    title = { Text("Collection") },
-                    actions = {
-                        if (state.selectedTab == CollectionTab.TEAS) {
-                            Box {
-                                IconButton(onClick = { showSortMenu = true }) {
+                        },
+                        title = {
+                            TextField(
+                                value = state.searchQuery,
+                                onValueChange = { query ->
+                                    onIntent(TeaCollectionIntent.SearchQueryChanged(query))
+                                },
+                                placeholder = { Text("Search teas...") },
+                                singleLine = true,
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .focusRequester(focusRequester),
+                            )
+                        },
+                        actions = {
+                            if (state.searchQuery.isNotEmpty()) {
+                                IconButton(onClick = {
+                                    onIntent(TeaCollectionIntent.SearchQueryChanged(""))
+                                }) {
                                     Icon(
-                                        imageVector = FeatherIcons.Sliders,
-                                        contentDescription = "Sort teas",
+                                        imageVector = FeatherIcons.X,
+                                        contentDescription = "Clear search",
                                     )
                                 }
-                                DropdownMenu(
-                                    expanded = showSortMenu,
-                                    onDismissRequest = { showSortMenu = false },
-                                ) {
-                                    TeaSortOption.entries.forEach { option ->
-                                        DropdownMenuItem(
-                                            text = { Text(option.label) },
-                                            onClick = {
-                                                onIntent(TeaCollectionIntent.SortSelected(option))
-                                                showSortMenu = false
-                                            },
-                                            trailingIcon = if (state.selectedSortOption == option) {
-                                                {
-                                                    Icon(
-                                                        imageVector = FeatherIcons.Check,
-                                                        contentDescription = null,
-                                                    )
-                                                }
-                                            } else null,
+                            }
+                        },
+                    )
+                } else {
+                    TopAppBar(
+                        title = { Text("Collection") },
+                        actions = {
+                            if (state.selectedTab == CollectionTab.TEAS) {
+                                Box {
+                                    IconButton(onClick = { showSortMenu = true }) {
+                                        Icon(
+                                            imageVector = FeatherIcons.Sliders,
+                                            contentDescription = "Sort teas",
                                         )
                                     }
+                                    DropdownMenu(
+                                        expanded = showSortMenu,
+                                        onDismissRequest = { showSortMenu = false },
+                                    ) {
+                                        TeaSortOption.entries.forEach { option ->
+                                            DropdownMenuItem(
+                                                text = { Text(option.label) },
+                                                onClick = {
+                                                    onIntent(TeaCollectionIntent.SortSelected(option))
+                                                    showSortMenu = false
+                                                },
+                                                trailingIcon = if (state.selectedSortOption == option) {
+                                                    {
+                                                        Icon(
+                                                            imageVector = FeatherIcons.Check,
+                                                            contentDescription = null,
+                                                        )
+                                                    }
+                                                } else null,
+                                            )
+                                        }
+                                    }
+                                }
+                                IconButton(onClick = { showSearchBar = true }) {
+                                    Icon(
+                                        imageVector = FeatherIcons.Search,
+                                        contentDescription = "Search teas",
+                                    )
                                 }
                             }
-                            IconButton(onClick = { showSearchBar = true }) {
-                                Icon(
-                                    imageVector = FeatherIcons.Search,
-                                    contentDescription = "Search teas",
-                                )
-                            }
                         }
-                    }
-                )
-            }
+                    )
+                }
 
-            // Tab row
-            PrimaryTabRow(
-                selectedTabIndex = state.selectedTab.ordinal,
+                // Tab row
+                PrimaryTabRow(
+                    selectedTabIndex = state.selectedTab.ordinal,
+                ) {
+                    Tab(
+                        selected = state.selectedTab == CollectionTab.TEAS,
+                        onClick = { onIntent(TeaCollectionIntent.TabSelected(CollectionTab.TEAS)) },
+                        text = { Text("Teas") },
+                    )
+                    Tab(
+                        selected = state.selectedTab == CollectionTab.VESSELS,
+                        onClick = { onIntent(TeaCollectionIntent.TabSelected(CollectionTab.VESSELS)) },
+                        text = { Text("Vessels") },
+                    )
+                }
+            }
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = when (state.selectedTab) {
+                    CollectionTab.TEAS -> onNavigateToAddTea
+                    CollectionTab.VESSELS -> onNavigateToAddVessel
+                },
             ) {
-                Tab(
-                    selected = state.selectedTab == CollectionTab.TEAS,
-                    onClick = { onIntent(TeaCollectionIntent.TabSelected(CollectionTab.TEAS)) },
-                    text = { Text("Teas") },
-                )
-                Tab(
-                    selected = state.selectedTab == CollectionTab.VESSELS,
-                    onClick = { onIntent(TeaCollectionIntent.TabSelected(CollectionTab.VESSELS)) },
-                    text = { Text("Vessels") },
+                Icon(
+                    imageVector = FeatherIcons.Plus,
+                    contentDescription = when (state.selectedTab) {
+                        CollectionTab.TEAS -> "Add tea"
+                        CollectionTab.VESSELS -> "Add vessel"
+                    },
                 )
             }
-
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
             when (state.selectedTab) {
                 CollectionTab.TEAS -> TeasTabContent(
                     state = state,
@@ -227,39 +268,6 @@ private fun TeaCollectionContent(
                     onNavigateToAddVessel = onNavigateToAddVessel,
                 )
             }
-
-            // Error message
-            state.error?.let { error ->
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    action = {
-                        TextButton(onClick = { onIntent(TeaCollectionIntent.ClearError) }) {
-                            Text("Dismiss")
-                        }
-                    }
-                ) {
-                    Text(error)
-                }
-            }
-        }
-
-        // Contextual FAB
-        FloatingActionButton(
-            onClick = when (state.selectedTab) {
-                CollectionTab.TEAS -> onNavigateToAddTea
-                CollectionTab.VESSELS -> onNavigateToAddVessel
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-        ) {
-            Icon(
-                imageVector = FeatherIcons.Plus,
-                contentDescription = when (state.selectedTab) {
-                    CollectionTab.TEAS -> "Add tea"
-                    CollectionTab.VESSELS -> "Add vessel"
-                },
-            )
         }
     }
 }
@@ -356,7 +364,7 @@ private fun TeasTabContent(
 @Composable
 private fun VesselsTabContent(
     vesselState: dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState,
-    onVesselIntent: (dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent) -> Unit,
+    onVesselIntent: (VesselListIntent) -> Unit,
     onNavigateToVesselDetail: (String) -> Unit,
     onNavigateToAddVessel: () -> Unit,
 ) {

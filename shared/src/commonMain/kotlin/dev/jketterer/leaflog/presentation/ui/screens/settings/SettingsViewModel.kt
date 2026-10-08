@@ -41,9 +41,15 @@ class SettingsViewModel(
             is SettingsIntent.ExportCompleted -> _state.update {
                 it.copy(exportFilePath = null, isExporting = false)
             }
+            is SettingsIntent.ExportFailed -> _state.update {
+                it.copy(exportFilePath = null, isExporting = false, error = intent.message)
+            }
             is SettingsIntent.ImportData -> _state.update { it.copy(showImportPicker = true) }
             is SettingsIntent.ImportFileSelected -> importData(intent.filePath)
             is SettingsIntent.ImportCancelled -> _state.update { it.copy(showImportPicker = false) }
+            is SettingsIntent.ImportFailed -> _state.update {
+                it.copy(showImportPicker = false, error = intent.message)
+            }
             is SettingsIntent.DismissImportResult -> _state.update { it.copy(importResult = null) }
         }
     }

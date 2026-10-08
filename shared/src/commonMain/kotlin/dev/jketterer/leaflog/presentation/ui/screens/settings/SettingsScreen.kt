@@ -142,17 +142,14 @@ private fun SettingsContent(
             "leaf-log-export-${date.year}${month}${day}-${hour}${minute}${second}.zip"
         },
         onExported = { onIntent(SettingsIntent.ExportCompleted) },
-        onError = { error ->
-            onIntent(SettingsIntent.ExportCompleted)
-            onIntent(SettingsIntent.ClearError) // Clear any prior, then set new
-        },
+        onError = { message -> onIntent(SettingsIntent.ExportFailed(message)) },
     )
 
     ImportFileLauncher(
         shouldLaunch = state.showImportPicker,
         onFilePath = { path -> onIntent(SettingsIntent.ImportFileSelected(path)) },
         onCancelled = { onIntent(SettingsIntent.ImportCancelled) },
-        onError = { onIntent(SettingsIntent.ImportCancelled) },
+        onError = { message -> onIntent(SettingsIntent.ImportFailed(message)) },
     )
 
     // Import result dialog

@@ -70,6 +70,7 @@ class EditSessionViewModel(
 
     fun onIntent(intent: EditSessionIntent) {
         when (intent) {
+            is EditSessionIntent.ErrorShown -> _state.update { it.copy(error = null) }
             is EditSessionIntent.LoadSession -> loadSession(
                 intent.sessionId,
                 intent.editFullSession

@@ -28,6 +28,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -84,245 +87,264 @@ private fun CreateBrewingConfigurationContent(
     onIntent: (CreateBrewingConfigurationIntent) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text(if (state.isEditMode) "Edit Brewing Method" else "Add Brewing Method") },
-            navigationIcon = {
-                IconButton(onClick = { onIntent(CreateBrewingConfigurationIntent.NavigateBack) }) {
-                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
-                }
-            },
-        )
-        Box(modifier = Modifier.weight(1f)) {
-            if (state.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-            // Vessel selector
-            item(key = "vessel") {
-                VesselSelector(
-                    vessels = state.vessels,
-                    selectedVessel = state.selectedVessel,
-                    onVesselSelected = { vessel ->
-                        onIntent(CreateBrewingConfigurationIntent.SelectVessel(vessel.id))
-                    },
-                    label = "Brewing Vessel *",
-                    volumeUnit = state.userPreferences.volumeUnit,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-            // Label (optional)
-            item(key = "label") {
-                OutlinedTextField(
-                    value = state.label,
-                    onValueChange = { onIntent(CreateBrewingConfigurationIntent.UpdateLabel(it)) },
-                    label = { Text("Name (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                )
-            }
+    LaunchedEffect(state.error) {
+        state.error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onIntent(CreateBrewingConfigurationIntent.ErrorShown)
+        }
+    }
 
-            // Brewing Time
-            item(key = "brewing_time") {
-                val brewingTimePresets = remember {
-                    listOf(
-                        Preset("0:30", 30.seconds),
-                        Preset("0:45", 45.seconds),
-                        Preset("1:00", 1.minutes),
-                        Preset("1:30", 1.minutes + 30.seconds),
-                        Preset("2:00", 2.minutes),
-                        Preset("3:00", 3.minutes),
-                        Preset("4:00", 4.minutes),
-                        Preset("5:00", 5.minutes),
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (state.isEditMode) "Edit Brewing Method" else "Add Brewing Method") },
+                navigationIcon = {
+                    IconButton(onClick = { onIntent(CreateBrewingConfigurationIntent.NavigateBack) }) {
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                if (state.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                // Vessel selector
+                item(key = "vessel") {
+                    VesselSelector(
+                        vessels = state.vessels,
+                        selectedVessel = state.selectedVessel,
+                        onVesselSelected = { vessel ->
+                            onIntent(CreateBrewingConfigurationIntent.SelectVessel(vessel.id))
+                        },
+                        label = "Brewing Vessel *",
+                        volumeUnit = state.userPreferences.volumeUnit,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
 
-                Column {
-                    DurationPicker(
-                        duration = state.brewingTime,
-                        onDurationChange = { duration ->
-                            duration?.let {
-                                onIntent(
-                                    CreateBrewingConfigurationIntent.UpdateBrewingTime(
-                                        it
+                // Label (optional)
+                item(key = "label") {
+                    OutlinedTextField(
+                        value = state.label,
+                        onValueChange = { onIntent(CreateBrewingConfigurationIntent.UpdateLabel(it)) },
+                        label = { Text("Name (optional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    )
+                }
+
+                // Brewing Time
+                item(key = "brewing_time") {
+                    val brewingTimePresets = remember {
+                        listOf(
+                            Preset("0:30", 30.seconds),
+                            Preset("0:45", 45.seconds),
+                            Preset("1:00", 1.minutes),
+                            Preset("1:30", 1.minutes + 30.seconds),
+                            Preset("2:00", 2.minutes),
+                            Preset("3:00", 3.minutes),
+                            Preset("4:00", 4.minutes),
+                            Preset("5:00", 5.minutes),
+                        )
+                    }
+
+                    Column {
+                        DurationPicker(
+                            duration = state.brewingTime,
+                            onDurationChange = { duration ->
+                                duration?.let {
+                                    onIntent(
+                                        CreateBrewingConfigurationIntent.UpdateBrewingTime(
+                                            it
+                                        )
                                     )
-                                )
-                            }
-                        },
-                        label = "Brewing Time *",
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PresetChips(
-                        presets = brewingTimePresets,
-                        currentValue = state.brewingTime,
-                        onSelect = { onIntent(CreateBrewingConfigurationIntent.UpdateBrewingTime(it)) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-
-            // Temperature
-            item(key = "temperature") {
-                val displayValue = state.temperatureDisplay.ifEmpty {
-                    state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
-                        state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
-                    } ?: state.temperatureCelsius
-                }
-                val tempUnit = state.userPreferences.temperatureUnit
-
-                val tempPresets = remember(tempUnit) {
-                    when (tempUnit) {
-                        TemperatureUnit.CELSIUS -> listOf(60, 70, 75, 80, 85, 90, 95, 100)
-                        TemperatureUnit.FAHRENHEIT -> listOf(140, 160, 170, 175, 185, 195, 200, 208, 212)
-                    }.map { Preset("$it${tempUnit.symbol}", it.toString()) }
-                }
-
-                Column {
-                    TemperatureInputField(
-                        value = displayValue,
-                        onValueChange = {
-                            onIntent(
-                                CreateBrewingConfigurationIntent.UpdateTemperature(
-                                    it
-                                )
-                            )
-                        },
-                        currentUnit = tempUnit,
-                        onToggleUnit = { onIntent(CreateBrewingConfigurationIntent.ToggleTemperatureUnit) },
-                        label = { Text("Temperature *") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PresetChips(
-                        presets = tempPresets,
-                        currentValue = displayValue,
-                        isSelected = { preset, current ->
-                            preset.toFloatOrNull() == current?.toFloatOrNull()
-                        },
-                        onSelect = { onIntent(CreateBrewingConfigurationIntent.UpdateTemperature(it)) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-
-            // Water Quantity
-            item(key = "water_quantity") {
-                val displayValue = state.waterQuantityDisplay.ifEmpty {
-                    state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
-                        state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
-                    } ?: state.waterQuantityMl
-                }
-                val volUnit = state.userPreferences.volumeUnit
-
-                val waterPresets = remember(volUnit) {
-                    when (volUnit) {
-                        VolumeUnit.MILLILITERS -> listOf(100, 150, 200, 250, 300, 400, 500)
-                        VolumeUnit.FLUID_OUNCES -> listOf(4, 6, 8, 10, 12, 16)
-                    }.map { Preset("$it ${volUnit.symbol}", it.toString()) }
-                }
-
-                Column {
-                    VolumeInputField(
-                        value = displayValue,
-                        onValueChange = {
-                            onIntent(
-                                CreateBrewingConfigurationIntent.UpdateWaterQuantity(
-                                    it
-                                )
-                            )
-                        },
-                        currentUnit = volUnit,
-                        onToggleUnit = { onIntent(CreateBrewingConfigurationIntent.ToggleVolumeUnit) },
-                        label = { Text("Water Quantity *") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PresetChips(
-                        presets = waterPresets,
-                        currentValue = displayValue,
-                        isSelected = { preset, current ->
-                            preset.toFloatOrNull() == current?.toFloatOrNull()
-                        },
-                        onSelect = {
-                            onIntent(
-                                CreateBrewingConfigurationIntent.UpdateWaterQuantity(
-                                    it
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-
-            // Tea Quantity (optional)
-            item(key = "tea_quantity") {
-                val teaQtyPresets = remember {
-                    listOf("1", "2", "3", "4", "5", "7", "10").map {
-                        Preset("${it}g", it)
+                                }
+                            },
+                            label = "Brewing Time *",
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        PresetChips(
+                            presets = brewingTimePresets,
+                            currentValue = state.brewingTime,
+                            onSelect = { onIntent(CreateBrewingConfigurationIntent.UpdateBrewingTime(it)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
                 }
 
-                Column {
-                    OutlinedTextField(
-                        value = state.teaQuantityGrams,
-                        onValueChange = {
+                // Temperature
+                item(key = "temperature") {
+                    val displayValue = state.temperatureDisplay.ifEmpty {
+                        state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
+                            state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
+                        } ?: state.temperatureCelsius
+                    }
+                    val tempUnit = state.userPreferences.temperatureUnit
+
+                    val tempPresets = remember(tempUnit) {
+                        when (tempUnit) {
+                            TemperatureUnit.CELSIUS -> listOf(60, 70, 75, 80, 85, 90, 95, 100)
+                            TemperatureUnit.FAHRENHEIT -> listOf(140, 160, 170, 175, 185, 195, 200, 208, 212)
+                        }.map { Preset("$it${tempUnit.symbol}", it.toString()) }
+                    }
+
+                    Column {
+                        TemperatureInputField(
+                            value = displayValue,
+                            onValueChange = {
+                                onIntent(
+                                    CreateBrewingConfigurationIntent.UpdateTemperature(
+                                        it
+                                    )
+                                )
+                            },
+                            currentUnit = tempUnit,
+                            onToggleUnit = { onIntent(CreateBrewingConfigurationIntent.ToggleTemperatureUnit) },
+                            label = { Text("Temperature *") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        PresetChips(
+                            presets = tempPresets,
+                            currentValue = displayValue,
+                            isSelected = { preset, current ->
+                                preset.toFloatOrNull() == current?.toFloatOrNull()
+                            },
+                            onSelect = { onIntent(CreateBrewingConfigurationIntent.UpdateTemperature(it)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                // Water Quantity
+                item(key = "water_quantity") {
+                    val displayValue = state.waterQuantityDisplay.ifEmpty {
+                        state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
+                            state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                        } ?: state.waterQuantityMl
+                    }
+                    val volUnit = state.userPreferences.volumeUnit
+
+                    val waterPresets = remember(volUnit) {
+                        when (volUnit) {
+                            VolumeUnit.MILLILITERS -> listOf(100, 150, 200, 250, 300, 400, 500)
+                            VolumeUnit.FLUID_OUNCES -> listOf(4, 6, 8, 10, 12, 16)
+                        }.map { Preset("$it ${volUnit.symbol}", it.toString()) }
+                    }
+
+                    Column {
+                        VolumeInputField(
+                            value = displayValue,
+                            onValueChange = {
+                                onIntent(
+                                    CreateBrewingConfigurationIntent.UpdateWaterQuantity(
+                                        it
+                                    )
+                                )
+                            },
+                            currentUnit = volUnit,
+                            onToggleUnit = { onIntent(CreateBrewingConfigurationIntent.ToggleVolumeUnit) },
+                            label = { Text("Water Quantity *") },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        PresetChips(
+                            presets = waterPresets,
+                            currentValue = displayValue,
+                            isSelected = { preset, current ->
+                                preset.toFloatOrNull() == current?.toFloatOrNull()
+                            },
+                            onSelect = {
+                                onIntent(
+                                    CreateBrewingConfigurationIntent.UpdateWaterQuantity(
+                                        it
+                                    )
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                // Tea Quantity (optional)
+                item(key = "tea_quantity") {
+                    val teaQtyPresets = remember {
+                        listOf("1", "2", "3", "4", "5", "7", "10").map {
+                            Preset("${it}g", it)
+                        }
+                    }
+
+                    Column {
+                        OutlinedTextField(
+                            value = state.teaQuantityGrams,
+                            onValueChange = {
+                                onIntent(
+                                    CreateBrewingConfigurationIntent.UpdateTeaQuantity(
+                                        it
+                                    )
+                                )
+                            },
+                            label = { Text("Tea Quantity (g)") },
+                            supportingText = { Text("Optional - leave empty for tea bags") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                        )
+                        PresetChips(
+                            presets = teaQtyPresets,
+                            currentValue = state.teaQuantityGrams,
+                            isSelected = { preset, current ->
+                                preset.toFloatOrNull() == current?.toFloatOrNull()
+                            },
+                            onSelect = { onIntent(CreateBrewingConfigurationIntent.UpdateTeaQuantity(it)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                // Water Type
+                item(key = "water_type") {
+                    WaterTypeSelector(
+                        selectedWaterType = state.waterType,
+                        onWaterTypeSelected = {
                             onIntent(
-                                CreateBrewingConfigurationIntent.UpdateTeaQuantity(
+                                CreateBrewingConfigurationIntent.SelectWaterType(
                                     it
                                 )
                             )
                         },
-                        label = { Text("Tea Quantity (g)") },
-                        supportingText = { Text("Optional - leave empty for tea bags") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                    )
-                    PresetChips(
-                        presets = teaQtyPresets,
-                        currentValue = state.teaQuantityGrams,
-                        isSelected = { preset, current ->
-                            preset.toFloatOrNull() == current?.toFloatOrNull()
-                        },
-                        onSelect = { onIntent(CreateBrewingConfigurationIntent.UpdateTeaQuantity(it)) },
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    }
                 }
             }
-
-            // Water Type
-            item(key = "water_type") {
-                WaterTypeSelector(
-                    selectedWaterType = state.waterType,
-                    onWaterTypeSelected = {
-                        onIntent(
-                            CreateBrewingConfigurationIntent.SelectWaterType(
-                                it
-                            )
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                }
             }
-        }
-        }
-        Surface(tonalElevation = 3.dp) {
-            Button(
-                onClick = { onIntent(CreateBrewingConfigurationIntent.Save) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                enabled = state.canSave && !state.isSaving,
-            ) {
-                Text("Save")
+            Surface(tonalElevation = 3.dp) {
+                Button(
+                    onClick = { onIntent(CreateBrewingConfigurationIntent.Save) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    enabled = state.canSave && !state.isSaving,
+                ) {
+                    Text("Save")
+                }
             }
         }
     }

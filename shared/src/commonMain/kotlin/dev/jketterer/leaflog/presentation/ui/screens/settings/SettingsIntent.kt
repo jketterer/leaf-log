@@ -13,8 +13,10 @@ sealed interface SettingsIntent {
     data object ClearError : SettingsIntent
     data object ExportData : SettingsIntent
     data object ExportCompleted : SettingsIntent
+    data class ExportFailed(val message: String) : SettingsIntent
     data object ImportData : SettingsIntent
     data class ImportFileSelected(val filePath: String) : SettingsIntent
     data object ImportCancelled : SettingsIntent
+    data class ImportFailed(val message: String) : SettingsIntent
     data object DismissImportResult : SettingsIntent
 }

@@ -33,6 +33,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -95,278 +99,295 @@ private fun EditSessionContent(
     onIntent: (EditSessionIntent) -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        TopAppBar(
-            title = {
-                Text(
-                    if (state.isParentSession) {
-                        "Edit Session"
-                    } else {
-                        "Edit Steep ${state.steepNumber ?: ""}"
-                    }
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = { onIntent(EditSessionIntent.BackClicked) }) {
-                    Icon(
-                        imageVector = FeatherIcons.ArrowLeft,
-                        contentDescription = "Back",
-                    )
-                }
-            },
-            actions = {
-                IconButton(
-                    onClick = { onIntent(EditSessionIntent.SaveClicked) },
-                    enabled = state.hasChanges && state.isValid && !state.isSaving
-                ) {
-                    Icon(
-                        imageVector = FeatherIcons.Check,
-                        contentDescription = "Save",
-                    )
-                }
-            }
-        )
+    val snackbarHostState = remember { SnackbarHostState() }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            // Steep Parameters Section (only when NOT editing full parent session)
-            if (!state.isParentSession) {
-                item(key = "parameters_header") {
+    LaunchedEffect(state.error) {
+        state.error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onIntent(EditSessionIntent.ErrorShown)
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
                     Text(
-                        text = "STEEP PARAMETERS",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
+                        if (state.isParentSession) {
+                            "Edit Session"
+                        } else {
+                            "Edit Steep ${state.steepNumber ?: ""}"
+                        }
                     )
-                }
-
-                // Brewing Time
-                item(key = "brewing_time") {
-                    DurationPicker(
-                        duration = state.brewingTime,
-                        onDurationChange = { duration ->
-                            duration?.let { onIntent(EditSessionIntent.BrewingTimeChanged(it)) }
-                        },
-                        label = "Brewing Time *",
-                        isError = state.brewingTimeError != null,
-                        errorMessage = state.brewingTimeError,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                // Temperature
-                item(key = "temperature") {
-                    // Use display value if set (preserves user input), otherwise convert from storage
-                    val displayValue = state.temperatureDisplay.ifEmpty {
-                        state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
-                            state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
-                        } ?: state.temperatureCelsius
+                },
+                navigationIcon = {
+                    IconButton(onClick = { onIntent(EditSessionIntent.BackClicked) }) {
+                        Icon(
+                            imageVector = FeatherIcons.ArrowLeft,
+                            contentDescription = "Back",
+                        )
                     }
-
-                    TemperatureInputField(
-                        value = displayValue,
-                        onValueChange = { onIntent(EditSessionIntent.TemperatureChanged(it)) },
-                        currentUnit = state.userPreferences.temperatureUnit,
-                        onToggleUnit = {
-                            onIntent(EditSessionIntent.ToggleTemperatureUnit)
-                        },
-                        label = { Text("Temperature *") },
-                        isError = state.temperatureError != null,
-                        supportingText = state.temperatureError?.let { { Text(it) } },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                },
+                actions = {
+                    IconButton(
+                        onClick = { onIntent(EditSessionIntent.SaveClicked) },
+                        enabled = state.hasChanges && state.isValid && !state.isSaving
+                    ) {
+                        Icon(
+                            imageVector = FeatherIcons.Check,
+                            contentDescription = "Save",
+                        )
+                    }
                 }
-            }
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
 
-            // Session Details Section (parent only)
-            if (state.isParentSession) {
-                item(key = "session_details_header") {
-                    Column {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                // Steep Parameters Section (only when NOT editing full parent session)
+                if (!state.isParentSession) {
+                    item(key = "parameters_header") {
                         Text(
-                            text = "SESSION DETAILS",
+                            text = "STEEP PARAMETERS",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
                         )
                     }
-                }
 
-                // Vessel Selector
-                item(key = "vessel") {
-                    VesselSelector(
-                        vessels = state.availableVessels,
-                        selectedVessel = state.selectedVessel,
-                        onVesselSelected = { vessel ->
-                            onIntent(EditSessionIntent.VesselSelected(vessel))
-                        },
-                        volumeUnit = state.userPreferences.volumeUnit,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                // Water Type Selector
-                item(key = "water_type") {
-                    WaterTypeSelector(
-                        selectedWaterType = state.selectedWaterType,
-                        onWaterTypeSelected = { waterType ->
-                            onIntent(EditSessionIntent.WaterTypeSelected(waterType))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                // Water Quantity
-                item(key = "water_quantity") {
-                    // Use display value if set (preserves user input), otherwise convert from storage
-                    val displayValue = state.waterQuantityDisplay.ifEmpty {
-                        state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
-                            state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
-                        } ?: state.waterQuantityMl
+                    // Brewing Time
+                    item(key = "brewing_time") {
+                        DurationPicker(
+                            duration = state.brewingTime,
+                            onDurationChange = { duration ->
+                                duration?.let { onIntent(EditSessionIntent.BrewingTimeChanged(it)) }
+                            },
+                            label = "Brewing Time *",
+                            isError = state.brewingTimeError != null,
+                            errorMessage = state.brewingTimeError,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
 
-                    VolumeInputField(
-                        value = displayValue,
-                        onValueChange = { onIntent(EditSessionIntent.WaterQuantityChanged(it)) },
-                        currentUnit = state.userPreferences.volumeUnit,
-                        onToggleUnit = {
-                            onIntent(EditSessionIntent.ToggleVolumeUnit)
-                        },
-                        label = { Text("Water Quantity *") },
-                        isError = state.waterQuantityError != null,
-                        supportingText = state.waterQuantityError?.let { { Text(it) } },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    // Temperature
+                    item(key = "temperature") {
+                        // Use display value if set (preserves user input), otherwise convert from storage
+                        val displayValue = state.temperatureDisplay.ifEmpty {
+                            state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
+                                state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
+                            } ?: state.temperatureCelsius
+                        }
+
+                        TemperatureInputField(
+                            value = displayValue,
+                            onValueChange = { onIntent(EditSessionIntent.TemperatureChanged(it)) },
+                            currentUnit = state.userPreferences.temperatureUnit,
+                            onToggleUnit = {
+                                onIntent(EditSessionIntent.ToggleTemperatureUnit)
+                            },
+                            label = { Text("Temperature *") },
+                            isError = state.temperatureError != null,
+                            supportingText = state.temperatureError?.let { { Text(it) } },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
 
-                // Tea Quantity
-                item(key = "tea_quantity") {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                            SegmentedButton(
-                                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                                onClick = { onIntent(EditSessionIntent.TeaBagModeChanged(false)) },
-                                selected = !state.isTeaBag,
-                                label = { Text("Loose Leaf") },
-                            )
-                            SegmentedButton(
-                                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                                onClick = { onIntent(EditSessionIntent.TeaBagModeChanged(true)) },
-                                selected = state.isTeaBag,
-                                label = { Text("Tea Bag") },
-                            )
-                        }
-                        if (!state.isTeaBag) {
-                            OutlinedTextField(
-                                value = state.teaQuantityGrams,
-                                onValueChange = { onIntent(EditSessionIntent.TeaQuantityChanged(it)) },
-                                label = { Text("Tea Quantity") },
-                                isError = state.teaQuantityError != null,
-                                supportingText = state.teaQuantityError?.let { { Text(it) } },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true,
-                                suffix = { Text("g") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                // Session Details Section (parent only)
+                if (state.isParentSession) {
+                    item(key = "session_details_header") {
+                        Column {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "SESSION DETAILS",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                     }
-                }
 
-                // Location
-                item(key = "location") {
-                    OutlinedTextField(
-                        value = state.location,
-                        onValueChange = { onIntent(EditSessionIntent.LocationChanged(it)) },
-                        label = { Text("Location (optional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                    )
-                }
-            }
+                    // Vessel Selector
+                    item(key = "vessel") {
+                        VesselSelector(
+                            vessels = state.availableVessels,
+                            selectedVessel = state.selectedVessel,
+                            onVesselSelected = { vessel ->
+                                onIntent(EditSessionIntent.VesselSelected(vessel))
+                            },
+                            volumeUnit = state.userPreferences.volumeUnit,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
 
-            // Rating Section (only when NOT editing full parent session)
-            if (!state.isParentSession) {
-                item(key = "rating_header") {
-                    Column {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "RATING",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
+                    // Water Type Selector
+                    item(key = "water_type") {
+                        WaterTypeSelector(
+                            selectedWaterType = state.selectedWaterType,
+                            onWaterTypeSelected = { waterType ->
+                                onIntent(EditSessionIntent.WaterTypeSelected(waterType))
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    // Water Quantity
+                    item(key = "water_quantity") {
+                        // Use display value if set (preserves user input), otherwise convert from storage
+                        val displayValue = state.waterQuantityDisplay.ifEmpty {
+                            state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
+                                state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
+                            } ?: state.waterQuantityMl
+                        }
+
+                        VolumeInputField(
+                            value = displayValue,
+                            onValueChange = { onIntent(EditSessionIntent.WaterQuantityChanged(it)) },
+                            currentUnit = state.userPreferences.volumeUnit,
+                            onToggleUnit = {
+                                onIntent(EditSessionIntent.ToggleVolumeUnit)
+                            },
+                            label = { Text("Water Quantity *") },
+                            isError = state.waterQuantityError != null,
+                            supportingText = state.waterQuantityError?.let { { Text(it) } },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    // Tea Quantity
+                    item(key = "tea_quantity") {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                                    onClick = { onIntent(EditSessionIntent.TeaBagModeChanged(false)) },
+                                    selected = !state.isTeaBag,
+                                    label = { Text("Loose Leaf") },
+                                )
+                                SegmentedButton(
+                                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                                    onClick = { onIntent(EditSessionIntent.TeaBagModeChanged(true)) },
+                                    selected = state.isTeaBag,
+                                    label = { Text("Tea Bag") },
+                                )
+                            }
+                            if (!state.isTeaBag) {
+                                OutlinedTextField(
+                                    value = state.teaQuantityGrams,
+                                    onValueChange = { onIntent(EditSessionIntent.TeaQuantityChanged(it)) },
+                                    label = { Text("Tea Quantity") },
+                                    isError = state.teaQuantityError != null,
+                                    supportingText = state.teaQuantityError?.let { { Text(it) } },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    singleLine = true,
+                                    suffix = { Text("g") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                                )
+                            }
+                        }
+                    }
+
+                    // Location
+                    item(key = "location") {
+                        OutlinedTextField(
+                            value = state.location,
+                            onValueChange = { onIntent(EditSessionIntent.LocationChanged(it)) },
+                            label = { Text("Location (optional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         )
                     }
                 }
 
-                item(key = "rating") {
-                    RatingSelector(
-                        rating = state.rating,
-                        onRatingChange = { rating ->
-                            onIntent(EditSessionIntent.RatingChanged(rating))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
+                // Rating Section (only when NOT editing full parent session)
+                if (!state.isParentSession) {
+                    item(key = "rating_header") {
+                        Column {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "RATING",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
 
-            // Notes Section (only when NOT editing full parent session)
-            if (!state.isParentSession) {
-                item(key = "notes_header") {
-                    Column {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "NOTES",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
+                    item(key = "rating") {
+                        RatingSelector(
+                            rating = state.rating,
+                            onRatingChange = { rating ->
+                                onIntent(EditSessionIntent.RatingChanged(rating))
+                            },
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
 
-                item(key = "notes") {
-                    OutlinedTextField(
-                        value = state.notes,
-                        onValueChange = { onIntent(EditSessionIntent.NotesChanged(it)) },
-                        label = { Text("Notes (optional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                        maxLines = 5,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                    )
-                }
+                // Notes Section (only when NOT editing full parent session)
+                if (!state.isParentSession) {
+                    item(key = "notes_header") {
+                        Column {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "NOTES",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
 
-                // Photos Section (only when NOT editing full parent session)
-                item(key = "photos_header") {
-                    Column {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "PHOTOS",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
+                    item(key = "notes") {
+                        OutlinedTextField(
+                            value = state.notes,
+                            onValueChange = { onIntent(EditSessionIntent.NotesChanged(it)) },
+                            label = { Text("Notes (optional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            maxLines = 5,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                         )
                     }
-                }
 
-                item(key = "photos") {
-                    PhotoGrid(
-                        photos = state.photos,
-                        onAddPhoto = { onIntent(EditSessionIntent.PhotoSelected(it)) },
-                        onRemovePhoto = { onIntent(EditSessionIntent.PhotoRemoved(it)) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    // Photos Section (only when NOT editing full parent session)
+                    item(key = "photos_header") {
+                        Column {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "PHOTOS",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+
+                    item(key = "photos") {
+                        PhotoGrid(
+                            photos = state.photos,
+                            onAddPhoto = { onIntent(EditSessionIntent.PhotoSelected(it)) },
+                            onRemovePhoto = { onIntent(EditSessionIntent.PhotoRemoved(it)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
         }

@@ -49,6 +49,7 @@ class CreateBrewingConfigurationViewModel(
 
     fun onIntent(intent: CreateBrewingConfigurationIntent) {
         when (intent) {
+            is CreateBrewingConfigurationIntent.ErrorShown -> _state.update { it.copy(error = null) }
             is CreateBrewingConfigurationIntent.LoadData -> loadData(
                 intent.teaId,
                 intent.configurationId

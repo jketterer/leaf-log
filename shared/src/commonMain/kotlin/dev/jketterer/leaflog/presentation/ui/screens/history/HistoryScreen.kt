@@ -21,7 +21,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -144,8 +146,17 @@ private fun HistoryContent(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error) {
+        state.error?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            onIntent(HistoryIntent.ClearError)
+        }
+    }
+
+    Scaffold(
+        topBar = {
             if (showSearchBar) {
                 TopAppBar(
                     navigationIcon = {
@@ -226,7 +237,14 @@ private fun HistoryContent(
                     }
                 )
             }
-
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+        ) {
             when {
                 state.isLoading -> {
                     Box(
@@ -310,20 +328,6 @@ private fun HistoryContent(
                             }
                         }
                     }
-                }
-            }
-
-            // Error snackbar
-            state.error?.let { error ->
-                Snackbar(
-                    modifier = Modifier.padding(16.dp),
-                    action = {
-                        TextButton(onClick = { onIntent(HistoryIntent.ClearError) }) {
-                            Text("Dismiss")
-                        }
-                    }
-                ) {
-                    Text(error)
                 }
             }
         }

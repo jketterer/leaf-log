@@ -432,6 +432,7 @@ class SteepCompleteViewModel(
                 }
 
                 teaSessionRepository.delete(session.id)
+                timerService.onSessionResolved(session.id)
 
                 session.parentSessionId?.let { parentId ->
                     updateAverageRatingUseCase(parentId)

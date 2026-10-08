@@ -57,7 +57,7 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Rate or discard the steep before the reminder is due. The reminder never arrives.
 - [ ] Start a new steep while an old session's reminder is pending. Resolving the old session does
       not cancel the new one's alerts.
-- [ ] Discard from Steep Complete. The reminder is withdrawn (F1 bug: fails today).
+- [ ] Discard from Steep Complete. The reminder is withdrawn.
 
 ## 3. Tap routing
 

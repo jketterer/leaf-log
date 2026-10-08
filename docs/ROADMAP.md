@@ -224,7 +224,7 @@ closes.
   rounding.
 - [x] **Timer edit sheet** (#15). Re-read the session inside the launch, copy the edited fields onto
   it, then upsert. Reset while paused persists via `saveTimerStateUseCase`.
-- [ ] **Steep Complete discard withdraws the reminder** (#17). `timerService.onSessionResolved`.
+- [x] **Steep Complete discard withdraws the reminder** (#17). `timerService.onSessionResolved`.
 - [ ] **Live Activity deployment target** 26.2 → 18.2 (#18). Exit: an Xcode Cloud build; a Track B
   line for the Live Activity on an iOS 18 device.
 - [ ] **Errors you can see** (#19). Minimal visibility only — Bet 1 replaces the source, not the

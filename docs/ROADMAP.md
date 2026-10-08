@@ -212,7 +212,7 @@ closes.
       `lastUsedAt` finally rise (increments only fire on `COMPLETED`, so no double count).
     - `SaveConfigurationDialog` gets `session.rating`, not `?: 5f`; its `rating` becomes nullable.
     - The Log Session dialog prefill stays for F2 — the user sees it and submits it.
-- [ ] **iOS relative dates** (#9). A pure commonMain function classifies an instant as Today /
+- [x] **iOS relative dates** (#9). A pure commonMain function classifies an instant as Today /
   Yesterday / This year / Older given `now` and `tz`; the actuals only format. Test: year boundary,
   Aug 23 vs Sep 23.
 - [ ] **Weeks start on Monday, everywhere** (#13). One `LocalDate.startOfWeek()` replaces the three

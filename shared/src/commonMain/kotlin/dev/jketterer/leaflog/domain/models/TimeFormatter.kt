@@ -1,5 +1,9 @@
 package dev.jketterer.leaflog.domain.models
 
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 /**
@@ -23,4 +27,18 @@ expect object TimeFormatter {
      * - Previous years: "Jan 15, 2024"
      */
     fun formatRelativeTimestamp(instant: Instant): String
+}
+
+internal enum class RelativeDay { TODAY, YESTERDAY, THIS_YEAR, OLDER }
+
+/** Which bucket of [TimeFormatter.formatRelativeTimestamp] [instant] falls in, as seen from [now] in [tz]. */
+internal fun relativeDayOf(instant: Instant, now: Instant, tz: TimeZone): RelativeDay {
+    val date = instant.toLocalDateTime(tz).date
+    val today = now.toLocalDateTime(tz).date
+    return when {
+        date == today -> RelativeDay.TODAY
+        date == today.minus(1, DateTimeUnit.DAY) -> RelativeDay.YESTERDAY
+        date.year == today.year -> RelativeDay.THIS_YEAR
+        else -> RelativeDay.OLDER
+    }
 }

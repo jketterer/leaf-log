@@ -5,6 +5,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlinx.datetime.TimeZone
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 actual object TimeFormatter {
@@ -18,23 +20,11 @@ actual object TimeFormatter {
 
     actual fun formatRelativeTimestamp(instant: Instant): String {
         val date = Date(instant.toEpochMilliseconds())
-        val now = Calendar.getInstance()
-        val then = Calendar.getInstance().apply { time = date }
-
-        val isToday = now.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
-                now.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
-
-        val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
-        val isYesterday = yesterday.get(Calendar.YEAR) == then.get(Calendar.YEAR) &&
-                yesterday.get(Calendar.DAY_OF_YEAR) == then.get(Calendar.DAY_OF_YEAR)
-
-        val isSameYear = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
-
-        return when {
-            isToday -> DateFormat.getTimeInstance(DateFormat.SHORT).format(date)
-            isYesterday -> "Yesterday"
-            isSameYear -> SimpleDateFormat("MMM d", Locale.getDefault()).format(date)
-            else -> SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(date)
+        return when (relativeDayOf(instant, Clock.System.now(), TimeZone.currentSystemDefault())) {
+            RelativeDay.TODAY -> DateFormat.getTimeInstance(DateFormat.SHORT).format(date)
+            RelativeDay.YESTERDAY -> "Yesterday"
+            RelativeDay.THIS_YEAR -> SimpleDateFormat("MMM d", Locale.getDefault()).format(date)
+            RelativeDay.OLDER -> SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(date)
         }
     }
 }

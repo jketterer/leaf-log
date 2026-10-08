@@ -85,7 +85,7 @@ A roadmap without a "no" is a wishlist. These are decided, not open:
 | CI — iOS | Xcode Cloud, via `iosApp/ci_scripts/ci_post_clone.sh` |
 | Crash reporting | none |
 | String resources | **none** — ~550 hardcoded literals across 71 files |
-| Version | 1.0 / build 1 everywhere. No tags, no changelog |
+| Version | 0.1.0 from `version.properties` (F0). Before that: 1.0 / build 1 everywhere, no tags, no changelog |
 | `docs/` | Untracked. The eight superseded docs still exist |
 | Git index | `EditVesselFormLogic.kt` staged as added but deleted in the tree, and it duplicates `EditVesselState.kt` — **a commit without `-a` will not compile** |
 
@@ -177,9 +177,28 @@ Small; everything after it is worth more once it's done.
 - [ ] **Test dependencies:** keep and wire `koin-test` (DI graph verification); delete the
       Android-instrumented scaffolding and the other unused deps listed in § 2.
 - [ ] **Trim `TEST_CASES.md`** to the Track B checklist (~150 lines).
-- [ ] **Release hygiene:** tags, `CHANGELOG.md`, version bumps on both platforms — including the
-      widget extension, whose version is hardcoded and will fail App Store validation on the
-      first bump. "Which build is on my phone" must be answerable.
+- [ ] **Release hygiene.** "Which build is on my phone" must be answerable.
+    - Semver, bumped by judgement (not tied to milestones), starting at `0.1.0`.
+    - `version.properties` at the repo root holds `VERSION_NAME` and nothing else. Android reads
+      it in Gradle; `Config.xcconfig` `#include`s it (a comment-free properties file is valid
+      xcconfig) and maps it to `MARKETING_VERSION`. The widget extension's hardcoded
+      `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION` are removed so it inherits.
+    - Build numbers are never edited by hand. iOS: Xcode Cloud sets `CFBundleVersion` per archive;
+      TestFlight shows `0.1.0 (47)`. Android: `versionCode` = UTC `yyMMddHH` via a `ValueSource`
+      (survives non-linear branch work; plain `now()` would be frozen by the configuration
+      cache); `versionName` = `0.1.0+<sha>[.dirty]` on every variant, visible in App info.
+    - No in-app version display until the About screen (Store readiness).
+    - `CHANGELOG.md` in Keep a Changelog format, written at bump time from `git log`, in user
+      language. Bump steps live at its top.
+    - Tags: `v0.1.0` style, annotated. History: `flutter-1.1.1` (the published 2019 Flutter app,
+      `com.jketterer.leaf_log`) and `flutter-2.0-wip` (the 2022 `two-point-oh` attempt), kept out
+      of the `v*` namespace.
+    - `master` → `main` now; CI triggers on `[main, kmp]` until `kmp` merges. Check the Xcode
+      Cloud workflow's branch start condition after the rename.
+
+      Exit: both platforms and the widget read `version.properties` (the `#include` confirmed by a
+      local Xcode build and an Xcode Cloud run); `CHANGELOG.md` has a `0.1.0` entry; the three
+      tags are pushed; `main` exists and CI and Xcode Cloud trigger from it.
 
 ### F1 — Fix now
 
@@ -493,8 +512,7 @@ Gated. Nothing ships to strangers until these are done. Blocks nothing before th
 - [ ] **First-run experience.** A stranger opens to an empty Home. Also: notification permission
       is requested in the first `onCreate` with no context — ask at first timer use, as iOS does.
 - [ ] **Store blockers from the audit:** `PrivacyInfo.xcprivacy` (NSUserDefaults is a
-      required-reason API), widget extension version sourced from the app's config,
-      `FOREGROUND_SERVICE_SPECIAL_USE` Play declaration, `isMinifyEnabled = true`,
+      required-reason API), `FOREGROUND_SERVICE_SPECIAL_USE` Play declaration, `isMinifyEnabled = true`,
       `ITSAppUsesNonExemptEncryption`, widget display name, `dataExtractionRules`.
 - [ ] **About screen:** version, licences, privacy policy, support contact.
 - [ ] **One TalkBack and VoiceOver pass** over the whole app.

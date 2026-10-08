@@ -3,5 +3,7 @@ TEAM_ID=N297L24455
 PRODUCT_NAME=Leaf Log: Tea Tracker
 PRODUCT_BUNDLE_IDENTIFIER=dev.jketterer.leaflog
 
+// Shared with Android. Xcode Cloud overrides CURRENT_PROJECT_VERSION on archive.
+#include "../../version.properties"
+MARKETING_VERSION=$(VERSION_NAME)
 CURRENT_PROJECT_VERSION=1
-MARKETING_VERSION=1.0

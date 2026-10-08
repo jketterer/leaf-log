@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.AnalyticsDateRange
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -14,28 +15,58 @@ class GetAnalyticsDateRangeUseCaseTest {
     private val getDateRange = GetAnalyticsDateRangeUseCase()
     private val tz = TimeZone.of("America/New_York")
 
-    private fun thisWeekAt(now: String) = getDateRange(
-        period = AnalyticsPeriod.THIS_WEEK,
-        customRange = null,
-        now = LocalDateTime.parse(now).toInstant(tz),
-        tz = tz,
-    )
+    private fun at(dateTime: String) = LocalDateTime.parse(dateTime).toInstant(tz)
 
-    private fun midnight(date: LocalDate) = date.atStartOfDayIn(tz)
+    private fun midnight(date: String) = LocalDate.parse(date).atStartOfDayIn(tz)
+
+    private fun rangeAt(period: AnalyticsPeriod, now: String): AnalyticsDateRange =
+        getDateRange(period = period, customRange = null, now = at(now), tz = tz)
 
     @Test
     fun `this week on a Sunday runs Monday to Monday and includes today`() {
-        val (start, end) = thisWeekAt("2026-09-27T20:00")
+        val range = rangeAt(AnalyticsPeriod.THIS_WEEK, now = "2026-09-27T20:00")
 
-        assertEquals(midnight(LocalDate(2026, 9, 21)), start)
-        assertEquals(midnight(LocalDate(2026, 9, 28)), end)
+        assertEquals(midnight("2026-09-21"), range.start)
+        assertEquals(midnight("2026-09-28"), range.end)
     }
 
     @Test
     fun `this week on a Monday starts today`() {
-        val (start, end) = thisWeekAt("2026-09-28T08:00")
+        val range = rangeAt(AnalyticsPeriod.THIS_WEEK, now = "2026-09-28T08:00")
 
-        assertEquals(midnight(LocalDate(2026, 9, 28)), start)
-        assertEquals(midnight(LocalDate(2026, 10, 5)), end)
+        assertEquals(midnight("2026-09-28"), range.start)
+        assertEquals(midnight("2026-10-05"), range.end)
+    }
+
+    @Test
+    fun `this week is compared against the same elapsed part of last week`() {
+        val range = rangeAt(AnalyticsPeriod.THIS_WEEK, now = "2026-09-23T14:30")
+
+        assertEquals(midnight("2026-09-14"), range.previousStart)
+        assertEquals(at("2026-09-16T14:30"), range.previousEnd)
+    }
+
+    @Test
+    fun `this month is compared against the same elapsed part of last month`() {
+        val range = rangeAt(AnalyticsPeriod.THIS_MONTH, now = "2026-09-23T14:30")
+
+        assertEquals(midnight("2026-08-01"), range.previousStart)
+        assertEquals(at("2026-08-23T14:30"), range.previousEnd)
+    }
+
+    @Test
+    fun `this year is compared against the same elapsed part of last year`() {
+        val range = rangeAt(AnalyticsPeriod.THIS_YEAR, now = "2026-09-23T14:30")
+
+        assertEquals(midnight("2025-01-01"), range.previousStart)
+        assertEquals(at("2025-09-23T14:30"), range.previousEnd)
+    }
+
+    @Test
+    fun `a rolling window is compared against the window just before it`() {
+        val range = rangeAt(AnalyticsPeriod.LAST_7_DAYS, now = "2026-09-23T14:30")
+
+        assertEquals(range.start, range.previousEnd)
+        assertEquals(range.end - range.start, range.previousEnd - range.previousStart)
     }
 }

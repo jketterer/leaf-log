@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.AnalyticsDateRange
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.startOfWeek
 import kotlinx.datetime.DateTimeUnit
@@ -12,8 +13,37 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 class GetAnalyticsDateRangeUseCase {
-    /** The `[start, end)` window [period] covers at [now] in [tz]. */
+    /** The windows [period] covers and is compared against, at [now] in [tz]. */
     operator fun invoke(
+        period: AnalyticsPeriod,
+        customRange: Pair<LocalDate, LocalDate>?,
+        now: Instant,
+        tz: TimeZone,
+    ): AnalyticsDateRange {
+        val (start, end) = currentRange(period, customRange, now, tz)
+
+        // Calendar windows (week/month/year) compare against the same elapsed portion of the
+        // previous one, e.g. on a Monday this week is compared against last Monday only.
+        val (previousStart, previousEnd) = when (period) {
+            AnalyticsPeriod.THIS_WEEK ->
+                start.minus(7, DateTimeUnit.DAY, tz) to now.minus(7, DateTimeUnit.DAY, tz)
+
+            AnalyticsPeriod.THIS_MONTH ->
+                start.minus(1, DateTimeUnit.MONTH, tz) to now.minus(1, DateTimeUnit.MONTH, tz)
+
+            AnalyticsPeriod.THIS_YEAR ->
+                start.minus(1, DateTimeUnit.YEAR, tz) to now.minus(1, DateTimeUnit.YEAR, tz)
+
+            else -> {
+                val periodDuration = end - start
+                (start - periodDuration) to start
+            }
+        }
+
+        return AnalyticsDateRange(start, end, previousStart, previousEnd)
+    }
+
+    private fun currentRange(
         period: AnalyticsPeriod,
         customRange: Pair<LocalDate, LocalDate>?,
         now: Instant,

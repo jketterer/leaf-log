@@ -5,6 +5,7 @@ import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlin.time.Duration
+import kotlin.time.Instant
 
 data class AnalyticsData(
     val totalSessions: Int,
@@ -81,6 +82,17 @@ data class TeaTypeDistribution(
 data class TopTea(
     val tea: Tea,
     val sessionCount: Int,
+)
+
+/**
+ * The `[start, end)` window a period covers, and the `[previousStart, previousEnd)` window it is
+ * compared against.
+ */
+data class AnalyticsDateRange(
+    val start: Instant,
+    val end: Instant,
+    val previousStart: Instant,
+    val previousEnd: Instant,
 )
 
 enum class AnalyticsPeriod {

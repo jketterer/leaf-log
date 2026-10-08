@@ -237,7 +237,7 @@ closes.
   `InsightType.CONSISTENCY` if otherwise unused, the preview string.
 - [x] **`removeLast()` → `removeAt(lastIndex)`** in `AppNavigation.kt` (18 sites). Safe whether or
   not the API < 35 crash is real; move the Hard-won facts entry from "unverified" to a rule.
-- [ ] **Release `0.1.1`**: CHANGELOG entry, tag `v0.1.1`.
+- [x] **Release `0.1.1`**: CHANGELOG entry, tag `v0.1.1`.
 
 **Moved, not fixed here:** #2–7 → F2 (except the rating writes stopped above), #8 → F3, #10–12 → F4,
 #16 Quick Timer notification → Bet 2 (which deletes that engine). #1 closed in F0.

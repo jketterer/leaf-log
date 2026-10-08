@@ -11,6 +11,7 @@ import dev.jketterer.leaflog.domain.models.WeightFormatter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsDateRangeUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
@@ -31,10 +32,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -52,6 +51,7 @@ class AnalyticsViewModel(
     private val getTopRatedTeasUseCase: GetTopRatedTeasUseCase,
     private val getVesselDistributionUseCase: GetVesselDistributionUseCase,
     private val getTimeInsightsUseCase: GetTimeInsightsUseCase,
+    private val getAnalyticsDateRangeUseCase: GetAnalyticsDateRangeUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnalyticsState())
@@ -197,9 +197,13 @@ class AnalyticsViewModel(
                 val hasMinimumData = totalCompleted >= 10
 
                 val currentState = _state.value
-                val (start, end) = calculateDateRange(
+                val now = Clock.System.now()
+                val tz = TimeZone.currentSystemDefault()
+                val (start, end) = getAnalyticsDateRangeUseCase(
                     currentState.selectedPeriod,
                     currentState.customDateRange,
+                    now,
+                    tz,
                 )
 
                 val currentData = getAnalyticsUseCase(start, end)
@@ -208,8 +212,6 @@ class AnalyticsViewModel(
                 // For calendar-based windows (week/month/year), compare against the equivalent
                 // elapsed portion of the previous period rather than the full previous period.
                 // e.g. if today is Monday, compare this week's data against last Monday only.
-                val now = Clock.System.now()
-                val tz = TimeZone.currentSystemDefault()
                 val (previousStart, previousEnd) = when (currentState.selectedPeriod) {
                     AnalyticsPeriod.THIS_WEEK ->
                         start.minus(7, DateTimeUnit.DAY, tz) to now.minus(7, DateTimeUnit.DAY, tz)
@@ -341,71 +343,6 @@ class AnalyticsViewModel(
     }
 
     companion object {
-        fun calculateDateRange(
-            period: AnalyticsPeriod,
-            customRange: Pair<LocalDate, LocalDate>?,
-        ): Pair<Instant, Instant> {
-            val tz = TimeZone.currentSystemDefault()
-            val now = Clock.System.now()
-            val today = now.toLocalDateTime(tz).date
-
-            return when (period) {
-                AnalyticsPeriod.LAST_7_DAYS -> {
-                    val start = today.minus(6, DateTimeUnit.DAY)
-                    start.atStartOfDayIn(tz) to now
-                }
-
-                AnalyticsPeriod.LAST_30_DAYS -> {
-                    val start = today.minus(30, DateTimeUnit.DAY)
-                    start.atStartOfDayIn(tz) to now
-                }
-
-                AnalyticsPeriod.LAST_90_DAYS -> {
-                    val start = today.minus(90, DateTimeUnit.DAY)
-                    start.atStartOfDayIn(tz) to now
-                }
-
-                AnalyticsPeriod.THIS_WEEK -> {
-                    val dayOfWeek = today.dayOfWeek.ordinal // Monday = 0
-                    val startOfWeek = today.minus(dayOfWeek + 1, DateTimeUnit.DAY)
-                    val endOfWeek = startOfWeek.plus(7, DateTimeUnit.DAY)
-                    startOfWeek.atStartOfDayIn(tz) to endOfWeek.atStartOfDayIn(tz)
-                }
-
-                AnalyticsPeriod.THIS_MONTH -> {
-                    val firstOfMonth = LocalDate(today.year, today.month, 1)
-                    val firstOfNextMonth = firstOfMonth.plus(1, DateTimeUnit.MONTH)
-                    firstOfMonth.atStartOfDayIn(tz) to firstOfNextMonth.atStartOfDayIn(tz)
-                }
-
-                AnalyticsPeriod.LAST_MONTH -> {
-                    val firstOfThisMonth = LocalDate(today.year, today.month, 1)
-                    val firstOfLastMonth = firstOfThisMonth.minus(1, DateTimeUnit.MONTH)
-                    firstOfLastMonth.atStartOfDayIn(tz) to firstOfThisMonth.atStartOfDayIn(tz)
-                }
-
-                AnalyticsPeriod.THIS_YEAR -> {
-                    val firstOfYear = LocalDate(today.year, 1, 1)
-                    firstOfYear.atStartOfDayIn(tz) to now
-                }
-
-                AnalyticsPeriod.ALL_TIME -> {
-                    Instant.DISTANT_PAST to now
-                }
-
-                AnalyticsPeriod.CUSTOM -> {
-                    if (customRange != null) {
-                        val (start, end) = customRange
-                        start.atStartOfDayIn(tz) to end.plus(1, DateTimeUnit.DAY).atStartOfDayIn(tz)
-                    } else {
-                        // Fallback to this month
-                        val firstOfMonth = LocalDate(today.year, today.month, 1)
-                        firstOfMonth.atStartOfDayIn(tz) to now
-                    }
-                }
-            }
-        }
-
         fun formatDuration(duration: Duration): String {
             val totalMinutes = duration.inWholeMinutes
             return when {

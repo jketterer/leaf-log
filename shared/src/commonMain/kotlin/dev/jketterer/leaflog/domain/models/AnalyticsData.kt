@@ -1,7 +1,9 @@
 package dev.jketterer.leaflog.domain.models
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import kotlin.time.Duration
 
 data class AnalyticsData(
@@ -106,3 +108,6 @@ enum class AnalyticsPeriod {
             CUSTOM -> "Custom Range"
         }
 }
+
+/** The Monday on or before this date. Weeks start on Monday everywhere in the app. */
+fun LocalDate.startOfWeek(): LocalDate = minus(dayOfWeek.ordinal, DateTimeUnit.DAY) // ordinal: MONDAY = 0

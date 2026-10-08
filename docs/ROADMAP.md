@@ -215,7 +215,7 @@ closes.
 - [x] **iOS relative dates** (#9). A pure commonMain function classifies an instant as Today /
   Yesterday / This year / Older given `now` and `tz`; the actuals only format. Test: year boundary,
   Aug 23 vs Sep 23.
-- [ ] **Weeks start on Monday, everywhere** (#13). One `LocalDate.startOfWeek()` replaces the three
+- [x] **Weeks start on Monday, everywhere** (#13). One `LocalDate.startOfWeek()` replaces the three
   `ordinal` copies (Analytics `THIS_WEEK`, trend buckets, activity). Heatmap grid and labels go
   Monday-first. History's "This Week" filter is renamed "Last 7 Days" — that's what it does.
   `calculateDateRange` takes `now` and `tz`. Test: Sunday, Monday, month and year edges.

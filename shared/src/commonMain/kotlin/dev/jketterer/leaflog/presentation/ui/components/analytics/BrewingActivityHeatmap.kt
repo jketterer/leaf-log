@@ -38,7 +38,8 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.math.min
 
-private val DAY_LABELS = listOf("S", "M", "T", "W", "T", "F", "S")
+// Indexed by DayOfWeek.ordinal (MONDAY = 0)
+private val DAY_LABELS = listOf("M", "T", "W", "T", "F", "S", "S")
 private val MONTH_NAMES = listOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
@@ -118,7 +119,7 @@ private fun WeekHeatmapCanvas(
     val headerLabels = if (period == AnalyticsPeriod.THIS_WEEK) {
         DAY_LABELS
     } else {
-        cells.take(7).map { DAY_LABELS[(it.date.dayOfWeek.ordinal + 1) % 7] }
+        cells.take(7).map { DAY_LABELS[it.date.dayOfWeek.ordinal] }
     }
 
     val gap = 4.dp
@@ -239,7 +240,7 @@ private fun MonthCalendarHeatmapCanvas(
 
     val firstDate = cells.first().date
     val lastDate = cells.last().date
-    val emptyStart = (firstDate.dayOfWeek.ordinal + 1) % 7  // 0=Sun, 6=Sat
+    val emptyStart = firstDate.dayOfWeek.ordinal
     val totalPositions = emptyStart + cells.size
     val numRows = (totalPositions + 6) / 7
     val emptyEnd = numRows * 7 - totalPositions

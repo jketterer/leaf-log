@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.domain.usecases.session
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.startOfWeek
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -90,9 +91,9 @@ class GetBrewingActivityUseCase(
         tz: TimeZone,
     ): List<ActivityCell> {
         val startDate = start.toLocalDateTime(tz).date
-        val startMonday = startDate.toWeekMonday()
-        val endMonday = end.toLocalDateTime(tz).date.toWeekMonday()
-        val sessionsByWeek = sessions.groupBy { it.timestamp.toLocalDateTime(tz).date.toWeekMonday() }
+        val startMonday = startDate.startOfWeek()
+        val endMonday = end.toLocalDateTime(tz).date.startOfWeek()
+        val sessionsByWeek = sessions.groupBy { it.timestamp.toLocalDateTime(tz).date.startOfWeek() }
 
         val result = mutableListOf<ActivityCell>()
         var current = startMonday
@@ -122,10 +123,10 @@ class GetBrewingActivityUseCase(
     ): List<ActivityCell> {
         return if (useWeekly) {
             val startDate = start.toLocalDateTime(tz).date
-            val startMonday = startDate.toWeekMonday().let { monday ->
+            val startMonday = startDate.startOfWeek().let { monday ->
                 if (monday < startDate) startDate else monday
             }
-            val endMonday = end.toLocalDateTime(tz).date.toWeekMonday()
+            val endMonday = end.toLocalDateTime(tz).date.startOfWeek()
             val result = mutableListOf<ActivityCell>()
             var current = startMonday
             while (current <= endMonday) {
@@ -150,11 +151,6 @@ class GetBrewingActivityUseCase(
     private fun dominantNonEmpty(colors: List<String>): String? {
         val valid = colors.filter { it.isNotEmpty() }
         return valid.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
-    }
-
-    private fun LocalDate.toWeekMonday(): LocalDate {
-        // dayOfWeek.ordinal: MONDAY=0, ..., SUNDAY=6
-        return minus(dayOfWeek.ordinal, DateTimeUnit.DAY)
     }
 
     /**

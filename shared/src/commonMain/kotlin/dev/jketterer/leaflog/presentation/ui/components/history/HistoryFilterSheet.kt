@@ -60,7 +60,7 @@ import kotlin.time.Instant
 
 private enum class DateRangePreset(val label: String) {
     TODAY("Today"),
-    THIS_WEEK("This Week"),
+    LAST_7_DAYS("Last 7 Days"),
     THIS_MONTH("This Month"),
     ;
 
@@ -69,7 +69,7 @@ private enum class DateRangePreset(val label: String) {
             .toLocalDateTime(TimeZone.currentSystemDefault()).date
         return when (this) {
             TODAY -> today to today
-            THIS_WEEK -> today.minus(6, DateTimeUnit.DAY) to today
+            LAST_7_DAYS -> today.minus(6, DateTimeUnit.DAY) to today
             THIS_MONTH -> today.minus(29, DateTimeUnit.DAY) to today
         }
     }

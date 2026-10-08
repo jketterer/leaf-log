@@ -4,12 +4,12 @@ import dev.jketterer.leaflog.domain.models.BrewingTrends
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.TrendPoint
+import dev.jketterer.leaflog.domain.models.startOfWeek
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
-import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
@@ -76,13 +76,13 @@ class GetBrewingTrendsUseCase(
         // Bucket daily counts by week start (Monday)
         val weekCounts = mutableMapOf<LocalDate, Int>()
         countsByDate.forEach { (date, count) ->
-            val monday = date.minus(date.dayOfWeek.ordinal, DateTimeUnit.DAY)
+            val monday = date.startOfWeek()
             weekCounts[monday] = (weekCounts[monday] ?: 0) + count
         }
 
         // Generate points for all weeks in range
         val result = mutableListOf<TrendPoint>()
-        var weekStart = startDate.minus(startDate.dayOfWeek.ordinal, DateTimeUnit.DAY)
+        var weekStart = startDate.startOfWeek()
         while (weekStart <= endDate) {
             result.add(TrendPoint(date = weekStart, sessionCount = weekCounts[weekStart] ?: 0))
             weekStart = weekStart.plus(7, DateTimeUnit.DAY)

@@ -72,7 +72,8 @@ di/ (Dependency Injection)
 **Use Cases**
 
 - Single responsibility: one business operation per use case
-- Return `Result<T>` for error handling
+- Return `Result<T>` when the operation can fail (writes, validation, state transitions). Reads
+  and pure calculations that cannot fail return the value directly
 - Complex business logic (calculations, validations, multi-step operations) belongs in use cases,
   NOT ViewModels
 - Should NEVER be simple wrappers for a lone single repository function

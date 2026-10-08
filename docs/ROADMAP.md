@@ -77,7 +77,7 @@ A roadmap without a "no" is a wishlist. These are decided, not open:
 |-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | Kotlin source files                           | ~304                                                                                                                  |
 | Screens (Screen + ViewModel + State + Intent) | 16                                                                                                                    |
-| Use cases                                     | 47, all returning `Result<T>` — 4 are single-call wrappers CLAUDE.md forbids                                          |
+| Use cases                                     | 47 — 4 are single-call wrappers CLAUDE.md forbids                                                                     |
 | **Test files**                                | **4** — `GetBrewingParametersPrefillUseCaseTest`, `DurationFieldsTest`, `EditTeaFormLogicTest`, `EditVesselStateTest` |
 | Room schema                                   | version 6, 5 migrations, all registered on both platforms, schemas exported                                           |
 | Migration tests                               | **zero**                                                                                                              |

@@ -14,7 +14,7 @@ Multiplatform for UI, Room for local storage, and follows Clean Architecture wit
 
 ```bash
 # Build debug APK
-./gradlew :composeApp:assembleDebug
+./gradlew :androidApp:assembleDebug
 ```
 
 ## Architecture

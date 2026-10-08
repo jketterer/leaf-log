@@ -81,13 +81,12 @@ A roadmap without a "no" is a wishlist. These are decided, not open:
 | **Test files** | **4** — `GetBrewingParametersPrefillUseCaseTest`, `DurationFieldsTest`, `EditTeaFormLogicTest`, `EditVesselStateTest` |
 | Room schema | version 6, 5 migrations, all registered on both platforms, schemas exported |
 | Migration tests | **zero** |
-| CI — Android / shared | **none** |
+| CI — Android / shared | GitHub Actions: `:shared:allTests :androidApp:assembleDebug` (F0) |
 | CI — iOS | Xcode Cloud, via `iosApp/ci_scripts/ci_post_clone.sh` |
 | Crash reporting | none |
 | String resources | **none** — ~550 hardcoded literals across 71 files |
 | Version | 0.1.0 from `version.properties` (F0). Before that: 1.0 / build 1 everywhere, no tags, no changelog |
-| `docs/` | Untracked. The eight superseded docs still exist |
-| Git index | `EditVesselFormLogic.kt` staged as added but deleted in the tree, and it duplicates `EditVesselState.kt` — **a commit without `-a` will not compile** |
+| `docs/` | Tracked; superseded docs deleted (F0) |
 
 **The audit's headline:** the surface is further along than the foundations. ~355 findings, ~117
 bugs, most of them produced by a handful of root causes repeated on every screen (audit §3). The
@@ -169,15 +168,15 @@ Bet 1 Design system & app shell ─► Bet 2 Brewing plans ─► Bet 3 Journal 
 
 Small; everything after it is worth more once it's done.
 
-- [ ] **Unstage `EditVesselFormLogic.kt`** (`git rm --cached`). It will break the next commit.
-- [ ] **Commit `docs/` as-is, then delete the superseded eight** in a second commit, so the old
+- [x] **Unstage `EditVesselFormLogic.kt`** (`git rm --cached`). It will break the next commit.
+- [x] **Commit `docs/` as-is, then delete the superseded eight** in a second commit, so the old
       material is recoverable from history.
-- [ ] **GitHub Actions CI**: `./gradlew :shared:allTests :composeApp:assembleDebug` on push and
+- [x] **GitHub Actions CI**: `./gradlew :shared:allTests :androidApp:assembleDebug` on push and
       PR. Without it, every test written later is a thing you *remember* to run.
-- [ ] **Test dependencies:** keep and wire `koin-test` (DI graph verification); delete the
+- [x] **Test dependencies:** keep and wire `koin-test` (DI graph verification); delete the
       Android-instrumented scaffolding and the other unused deps listed in § 2.
-- [ ] **Trim `TEST_CASES.md`** to the Track B checklist (~150 lines).
-- [ ] **Release hygiene.** "Which build is on my phone" must be answerable.
+- [x] **Trim `TEST_CASES.md`** to the Track B checklist (~150 lines).
+- [x] **Release hygiene.** "Which build is on my phone" must be answerable.
     - Semver, bumped by judgement (not tied to milestones), starting at `0.1.0`.
     - `version.properties` at the repo root holds `VERSION_NAME` and nothing else. Android reads
       it in Gradle; `Config.xcconfig` `#include`s it (a comment-free properties file is valid
@@ -202,17 +201,49 @@ Small; everything after it is worth more once it's done.
 
 ### F1 — Fix now
 
-The twenty verified bugs in `docs/audit/README.md` §2. No design needed; all small. Highlights:
-iOS relative dates (day-of-month), Analytics "This Week" on Sundays, donut and trend tap maths,
-Timer edit sheet corrupting persisted timer state, Steep Complete discard not withdrawing the
-reminder, the Live Activity extension's iOS 26.2 deployment target, errors that can never be seen,
-and **removing the streak insight** (contradicts Decisions).
+The verified bugs in `docs/audit/README.md` §2 that no later item rewrites. No design needed; all
+small. One conventional commit per item, its test in the same commit. Strike the audit row as it
+closes.
 
-Items that F2–F4 fix structurally (rating guesses, stale-snapshot saves, clearing fields, tea
-average, backup bugs) are left to those — don't patch them twice.
+- [ ] **Stop writing ratings the user didn't give** (#2, #3). F2's migration can't tell a guess
+      from a real rating, so every day these run is unrecoverable. Deletions only:
+    - Steep Complete's guess-and-upsert on open (`SteepCompleteViewModel` `suggestedRating`).
+    - Quick Brew: `rating = null`, and pass `usedConfigurationId = config.id` so `timesUsed` /
+      `lastUsedAt` finally rise (increments only fire on `COMPLETED`, so no double count).
+    - `SaveConfigurationDialog` gets `session.rating`, not `?: 5f`; its `rating` becomes nullable.
+    - The Log Session dialog prefill stays for F2 — the user sees it and submits it.
+- [ ] **iOS relative dates** (#9). A pure commonMain function classifies an instant as Today /
+      Yesterday / This year / Older given `now` and `tz`; the actuals only format. Test: year
+      boundary, Aug 23 vs Sep 23.
+- [ ] **Weeks start on Monday, everywhere** (#13). One `LocalDate.startOfWeek()` replaces the
+      three `ordinal` copies (Analytics `THIS_WEEK`, trend buckets, activity). Heatmap grid and
+      labels go Monday-first. History's "This Week" filter is renamed "Last 7 Days" — that's what
+      it does. `calculateDateRange` takes `now` and `tz`. Test: Sunday, Monday, month and year edges.
+- [ ] **Chart taps** (#14). Donut segment and trend point hit-testing become pure functions. Each
+      Canvas gets a `contentDescription` summary (definition of done). Test: angle offset,
+      nearest-point rounding.
+- [ ] **Timer edit sheet** (#15). Re-read the session inside the launch, copy the edited fields
+      onto it, then upsert. Reset while paused persists via `saveTimerStateUseCase`.
+- [ ] **Steep Complete discard withdraws the reminder** (#17). `timerService.onSessionResolved`.
+- [ ] **Live Activity deployment target** 26.2 → 18.2 (#18). Exit: an Xcode Cloud build; a Track
+      B line for the Live Activity on an iOS 18 device.
+- [ ] **Errors you can see** (#19). Minimal visibility only — Bet 1 replaces the source, not the
+      placement:
+    - Collection, History: inline `Snackbar` → `Scaffold` `snackbarHost`.
+    - Timer, Brewing Method, Edit Session, Vessels: render `state.error` in a `SnackbarHost`.
+    - Settings: export and import picker failures get their own intents instead of
+      `ExportCompleted` / `ImportCancelled`.
+- [ ] **Remove the streak insight** (#20): the block, `computeMaxStreak`,
+      `InsightType.CONSISTENCY` if otherwise unused, the preview string.
+- [ ] **`removeLast()` → `removeAt(lastIndex)`** in `AppNavigation.kt` (18 sites). Safe whether or
+      not the API < 35 crash is real; move the Hard-won facts entry from "unverified" to a rule.
+- [ ] **Release `0.1.1`**: CHANGELOG entry, tag `v0.1.1`.
 
-Exit: every F1 row closed or explicitly moved to the F-item that owns it; each fix that involved a
-branch, loop, or date calculation has a Track A test.
+**Moved, not fixed here:** #2–7 → F2 (except the rating writes stopped above), #8 → F3,
+#10–12 → F4, #16 Quick Timer notification → Bet 2 (which deletes that engine). #1 closed in F0.
+
+Exit: every item above checked; each fix that involved a branch, loop, or date calculation has a
+Track A test.
 
 ### F2 — The session aggregate
 

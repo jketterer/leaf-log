@@ -163,7 +163,7 @@ iosApp/                          # iOS app (SwiftUI entry point, Live Activity w
 ### Android
 
 ```shell
-./gradlew :composeApp:assembleDebug
+./gradlew :androidApp:assembleDebug
 ```
 
 Or use the run configuration in Android Studio / IntelliJ IDEA.

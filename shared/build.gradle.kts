@@ -40,13 +40,15 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
+        // koin-test's verify() is JVM-only
+        getByName("androidHostTest").dependencies {
+            implementation(libs.koin.test)
+        }
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.androidx.lifecycle.process)
-            implementation(libs.androidx.room.sqlite.wrapper)
             implementation(libs.koin.android)
             implementation(libs.koin.compose)
             implementation(libs.koin.core)
@@ -66,7 +68,6 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.coil.compose)
-            implementation(libs.coil.network.ktor3)
             implementation(libs.filekit.dialogs.compose)
             implementation(libs.kermit)
 

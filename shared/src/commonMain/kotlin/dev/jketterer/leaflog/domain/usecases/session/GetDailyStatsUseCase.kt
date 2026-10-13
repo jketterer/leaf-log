@@ -2,7 +2,7 @@ package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
@@ -19,37 +19,30 @@ class GetDailyStatsUseCase(
 ) {
     operator fun invoke(): Flow<DailyStats> {
         return combine(
-            teaSessionRepository.getAllFlow(),
+            teaSessionRepository.getAllSessionsFlow(),
             preferencesRepository.getPreferencesFlow(),
         ) { sessions, prefs -> calculateDailyStats(sessions, prefs) }
     }
 
     private fun calculateDailyStats(
-        allSessions: List<TeaSession>,
+        allSessions: List<SessionWithSteeps>,
         prefs: UserPreferences
     ): DailyStats {
         val now = Clock.System.now()
         val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
-        // Filter to today's completed sessions only
         val todaySessions = allSessions.filter { session ->
-            val sessionDate =
-                session.timestamp.toLocalDateTime(TimeZone.currentSystemDefault()).date
-            sessionDate == today && session.status == SessionStatus.COMPLETED
+            val sessionDate = session.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
+            sessionDate == today && session.session.status == SessionStatus.COMPLETED
         }
 
-        // Count only parent sessions (not child steeps)
-        val parentSessions = todaySessions.filter { it.parentSessionId == null }
-
-        // Calculate total water consumed (sum across all steeps, including children)
-        val totalWaterMl = todaySessions.sumOf { it.waterQuantityMl }
+        val totalWaterMl = todaySessions.sumOf { session -> session.steeps.sumOf { it.waterQuantityMl } }
         val formattedWaterQuantity = VolumeFormatter.format(totalWaterMl, prefs.volumeUnit)
 
-        // Count unique teas brewed today (only parent sessions)
-        val uniqueTeaIds = parentSessions.map { it.teaId }.distinct()
+        val uniqueTeaIds = todaySessions.map { it.session.teaId }.distinct()
 
         return DailyStats(
-            sessionCount = parentSessions.size,
+            sessionCount = todaySessions.size,
             formattedWaterQuantity = formattedWaterQuantity,
             differentTeasCount = uniqueTeaIds.size,
         )

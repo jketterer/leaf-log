@@ -36,7 +36,6 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.time.Instant
 
 class AnalyticsViewModel(
     private val teaSessionRepository: TeaSessionRepository,
@@ -186,13 +185,8 @@ class AnalyticsViewModel(
                 val prefs = preferencesRepository.getPreferences()
 
                 // Count total completed sessions for empty state check
-                val allSessions = teaSessionRepository.getByDateRange(
-                    Instant.DISTANT_PAST,
-                    Clock.System.now(),
-                )
-                val totalCompleted = allSessions.count {
-                    it.status == SessionStatus.COMPLETED && it.parentSessionId == null
-                }
+                val totalCompleted = teaSessionRepository.getAllSessions()
+                    .count { it.session.status == SessionStatus.COMPLETED }
 
                 val hasMinimumData = totalCompleted >= 10
 

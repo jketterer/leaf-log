@@ -14,9 +14,8 @@ class GetTimeInsightsUseCase(
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): TimeInsights {
         val tz = TimeZone.currentSystemDefault()
-        val sessions = teaSessionRepository.getByDateRange(start, end).filter {
-            it.status == SessionStatus.COMPLETED && it.parentSessionId == null
-        }
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+            .filter { it.session.status == SessionStatus.COMPLETED }
 
         val count = sessions.size
         if (count < 5) return TimeInsights(null, null, count)
@@ -25,7 +24,7 @@ class GetTimeInsightsUseCase(
         val dayBuckets = mutableMapOf<DayOfWeek, Int>()
 
         for (session in sessions) {
-            val ldt = session.timestamp.toLocalDateTime(tz)
+            val ldt = session.startedAt.toLocalDateTime(tz)
             val tod = when (ldt.hour) {
                 in 5..11 -> TimeOfDay.MORNING
                 in 12..16 -> TimeOfDay.AFTERNOON

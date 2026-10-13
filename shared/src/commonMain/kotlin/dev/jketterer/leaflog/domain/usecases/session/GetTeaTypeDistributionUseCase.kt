@@ -13,22 +13,20 @@ class GetTeaTypeDistributionUseCase(
     private val teaTypeRepository: TeaTypeRepository,
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): List<TeaTypeDistribution> {
-        val sessions = teaSessionRepository.getByDateRange(start, end)
-        val completedParents = sessions.filter {
-            it.status == SessionStatus.COMPLETED && it.parentSessionId == null
-        }
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+        val completed = sessions.filter { it.session.status == SessionStatus.COMPLETED }
 
-        if (completedParents.isEmpty()) return emptyList()
+        if (completed.isEmpty()) return emptyList()
 
         val teas = teaRepository.getAll().associateBy { it.id }
         val teaTypes = teaTypeRepository.getAll().associateBy { it.id }
 
-        val countsByTeaType = completedParents
-            .mapNotNull { session -> teas[session.teaId]?.teaTypeId }
+        val countsByTeaType = completed
+            .mapNotNull { session -> teas[session.session.teaId]?.teaTypeId }
             .groupingBy { it }
             .eachCount()
 
-        val total = completedParents.size.toFloat()
+        val total = completed.size.toFloat()
 
         return countsByTeaType
             .mapNotNull { (teaTypeId, count) ->

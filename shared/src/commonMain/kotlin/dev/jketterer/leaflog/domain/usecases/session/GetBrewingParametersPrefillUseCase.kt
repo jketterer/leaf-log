@@ -2,8 +2,8 @@ package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -46,13 +46,14 @@ class GetBrewingParametersPrefillUseCase(
         // 2. The best brew of this tea you have already had in this vessel
         val bestSession = findBestRatedSession(tea.id, vessel.id)
         if (bestSession != null) {
+            val firstSteep = bestSession.steeps.first()
             return BrewingParametersPrefill(
-                teaQuantityGrams = bestSession.teaQuantityGrams,
-                waterQuantityMl = bestSession.waterQuantityMl,
-                temperatureCelsius = bestSession.temperatureCelsius,
-                brewingTime = bestSession.brewingTime,
-                waterType = bestSession.waterType,
-                source = PrefillSource.BestRatedSession(bestSession.effectiveRating()!!),
+                teaQuantityGrams = bestSession.session.teaQuantityGrams,
+                waterQuantityMl = firstSteep.waterQuantityMl,
+                temperatureCelsius = firstSteep.temperatureCelsius,
+                brewingTime = firstSteep.brewingTime,
+                waterType = bestSession.session.waterType,
+                source = PrefillSource.BestRatedSession(bestSession.effectiveRating!!),
             )
         }
 
@@ -106,21 +107,19 @@ class GetBrewingParametersPrefillUseCase(
     /**
      * The best completed brew of this tea in this vessel, or null if none clears [MINIMUM_RATING].
      *
-     * Only parent sessions are considered: their parameters describe the first steep, which is
-     * what a new session is about to start. Brews rated below the floor are skipped rather than
-     * suggested back, since reproducing a cup you did not enjoy is worse than a generic starting
-     * point from the same tea type.
+     * Its parameters are its first steep's, which is what a new session is about to start. Brews
+     * rated below the floor are skipped rather than suggested back, since reproducing a cup you did
+     * not enjoy is worse than a generic starting point from the same tea type.
      */
-    private suspend fun findBestRatedSession(teaId: String, vesselId: String): TeaSession? {
-        return teaSessionRepository.getByTeaId(teaId)
+    private suspend fun findBestRatedSession(teaId: String, vesselId: String): SessionWithSteeps? {
+        return teaSessionRepository.getSessionsByTea(teaId)
             .filter {
-                it.status == SessionStatus.COMPLETED &&
-                    it.parentSessionId == null &&
-                    it.vesselId == vesselId &&
-                    (it.effectiveRating() ?: 0f) >= MINIMUM_RATING
+                it.session.status == SessionStatus.COMPLETED &&
+                    it.session.vesselId == vesselId &&
+                    (it.effectiveRating ?: 0f) >= MINIMUM_RATING
             }
             .maxWithOrNull(
-                compareBy<TeaSession> { it.effectiveRating() ?: 0f }.thenBy { it.timestamp },
+                compareBy<SessionWithSteeps> { it.effectiveRating ?: 0f }.thenBy { it.startedAt },
             )
     }
 
@@ -129,6 +128,3 @@ class GetBrewingParametersPrefillUseCase(
         const val MINIMUM_RATING = 3.0f
     }
 }
-
-/** Rating for the brew as a whole, preferring the multi-steep average over a single steep. */
-private fun TeaSession.effectiveRating(): Float? = averageRating ?: rating

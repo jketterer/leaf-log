@@ -11,15 +11,13 @@ class GetTopTeasUseCase(
     private val teaRepository: TeaRepository,
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): List<TopTea> {
-        val sessions = teaSessionRepository.getByDateRange(start, end)
-        val completedParents = sessions.filter {
-            it.status == SessionStatus.COMPLETED && it.parentSessionId == null
-        }
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+        val completed = sessions.filter { it.session.status == SessionStatus.COMPLETED }
 
         val teas = teaRepository.getAll().associateBy { it.id }
 
-        return completedParents
-            .groupingBy { it.teaId }
+        return completed
+            .groupingBy { it.session.teaId }
             .eachCount()
             .mapNotNull { (teaId, count) ->
                 val tea = teas[teaId] ?: return@mapNotNull null

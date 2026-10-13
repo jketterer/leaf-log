@@ -3,11 +3,11 @@ package dev.jketterer.leaflog.domain.usecases.session
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -91,7 +91,7 @@ class GetBrewingParametersPrefillUseCaseTest {
         val tea = tea(defaultTemperatureCelsius = 82.0)
         val prefill = prefillFor(
             tea = tea,
-            sessions = listOf(session(teaId = tea.id, temperatureCelsius = 88.0, rating = 4.5f)),
+            sessions = listOf(session(temperatureCelsius = 88.0, 4.5f)),
         )
 
         assertEquals(88.0, prefill.temperatureCelsius)
@@ -104,10 +104,30 @@ class GetBrewingParametersPrefillUseCaseTest {
         val tea = tea(defaultTemperatureCelsius = 82.0)
         val prefill = prefillFor(
             tea = tea,
-            sessions = listOf(session(teaId = tea.id, temperatureCelsius = 88.0, rating = 1.0f)),
+            sessions = listOf(session(temperatureCelsius = 88.0, 1.0f)),
         )
 
         assertEquals(82.0, prefill.temperatureCelsius)
+        assertEquals(PrefillSource.TeaDefault, prefill.source)
+    }
+
+    @Test
+    fun `a gongfu session is suggested by its steeps' mean rating`() = runTest {
+        val prefill = prefillFor(
+            tea = tea(defaultTemperatureCelsius = null),
+            sessions = listOf(session(88.0, 2f, null, 5f)),
+        )
+
+        assertEquals(PrefillSource.BestRatedSession(3.5f), prefill.source)
+    }
+
+    @Test
+    fun `a session still brewing is never suggested`() = runTest {
+        val prefill = prefillFor(
+            tea = tea(defaultTemperatureCelsius = 82.0),
+            sessions = listOf(session(88.0, 5f, status = SessionStatus.IN_PROGRESS)),
+        )
+
         assertEquals(PrefillSource.TeaDefault, prefill.source)
     }
 
@@ -131,7 +151,7 @@ class GetBrewingParametersPrefillUseCaseTest {
         tea: Tea,
         teaType: TeaType = teaType(defaultTemperatureCelsius = null),
         configurations: List<BrewingConfiguration> = emptyList(),
-        sessions: List<TeaSession> = emptyList(),
+        sessions: List<SessionWithSteeps> = emptyList(),
     ): BrewingParametersPrefill {
         val useCase = GetBrewingParametersPrefillUseCase(
             brewingConfigurationRepository = FakeBrewingConfigurationRepository(configurations),
@@ -181,21 +201,15 @@ class GetBrewingParametersPrefillUseCaseTest {
         updatedAt = EPOCH,
     )
 
-    private fun session(teaId: String, temperatureCelsius: Double, rating: Float) = TeaSession(
-        id = "session-1",
-        teaId = teaId,
-        status = SessionStatus.COMPLETED,
-        teaQuantityGrams = 5f,
-        vesselId = VESSEL.id,
-        waterType = WaterType.FILTERED,
-        rating = rating,
-        timestamp = EPOCH,
-        brewingTime = 30.seconds,
+    // previewSession brews tea-1 in vessel-1: the tea and VESSEL here
+    private fun session(
+        temperatureCelsius: Double,
+        vararg ratings: Float?,
+        status: SessionStatus = SessionStatus.COMPLETED,
+    ) = previewSession(
+        ratings = ratings.toList(),
+        status = status,
         temperatureCelsius = temperatureCelsius,
-        waterQuantityMl = 150.0,
-        syncStatus = SyncStatus.LOCAL_ONLY,
-        createdAt = EPOCH,
-        updatedAt = EPOCH,
     )
 
     private companion object {

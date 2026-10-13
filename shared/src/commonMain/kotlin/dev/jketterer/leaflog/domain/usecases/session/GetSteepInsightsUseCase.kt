@@ -5,8 +5,6 @@ import dev.jketterer.leaflog.domain.models.SteepInsights
 import dev.jketterer.leaflog.domain.models.TopReSteepedTea
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 
 class GetSteepInsightsUseCase(
@@ -14,50 +12,37 @@ class GetSteepInsightsUseCase(
     private val teaRepository: TeaRepository,
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): SteepInsights {
-        val periodSessions = teaSessionRepository.getByDateRange(start, end)
-            .filter { it.status == SessionStatus.COMPLETED }
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+            .filter { it.session.status == SessionStatus.COMPLETED }
 
-        val parentSessions = periodSessions.filter { it.parentSessionId == null }
-        val childSessions = periodSessions.filter { it.parentSessionId != null }
-
-        // Average steeps per session
-        val averageSteepsPerSession = if (parentSessions.isEmpty()) {
+        val averageSteepsPerSession = if (sessions.isEmpty()) {
             1.0f
         } else {
-            val childCountByParent = childSessions.groupingBy { it.parentSessionId!! }.eachCount()
-            val totalSteeps = parentSessions.sumOf { parent ->
-                1 + (childCountByParent[parent.id] ?: 0)
-            }
-            totalSteeps.toFloat() / parentSessions.size
+            sessions.map { it.steeps.size }.average().toFloat()
         }
 
-        // Top re-steeped tea: group parent sessions by teaId, compute avg steeps per parent
+        // Top re-steeped tea: the tea with the most steeps per session, over 2+ sessions
         val teas = teaRepository.getAll().associateBy { it.id }
-        val childCountByParent = childSessions.groupingBy { it.parentSessionId!! }.eachCount()
-        val topReSteepedTea = parentSessions
-            .groupBy { it.teaId }
-            .filter { (_, parents) -> parents.size >= 2 }
-            .mapNotNull { (teaId, parents) ->
+        val topReSteepedTea = sessions
+            .groupBy { it.session.teaId }
+            .filter { (_, teaSessions) -> teaSessions.size >= 2 }
+            .mapNotNull { (teaId, teaSessions) ->
                 val tea = teas[teaId] ?: return@mapNotNull null
-                val avgSteeps = parents.map { parent ->
-                    1 + (childCountByParent[parent.id] ?: 0)
-                }.average().toFloat()
+                val avgSteeps = teaSessions.map { it.steeps.size }.average().toFloat()
                 if (avgSteeps < 2f) null else TopReSteepedTea(tea = tea, averageSteeps = avgSteeps)
             }
             .maxByOrNull { it.averageSteeps }
 
         // New tea discoveries: teas first brewed within [start, end)
-        val allSessions = teaSessionRepository.getAll()
-            .filter { it.status == SessionStatus.COMPLETED && it.parentSessionId == null }
+        val earliestByTeaId = teaSessionRepository.getAllSessions()
+            .filter { it.session.status == SessionStatus.COMPLETED }
+            .groupBy { it.session.teaId }
+            .mapValues { (_, teaSessions) -> teaSessions.minOf { it.startedAt } }
 
-        val earliestByTeaId = allSessions
-            .groupBy { it.teaId }
-            .mapValues { (_, sessions) -> sessions.minOf { it.timestamp } }
-
-        val teaIdsInPeriod = parentSessions.map { it.teaId }.toSet()
+        val teaIdsInPeriod = sessions.map { it.session.teaId }.toSet()
         val newTeaDiscoveries = teaIdsInPeriod.count { teaId ->
             val earliest = earliestByTeaId[teaId] ?: return@count false
-            earliest >= start && earliest < end
+            earliest in start..<end
         }
 
         return SteepInsights(

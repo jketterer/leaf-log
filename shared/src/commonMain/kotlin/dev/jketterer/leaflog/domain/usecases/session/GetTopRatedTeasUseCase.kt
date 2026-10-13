@@ -11,22 +11,18 @@ class GetTopRatedTeasUseCase(
     private val teaRepository: TeaRepository,
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): List<TopRatedTea> {
-        val sessions = teaSessionRepository.getByDateRange(start, end)
-        val ratedParents = sessions.filter { session ->
-            session.status == SessionStatus.COMPLETED &&
-                session.parentSessionId == null &&
-                (session.averageRating != null || session.rating != null)
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+        val rated = sessions.filter {
+            it.session.status == SessionStatus.COMPLETED && it.effectiveRating != null
         }
 
         val teas = teaRepository.getAll().associateBy { it.id }
 
-        return ratedParents
-            .groupBy { it.teaId }
+        return rated
+            .groupBy { it.session.teaId }
             .mapNotNull { (teaId, sessions) ->
                 val tea = teas[teaId] ?: return@mapNotNull null
-                val avgRating = sessions.map { session ->
-                    session.averageRating ?: session.rating!!
-                }.average().toFloat()
+                val avgRating = sessions.map { it.effectiveRating!! }.average().toFloat()
                 TopRatedTea(
                     tea = tea,
                     averageRating = avgRating,

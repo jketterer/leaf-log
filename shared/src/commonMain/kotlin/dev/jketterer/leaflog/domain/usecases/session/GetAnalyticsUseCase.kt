@@ -10,39 +10,26 @@ class GetAnalyticsUseCase(
     private val teaSessionRepository: TeaSessionRepository,
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): AnalyticsData {
-        val allSessions = teaSessionRepository.getByDateRange(start, end)
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+            .filter { it.session.status == SessionStatus.COMPLETED }
+        val steeps = sessions.flatMap { it.steeps }
 
-        val completedSessions = allSessions.filter { it.status == SessionStatus.COMPLETED }
-        val parentSessions = completedSessions.filter { it.parentSessionId == null }
+        val totalBrewingTime = steeps.fold(Duration.ZERO) { acc, steep -> acc + steep.brewingTime }
 
-        val totalBrewingTime = completedSessions.fold(Duration.ZERO) { acc, session ->
-            acc + session.brewingTime
-        }
-
-        val totalWaterMl = completedSessions.sumOf { it.waterQuantityMl }
-
-        val uniqueTeasCount = parentSessions.map { it.teaId }.distinct().size
-
-        val ratedSessions = parentSessions.filter { it.rating != null || it.averageRating != null }
-        val averageRating = if (ratedSessions.isNotEmpty()) {
-            ratedSessions.map { it.averageRating ?: it.rating ?: 0f }.average().toFloat()
-        } else {
-            null
-        }
-
-        // Parent sessions only: a steep re-uses the leaves it was given, and AddSteepUseCase
-        // copies the parent's quantity onto each child, so summing every steep would report the
-        // same leaf once per steep. Water is summed across all steeps because each one is fresh.
-        val weighedSessions = parentSessions.mapNotNull { it.teaQuantityGrams }
+        // Water is per steep, each one fresh. Leaf is per session: every steep re-uses it.
+        val totalWaterMl = steeps.sumOf { it.waterQuantityMl }
+        val weighedSessions = sessions.mapNotNull { it.session.teaQuantityGrams }
         val totalTeaGrams = weighedSessions.sumOf { it.toDouble() }
 
+        val ratings = sessions.mapNotNull { it.effectiveRating }
+
         return AnalyticsData(
-            totalSessions = parentSessions.size,
+            totalSessions = sessions.size,
             totalBrewingTime = totalBrewingTime,
             totalWaterMl = totalWaterMl,
-            uniqueTeasCount = uniqueTeasCount,
-            averageRating = averageRating,
-            ratedSessionsCount = ratedSessions.size,
+            uniqueTeasCount = sessions.map { it.session.teaId }.distinct().size,
+            averageRating = ratings.takeIf { it.isNotEmpty() }?.average()?.toFloat(),
+            ratedSessionsCount = ratings.size,
             totalTeaGrams = totalTeaGrams,
             weighedSessionsCount = weighedSessions.size,
         )

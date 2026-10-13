@@ -19,16 +19,14 @@ class GetBrewingTrendsUseCase(
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): BrewingTrends {
         val tz = TimeZone.currentSystemDefault()
-        val sessions = teaSessionRepository.getByDateRange(start, end)
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
 
-        val completedParents = sessions.filter {
-            it.status == SessionStatus.COMPLETED && it.parentSessionId == null
-        }
+        val completed = sessions.filter { it.session.status == SessionStatus.COMPLETED }
 
-        if (completedParents.isEmpty()) return BrewingTrends(emptyList(), TrendGranularity.DAILY)
+        if (completed.isEmpty()) return BrewingTrends(emptyList(), TrendGranularity.DAILY)
 
-        val countsByDate = completedParents.groupBy { session ->
-            session.timestamp.toLocalDateTime(tz).date
+        val countsByDate = completed.groupBy { session ->
+            session.startedAt.toLocalDateTime(tz).date
         }.mapValues { (_, sessions) -> sessions.size }
 
         // Use earliest session date as start bound to avoid iterating millions of days

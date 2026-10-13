@@ -359,7 +359,9 @@ the SQL against the Kotlin rules on the same fixture.
   delete, and `UpdateAverageRatingUseCase`. The old write use cases had no callers left, so they
   went here, and `UseCaseModule`'s `Aggregate` aliases with them. Add Steep shows on completed
   sessions only.
-- [ ] `refactor: move analytics and prefill onto the aggregate`
+- [x] `refactor: move analytics and prefill onto the aggregate`: the Analytics use cases, Home's
+  daily stats and prefill's best session. A session's steeps all land in the period and day it
+  started; ratings are `effectiveRating`. Only export still reads `TeaSession`.
 - [ ] `refactor: delete TeaSession`, `RecentSessionsCard` and the `TeaSession` reads; import goes
   through the DAO. `session/aggregate/` moves up into `session/`.
 - [ ] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both

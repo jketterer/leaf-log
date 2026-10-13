@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.domain.usecases.session
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.startOfWeek
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -28,14 +29,12 @@ class GetBrewingActivityUseCase(
         if (period == AnalyticsPeriod.ALL_TIME) return@runCatching emptyList()
 
         val tz = TimeZone.currentSystemDefault()
-        val sessions = teaSessionRepository.getByDateRange(start, end)
-        val completedParents = sessions.filter {
-            it.status == SessionStatus.COMPLETED && it.parentSessionId == null
-        }
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+        val completed = sessions.filter { it.session.status == SessionStatus.COMPLETED }
 
         val useWeekly = period == AnalyticsPeriod.LAST_90_DAYS || period == AnalyticsPeriod.THIS_YEAR
 
-        if (completedParents.isEmpty()) {
+        if (completed.isEmpty()) {
             return@runCatching generateEmptyCells(start, end, useWeekly, tz)
         }
 
@@ -48,14 +47,14 @@ class GetBrewingActivityUseCase(
         }
 
         if (useWeekly) {
-            buildWeeklyCells(completedParents, teaColorMap, start, end, tz)
+            buildWeeklyCells(completed, teaColorMap, start, end, tz)
         } else {
-            buildDailyCells(completedParents, teaColorMap, start, end, tz)
+            buildDailyCells(completed, teaColorMap, start, end, tz)
         }
     }
 
     private fun buildDailyCells(
-        sessions: List<dev.jketterer.leaflog.domain.models.TeaSession>,
+        sessions: List<SessionWithSteeps>,
         teaColorMap: Map<String, String>,
         start: Instant,
         end: Instant,
@@ -63,13 +62,13 @@ class GetBrewingActivityUseCase(
     ): List<ActivityCell> {
         val startDate = start.toLocalDateTime(tz).date
         val endDate = end.toExclusiveLocalDate(tz)
-        val sessionsByDay = sessions.groupBy { it.timestamp.toLocalDateTime(tz).date }
+        val sessionsByDay = sessions.groupBy { it.startedAt.toLocalDateTime(tz).date }
 
         val result = mutableListOf<ActivityCell>()
         var current = startDate
         while (current <= endDate) {
             val daySessions = sessionsByDay[current]
-            val dominantColor = daySessions?.mapNotNull { teaColorMap[it.teaId] }
+            val dominantColor = daySessions?.mapNotNull { teaColorMap[it.session.teaId] }
                 ?.let { colors -> dominantNonEmpty(colors) }
             result.add(
                 ActivityCell(
@@ -84,7 +83,7 @@ class GetBrewingActivityUseCase(
     }
 
     private fun buildWeeklyCells(
-        sessions: List<dev.jketterer.leaflog.domain.models.TeaSession>,
+        sessions: List<SessionWithSteeps>,
         teaColorMap: Map<String, String>,
         start: Instant,
         end: Instant,
@@ -93,13 +92,13 @@ class GetBrewingActivityUseCase(
         val startDate = start.toLocalDateTime(tz).date
         val startMonday = startDate.startOfWeek()
         val endMonday = end.toLocalDateTime(tz).date.startOfWeek()
-        val sessionsByWeek = sessions.groupBy { it.timestamp.toLocalDateTime(tz).date.startOfWeek() }
+        val sessionsByWeek = sessions.groupBy { it.startedAt.toLocalDateTime(tz).date.startOfWeek() }
 
         val result = mutableListOf<ActivityCell>()
         var current = startMonday
         while (current <= endMonday) {
             val weekSessions = sessionsByWeek[current]
-            val dominantColor = weekSessions?.mapNotNull { teaColorMap[it.teaId] }
+            val dominantColor = weekSessions?.mapNotNull { teaColorMap[it.session.teaId] }
                 ?.let { colors -> dominantNonEmpty(colors) }
             // Clamp cell date so partial weeks don't spill before the requested start
             val cellDate = if (current < startDate) startDate else current

@@ -11,18 +11,16 @@ class GetVesselDistributionUseCase(
     private val brewingVesselRepository: BrewingVesselRepository,
 ) {
     suspend operator fun invoke(start: Instant, end: Instant): List<VesselDistribution> {
-        val sessions = teaSessionRepository.getByDateRange(start, end)
-        val completedParents = sessions.filter { session ->
-            session.status == SessionStatus.COMPLETED &&
-                session.parentSessionId == null &&
-                session.vesselId.isNotBlank()
+        val sessions = teaSessionRepository.getSessionsStartedBetween(start, end)
+        val completed = sessions.filter {
+            it.session.status == SessionStatus.COMPLETED && it.session.vesselId.isNotBlank()
         }
 
-        if (completedParents.isEmpty()) return emptyList()
+        if (completed.isEmpty()) return emptyList()
 
         val vessels = brewingVesselRepository.getAll().associateBy { it.id }
-        val countByVesselId = completedParents.groupingBy { it.vesselId }.eachCount()
-        val total = completedParents.size.toFloat()
+        val countByVesselId = completed.groupingBy { it.session.vesselId }.eachCount()
+        val total = completed.size.toFloat()
 
         return countByVesselId
             .mapNotNull { (vesselId, count) ->

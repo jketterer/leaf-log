@@ -338,7 +338,7 @@ the SQL against the Kotlin rules on the same fixture.
 - [x] `test: run Room migrations on the host JVM`: the harness, proven on 5 → 6. First choice is
   `MIGRATION_x_y.migrate()` on a `BundledSQLiteDriver` connection with the JVM natives; the fallback
   is Robolectric + `room-testing`.
-- [ ] `fix: start the Log Session rating unrated`
+- [x] `fix: start the Log Session rating unrated`
 - [ ] `refactor: add the Session, Steep and SessionWithSteeps domain types`: the rating and stats
   rules as pure functions, the mapper, `Transactor`.
 - [ ] `feat: read sessions as aggregates`

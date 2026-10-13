@@ -40,7 +40,6 @@ class GetBrewingParametersPrefillUseCase(
                 brewingTime = exactConfig.brewingTime,
                 waterType = exactConfig.waterType,
                 source = PrefillSource.SavedConfig,
-                rating = exactConfig.rating,
             )
         }
 
@@ -54,7 +53,6 @@ class GetBrewingParametersPrefillUseCase(
                 brewingTime = bestSession.brewingTime,
                 waterType = bestSession.waterType,
                 source = PrefillSource.BestRatedSession(bestSession.effectiveRating()!!),
-                rating = bestSession.effectiveRating(),
             )
         }
 
@@ -75,7 +73,6 @@ class GetBrewingParametersPrefillUseCase(
                         brewingTime = typeConfig.brewingTime,
                         waterType = typeConfig.waterType,
                         source = PrefillSource.SameTypeConfig(teaName = otherTea.name),
-                        rating = typeConfig.rating,
                     )
                 }
             }
@@ -103,7 +100,6 @@ class GetBrewingParametersPrefillUseCase(
             temperatureCelsius = temperature,
             brewingTime = null,
             waterType = null,
-            rating = null,
             source = source,
         )
 

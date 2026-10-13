@@ -278,7 +278,6 @@ class LogTeaViewModel(
                     prefillSource = prefill.source,
                     availableConfigurations = configurations,
                     usedConfigurationId = configurations.firstOrNull()?.id,
-                    completionRating = prefill.rating ?: 0f,
                 )
             }
         }

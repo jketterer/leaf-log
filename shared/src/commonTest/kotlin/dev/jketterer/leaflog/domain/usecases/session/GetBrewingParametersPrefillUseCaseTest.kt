@@ -70,7 +70,6 @@ class GetBrewingParametersPrefillUseCaseTest {
         assertNull(prefill.waterQuantityMl)
         assertNull(prefill.brewingTime)
         assertNull(prefill.waterType)
-        assertNull(prefill.rating)
     }
 
     // --- ordering: the new steps must stay below the existing three -----------------------------

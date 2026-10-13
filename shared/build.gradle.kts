@@ -43,6 +43,8 @@ kotlin {
         // koin-test's verify() is JVM-only
         getByName("androidHostTest").dependencies {
             implementation(libs.koin.test)
+            // The android variant ships device .so files; the jvm one carries host natives
+            implementation(libs.androidx.sqlite.bundled.jvm)
         }
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)

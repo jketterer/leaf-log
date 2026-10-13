@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-09-23
+> **Last updated:** 2026-10-13 (F2 design)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -251,41 +251,114 @@ Track A test.
 brewing plans, best brew, the journal, and recap — all of which would otherwise be built on six
 disagreeing copies of the rules.
 
-**Design:**
+**Design** (decided 2026-10-13):
 
-- A `SessionWithSteeps` domain aggregate (parent + ordered children). Reads that present sessions —
-  History, Tea Detail, Vessel Detail, Analytics, recap — go through it.
-- **One rating rule:** `effectiveRating` = mean of *rated* steeps, `null` if none. Replaces the
-  current split (tea stats read steep 1's `rating`; prefill reads `averageRating ?: rating`).
-  Unrated steeps are excluded from every average and from best brew.
-- **Every steep mutation goes through a use case** that also recomputes the session's average and
-  the tea's stats: `AddSteep`, `RateSteep`, `EditSteep`, `DeleteSteep` (renumbers),
-  `FinishSession`, `DiscardSession` (withdraws the reminder). The six current code paths —
-  `CompleteSessionUseCase`, `SteepCompleteViewModel` (×3), `TimerViewModel` discard,
-  `InProgressSessionDelegate`, `SessionDetailViewModel` steep delete — collapse into these.
-- **Honest data rules**, enforced in the aggregate's use cases, not screens:
-    - Only a user tap stores a rating. Suggestions render as ghost values. The four sources of
-      unrequested ratings (Steep Complete guess, Quick Brew copy, Log Session dialog prefill,
-      `SaveConfigurationDialog ?: 5f`) are removed.
-    - Session-level fields (vessel, water type, leaf, location) live on the parent only; children
-      stop copying them. Reads take them from the parent. (Fixes edits not propagating, and the leaf
-      double-count trap becomes structurally impossible.)
-    - A steep added to a past session is stamped relative to that session, not "now".
-    - **Record actual brew time** alongside the planned time. ±adjust and Complete Now stop being
-      lost; prefill and plans replay what actually happened.
-    - Updates use field-level writes or read-modify-write *inside* the use case. No more
-      `staleSnapshot.copy(oneField)` from ViewModels.
-    - Update APIs can express "cleared" (explicit patch type, not `null` = unchanged).
-    - Unit edits round-trip in storage units; display conversion never writes back unless the user
-      changed the value.
-- Re-finishing a completed session is a no-op (fixes the `timesUsed` double count).
+- **Storage stays one table; the domain splits.** A parent row is the session *and* steep 1;
+  children are steeps 2…n. The domain gets `Session` (tea, status, start time, vessel, water type,
+  leaf, location, `usedConfigurationId`), `Steep` (number, planned and actual time, temperature,
+  water, rating, notes, photos, timer fields) and `SessionWithSteeps(session, steeps)`. The mapper
+  splits a parent row into `Session` + `Steep(1)`, so `Session.id` is steep 1's id. Domain
+  `TeaSession` is deleted. The timer works on a `Steep`.
+- **Status lives on the parent and means the session.** It stays `IN_PROGRESS` until Finish. Child
+  `status` is ignored, not maintained. The current steep is the highest `steepNumber` of an
+  in-progress session. (Today the parent goes `COMPLETED` when steep 2 starts, so tea stats count
+  unfinished sessions and `hasInProgressSession()` misses steeps 2+.)
+- **Session-level fields live on the parent only.** Children's vessel, water type, leaf, location
+  and `usedConfigurationId` are NULL. `teaId` stays on every row (FK cascade, by-tea queries).
+- **Ratings:**
+    - `effectiveRating` = mean of rated steeps, `null` if none. **Computed on the aggregate, never
+      stored:** `averageRating` and `UpdateAverageRatingUseCase` are deleted. Full precision in the
+      domain; rounding belongs to Bet 1's rating component.
+    - A tea's rating = mean of its completed sessions' `effectiveRating`s. Each session counts once;
+      unrated sessions are skipped.
+    - Only a user tap stores a rating. The Log Session dialog starts unrated. Ghost suggestions are
+      Bet 1 and 2's; F2 renders none.
+- **Stored derived stats are recomputed, never incremented.** Tea `totalSessions`, `averageRating`
+  and `lastBrewedAt` (completed sessions only; `lastBrewedAt` is the start time) and configuration
+  `timesUsed` and `lastUsedAt` are recomputed from sessions by one function inside every mutation's
+  transaction. `incrementTimesUsed` is deleted: it fired once per steep and never decremented.
+  Re-finish, reopen and delete are then correct with no special cases.
+- **Transactions.** A domain `Transactor`; Room implements it with
+  `useWriterConnection { it.immediateTransaction { } }`, the test fake just runs the block. Database
+  work runs inside it. Side effects (timer stop, reminder withdrawal, file deletion) run after the
+  commit, so a rollback never withdraws a reminder. A stats failure rolls the mutation back.
+- **Writes, one use case per operation:** `StartSession` (Brew Again folds in), `AddSteep`,
+  `EditSteep`, `EditSession`, `DeleteSteep` (renumbers), `FinishSession` (no-op when already
+  completed), `ReopenSession`, `DeleteSession`, plus timer state save and clear. Repository writes
+  are called only from these. The six current paths — `CompleteSessionUseCase`,
+  `SteepCompleteViewModel` (×3), `TimerViewModel` discard, `InProgressSessionDelegate`,
+  `SessionDetailViewModel` steep delete — collapse into them.
+    - Edits take a transform applied to the row re-read inside the transaction:
+      `editSteep(id) { it.copy(notes = null) }`. Callers name only what they changed, so stale
+      snapshots can't happen and `null` means cleared. No patch type. Changes to identity or timer
+      fields are rejected.
+    - Discard is `DeleteSession` on steep 1, and `DeleteSteep(N)` + `FinishSession` on steep N ≥ 2.
+    - Soft deletes stop deleting photo files (F3's rule, pulled forward). Removing a photo in Edit
+      Session still deletes the file.
+    - A unit field goes into an edit only if its display text changed. One pure helper, used by the
+      Timer, Steep Complete and Edit Session sheets.
+- **Reads return aggregates.** One query per read: the matching parents plus their children via
+  `COALESCE(parentSessionId, id) IN (…)`, grouped by one `toAggregates()`. A session belongs to its
+  start time for ranges and days. Callers keep filtering by status. Routes carry the session id;
+  Session Detail's child-to-parent walk is deleted. History and Tea Detail get one card per session
+  without a layout change, and Vessel Detail stops counting steeps as sessions. Analytics ports
+  mechanically; Bet 4 restructures it.
+- **Actual brew time.** `Steep.actualTime` = `totalDuration − remainingDuration` at timer completion:
+  includes ±adjust, excludes paused time, and is the elapsed time for Complete Now. The planned
+  `brewingTime` is never rewritten. `null` means no timer record. Prefill and Brew Again replay
+  `actualTime ?: plannedTime`; Quick Timer passes it too. Nothing displays it until Bet 3.
+- **Session Detail's Add Steep records a forgotten steep:** no timer, stamped
+  `last.timestamp + (actual ?: planned)`, and the session stays completed.
+- **Undo an accidental finish.** Home's route takes `finishedSessionId`; a long snackbar offers Undo,
+  which runs `ReopenSession` and returns to Steep Complete. This is not a general way to re-open old
+  sessions, and it doesn't re-arm the reminder.
+- **Backups stay importable** (the minimum; F4 does the rest). Import writes rows through the DAO,
+  NULLs children's session fields and recomputes all stats. The new column defaults to null, so v6
+  backups still parse.
 
-**Migration:** v6 → v7 — move session-level fields off children (keep columns nullable for one
-version if simpler), add `actualBrewingTimeMs`, recompute every parent's `averageRating` and every
-tea's stats under the new rule.
+**Migration:** v6 → v7 rebuilds `tea_session`. Session columns become nullable and are NULLed on
+children; `averageRating` is dropped; `actualBrewingTimeMs` is added with no backfill (an old total
+can't tell Complete Now from a natural finish). A parent with an `IN_PROGRESS` child becomes
+`IN_PROGRESS`, the rest `COMPLETED`. Tea and configuration stats are recomputed in SQL; a test checks
+the SQL against the Kotlin rules on the same fixture.
 
-**Exit:** the six paths are gone; Track A tests cover every steep mutation, the rating rule, and the
-migration against real v6 data; History, Tea Detail and prefill agree on every tea's rating.
+**Verification:**
+
+- Track A: every use case against a fake repository, the rating and stats rules, aggregate grouping,
+  the migration on a synthetic fixture (host JVM, bundled SQLite), and an F2 export → import round
+  trip.
+- Track B: install `v0.1.1` on an emulator and seed by hand a single-steep session, a gongfu session
+  with a deleted middle steep, a parent edited after steeps were added, an unrated session, a session
+  left mid-steep, and a saved method used across several steeps. Install the F2 build over it and
+  check the screens and stats.
+
+**Commits.** Each compiles, passes tests and leaves the app working. The schema lands late: until v7,
+`upsertSteep` fills children's NOT NULL vessel and water columns from the parent.
+
+- [x] `test: run Room migrations on the host JVM`: the harness, proven on 5 → 6. First choice is
+  `MIGRATION_x_y.migrate()` on a `BundledSQLiteDriver` connection with the JVM natives; the fallback
+  is Robolectric + `room-testing`.
+- [ ] `fix: start the Log Session rating unrated`
+- [ ] `refactor: add the Session, Steep and SessionWithSteeps domain types`: the rating and stats
+  rules as pure functions, the mapper, `Transactor`.
+- [ ] `feat: read sessions as aggregates`
+- [ ] `feat: add the session aggregate use cases`, alongside the old ones.
+- [ ] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
+  delegate, Home, Log Tea, Quick Timer, Brew Again. The status meaning flips here, for every writer
+  at once.
+- [ ] `refactor: move the journal onto the aggregate`: History, Session Detail, Edit Session, Tea
+  Detail, Vessel Detail, the vessel delete guard.
+- [ ] `refactor: move analytics and prefill onto the aggregate`
+- [ ] `refactor: delete TeaSession and the old session use cases`; import goes through the DAO.
+- [ ] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
+  platforms, the migration test, the transitional copy removed, import normalisation, the Track B
+  line, the Hard-won facts entry on `AddSteepUseCase` deleted.
+- [ ] `feat: record actual brew time`
+- [ ] `feat: undo an accidental finish`
+- [ ] `chore: release 0.2.0`: audit rows #4–7 struck.
+
+**Exit:** the six paths are gone; Track A tests cover every steep mutation, the rating rule and the
+migration; the emulator upgrade passes; History, Tea Detail and prefill agree on every tea's rating.
 
 ### F3 — Tea lifecycle: finished, not deleted
 
@@ -431,9 +504,9 @@ and the timer-without-tea across process death.
 
 ### Open questions
 
-- **Rinse representation.** The aggregate treats the parent as steep 1. A rinse as a
-  `steepNumber = 0` row breaks that invariant. Recommended: a `rinseDuration: Duration?` on the
-  parent session instead of a row.
+- **Rinse representation.** The parent row is both the `Session` and steep 1. A rinse as a
+  `steepNumber = 0` row breaks that invariant. Recommended: a `rinseDuration: Duration?` on
+  `Session` instead of a row.
 - **Per-steep temperature** in plans (some gongfu raises temperature across steeps). Recommended:
   overrides may carry temperature; base plan does not.
 - **Curated vocabulary contents** — draft the list before the migration.
@@ -574,6 +647,9 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **Thin foundation, then bets**                                                      | Only what every bet stands on goes first. Other foundations are paid for by the first bet that touches them. Considered: all foundations first (weeks of invisible work, some shaped better by features) and features first (built on the six-way session logic).          |
 | **Design system before brewing plans**                                              | Bets 2–3 rewrite most screens; building them after the system means building them once.                                                                                                                                                                                    |
 | **Only a user tap stores a rating**                                                 | Four code paths wrote ratings the user never gave, and one fed back into itself. Unrated steeps stay null and are excluded from averages and best brew. Cost: less rating data. Worth it: the data means something.                                                        |
+| **Stored derived stats are recomputed, never incremented**                         | Tea and configuration stats are rebuilt from sessions inside each mutation's transaction. Increments drifted: `timesUsed` rose once per steep and never fell on delete. Recomputing makes re-finish, Undo and delete correct with no special cases. Session ratings aren't stored at all.  |
+| **Discarding steep N ≥ 2 finishes the session**                                     | Steeps 1…N−1 happened; only the next one was abandoned. Discarding steep 1 deletes the session. Considered: discarding the whole session from any steep.                                                                                                                  |
+| **Undo is the only way to re-open a finished session**                              | An accidental Finish needs a way back; re-opening old sessions doesn't. Session Detail's Add Steep records a forgotten steep without a timer instead.                                                                                                                       |
 | **A brewing style lives on the method, not the tea**                                | A tea brewed both ways needs two methods; the vessel usually implies the style.                                                                                                                                                                                            |
 | **Plans are base + increment with overrides**                                       | Matches how the author actually brews gongfu.                                                                                                                                                                                                                              |
 | **Timer waits for Start**                                                           | Pouring takes time. Auto-start considered and rejected.                                                                                                                                                                                                                    |

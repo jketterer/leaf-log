@@ -1,15 +1,17 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 data class EditSessionState(
     // Session metadata
-    val existingSession: TeaSession? = null,
+    val existingSession: Session? = null,
+    val existingSteep: Steep? = null, // Steep 1 when editing the session, which holds its water
     val isParentSession: Boolean = true,
     val steepNumber: Int? = null,
     val teaName: String? = null,
@@ -57,22 +59,23 @@ data class EditSessionState(
     val hasChanges: Boolean
         get() {
             val session = existingSession ?: return false
+            val steep = existingSteep ?: return false
 
             return if (isParentSession) {
                 // When editing full parent session, only check parent-specific fields
                 selectedVessel?.id != session.vesselId ||
                 selectedWaterType != session.waterType ||
-                waterQuantityMl.toDoubleOrNull() != session.waterQuantityMl ||
+                waterQuantityMl.toDoubleOrNull() != steep.waterQuantityMl ||
                 isTeaBag != (session.teaQuantityGrams == null) ||
                 teaQuantityGrams.toFloatOrNull() != session.teaQuantityGrams ||
                 location != (session.location ?: "")
             } else {
                 // When editing steep, check steep-specific fields
-                brewingTime != session.brewingTime ||
-                temperatureCelsius.toDoubleOrNull() != session.temperatureCelsius ||
-                rating != (session.rating ?: 0f) ||
-                notes != (session.notes ?: "") ||
-                photos != session.photos
+                brewingTime != steep.brewingTime ||
+                temperatureCelsius.toDoubleOrNull() != steep.temperatureCelsius ||
+                rating != (steep.rating ?: 0f) ||
+                notes != (steep.notes ?: "") ||
+                photos != steep.photos
             }
         }
 

@@ -55,20 +55,16 @@ import compose.icons.feathericons.X
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import kotlinx.datetime.LocalDate
-import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.DurationUnit
 import kotlin.time.Instant
-import kotlin.time.toDuration
 
 /**
  * History Screen - displays all brewing sessions.
@@ -296,11 +292,12 @@ private fun HistoryContent(
                             // Sessions in this period
                             items(
                                 items = sessions,
-                                key = { it.id }
+                                key = { it.session.id }
                             ) { session ->
-                                val tea = state.teas[session.teaId]
+                                val sessionId = session.session.id
+                                val tea = state.teas[session.session.teaId]
                                 val teaType = tea?.let { state.teaTypes[it.teaTypeId] }
-                                val vessel = state.vessels[session.vesselId]
+                                val vessel = state.vessels[session.session.vesselId]
 
                                 SessionCard(
                                     session = session,
@@ -310,17 +307,17 @@ private fun HistoryContent(
                                     teaPhotoUrl = tea?.photos?.firstOrNull(),
                                     userPrefs = state.userPreferences,
                                     onSessionClick = {
-                                        if (session.status == SessionStatus.IN_PROGRESS) {
-                                            onIntent(HistoryIntent.CompleteInProgress(session.id))
+                                        if (session.session.status == SessionStatus.IN_PROGRESS) {
+                                            onIntent(HistoryIntent.CompleteInProgress(sessionId))
                                         } else {
-                                            onIntent(HistoryIntent.SessionClicked(session.id))
+                                            onIntent(HistoryIntent.SessionClicked(sessionId))
                                         }
                                     },
                                     onBrewAgainClick = {
-                                        onIntent(HistoryIntent.BrewAgain(session.id))
+                                        onIntent(HistoryIntent.BrewAgain(sessionId))
                                     },
                                     onDeleteClick = {
-                                        onIntent(HistoryIntent.DeleteSession(session.id))
+                                        onIntent(HistoryIntent.DeleteSession(sessionId))
                                     },
                                     imageStorage = imageStorage,
                                     modifier = Modifier.animateItem(),
@@ -389,8 +386,8 @@ private fun HistoryScreenPreview() {
         HistoryContent(
             state = HistoryState(
                 teas = mapOf(
-                    "1" to Tea(
-                        id = "1",
+                    "tea-1" to Tea(
+                        id = "tea-1",
                         name = "Test Tea",
                         teaTypeId = "",
                         createdAt = Instant.fromEpochMilliseconds(1),
@@ -399,42 +396,21 @@ private fun HistoryScreenPreview() {
                 ),
                 groupedSessions = mapOf(
                     "Today" to listOf(
-                        TeaSession(
+                        previewSession(
                             id = "0",
-                            teaId = "1",
-                            steepNumber = 1,
-                            vesselId = "1",
-                            waterType = WaterType.FILTERED,
-                            timestamp = Instant.fromEpochMilliseconds(1),
+                            ratings = listOf(4f, 4.5f, null),
                             status = SessionStatus.COMPLETED,
-                            brewingTime = 200.toDuration(DurationUnit.SECONDS),
-                            updatedAt = Instant.fromEpochMilliseconds(1),
-                            deletedAt = Instant.fromEpochMilliseconds(1),
-                            createdAt = Instant.fromEpochMilliseconds(1),
                             temperatureCelsius = 95.0,
                             waterQuantityMl = 400.0,
-                            photos = emptyList(),
-                            syncStatus = SyncStatus.LOCAL_ONLY,
                         ),
-                        TeaSession(
+                        previewSession(
                             id = "1",
-                            teaId = "1",
-                            steepNumber = 1,
-                            vesselId = "1",
-                            waterType = WaterType.FILTERED,
-                            timestamp = Instant.fromEpochMilliseconds(1000000),
                             status = SessionStatus.COMPLETED,
-                            brewingTime = 200.toDuration(DurationUnit.SECONDS),
-                            updatedAt = Instant.fromEpochMilliseconds(1),
-                            deletedAt = Instant.fromEpochMilliseconds(1),
-                            createdAt = Instant.fromEpochMilliseconds(1),
                             temperatureCelsius = 95.0,
                             waterQuantityMl = 400.0,
-                            photos = emptyList(),
-                            syncStatus = SyncStatus.LOCAL_ONLY,
                         ),
-                    )
-                )
+                    ),
+                ),
             ),
             onIntent = {},
         )

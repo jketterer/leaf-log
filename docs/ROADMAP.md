@@ -353,13 +353,15 @@ the SQL against the Kotlin rules on the same fixture.
   `steepNumber`. Saving a method claims its source session as its first use, unless that session
   used another. Until v7, `saveSession` keeps the parent's `averageRating` filled for the screens
   still reading `TeaSession`.
-- [ ] `refactor: move the journal onto the aggregate`: History, Session Detail, Edit Session, Tea
+- [x] `refactor: move the journal onto the aggregate`: History, Session Detail, Edit Session, Tea
   Detail, Vessel Detail, the vessel delete guard. Home's recent-session cards come too: they share
   `SessionCard` with History. So do the journal's own deletes, Session Detail's Add Steep and steep
-  delete, and `UpdateAverageRatingUseCase`.
+  delete, and `UpdateAverageRatingUseCase`. The old write use cases had no callers left, so they
+  went here, and `UseCaseModule`'s `Aggregate` aliases with them. Add Steep shows on completed
+  sessions only.
 - [ ] `refactor: move analytics and prefill onto the aggregate`
-- [ ] `refactor: delete TeaSession and the old session use cases`; import goes through the DAO.
-  `session/aggregate/` moves up into `session/`; `UseCaseModule` drops its `Aggregate` aliases.
+- [ ] `refactor: delete TeaSession`, `RecentSessionsCard` and the `TeaSession` reads; import goes
+  through the DAO. `session/aggregate/` moves up into `session/`.
 - [ ] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
   platforms, the migration test, the transitional copy removed, import normalisation, the Track B
   line, the Hard-won facts entry on `AddSteepUseCase` deleted.

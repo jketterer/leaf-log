@@ -3,8 +3,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -12,9 +12,9 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
@@ -126,7 +126,7 @@ class HistoryViewModel(
 
             try {
                 combine(
-                    teaSessionRepository.getAllFlow(),
+                    teaSessionRepository.getAllSessionsFlow(),
                     teaRepository.getAllFlow(),
                     teaTypeRepository.getAllFlow(),
                     brewingVesselRepository.getAllFlow(),
@@ -177,9 +177,9 @@ class HistoryViewModel(
     }
 
     private fun applyFilters(
-        sessions: List<TeaSession>,
+        sessions: List<SessionWithSteeps>,
         teasMap: Map<String, Tea>,
-    ): List<TeaSession> {
+    ): List<SessionWithSteeps> {
         var filtered = sessions
 
         val currentState = _state.value
@@ -187,19 +187,19 @@ class HistoryViewModel(
         // Filter by tea type
         if (currentState.selectedTeaTypeId != null) {
             filtered = filtered.filter { session ->
-                teasMap[session.teaId]?.teaTypeId == currentState.selectedTeaTypeId
+                teasMap[session.session.teaId]?.teaTypeId == currentState.selectedTeaTypeId
             }
         }
 
         // Filter by specific tea
         if (currentState.selectedTeaId != null) {
-            filtered = filtered.filter { it.teaId == currentState.selectedTeaId }
+            filtered = filtered.filter { it.session.teaId == currentState.selectedTeaId }
         }
 
         // Filter by date range
         if (currentState.dateRangeStart != null || currentState.dateRangeEnd != null) {
             filtered = filtered.filter { session ->
-                val sessionDate = session.timestamp.toLocalDateTime(
+                val sessionDate = session.startedAt.toLocalDateTime(
                     kotlinx.datetime.TimeZone.currentSystemDefault()
                 ).date
 
@@ -213,22 +213,22 @@ class HistoryViewModel(
         // Filter by minimum rating
         if (currentState.minRating != null) {
             filtered = filtered.filter { session ->
-                session.rating != null && session.rating >= currentState.minRating
+                session.effectiveRating?.let { it >= currentState.minRating } ?: false
             }
         }
 
         // Filter by vessel
         if (currentState.selectedVesselId != null) {
-            filtered = filtered.filter { it.vesselId == currentState.selectedVesselId }
+            filtered = filtered.filter { it.session.vesselId == currentState.selectedVesselId }
         }
 
         // Filter by search query
         if (currentState.searchQuery.isNotBlank()) {
             val query = currentState.searchQuery.lowercase()
             filtered = filtered.filter { session ->
-                val teaName = teasMap[session.teaId]?.name?.lowercase() ?: ""
-                val notes = session.notes?.lowercase() ?: ""
-                teaName.contains(query) || notes.contains(query)
+                val teaName = teasMap[session.session.teaId]?.name?.lowercase() ?: ""
+                teaName.contains(query) ||
+                    session.steeps.any { it.notes?.lowercase()?.contains(query) == true }
             }
         }
 
@@ -313,6 +313,7 @@ class HistoryViewModel(
             val sessionId = _state.value.sessionPendingDelete ?: return@launch
             _state.update { it.copy(sessionPendingDelete = null) }
             deleteSessionUseCase(sessionId)
+                .onSuccess { timerService.onSessionResolved(sessionId) }
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
                 }
@@ -321,7 +322,7 @@ class HistoryViewModel(
 
     private fun brewAgain(sessionId: String) {
         viewModelScope.launch {
-            val session = teaSessionRepository.getSessionOfSteep(sessionId)
+            val session = teaSessionRepository.getSession(sessionId)
             if (session == null) {
                 _state.update {
                     it.copy(error = "Session not found")
@@ -350,7 +351,7 @@ sealed interface HistoryNavEvent {
 }
 
 private data class HistoryData(
-    val sessions: List<TeaSession>,
+    val sessions: List<SessionWithSteeps>,
     val teas: List<Tea>,
     val types: List<TeaType>,
     val vessels: List<BrewingVessel>,

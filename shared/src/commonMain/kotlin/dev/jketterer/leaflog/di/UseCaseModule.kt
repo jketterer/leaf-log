@@ -13,8 +13,6 @@ import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfiguration
 import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
@@ -30,11 +28,8 @@ import dev.jketterer.leaflog.domain.usecases.session.GetTimeInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
-import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.AddSteepUseCase as AggregateAddSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase as AggregateDeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
@@ -67,26 +62,21 @@ val useCaseModule = module {
     factoryOf(::ToggleFavoriteUseCase)
 
     // Session use cases
-    factoryOf(::UpdateSessionUseCase)
-    factoryOf(::UpdateAverageRatingUseCase)
-    factoryOf(::UpdateTeaStatsUseCase)
-    factoryOf(::DeleteSessionUseCase)
-    factoryOf(::AddSteepUseCase)
     factoryOf(::GetBrewingParametersPrefillUseCase)
     factoryOf(::GetInProgressSessionInfoUseCase)
     factoryOf(::GetSessionReminderDelayUseCase)
 
-    // Session aggregate writes. The Aggregate aliases share a name with an old use case
+    // Session aggregate writes
     factoryOf(::RecomputeStatsUseCase)
     factoryOf(::StartSessionUseCase)
-    factoryOf(::AggregateAddSteepUseCase)
+    factoryOf(::AddSteepUseCase)
     factoryOf(::EditSteepUseCase)
     factoryOf(::EditSessionUseCase)
     factoryOf(::DeleteSteepUseCase)
     factoryOf(::FinishSessionUseCase)
     factoryOf(::ReopenSessionUseCase)
     factoryOf(::DiscardSteepUseCase)
-    factoryOf(::AggregateDeleteSessionUseCase)
+    factoryOf(::DeleteSessionUseCase)
     factoryOf(::SaveTimerStateUseCase)
 
     // Home screen use cases

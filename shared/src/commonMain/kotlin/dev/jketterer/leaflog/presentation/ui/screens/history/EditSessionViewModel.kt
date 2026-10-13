@@ -14,7 +14,8 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSteepUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
@@ -35,7 +36,8 @@ class EditSessionViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val imageStorage: ImageStorage,
-    private val updateSessionUseCase: UpdateSessionUseCase,
+    private val editSessionUseCase: EditSessionUseCase,
+    private val editSteepUseCase: EditSteepUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
     private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
@@ -137,9 +139,11 @@ class EditSessionViewModel(
             _state.update { it.copy(isLoading = true) }
 
             try {
-                val session = teaSessionRepository.getById(sessionId)
+                val aggregate = teaSessionRepository.getSessionOfSteep(sessionId)
 
-                if (session != null) {
+                if (aggregate != null) {
+                    val session = aggregate.session
+                    val steep = aggregate.steeps.first { it.id == sessionId }
                     // Load tea name for SaveConfigurationDialog
                     val tea = teaRepository.getById(session.teaId)
                     // Use editFullSession flag to determine whether to show parent fields
@@ -169,20 +173,21 @@ class EditSessionViewModel(
                     _state.update {
                         it.copy(
                             existingSession = session,
+                            existingSteep = steep,
                             isParentSession = isParent,
-                            steepNumber = session.steepNumber,
+                            steepNumber = steep.number,
                             teaName = tea?.name,
-                            brewingTime = session.brewingTime,
-                            temperatureCelsius = session.temperatureCelsius.toString(),
+                            brewingTime = steep.brewingTime,
+                            temperatureCelsius = steep.temperatureCelsius.toString(),
                             selectedVessel = vessel,
                             selectedWaterType = session.waterType,
-                            waterQuantityMl = session.waterQuantityMl.toString(),
+                            waterQuantityMl = steep.waterQuantityMl.toString(),
                             teaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
                             isTeaBag = session.teaQuantityGrams == null,
                             location = session.location ?: "",
-                            rating = session.rating ?: 0f,
-                            notes = session.notes ?: "",
-                            photos = session.photos,
+                            rating = steep.rating ?: 0f,
+                            notes = steep.notes ?: "",
+                            photos = steep.photos,
                             isLoading = false,
                         )
                     }
@@ -384,38 +389,47 @@ class EditSessionViewModel(
         }
 
         val session = currentState.existingSession ?: return
+        val steep = currentState.existingSteep ?: return
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
 
-            val result = if (currentState.isParentSession) {
-                // Update only parent-specific fields (not steep parameters)
-                updateSessionUseCase(
-                    existingSession = session,
-                    vesselId = currentState.selectedVessel?.id,
-                    waterType = currentState.selectedWaterType,
-                    waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull(),
-                    teaQuantityGrams = if (currentState.isTeaBag) null
-                    else currentState.teaQuantityGrams.toFloatOrNull(),
-                    location = currentState.location.takeIf { it.isNotBlank() },
-                )
-            } else {
-                // Update only steep-specific fields
-                updateSessionUseCase(
-                    existingSession = session,
-                    brewingTime = currentState.brewingTime,
-                    temperatureCelsius = currentState.temperatureCelsius.toDoubleOrNull(),
-                    rating = if (currentState.rating > 0f) currentState.rating else null,
-                    notes = currentState.notes.takeIf { it.isNotBlank() },
-                    photos = currentState.photos,
-                )
+            // Unit fields go in only when changed, so an untouched one isn't nudged by conversion
+            val result = runCatching {
+                if (currentState.isParentSession) {
+                    val waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull()
+                    if (waterQuantityMl != null && waterQuantityMl != steep.waterQuantityMl) {
+                        editSteepUseCase(steep.id) { it.copy(waterQuantityMl = waterQuantityMl) }
+                            .getOrThrow()
+                    }
+                    editSessionUseCase(session.id) {
+                        it.copy(
+                            vesselId = currentState.selectedVessel?.id ?: it.vesselId,
+                            waterType = currentState.selectedWaterType,
+                            teaQuantityGrams = if (currentState.isTeaBag) null
+                            else currentState.teaQuantityGrams.toFloatOrNull(),
+                            location = currentState.location,
+                        )
+                    }.getOrThrow()
+                } else {
+                    val temperatureCelsius = currentState.temperatureCelsius.toDoubleOrNull()
+                        ?.takeIf { it != steep.temperatureCelsius }
+                    editSteepUseCase(steep.id) {
+                        it.copy(
+                            brewingTime = currentState.brewingTime ?: it.brewingTime,
+                            temperatureCelsius = temperatureCelsius ?: it.temperatureCelsius,
+                            rating = currentState.rating.takeIf { r -> r > 0f },
+                            notes = currentState.notes,
+                            photos = currentState.photos,
+                        )
+                    }.getOrThrow()
+                }
             }
 
             result
-                .onSuccess { updatedSession ->
-                    // Clean up photo files that were removed from the original session
-                    val originalPhotos = session.photos
-                    val removedPhotos = originalPhotos - currentState.photos.toSet()
+                .onSuccess { savedSession ->
+                    // Clean up photo files that were removed from the original steep
+                    val removedPhotos = steep.photos - currentState.photos.toSet()
                     for (photo in removedPhotos) {
                         try {
                             imageStorage.deleteImage(photo)
@@ -424,19 +438,10 @@ class EditSessionViewModel(
                     }
                     newlyAddedPhotos.clear()
 
-                    // Methods are saved from the whole session, so the dialog shows its first steep
-                    val savedSession = teaSessionRepository.getSession(
-                        updatedSession.parentSessionId ?: updatedSession.id,
-                    )
                     _state.update { it.copy(isSaving = false, savedSession = savedSession) }
 
-                    // Check if we should show the save configuration dialog
-                    // Only for steep edits with rating >= 5
-                    if (!currentState.isParentSession &&
-                        savedSession != null &&
-                        updatedSession.rating != null &&
-                        updatedSession.rating >= 5f
-                    ) {
+                    // Offer to save a method after a steep is rated 5
+                    if (!currentState.isParentSession && currentState.rating >= 5f) {
                         maybeShowSaveConfigDialog(savedSession)
                     } else {
                         _navEvents.send(EditSessionNavEvent.NavigateBack)

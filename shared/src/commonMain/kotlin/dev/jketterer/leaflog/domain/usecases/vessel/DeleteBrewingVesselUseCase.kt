@@ -21,7 +21,7 @@ class DeleteBrewingVesselUseCase(
         }
 
         // Check: no sessions reference this vessel
-        val sessionsUsingVessel = teaSessionRepository.getByVesselId(vesselId)
+        val sessionsUsingVessel = teaSessionRepository.getSessionsByVessel(vesselId)
         if (sessionsUsingVessel.isNotEmpty()) {
             return Result.failure(
                 IllegalStateException(

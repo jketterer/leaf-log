@@ -9,7 +9,6 @@ import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
@@ -243,11 +242,9 @@ class HomeViewModel(
 
     private fun handleSessionClick(sessionId: String) {
         val session =
-            _state.value.recentSessionsWithTea.find { it.session.id == sessionId }?.session
-        if (session?.status == SessionStatus.IN_PROGRESS) {
-            viewModelScope.launch {
-                teaSessionRepository.getSession(sessionId)?.let { handleResumeSession(it) }
-            }
+            _state.value.recentSessionsWithTea.find { it.session.session.id == sessionId }?.session
+        if (session?.session?.status == SessionStatus.IN_PROGRESS) {
+            handleResumeSession(session)
         } else {
             _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))
         }
@@ -315,7 +312,7 @@ class HomeViewModel(
 
     private suspend fun collectRecentSessions(loaded: MutableStateFlow<Boolean>) {
         combine(
-            teaSessionRepository.getRecentFlow(limit = 5),
+            teaSessionRepository.getRecentSessionsFlow(limit = 5),
             teaRepository.getAllFlow(),
             teaTypeRepository.getAllFlow(),
             vesselRepository.getAllFlow(),
@@ -339,9 +336,9 @@ class HomeViewModel(
                 _state.update {
                     it.copy(
                         recentSessionsWithTea = sessions.map { session ->
-                            val tea = teaMap[session.teaId]
+                            val tea = teaMap[session.session.teaId]
                             val type = tea?.let { t -> typeMap[t.teaTypeId] }
-                            val vessel = vesselMap[session.vesselId]
+                            val vessel = vesselMap[session.session.vesselId]
                             SessionWithTeaData(
                                 session = session,
                                 teaName = tea?.name ?: "Unknown Tea",
@@ -520,7 +517,7 @@ class HomeViewModel(
 }
 
 data class SessionWithTeaData(
-    val session: TeaSession,
+    val session: SessionWithSteeps,
     val teaName: String = "Unknown Tea",
     val teaTypeName: String = "Unknown Type",
     val teaPhotoUrl: String? = null,
@@ -560,7 +557,7 @@ sealed interface HomeNavEvent {
 }
 
 private data class HomeSessionData(
-    val sessions: List<TeaSession>,
+    val sessions: List<SessionWithSteeps>,
     val teas: List<Tea>,
     val types: List<TeaType>,
     val vessels: List<BrewingVessel>,

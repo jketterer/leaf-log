@@ -62,19 +62,18 @@ import compose.icons.fontawesomeicons.solid.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.SyncStatus
+import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
@@ -84,9 +83,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.DurationUnit
 import kotlin.time.Instant
-import kotlin.time.toDuration
 
 /**
  * Session Detail Screen - displays complete session information.
@@ -177,7 +174,9 @@ private fun SessionDetailContent(
                     }
                 }
 
-                state.parentSession != null -> {
+                state.session != null -> {
+                    val session = state.session.session
+                    val first = state.session.steeps.first()
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
@@ -207,7 +206,7 @@ private fun SessionDetailContent(
                                     )
 
                                     // Date/Time
-                                    val localDateTime = state.parentSession.timestamp
+                                    val localDateTime = state.session.startedAt
                                         .toLocalDateTime(TimeZone.currentSystemDefault())
                                     val dateTimeString = buildString {
                                         append(
@@ -228,13 +227,7 @@ private fun SessionDetailContent(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
 
-                                    // Show average rating for multi-steep sessions, otherwise show rating
-                                    val displayRating = state.parentSession.averageRating
-                                        ?: state.parentSession.rating
-
-                                    if (displayRating != null) {
-                                        RatingDisplay(displayRating)
-                                    }
+                                    state.session.effectiveRating?.let { RatingDisplay(it) }
                                 }
                             }
                         }
@@ -262,16 +255,16 @@ private fun SessionDetailContent(
                                         )
                                     }
 
-                                    if (state.parentSession.teaQuantityGrams != null) {
+                                    if (session.teaQuantityGrams != null) {
                                         BrewingParameterDisplay(
                                             label = "Tea Amount",
-                                            value = "${state.parentSession.teaQuantityGrams}g"
+                                            value = "${session.teaQuantityGrams}g"
                                         )
                                     }
                                     BrewingParameterDisplay(
                                         label = "Water Amount",
                                         value = VolumeFormatter.format(
-                                            state.parentSession.waterQuantityMl,
+                                            first.waterQuantityMl,
                                             state.userPreferences.volumeUnit
                                         )
                                     )
@@ -281,12 +274,12 @@ private fun SessionDetailContent(
                                     )
                                     BrewingParameterDisplay(
                                         label = "Water Type",
-                                        value = state.parentSession.waterType.displayName
+                                        value = session.waterType.displayName
                                     )
-                                    if (state.parentSession.location != null) {
+                                    if (session.location != null) {
                                         BrewingParameterDisplay(
                                             label = "Location",
-                                            value = state.parentSession.location
+                                            value = session.location
                                         )
                                     }
                                 }
@@ -295,12 +288,11 @@ private fun SessionDetailContent(
 
                         // All Steeps
                         items(
-                            items = state.allSteeps,
+                            items = state.session.steeps,
                             key = { it.id }
                         ) { steep ->
                             SteepCard(
                                 steep = steep,
-                                steepNumber = steep.steepNumber,
                                 temperatureUnit = state.userPreferences.temperatureUnit,
                                 onEditClick = { onIntent(SessionDetailIntent.EditSteepClicked(steep.id)) },
                                 onDeleteClick = {
@@ -313,8 +305,8 @@ private fun SessionDetailContent(
                             )
                         }
 
-                        // Add Steep button
-                        item {
+                        // Recording a forgotten steep; an in-progress session adds steeps as it brews
+                        if (session.status == SessionStatus.COMPLETED) item {
                             OutlinedButton(
                                 onClick = { onIntent(SessionDetailIntent.AddSteepClicked) },
                                 modifier = Modifier.fillMaxWidth(),
@@ -363,7 +355,7 @@ private fun SessionDetailContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (state.parentSession != null && state.usedConfigurationLabel == null) {
+                if (state.session != null && state.usedConfigurationLabel == null) {
                     OutlinedButton(
                         onClick = { onIntent(SessionDetailIntent.SaveAsConfigurationClicked) },
                         modifier = Modifier.weight(1f),
@@ -427,10 +419,10 @@ private fun SessionDetailContent(
     }
 
     // Add steep dialog
-    val lastSteep = state.allSteeps.lastOrNull()
+    val lastSteep = state.session?.currentSteep
     if (state.showAddSteepDialog && lastSteep != null) {
         NextSteepParameterDialog(
-            nextSteepNumber = lastSteep.steepNumber + 1,
+            nextSteepNumber = lastSteep.number + 1,
             duration = state.nextSteepDuration,
             temperature = state.nextSteepTemperature ?: lastSteep.temperatureCelsius,
             temperatureUnit = state.userPreferences.temperatureUnit,
@@ -443,15 +435,16 @@ private fun SessionDetailContent(
     }
 
     // Save as configuration dialog
-    if (state.showSaveConfigurationDialog && state.parentSession != null) {
+    if (state.showSaveConfigurationDialog && state.session != null) {
+        val first = state.session.steeps.first()
         SaveConfigurationDialog(
             teaName = state.tea?.name ?: "",
             vesselName = state.vessel?.name ?: "",
-            teaQuantityGrams = state.parentSession.teaQuantityGrams,
-            waterQuantityMl = state.parentSession.waterQuantityMl,
-            temperatureCelsius = state.parentSession.temperatureCelsius,
-            brewingTimeSeconds = state.parentSession.brewingTime.inWholeSeconds.toInt(),
-            rating = state.parentSession.rating,
+            teaQuantityGrams = state.session.session.teaQuantityGrams,
+            waterQuantityMl = first.waterQuantityMl,
+            temperatureCelsius = first.temperatureCelsius,
+            brewingTimeSeconds = first.brewingTime.inWholeSeconds.toInt(),
+            rating = state.session.effectiveRating,
             suggestedLabel = state.suggestedConfigurationLabel,
             userPreferences = state.userPreferences,
             onSave = { label -> onIntent(SessionDetailIntent.ConfirmSaveConfiguration(label)) },
@@ -486,8 +479,7 @@ private fun SessionDetailContent(
 
 @Composable
 private fun SteepCard(
-    steep: TeaSession,
-    steepNumber: Int,
+    steep: Steep,
     temperatureUnit: TemperatureUnit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -508,7 +500,7 @@ private fun SteepCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Steep $steepNumber",
+                    text = "Steep ${steep.number}",
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -519,7 +511,7 @@ private fun SteepCard(
                             contentDescription = "Edit steep"
                         )
                     }
-                    if (steepNumber > 1) {
+                    if (steep.number > 1) {
                         IconButton(onClick = onDeleteClick) {
                             Icon(
                                 imageVector = FeatherIcons.Trash2,
@@ -640,23 +632,11 @@ private fun SessionDetailScreenPreview() {
                     temperatureUnit = TemperatureUnit.FAHRENHEIT,
                     volumeUnit = VolumeUnit.FLUID_OUNCES,
                 ),
-                parentSession = TeaSession(
-                    id = "0",
-                    teaId = "1",
-                    steepNumber = 1,
-                    vesselId = "1",
-                    rating = 5f,
-                    waterType = WaterType.FILTERED,
-                    timestamp = Instant.fromEpochMilliseconds(1),
+                session = previewSession(
+                    ratings = listOf(5f, 4f),
                     status = SessionStatus.COMPLETED,
-                    brewingTime = 200.toDuration(DurationUnit.SECONDS),
-                    updatedAt = Instant.fromEpochMilliseconds(1),
-                    deletedAt = Instant.fromEpochMilliseconds(1),
-                    createdAt = Instant.fromEpochMilliseconds(1),
                     temperatureCelsius = 95.0,
                     waterQuantityMl = 400.0,
-                    photos = emptyList(),
-                    syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 vessel = BrewingVessel(
                     id = "",

@@ -60,6 +60,7 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Start a new steep while an old session's reminder is pending. Resolving the old session does
       not cancel the new one's alerts.
 - [ ] Discard from Steep Complete. The reminder is withdrawn.
+- [ ] Delete a running session from History's card menu. Its timer notification and reminder go.
 - [ ] Brew three steeps, leave the third unreviewed, then Finish from Steep Complete. The reminder
       is withdrawn.
 

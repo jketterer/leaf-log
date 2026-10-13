@@ -10,7 +10,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
-/** A session for @Preview functions, with one steep per entry of [ratings]. */
+/** A session for @Preview functions, with one steep per entry of [ratings]. Steep 1 gets [notes] and [photos]. */
 internal fun previewSession(
     id: String = "session-1",
     ratings: List<Float?> = listOf(null),
@@ -19,6 +19,8 @@ internal fun previewSession(
     temperatureCelsius: Double = 80.0,
     waterQuantityMl: Double = 200.0,
     teaQuantityGrams: Float? = 5f,
+    notes: String? = null,
+    photos: List<String> = emptyList(),
 ): SessionWithSteeps {
     val start = Instant.fromEpochSeconds(1_790_000_000L)
     return SessionWithSteeps(
@@ -41,6 +43,8 @@ internal fun previewSession(
                 temperatureCelsius = temperatureCelsius,
                 waterQuantityMl = waterQuantityMl,
                 rating = rating,
+                notes = notes.takeIf { index == 0 },
+                photos = if (index == 0) photos else emptyList(),
                 createdAt = timestamp,
                 updatedAt = timestamp,
             )

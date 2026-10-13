@@ -64,7 +64,7 @@ class VesselDetailViewModel(
                 val activeVesselCount = brewingVesselRepository.countActive()
 
                 // Count sessions using this vessel
-                val sessionCount = teaSessionRepository.getByVesselId(vesselId).size
+                val sessionCount = teaSessionRepository.getSessionsByVessel(vesselId).size
 
                 _state.update {
                     it.copy(

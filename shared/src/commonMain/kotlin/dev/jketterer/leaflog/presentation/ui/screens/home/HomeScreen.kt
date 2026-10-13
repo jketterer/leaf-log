@@ -43,8 +43,6 @@ import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.SyncStatus
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
@@ -298,7 +296,7 @@ private fun HomeContent(
                         // Recent sessions list
                         items(
                             items = state.recentSessionsWithTea,
-                            key = { it.session.id },
+                            key = { it.session.session.id },
                         ) { sessionData ->
                             SessionCard(
                                 teaName = sessionData.teaName,
@@ -308,13 +306,13 @@ private fun HomeContent(
                                 teaPhotoUrl = sessionData.teaPhotoUrl,
                                 userPrefs = state.userPreferences,
                                 onSessionClick = {
-                                    onIntent(HomeIntent.SessionClicked(sessionData.session.id))
+                                    onIntent(HomeIntent.SessionClicked(sessionData.session.session.id))
                                 },
                                 onBrewAgainClick = {
-                                    onIntent(HomeIntent.BrewAgainClicked(sessionData.session.id))
+                                    onIntent(HomeIntent.BrewAgainClicked(sessionData.session.session.id))
                                 },
                                 onDeleteClick = {
-                                    onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.id))
+                                    onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.session.id))
                                 },
                                 canBrewAgain = true,
                                 modifier = Modifier
@@ -521,39 +519,21 @@ private fun HomeScreenPreview() {
                 recentSessionsWithTea = listOf(
                     SessionWithTeaData(
                         teaName = "Test Tea",
-                        session =
-                            TeaSession(
-                                id = "1",
-                                teaId = "tea-1",
-                                vesselId = "gaiwan",
-                                waterType = WaterType.FILTERED,
-                                timestamp = now,
-                                brewingTime = 2.minutes + 30.seconds,
-                                temperatureCelsius = 80.0,
-                                waterQuantityMl = 200.0,
-                                status = SessionStatus.COMPLETED,
-                                syncStatus = SyncStatus.LOCAL_ONLY,
-                                createdAt = now,
-                                updatedAt = now,
-                            )
+                        session = previewSession(
+                            id = "1",
+                            status = SessionStatus.COMPLETED,
+                            brewingTime = 2.minutes + 30.seconds,
+                        ),
                     ),
                     SessionWithTeaData(
                         teaName = "Dragonwell",
-                        session =
-                            TeaSession(
-                                id = "2",
-                                teaId = "tea-2",
-                                vesselId = "kyusu",
-                                waterType = WaterType.FILTERED,
-                                timestamp = now,
-                                brewingTime = 2.minutes,
-                                temperatureCelsius = 75.0,
-                                waterQuantityMl = 150.0,
-                                status = SessionStatus.COMPLETED,
-                                syncStatus = SyncStatus.LOCAL_ONLY,
-                                createdAt = now,
-                                updatedAt = now,
-                            )
+                        session = previewSession(
+                            id = "2",
+                            ratings = listOf(4f, 3.5f),
+                            status = SessionStatus.COMPLETED,
+                            temperatureCelsius = 75.0,
+                            waterQuantityMl = 150.0,
+                        ),
                     ),
                 ),
                 inProgressSessionsCount = 1,

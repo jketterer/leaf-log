@@ -1,16 +1,15 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlin.time.Duration
 
 data class SessionDetailState(
-    val parentSession: TeaSession? = null,
-    val childSteeps: List<TeaSession> = emptyList(),
+    val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
     val teaType: TeaType? = null,
     val vessel: BrewingVessel? = null,
@@ -35,17 +34,4 @@ data class SessionDetailState(
 
     // In-progress session conflict dialog
     val inProgressDialogState: InProgressDialogState? = null,
-) {
-    val allSteeps: List<TeaSession>
-        get() = if (parentSession != null) {
-            listOf(parentSession) + childSteeps.sortedBy { it.steepNumber }
-        } else {
-            emptyList()
-        }
-
-    val isSingleSteep: Boolean
-        get() = childSteeps.isEmpty()
-
-    val isMultiSteep: Boolean
-        get() = childSteeps.isNotEmpty()
-}
+)

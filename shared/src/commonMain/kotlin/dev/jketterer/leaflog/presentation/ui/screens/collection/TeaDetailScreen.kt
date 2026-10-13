@@ -71,12 +71,11 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -413,10 +412,11 @@ private fun TeaDetailContent(
 
                             items(
                                 items = state.recentSessions,
-                                key = { it.id },
+                                key = { it.session.id },
                             ) { session ->
+                                val sessionId = session.session.id
                                 val vesselName = state.vessels
-                                    .firstOrNull { it.id == session.vesselId }
+                                    .firstOrNull { it.id == session.session.vesselId }
                                     ?.name ?: "Unknown"
                                 SessionCard(
                                     session = session,
@@ -426,13 +426,13 @@ private fun TeaDetailContent(
                                     teaPhotoUrl = state.tea.photos.firstOrNull(),
                                     userPrefs = state.userPreferences,
                                     onSessionClick = {
-                                        onIntent(TeaDetailIntent.SessionClicked(session.id))
+                                        onIntent(TeaDetailIntent.SessionClicked(sessionId))
                                     },
                                     onBrewAgainClick = {
-                                        onIntent(TeaDetailIntent.BrewAgainClicked(session.id))
+                                        onIntent(TeaDetailIntent.BrewAgainClicked(sessionId))
                                     },
                                     onDeleteClick = {
-                                        onIntent(TeaDetailIntent.DeleteSessionClicked(session.id))
+                                        onIntent(TeaDetailIntent.DeleteSessionClicked(sessionId))
                                     },
                                     modifier = Modifier.animateItem(),
                                     imageStorage = imageStorage,
@@ -685,20 +685,10 @@ private fun TeaDetailScreenPreview() {
                     updatedAt = Clock.System.now(),
                 ),
                 recentSessions = listOf(
-                    TeaSession(
-                        id = "session-1",
-                        teaId = "tea-1",
-                        vesselId = "gaiwan",
-                        waterType = WaterType.FILTERED,
-                        timestamp = Clock.System.now(),
-                        brewingTime = 2.minutes + 30.seconds,
-                        temperatureCelsius = 80.0,
-                        waterQuantityMl = 200.0,
-                        rating = 5f,
+                    previewSession(
+                        ratings = listOf(5f, 4.5f),
                         status = SessionStatus.COMPLETED,
-                        syncStatus = SyncStatus.LOCAL_ONLY,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        brewingTime = 2.minutes + 30.seconds,
                     ),
                 ),
             ),

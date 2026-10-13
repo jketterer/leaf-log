@@ -13,8 +13,8 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
@@ -224,7 +224,7 @@ class TeaDetailViewModel(
 
     private fun loadRecentSessions(teaId: String) {
         viewModelScope.launch {
-            teaSessionRepository.getByTeaIdFlow(teaId)
+            teaSessionRepository.getSessionsByTeaFlow(teaId)
                 .catchError("Failed to load sessions")
                 .map { it.take(5) }
                 .collect { sessions ->
@@ -307,6 +307,7 @@ class TeaDetailViewModel(
             val sessionId = _state.value.sessionPendingDelete ?: return@launch
             _state.update { it.copy(sessionPendingDelete = null) }
             deleteSessionUseCase(sessionId)
+                .onSuccess { timerService.onSessionResolved(sessionId) }
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
                 }
@@ -315,7 +316,7 @@ class TeaDetailViewModel(
 
     private fun brewAgain(sessionId: String) {
         viewModelScope.launch {
-            val session = teaSessionRepository.getSessionOfSteep(sessionId)
+            val session = teaSessionRepository.getSession(sessionId)
             if (session == null) {
                 _state.update { it.copy(error = "Session not found") }
                 return@launch
@@ -331,13 +332,11 @@ class TeaDetailViewModel(
     }
 
     private fun handleSessionClick(sessionId: String) {
-        viewModelScope.launch {
-            val session = teaSessionRepository.getById(sessionId)
-            if (session?.status == SessionStatus.IN_PROGRESS) {
-                _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(sessionId))
-            } else {
-                _navEvents.trySend(NavigateToSession(sessionId))
-            }
+        val session = _state.value.recentSessions.find { it.session.id == sessionId }
+        if (session?.session?.status == SessionStatus.IN_PROGRESS) {
+            _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(sessionId))
+        } else {
+            _navEvents.trySend(NavigateToSession(sessionId))
         }
     }
 }

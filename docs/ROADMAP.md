@@ -375,7 +375,10 @@ the SQL against the Kotlin rules on the same fixture.
   `TimerState.completedAt` shrinks a Complete Now timer to what had elapsed. `Steep.brewedTime` is
   the replay. Add Steep's stamp uses it too. A steep that ran out while the process was dead is
   never saved as complete, so it keeps `null`.
-- [ ] `feat: undo an accidental finish`
+- [x] `feat: undo an accidental finish`: only Steep Complete's Finish offers it, with or without
+  the save-method prompt. Discard does not. A `rememberSaveable` flag keeps it to once per Home
+  entry. Home's `CompleteSession` now goes straight to Steep Complete instead of bouncing off the
+  Timer.
 - [ ] `chore: release 0.2.0`: audit rows #4–7 struck.
 
 **Exit:** the six paths are gone; Track A tests cover every steep mutation, the rating rule and the

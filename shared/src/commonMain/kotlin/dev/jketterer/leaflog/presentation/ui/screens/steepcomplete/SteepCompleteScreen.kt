@@ -78,7 +78,7 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 fun SteepCompleteScreen(
     sessionId: String,
-    onNavigateToHome: () -> Unit,
+    onNavigateToHome: (finishedSessionId: String?) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: SteepCompleteViewModel = koinViewModel(),
@@ -92,7 +92,7 @@ fun SteepCompleteScreen(
     LaunchedEffect(Unit) {
         viewModel.navigationEvents.collect { event ->
             when (event) {
-                is SteepCompleteNavEvent.NavigateToHome -> onNavigateToHome()
+                is SteepCompleteNavEvent.NavigateToHome -> onNavigateToHome(event.finishedSessionId)
                 is SteepCompleteNavEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId)
                 is SteepCompleteNavEvent.NavigateBack -> onNavigateBack()
             }

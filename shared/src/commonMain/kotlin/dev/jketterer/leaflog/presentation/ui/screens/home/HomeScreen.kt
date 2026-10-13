@@ -23,6 +23,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -30,6 +34,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -72,12 +80,14 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Composable
 fun HomeScreen(
+    finishedSessionId: String?,
     onNavigateToLogTea: (teaId: String?, vesselId: String?, configurationId: String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
     onNavigateToCollection: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
+    onNavigateToSteepComplete: (String) -> Unit,
     onNavigateToQuickTimer: (Int) -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToEditBrewingMethod: (String, String) -> Unit,
@@ -116,8 +126,7 @@ fun HomeScreen(
                 }
 
                 is HomeNavEvent.CompleteSession -> {
-                    // Navigate to timer screen which will show completion UI
-                    onNavigateToTimer(event.sessionId)
+                    onNavigateToSteepComplete(event.sessionId)
                 }
 
                 is HomeNavEvent.NavigateToQuickTimer -> {
@@ -135,9 +144,26 @@ fun HomeScreen(
         }
     }
 
+    // Offered once: saved with the entry, so returning to Home doesn't offer it again
+    val snackbarHostState = remember { SnackbarHostState() }
+    var undoOffered by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(finishedSessionId) {
+        if (finishedSessionId == null || undoOffered) return@LaunchedEffect
+        undoOffered = true
+        val result = snackbarHostState.showSnackbar(
+            message = "Session finished",
+            actionLabel = "Undo",
+            duration = SnackbarDuration.Long,
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.onIntent(HomeIntent.UndoFinishClicked(finishedSessionId))
+        }
+    }
+
     HomeContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
         imageStorage = koinInject()
     )
 }
@@ -147,6 +173,7 @@ fun HomeScreen(
 private fun HomeContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     imageStorage: ImageStorage? = null,
 ) {
     Box(
@@ -363,6 +390,13 @@ private fun HomeContent(
                 Text(error)
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp),
+        )
     }
 
     // Delete session confirmation dialog

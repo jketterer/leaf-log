@@ -5,8 +5,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface NavRoute : NavKey {
+    /** [finishedSessionId]: a session just finished, offered for Undo once. */
     @Serializable
-    data object HomeRoute : NavRoute
+    data class HomeRoute(val finishedSessionId: String? = null) : NavRoute
 
     @Serializable
     data class LogTeaRoute(

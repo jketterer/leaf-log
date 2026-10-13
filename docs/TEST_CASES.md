@@ -138,6 +138,9 @@ the Activity is portrait-locked.
 - [ ] **[iOS]** Back-swipe on a screen pushed inside a tab returns to the previous screen, not out
       of the tab.
 - [ ] **[A]** System back from a tab's root returns Home, then exits.
+- [ ] Finish a session: Home offers Undo once. Undo opens Steep Complete on the last steep with the
+      session back in progress. Finishing it again offers Undo again. Opening Settings and coming
+      back, or recreating, doesn't offer it again.
 
 ## 9. Quick Timer
 

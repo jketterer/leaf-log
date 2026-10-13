@@ -57,7 +57,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AppNavigation() {
     val backStack = rememberNavBackStack(
         configuration = navSerializationConfig,
-        elements = arrayOf(NavRoute.HomeRoute)
+        elements = arrayOf(NavRoute.HomeRoute())
     )
 
     // Handle deep links from notification taps
@@ -66,7 +66,7 @@ fun AppNavigation() {
         val route = pendingRoute ?: return@LaunchedEffect
         // Ensure HomeRoute is at the bottom, then push the target route
         if (backStack.none { it is NavRoute.HomeRoute }) {
-            backStack.add(0, NavRoute.HomeRoute)
+            backStack.add(0, NavRoute.HomeRoute())
         }
         // We don't need to push the route if it's already at the top of the stack
         if (backStack.last() != route) {
@@ -118,8 +118,9 @@ fun AppNavigation() {
                         slideOutHorizontally(targetOffsetX = { it })
             },
             entryProvider = entryProvider {
-                entry<NavRoute.HomeRoute> {
+                entry<NavRoute.HomeRoute> { route ->
                     HomeScreen(
+                        finishedSessionId = route.finishedSessionId,
                         onNavigateToLogTea = { teaId, vesselId, configurationId ->
                             backStack.add(NavRoute.LogTeaRoute(teaId, vesselId, configurationId))
                         },
@@ -138,6 +139,12 @@ fun AppNavigation() {
                         onNavigateToSettings = { backStack.add(NavRoute.SettingsRoute) },
                         onNavigateToTimer = { sessionId ->
                             backStack.add(NavRoute.TimerRoute(sessionId))
+                        },
+                        onNavigateToSteepComplete = { sessionId ->
+                            // An equal HomeRoute would reuse this entry's state, so finishing
+                            // again after Undo would never offer Undo
+                            backStack[backStack.lastIndex] = NavRoute.HomeRoute()
+                            backStack.add(NavRoute.SteepCompleteRoute(sessionId))
                         },
                         onNavigateToQuickTimer = { durationSeconds ->
                             backStack.add(NavRoute.QuickTimerRoute(durationSeconds))
@@ -317,7 +324,7 @@ fun AppNavigation() {
                         onNavigateToTimer = { sessionId ->
                             backStack.clear()
                             backStack.add(NavRoute.TimerRoute(sessionId))
-                            backStack.add(0, NavRoute.HomeRoute)
+                            backStack.add(0, NavRoute.HomeRoute())
                         },
                         viewModel = koinViewModel<LogTeaViewModel>()
                     )
@@ -336,7 +343,7 @@ fun AppNavigation() {
                         onNavigateToTimer = { sessionId ->
                             backStack.clear()
                             backStack.add(NavRoute.TimerRoute(sessionId))
-                            backStack.add(0, NavRoute.HomeRoute)
+                            backStack.add(0, NavRoute.HomeRoute())
                         },
                     )
                 }
@@ -388,9 +395,9 @@ fun AppNavigation() {
                 entry<NavRoute.SteepCompleteRoute> { entry ->
                     SteepCompleteScreen(
                         sessionId = entry.sessionId,
-                        onNavigateToHome = {
+                        onNavigateToHome = { finishedSessionId ->
                             backStack.clear()
-                            backStack.add(NavRoute.HomeRoute)
+                            backStack.add(NavRoute.HomeRoute(finishedSessionId))
                         },
                         onNavigateToTimer = { sessionId ->
                             backStack.removeAt(backStack.lastIndex)
@@ -422,7 +429,7 @@ private fun BottomNavigationBar(
             },
             label = { Text("Home") },
             selected = currentRoute is NavRoute.HomeRoute,
-            onClick = { onNavigate(NavRoute.HomeRoute) }
+            onClick = { onNavigate(NavRoute.HomeRoute()) }
         )
 
         NavigationBarItem(

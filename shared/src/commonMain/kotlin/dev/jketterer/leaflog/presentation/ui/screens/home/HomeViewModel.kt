@@ -24,6 +24,7 @@ import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.ReopenSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
@@ -68,6 +69,7 @@ class HomeViewModel(
     private val startSessionUseCase: StartSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
+    private val reopenSessionUseCase: ReopenSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
     private val pinBrewingConfigurationUseCase: PinBrewingConfigurationUseCase,
@@ -158,6 +160,7 @@ class HomeViewModel(
                 _state.update { it.copy(isFabExpanded = intent.expanded) }
             }
 
+            is HomeIntent.UndoFinishClicked -> undoFinish(intent.sessionId)
             is HomeIntent.BrewAgainClicked ->
                 inProgressDelegate.checkAndProceed(HomePendingAction.BrewAgain(intent.sessionId))
 
@@ -237,6 +240,16 @@ class HomeViewModel(
         when (session.currentSteep.resolvedTimerStatus(Clock.System.now())) {
             TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(sessionId))
             else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(sessionId))
+        }
+    }
+
+    private fun undoFinish(sessionId: String) {
+        viewModelScope.launch {
+            reopenSessionUseCase(sessionId)
+                .onSuccess { _navEvents.send(HomeNavEvent.CompleteSession(sessionId)) }
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to undo: ${e.message}") }
+                }
         }
     }
 

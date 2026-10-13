@@ -62,7 +62,7 @@ class SteepCompleteViewModel(
         getSavedSession = { it.savedSession },
         dismissDialog = { it.copy(showSaveConfigurationDialog = false) },
         setError = { state, error -> state.copy(error = error) },
-        createSuccessNavEvent = { _ -> SteepCompleteNavEvent.NavigateToHome },
+        createSuccessNavEvent = { SteepCompleteNavEvent.NavigateToHome(it.session.id) },
         sendNavEvent = { _navigationEvents.trySend(it) },
     )
 
@@ -322,7 +322,7 @@ class SteepCompleteViewModel(
                         maybeShowSaveConfigDialog(finished)
                     } else {
                         _state.update { it.copy(isLoading = false) }
-                        _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
+                        _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome(finished.session.id))
                     }
                 }
                 .onFailure { e ->
@@ -336,7 +336,7 @@ class SteepCompleteViewModel(
     private suspend fun maybeShowSaveConfigDialog(session: SessionWithSteeps) {
         if (checkDuplicateConfigurationUseCase(session)) {
             _state.update { it.copy(isLoading = false) }
-            _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
+            _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome(session.session.id))
             return
         }
         val first = session.steeps.first()
@@ -363,7 +363,7 @@ class SteepCompleteViewModel(
             discardSteepUseCase(session.session.id)
                 .onSuccess {
                     timerService.onSessionResolved(session.session.id)
-                    _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
+                    _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome())
                 }
                 .onFailure { e ->
                     _state.update {
@@ -491,7 +491,7 @@ class SteepCompleteViewModel(
 }
 
 sealed interface SteepCompleteNavEvent {
-    data object NavigateToHome : SteepCompleteNavEvent
+    data class NavigateToHome(val finishedSessionId: String? = null) : SteepCompleteNavEvent
     data class NavigateToTimer(val sessionId: String) : SteepCompleteNavEvent
     data object NavigateBack : SteepCompleteNavEvent
 }

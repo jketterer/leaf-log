@@ -339,10 +339,11 @@ the SQL against the Kotlin rules on the same fixture.
   `MIGRATION_x_y.migrate()` on a `BundledSQLiteDriver` connection with the JVM natives; the fallback
   is Robolectric + `room-testing`.
 - [x] `fix: start the Log Session rating unrated`
-- [ ] `refactor: add the Session, Steep and SessionWithSteeps domain types`: the rating and stats
+- [x] `refactor: add the Session, Steep and SessionWithSteeps domain types`: the rating and stats
   rules as pure functions, the mapper, `Transactor`.
 - [ ] `feat: read sessions as aggregates`
-- [ ] `feat: add the session aggregate use cases`, alongside the old ones.
+- [ ] `feat: add the session aggregate use cases`, alongside the old ones. A host test proves
+  `RoomTransactor` rolls back and shares its connection with DAO calls (Robolectric if needed).
 - [ ] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
   delegate, Home, Log Tea, Quick Timer, Brew Again. The status meaning flips here, for every writer
   at once.

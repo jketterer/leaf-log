@@ -36,6 +36,8 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       remaining time, and the edits kept. The Home banner keeps its progress bar throughout.
 - [ ] Pause → Reset → leave the timer and come back, then force-stop and relaunch. Both times the
       timer is at full duration and not started.
+- [ ] Steep 2 running → force-stop → relaunch. The Home banner says "Steep 2" with its progress, and
+      Resume opens steep 2's timer, not steep 1's.
 
 ## 2. Notifications
 
@@ -58,6 +60,8 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Start a new steep while an old session's reminder is pending. Resolving the old session does
       not cancel the new one's alerts.
 - [ ] Discard from Steep Complete. The reminder is withdrawn.
+- [ ] Brew three steeps, leave the third unreviewed, then Finish from Steep Complete. The reminder
+      is withdrawn.
 
 ## 3. Tap routing
 
@@ -65,6 +69,8 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Tap the completion alert (app backgrounded) → Steep Complete for that session.
 - [ ] Tap the completion alert after the app was force-stopped (cold start) → Steep Complete.
 - [ ] Tap the reminder → Steep Complete for the session it names.
+- [ ] Tap the completion alert for steep 2 or later → Steep Complete for that steep, with the
+      earlier ones under Previous Steeps.
 - [ ] Tap a notification, then rotate or switch dark mode. The route is not replayed a second
       time.
 - [ ] Two sessions with posted notifications → tap the older one. It opens the older session,

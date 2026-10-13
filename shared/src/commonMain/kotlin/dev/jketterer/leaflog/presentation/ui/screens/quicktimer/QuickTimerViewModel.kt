@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.quicktimer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -10,8 +9,9 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
-import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
@@ -38,7 +38,8 @@ class QuickTimerViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val notificationService: TimerNotificationService,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
-    private val createSessionUseCase: CreateSessionUseCase,
+    private val startSessionUseCase: StartSessionUseCase,
+    private val saveTimerStateUseCase: SaveTimerStateUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
 ) : ViewModel() {
 
@@ -160,7 +161,7 @@ class QuickTimerViewModel(
         notificationService.scheduleCompletionAlarm(
             teaName = effectiveTeaName(),
             remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
-            sessionId = current.inProgressSession?.id,
+            sessionId = current.inProgressSessionId,
         )
         startCountdown()
     }
@@ -189,7 +190,7 @@ class QuickTimerViewModel(
         notificationService.scheduleCompletionAlarm(
             teaName = effectiveTeaName(),
             remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
-            sessionId = current.inProgressSession?.id,
+            sessionId = current.inProgressSessionId,
         )
         startCountdown()
     }
@@ -217,7 +218,7 @@ class QuickTimerViewModel(
             notificationService.scheduleCompletionAlarm(
                 teaName = effectiveTeaName(),
                 remainingSeconds = newRemaining.inWholeMilliseconds / 1000.0,
-                sessionId = current.inProgressSession?.id,
+                sessionId = current.inProgressSessionId,
             )
         }
     }
@@ -231,7 +232,7 @@ class QuickTimerViewModel(
     }
 
     private fun confirmReset() {
-        val sessionToDelete = _state.value.inProgressSession
+        val sessionToDelete = _state.value.inProgressSessionId
         timerJob?.cancel()
         timerJob = null
         startedAt = null
@@ -244,11 +245,11 @@ class QuickTimerViewModel(
                 status = TimerStatus.NOT_STARTED,
                 originalDuration = null,
                 showResetConfirmation = false,
-                inProgressSession = null,
+                inProgressSessionId = null,
             )
         }
         if (sessionToDelete != null) {
-            viewModelScope.launch { deleteSessionUseCase(sessionToDelete.id) }
+            viewModelScope.launch { deleteSessionUseCase(sessionToDelete) }
         }
     }
 
@@ -275,13 +276,13 @@ class QuickTimerViewModel(
             current.status == TimerStatus.RUNNING || current.status == TimerStatus.PAUSED -> {
                 showStopConfirmation()
             }
-            current.status == TimerStatus.COMPLETE && current.inProgressSession != null -> {
+            current.status == TimerStatus.COMPLETE && current.inProgressSessionId != null -> {
                 // Navigate to SteepComplete so the user can rate/finish
                 _navigationEvents.trySend(
-                    QuickTimerNavEvent.NavigateToSteepComplete(current.inProgressSession.id),
+                    QuickTimerNavEvent.NavigateToSteepComplete(current.inProgressSessionId),
                 )
             }
-            current.status == TimerStatus.COMPLETE && current.inProgressSession == null -> {
+            current.status == TimerStatus.COMPLETE && current.inProgressSessionId == null -> {
                 // Timer finished but session not saved — warn before discarding
                 _state.update { it.copy(showDiscardCompleteConfirmation = true) }
             }
@@ -327,7 +328,7 @@ class QuickTimerViewModel(
                     }
                     notificationService.showTimerComplete(
                         teaName = effectiveTeaName(),
-                        sessionId = current.inProgressSession?.id,
+                        sessionId = current.inProgressSessionId,
                     )
                     // Auto-save as IN_PROGRESS if we have the required details
                     if (_state.value.hasRequiredDetails) {
@@ -343,7 +344,7 @@ class QuickTimerViewModel(
 
     private fun buildTimerState(state: QuickTimerState): TimerState {
         return TimerState(
-            sessionId = state.inProgressSession?.id,
+            sessionId = state.inProgressSessionId,
             teaName = effectiveTeaName(),
             steepNumber = 1,
             totalDuration = state.totalDuration,
@@ -372,7 +373,7 @@ class QuickTimerViewModel(
         }
         // If the timer already completed, auto-save or re-prompt based on details
         val current = _state.value
-        if (current.status == TimerStatus.COMPLETE && current.inProgressSession == null) {
+        if (current.status == TimerStatus.COMPLETE && current.inProgressSessionId == null) {
             if (current.hasRequiredDetails) {
                 autoSaveCompleted()
             } else {
@@ -539,7 +540,7 @@ class QuickTimerViewModel(
 
     private fun autoSaveCompleted() {
         val current = _state.value
-        if (current.inProgressSession != null) return
+        if (current.inProgressSessionId != null) return
         if (!current.hasRequiredDetails) return
 
         val tea = current.selectedTea ?: return
@@ -560,19 +561,28 @@ class QuickTimerViewModel(
                 val teaQuantityGrams = if (current.isTeaBag) null
                     else current.teaQuantityGrams.toFloatOrNull()
 
-                createSessionUseCase(
+                val brewingTime = current.originalDuration ?: current.totalDuration
+                startSessionUseCase(
                     teaId = tea.id,
                     teaQuantityGrams = teaQuantityGrams,
                     vesselId = vessel.id,
                     waterType = current.waterType,
-                    brewingTime = current.originalDuration ?: current.totalDuration,
+                    brewingTime = brewingTime,
                     temperatureCelsius = temperatureCelsius,
                     waterQuantityMl = waterQuantityMl,
-                    status = SessionStatus.IN_PROGRESS,
-                    timerStatus = TimerStatus.COMPLETE,
-                ).onSuccess { session ->
-                    _state.update { it.copy(inProgressSession = session) }
-                    _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSteepComplete(session.id))
+                ).onSuccess { started ->
+                    val sessionId = started.session.id
+                    // The steep has already been timed here, so the session waits for review
+                    saveTimerStateUseCase(
+                        TimerState(
+                            sessionId = sessionId,
+                            teaId = tea.id,
+                            totalDuration = brewingTime,
+                            status = TimerStatus.COMPLETE,
+                        ),
+                    )
+                    _state.update { it.copy(inProgressSessionId = sessionId) }
+                    _navigationEvents.trySend(QuickTimerNavEvent.NavigateToSteepComplete(sessionId))
                 }
             } catch (_: Exception) {
                 // Silent failure — user can still save manually from the complete screen

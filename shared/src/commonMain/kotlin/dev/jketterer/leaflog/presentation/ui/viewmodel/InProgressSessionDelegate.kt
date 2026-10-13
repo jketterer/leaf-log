@@ -1,9 +1,10 @@
 package dev.jketterer.leaflog.presentation.ui.viewmodel
 
-import dev.jketterer.leaflog.domain.models.TeaSession
-import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
  * State for the in-progress session conflict resolution dialog.
  */
 data class InProgressDialogState(
-    val session: TeaSession,
+    val session: SessionWithSteeps,
     val teaName: String,
     val vesselName: String,
     val isProcessing: Boolean = false,
@@ -37,13 +38,14 @@ data class InProgressDialogState(
 class InProgressSessionDelegate<T, PendingAction>(
     private val viewModelScope: CoroutineScope,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
-    private val completeSessionUseCase: CompleteSessionUseCase,
-    private val deleteSessionUseCase: DeleteSessionUseCase,
+    private val finishSessionUseCase: FinishSessionUseCase,
+    private val discardSteepUseCase: DiscardSteepUseCase,
+    private val timerService: TimerService,
     private val stateFlow: MutableStateFlow<T>,
     private val getDialogState: (T) -> InProgressDialogState?,
     private val setDialogState: (T, InProgressDialogState?) -> T,
     private val setError: (T, String) -> T,
-    private val onResume: (TeaSession) -> Unit,
+    private val onResume: (SessionWithSteeps) -> Unit,
     private val executePendingAction: suspend (PendingAction) -> Unit,
 ) {
     private var pendingAction: PendingAction? = null
@@ -93,7 +95,8 @@ class InProgressSessionDelegate<T, PendingAction>(
         viewModelScope.launch {
             stateFlow.update { setDialogState(it, dialogState.copy(isProcessing = true)) }
 
-            val result = completeSessionUseCase(dialogState.session)
+            val sessionId = dialogState.session.session.id
+            val result = finishSessionUseCase(sessionId)
             if (result.isFailure) {
                 stateFlow.update {
                     var s = setError(it, "Failed to complete session: ${result.exceptionOrNull()?.message}")
@@ -102,6 +105,7 @@ class InProgressSessionDelegate<T, PendingAction>(
                 }
                 return@launch
             }
+            timerService.onSessionResolved(sessionId)
 
             stateFlow.update { setDialogState(it, null) }
             pendingAction = null
@@ -110,8 +114,8 @@ class InProgressSessionDelegate<T, PendingAction>(
     }
 
     /**
-     * Discards the in-progress session and then executes the original pending action.
-     * DeleteSessionUseCase handles stopping the timer.
+     * Discards the steep being brewed, as the Timer's discard does, and then executes the
+     * original pending action.
      */
     fun discardAndContinue() {
         val dialogState = getDialogState(stateFlow.value) ?: return
@@ -120,7 +124,8 @@ class InProgressSessionDelegate<T, PendingAction>(
         viewModelScope.launch {
             stateFlow.update { setDialogState(it, dialogState.copy(isProcessing = true)) }
 
-            val result = deleteSessionUseCase(dialogState.session.id)
+            val sessionId = dialogState.session.session.id
+            val result = discardSteepUseCase(sessionId)
             if (result.isFailure) {
                 stateFlow.update {
                     var s = setError(it, "Failed to discard session: ${result.exceptionOrNull()?.message}")
@@ -129,6 +134,7 @@ class InProgressSessionDelegate<T, PendingAction>(
                 }
                 return@launch
             }
+            timerService.onSessionResolved(sessionId)
 
             stateFlow.update { setDialogState(it, null) }
             pendingAction = null

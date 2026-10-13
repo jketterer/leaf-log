@@ -49,10 +49,9 @@ import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
-import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
@@ -62,6 +61,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParame
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
@@ -73,6 +73,7 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun SteepCompleteScreen(
@@ -185,11 +186,11 @@ private fun SteepCompleteContent(
 
     // Next steep parameter dialog
     if (state.showNextSteepDialog && state.session != null) {
-        val currentSession = state.session
+        val currentSteep = state.session.currentSteep
         NextSteepParameterDialog(
-            currentSession = currentSession,
+            nextSteepNumber = currentSteep.number + 1,
             duration = state.nextSteepDuration,
-            temperature = state.nextSteepTemperature ?: currentSession.temperatureCelsius,
+            temperature = state.nextSteepTemperature ?: currentSteep.temperatureCelsius,
             temperatureUnit = state.userPreferences.temperatureUnit,
             onDurationChange = { onIntent(SteepCompleteIntent.NextSteepDurationChanged(it)) },
             onTemperatureChange = { onIntent(SteepCompleteIntent.NextSteepTemperatureChanged(it)) },
@@ -201,10 +202,19 @@ private fun SteepCompleteContent(
 
     // Discard confirmation dialog
     if (state.showDiscardConfirmation) {
+        val steepNumber = state.session?.currentSteep?.number ?: 1
         AlertDialog(
             onDismissRequest = { onIntent(SteepCompleteIntent.DismissDiscardConfirmation) },
-            title = { Text("Discard Session?") },
-            text = { Text("This session will be permanently deleted. This action cannot be undone.") },
+            title = { Text(if (steepNumber == 1) "Discard Session?" else "Discard Steep $steepNumber?") },
+            text = {
+                Text(
+                    if (steepNumber == 1) {
+                        "This session will be permanently deleted. This action cannot be undone."
+                    } else {
+                        "Steep $steepNumber will be deleted and the session finished with the steeps before it."
+                    },
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = { onIntent(SteepCompleteIntent.ConfirmDiscard) },
@@ -250,17 +260,18 @@ private fun SteepCompleteContent(
     // Save Configuration Dialog
     if (state.showSaveConfigurationDialog && state.savedSession != null) {
         val session = state.savedSession
+        val first = session.steeps.first()
         val vessel = state.vessel
         val tea = state.tea
         if (vessel != null && tea != null) {
             SaveConfigurationDialog(
                 teaName = tea.name,
                 vesselName = vessel.name,
-                teaQuantityGrams = session.teaQuantityGrams,
-                waterQuantityMl = session.waterQuantityMl,
-                temperatureCelsius = session.temperatureCelsius,
-                brewingTimeSeconds = session.brewingTime.inWholeSeconds.toInt(),
-                rating = session.rating,
+                teaQuantityGrams = session.session.teaQuantityGrams,
+                waterQuantityMl = first.waterQuantityMl,
+                temperatureCelsius = first.temperatureCelsius,
+                brewingTimeSeconds = first.brewingTime.inWholeSeconds.toInt(),
+                rating = session.effectiveRating,
                 suggestedLabel = state.suggestedConfigurationLabel,
                 userPreferences = state.userPreferences,
                 onSave = { label ->
@@ -352,6 +363,7 @@ private fun SteepCompleteBody(
             state.previousSteeps.forEach { steep ->
                 PreviousSteepItem(
                     steep = steep,
+                    teaQuantityGrams = state.session?.session?.teaQuantityGrams,
                     userPreferences = state.userPreferences,
                     onRatingChanged = { rating ->
                         onIntent(SteepCompleteIntent.PreviousSteepRatingChanged(steep.id, rating))
@@ -369,7 +381,8 @@ private fun SteepCompleteBody(
 
 @Composable
 private fun PreviousSteepItem(
-    steep: TeaSession,
+    steep: Steep,
+    teaQuantityGrams: Float?,
     userPreferences: UserPreferences,
     onRatingChanged: (Float) -> Unit,
     onNotesChanged: (String) -> Unit,
@@ -393,7 +406,7 @@ private fun PreviousSteepItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "Steep ${steep.steepNumber}",
+                    text = "Steep ${steep.number}",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -403,7 +416,7 @@ private fun PreviousSteepItem(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    steep.teaQuantityGrams?.let {
+                    teaQuantityGrams?.let {
                         BrewingParamChip(
                             icon = vectorResource(Res.drawable.ic_tea_leaf),
                             text = "${it}g"
@@ -499,20 +512,7 @@ private fun SteepCompleteScreenSingleSteepPreview() {
                     isSystemDefault = false,
                     displayOrder = 0,
                 ),
-                session = TeaSession(
-                    id = "session-1",
-                    teaId = "tea-1",
-                    vesselId = "gaiwan",
-                    waterType = WaterType.FILTERED,
-                    timestamp = Clock.System.now(),
-                    brewingTime = 2.minutes,
-                    temperatureCelsius = 80.0,
-                    waterQuantityMl = 200.0,
-                    status = SessionStatus.IN_PROGRESS,
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
-                ),
+                session = previewSession(),
                 tea = Tea(
                     id = "tea-1",
                     name = "Dragon Well",
@@ -544,21 +544,11 @@ private fun SteepCompleteScreenMultiSteepPreview() {
                     isSystemDefault = false,
                     displayOrder = 0,
                 ),
-                session = TeaSession(
-                    id = "session-3",
-                    teaId = "tea-1",
-                    parentSessionId = "session-1",
-                    steepNumber = 3,
-                    vesselId = "gaiwan",
-                    waterType = WaterType.FILTERED,
-                    timestamp = Clock.System.now(),
-                    brewingTime = 45.minutes,
+                session = previewSession(
+                    ratings = listOf(4f, 5f, null),
+                    brewingTime = 45.seconds,
                     temperatureCelsius = 95.0,
                     waterQuantityMl = 100.0,
-                    status = SessionStatus.IN_PROGRESS,
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
                 ),
                 tea = Tea(
                     id = "tea-1",
@@ -568,41 +558,7 @@ private fun SteepCompleteScreenMultiSteepPreview() {
                     updatedAt = Clock.System.now(),
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
-                previousSteeps = listOf(
-                    TeaSession(
-                        id = "session-1",
-                        teaId = "tea-1",
-                        steepNumber = 1,
-                        vesselId = "gaiwan",
-                        waterType = WaterType.FILTERED,
-                        timestamp = Clock.System.now(),
-                        brewingTime = 30.minutes,
-                        temperatureCelsius = 95.0,
-                        waterQuantityMl = 100.0,
-                        rating = 4f,
-                        status = SessionStatus.COMPLETED,
-                        syncStatus = SyncStatus.LOCAL_ONLY,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
-                    ),
-                    TeaSession(
-                        id = "session-2",
-                        teaId = "tea-1",
-                        parentSessionId = "session-1",
-                        steepNumber = 2,
-                        vesselId = "gaiwan",
-                        waterType = WaterType.FILTERED,
-                        timestamp = Clock.System.now(),
-                        brewingTime = 40.minutes,
-                        temperatureCelsius = 95.0,
-                        waterQuantityMl = 100.0,
-                        rating = 5f,
-                        status = SessionStatus.COMPLETED,
-                        syncStatus = SyncStatus.LOCAL_ONLY,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
-                    ),
-                ),
+                previousSteeps = previewSession(ratings = listOf(4f, 5f)).steeps,
                 isLoading = false,
             ),
             onIntent = {},

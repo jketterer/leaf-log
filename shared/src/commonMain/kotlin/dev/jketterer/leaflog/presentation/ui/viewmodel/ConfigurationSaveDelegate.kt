@@ -1,6 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.viewmodel
 
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,10 +34,10 @@ class ConfigurationSaveDelegate<T, NavEvent>(
     private val viewModelScope: CoroutineScope,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
     private val stateFlow: MutableStateFlow<T>,
-    private val getSavedSession: (T) -> TeaSession?,
+    private val getSavedSession: (T) -> SessionWithSteeps?,
     private val dismissDialog: (T) -> T,
     private val setError: (T, String) -> T,
-    private val createSuccessNavEvent: (TeaSession) -> NavEvent,
+    private val createSuccessNavEvent: (SessionWithSteeps) -> NavEvent,
     private val sendNavEvent: (NavEvent) -> Unit,
 ) {
     /**

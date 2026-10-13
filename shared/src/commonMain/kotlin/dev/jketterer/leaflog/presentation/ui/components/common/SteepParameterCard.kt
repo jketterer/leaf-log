@@ -26,7 +26,7 @@ import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Thermometer
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
@@ -37,23 +37,24 @@ import org.jetbrains.compose.resources.vectorResource
 
 @Composable
 fun SteepParameterCard(
-    session: TeaSession,
+    session: SessionWithSteeps,
     userPreferences: UserPreferences,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val steep = session.currentSteep
     SteepParameterCard(
-        steepNumber = session.steepNumber,
-        teaQuantity = session.teaQuantityGrams?.let { "${it}g" },
+        steepNumber = steep.number,
+        teaQuantity = session.session.teaQuantityGrams?.let { "${it}g" },
         waterQuantity = VolumeFormatter.format(
-            session.waterQuantityMl,
+            steep.waterQuantityMl,
             userPreferences.volumeUnit,
         ),
         temperature = TemperatureFormatter.format(
-            session.temperatureCelsius,
+            steep.temperatureCelsius,
             userPreferences.temperatureUnit,
         ),
-        brewingTime = formatBrewingTime(session.brewingTime.inWholeSeconds.toInt()),
+        brewingTime = formatBrewingTime(steep.brewingTime.inWholeSeconds.toInt()),
         onEditClick = onEditClick,
         modifier = modifier,
     )
@@ -61,13 +62,13 @@ fun SteepParameterCard(
 
 @Composable
 fun SteepParameterCard(
+    modifier: Modifier = Modifier,
     steepNumber: Int = 1,
     teaQuantity: String? = null,
     waterQuantity: String? = null,
     temperature: String? = null,
     brewingTime: String? = null,
     onEditClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier = modifier,

@@ -12,10 +12,12 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -37,8 +39,10 @@ class HistoryViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
-    private val brewAgainUseCase: BrewAgainUseCase,
-    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val startSessionUseCase: StartSessionUseCase,
+    private val finishSessionUseCase: FinishSessionUseCase,
+    private val discardSteepUseCase: DiscardSteepUseCase,
+    private val timerService: TimerService,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
@@ -56,14 +60,15 @@ class HistoryViewModel(
 
     private val inProgressDelegate = createInProgressSessionDelegate<HistoryState, PendingAction>(
         getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
-        completeSessionUseCase = completeSessionUseCase,
-        deleteSessionUseCase = deleteSessionUseCase,
+        finishSessionUseCase = finishSessionUseCase,
+        discardSteepUseCase = discardSteepUseCase,
+        timerService = timerService,
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
         setError = { state, error -> state.copy(error = error) },
         onResume = { session ->
-            _navEvents.trySend(HistoryNavEvent.NavigateToTimer(session.id))
+            _navEvents.trySend(HistoryNavEvent.NavigateToTimer(session.session.id))
         },
         executePendingAction = { action ->
             when (action) {
@@ -316,8 +321,7 @@ class HistoryViewModel(
 
     private fun brewAgain(sessionId: String) {
         viewModelScope.launch {
-            // Get the session first
-            val session = teaSessionRepository.getById(sessionId)
+            val session = teaSessionRepository.getSessionOfSteep(sessionId)
             if (session == null) {
                 _state.update {
                     it.copy(error = "Session not found")
@@ -325,9 +329,9 @@ class HistoryViewModel(
                 return@launch
             }
 
-            brewAgainUseCase(session)
+            startSessionUseCase(session)
                 .onSuccess { newSession ->
-                    _navEvents.trySend(HistoryNavEvent.NavigateToTimer(newSession.id))
+                    _navEvents.trySend(HistoryNavEvent.NavigateToTimer(newSession.session.id))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to create new session: ${e.message}") }

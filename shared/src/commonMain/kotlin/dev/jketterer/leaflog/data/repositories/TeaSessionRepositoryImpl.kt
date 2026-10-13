@@ -164,8 +164,13 @@ class TeaSessionRepositoryImpl(
     override suspend fun getSessionOfSteep(steepId: String): SessionWithSteeps? =
         teaSessionDao.getSessionOfSteep(steepId).toAggregates().singleOrNull()
 
-    override suspend fun saveSession(session: SessionWithSteeps) =
-        teaSessionDao.upsertAll(session.steeps.map { it.toEntity(session.session) })
+    override suspend fun saveSession(session: SessionWithSteeps) = teaSessionDao.upsertAll(
+        session.steeps.map { steep ->
+            val row = steep.toEntity(session.session)
+            // Screens still reading TeaSession show the stored average until v7 drops the column
+            if (row.parentSessionId == null) row.copy(averageRating = session.effectiveRating) else row
+        },
+    )
 
     override suspend fun deleteSteep(steepId: String) =
         teaSessionDao.softDelete(steepId, Clock.System.now().toEpochMilliseconds())

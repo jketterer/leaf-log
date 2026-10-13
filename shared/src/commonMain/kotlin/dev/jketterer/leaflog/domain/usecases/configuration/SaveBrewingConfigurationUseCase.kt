@@ -1,67 +1,79 @@
 package dev.jketterer.leaflog.domain.usecases.configuration
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
+import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.Transactor
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.RecomputeStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.withSession
 import kotlin.time.Clock
 
 /**
- * Saves a brewing configuration from a successful tea session
+ * Saves a brewing configuration from a successful session: its set-up and first steep.
+ *
+ * The session counts as the method's first use, unless it already used another method, so the
+ * method's recomputed `timesUsed` starts at 1.
  */
 class SaveBrewingConfigurationUseCase(
+    private val transactor: Transactor,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
+    private val teaSessionRepository: TeaSessionRepository,
+    private val recomputeStats: RecomputeStatsUseCase,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
 ) {
     /**
-     * Save a configuration from a session
-     *
-     * @param session The session to save as a configuration
      * @param customLabel Optional custom label (if null, auto-generates)
-     * @return Result with the saved configuration
      */
     suspend operator fun invoke(
-        session: TeaSession,
+        session: SessionWithSteeps,
         customLabel: String? = null,
         skipRatingCheck: Boolean = false,
-    ): Result<BrewingConfiguration> {
-        return try {
-            // Validate that session has required data
-            if (!skipRatingCheck && (session.rating == null || session.rating < 3f)) {
-                return Result.failure(IllegalArgumentException("Session must have a rating of 3+ stars"))
-            }
-
-            // Generate label if not provided
-            val label = customLabel ?: generateConfigurationLabelUseCase(
-                teaQuantityGrams = session.teaQuantityGrams,
-                waterQuantityMl = session.waterQuantityMl,
-                brewingTime = session.brewingTime,
-            )
-
-            val now = Clock.System.now()
-            val configuration = BrewingConfiguration(
-                id = generateId(),
-                teaId = session.teaId,
-                vesselId = session.vesselId,
-                teaQuantityGrams = session.teaQuantityGrams,
-                waterQuantityMl = session.waterQuantityMl,
-                temperatureCelsius = session.temperatureCelsius,
-                brewingTime = session.brewingTime,
-                waterType = session.waterType,
-                sourceSessionId = session.id,
-                rating = session.rating,
-                timesUsed = 1,
-                lastUsedAt = now,
-                label = label,
-                isActive = true,
-                createdAt = now,
-                updatedAt = now,
-            )
-
-            brewingConfigurationRepository.upsert(configuration)
-            Result.success(configuration)
-        } catch (e: Exception) {
-            Result.failure(e)
+    ): Result<BrewingConfiguration> = runCatching {
+        val rating = session.effectiveRating
+        require(skipRatingCheck || (rating != null && rating >= 3f)) {
+            "Session must have a rating of 3+ stars"
         }
+
+        val first = session.steeps.first()
+        val label = customLabel ?: generateConfigurationLabelUseCase(
+            teaQuantityGrams = session.session.teaQuantityGrams,
+            waterQuantityMl = first.waterQuantityMl,
+            brewingTime = first.brewingTime,
+        )
+
+        val now = Clock.System.now()
+        val configuration = BrewingConfiguration(
+            id = generateId(),
+            teaId = session.session.teaId,
+            vesselId = session.session.vesselId,
+            teaQuantityGrams = session.session.teaQuantityGrams,
+            waterQuantityMl = first.waterQuantityMl,
+            temperatureCelsius = first.temperatureCelsius,
+            brewingTime = first.brewingTime,
+            waterType = session.session.waterType,
+            sourceSessionId = session.session.id,
+            rating = rating,
+            // Recomputed below, from the sessions that used it
+            timesUsed = 0,
+            lastUsedAt = null,
+            label = label,
+            isActive = true,
+            createdAt = now,
+            updatedAt = now,
+        )
+
+        transactor {
+            brewingConfigurationRepository.upsert(configuration)
+            val source = teaSessionRepository.getSession(session.session.id)
+            if (source != null && source.session.usedConfigurationId == null) {
+                teaSessionRepository.saveSession(
+                    source.withSession(source.session.copy(usedConfigurationId = configuration.id), now),
+                )
+            }
+            recomputeStats(configuration.teaId)
+        }
+        brewingConfigurationRepository.getById(configuration.id) ?: configuration
     }
 
     private fun generateId(): String {

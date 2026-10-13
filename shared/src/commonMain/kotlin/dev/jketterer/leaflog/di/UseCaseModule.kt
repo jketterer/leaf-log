@@ -14,9 +14,6 @@ import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurati
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
@@ -39,20 +36,18 @@ import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.AddSteepUseCase as AggregateAddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase as AggregateDeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.RecomputeStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.ReopenSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase as AggregateSaveTimerStateUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
-import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
-import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
-import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
@@ -72,14 +67,11 @@ val useCaseModule = module {
     factoryOf(::ToggleFavoriteUseCase)
 
     // Session use cases
-    factoryOf(::CreateSessionUseCase)
     factoryOf(::UpdateSessionUseCase)
     factoryOf(::UpdateAverageRatingUseCase)
     factoryOf(::UpdateTeaStatsUseCase)
     factoryOf(::DeleteSessionUseCase)
-    factoryOf(::CompleteSessionUseCase)
     factoryOf(::AddSteepUseCase)
-    factoryOf(::BrewAgainUseCase)
     factoryOf(::GetBrewingParametersPrefillUseCase)
     factoryOf(::GetInProgressSessionInfoUseCase)
     factoryOf(::GetSessionReminderDelayUseCase)
@@ -93,8 +85,9 @@ val useCaseModule = module {
     factoryOf(::DeleteSteepUseCase)
     factoryOf(::FinishSessionUseCase)
     factoryOf(::ReopenSessionUseCase)
+    factoryOf(::DiscardSteepUseCase)
     factoryOf(::AggregateDeleteSessionUseCase)
-    factoryOf(::AggregateSaveTimerStateUseCase)
+    factoryOf(::SaveTimerStateUseCase)
 
     // Home screen use cases
     factoryOf(::GetDailyStatsUseCase)
@@ -117,9 +110,6 @@ val useCaseModule = module {
     factoryOf(::PauseTimerUseCase)
     factoryOf(::ResumeTimerUseCase)
     factoryOf(::AdjustTimeUseCase)
-    factoryOf(::CompleteTimerUseCase)
-    factoryOf(::CancelTimerUseCase)
-    factoryOf(::SaveTimerStateUseCase)
     factoryOf(::RestoreTimerStateUseCase)
 
     // Brewing vessel use cases

@@ -3,9 +3,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.TeaSession
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -14,9 +13,12 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
-import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
+import dev.jketterer.leaflog.presentation.ui.components.common.editedUnitValue
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.async
@@ -27,7 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -36,13 +37,14 @@ class SteepCompleteViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
-    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val imageStorage: ImageStorage,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
-    private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
-    private val updateTeaStatsUseCase: UpdateTeaStatsUseCase,
+    private val editSteepUseCase: EditSteepUseCase,
+    private val editSessionUseCase: EditSessionUseCase,
+    private val finishSessionUseCase: FinishSessionUseCase,
+    private val discardSteepUseCase: DiscardSteepUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
     private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
@@ -157,37 +159,36 @@ class SteepCompleteViewModel(
         }
     }
 
-    private fun initialize(sessionId: String) {
+    // Takes a steep's id too: steep 1's id is the session's, and older notifications carry a steep's
+    private fun initialize(id: String) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
             try {
-                val session = teaSessionRepository.getById(sessionId)
+                val session = teaSessionRepository.getSessionOfSteep(id)
                 if (session == null) {
                     _state.update { it.copy(isLoading = false, error = "Session not found") }
                     return@launch
                 }
 
-                val teaDeferred = async { teaRepository.getById(session.teaId) }
-                val vesselDeferred = async { brewingVesselRepository.getById(session.vesselId) }
+                val teaDeferred = async { teaRepository.getById(session.session.teaId) }
+                val vesselDeferred = async { brewingVesselRepository.getById(session.session.vesselId) }
                 val tea = teaDeferred.await()
                 val vessel = vesselDeferred.await()
-
-                // Load previous steeps
-                val previousSteeps = loadPreviousSteeps(session)
+                val steep = session.currentSteep
 
                 _state.update {
                     it.copy(
                         session = session,
                         tea = tea,
                         vessel = vessel,
-                        rating = session.rating ?: 0f,
-                        notes = session.notes ?: "",
-                        photos = session.photos,
-                        previousSteeps = previousSteeps,
-                        nextSteepDuration = session.brewingTime,
-                        nextSteepTemperature = session.temperatureCelsius,
-                        nextSteepWaterQuantity = session.waterQuantityMl,
+                        rating = steep.rating ?: 0f,
+                        notes = steep.notes ?: "",
+                        photos = steep.photos,
+                        previousSteeps = session.steeps.dropLast(1),
+                        nextSteepDuration = steep.brewingTime,
+                        nextSteepTemperature = steep.temperatureCelsius,
+                        nextSteepWaterQuantity = steep.waterQuantityMl,
                         isLoading = false,
                     )
                 }
@@ -202,51 +203,39 @@ class SteepCompleteViewModel(
         }
     }
 
-    private suspend fun loadPreviousSteeps(session: TeaSession): List<TeaSession> {
-        val parentId = session.parentSessionId ?: return emptyList()
-
-        val parent = teaSessionRepository.getById(parentId) ?: return emptyList()
-        val children = teaSessionRepository.getChildSteeps(parentId)
-            .filter { it.steepNumber < session.steepNumber }
-
-        return (listOf(parent) + children).sortedBy { it.steepNumber }
+    /**
+     * Saves [edit] in the background. Edits read the screen's state when they run rather than
+     * when they were queued, so the last one to land carries the latest text.
+     */
+    private fun editSteep(steepId: String, edit: (Steep) -> Steep) {
+        viewModelScope.launch {
+            editSteepUseCase(steepId, edit)
+                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+                .onFailure { e -> _state.update { it.copy(error = "Failed to save: ${e.message}") } }
+        }
     }
 
     private fun updateRating(rating: Float) {
-        val session = _state.value.session ?: return
+        val steep = _state.value.session?.currentSteep ?: return
         _state.update { it.copy(rating = rating) }
-        viewModelScope.launch {
-            teaSessionRepository.upsert(
-                session.copy(rating = rating.takeIf { it > 0f }, updatedAt = Clock.System.now())
-            )
-        }
+        editSteep(steep.id) { it.copy(rating = _state.value.rating.takeIf { r -> r > 0f }) }
     }
 
     private fun updateNotes(notes: String) {
-        val session = _state.value.session ?: return
+        val steep = _state.value.session?.currentSteep ?: return
         _state.update { it.copy(notes = notes) }
-        viewModelScope.launch {
-            teaSessionRepository.upsert(
-                session.copy(
-                    notes = notes.takeIf { it.isNotBlank() },
-                    updatedAt = Clock.System.now()
-                )
-            )
-        }
+        editSteep(steep.id) { it.copy(notes = _state.value.notes) }
     }
 
     @OptIn(ExperimentalUuidApi::class)
     private fun addPhoto(imageBytes: ByteArray) {
-        val session = _state.value.session ?: return
+        val steep = _state.value.session?.currentSteep ?: return
         viewModelScope.launch {
             try {
                 val fileName = "${Uuid.random()}.jpg"
                 val persistedPath = imageStorage.saveImage(imageBytes, fileName, "session_images")
-                val newPhotos = _state.value.photos + persistedPath
-                _state.update { it.copy(photos = newPhotos) }
-                teaSessionRepository.upsert(
-                    session.copy(photos = newPhotos, updatedAt = Clock.System.now())
-                )
+                _state.update { it.copy(photos = it.photos + persistedPath) }
+                editSteep(steep.id) { it.copy(photos = _state.value.photos) }
             } catch (e: Exception) {
                 _state.update { it.copy(error = "Failed to save photo: ${e.message}") }
             }
@@ -254,28 +243,29 @@ class SteepCompleteViewModel(
     }
 
     private fun removePhoto(path: String) {
-        val session = _state.value.session ?: return
+        val steep = _state.value.session?.currentSteep ?: return
+        _state.update { it.copy(photos = it.photos - path) }
         viewModelScope.launch {
-            try {
-                imageStorage.deleteImage(path)
-            } catch (_: Exception) {
-            }
-            val newPhotos = _state.value.photos - path
-            _state.update { it.copy(photos = newPhotos) }
-            teaSessionRepository.upsert(
-                session.copy(photos = newPhotos, updatedAt = Clock.System.now())
-            )
+            editSteepUseCase(steep.id) { it.copy(photos = _state.value.photos) }
+                .onSuccess { updated ->
+                    _state.update { it.copy(session = updated) }
+                    try {
+                        imageStorage.deleteImage(path)
+                    } catch (_: Exception) {
+                    }
+                }
+                .onFailure { e -> _state.update { it.copy(error = "Failed to remove photo: ${e.message}") } }
         }
     }
 
     private fun showNextSteepDialog() {
-        val session = _state.value.session ?: return
+        val steep = _state.value.session?.currentSteep ?: return
         _state.update {
             it.copy(
                 showNextSteepDialog = true,
-                nextSteepDuration = it.nextSteepDuration ?: session.brewingTime,
-                nextSteepTemperature = it.nextSteepTemperature ?: session.temperatureCelsius,
-                nextSteepWaterQuantity = it.nextSteepWaterQuantity ?: session.waterQuantityMl,
+                nextSteepDuration = it.nextSteepDuration ?: steep.brewingTime,
+                nextSteepTemperature = it.nextSteepTemperature ?: steep.temperatureCelsius,
+                nextSteepWaterQuantity = it.nextSteepWaterQuantity ?: steep.waterQuantityMl,
             )
         }
     }
@@ -286,53 +276,24 @@ class SteepCompleteViewModel(
 
     private fun confirmNextSteep() {
         val session = _state.value.session ?: return
-        val duration = _state.value.nextSteepDuration ?: session.brewingTime
-        val temperature = _state.value.nextSteepTemperature ?: session.temperatureCelsius
-        val waterQuantity = _state.value.nextSteepWaterQuantity ?: session.waterQuantityMl
+        val steep = session.currentSteep
+        val duration = _state.value.nextSteepDuration ?: steep.brewingTime
+        val temperature = _state.value.nextSteepTemperature ?: steep.temperatureCelsius
+        val waterQuantity = _state.value.nextSteepWaterQuantity ?: steep.waterQuantityMl
 
         _state.update { it.copy(isLoading = true, showNextSteepDialog = false) }
 
         viewModelScope.launch {
-            val updatedSession = session.copy(
-                status = SessionStatus.COMPLETED,
-                rating = _state.value.rating.takeIf { it > 0f },
-                notes = _state.value.notes.takeIf { it.isNotBlank() },
-                photos = _state.value.photos,
-                updatedAt = Clock.System.now(),
-                timerStatus = null,
-                timerStartedAt = null,
-                timerPausedAt = null,
-                timerRemainingMs = null,
-            )
-            teaSessionRepository.upsert(updatedSession)
-            if (updatedSession.usedConfigurationId != null) {
-                brewingConfigurationRepository.incrementTimesUsed(
-                    updatedSession.usedConfigurationId,
-                    updatedSession.updatedAt,
-                )
-            }
-
-            session.parentSessionId?.let { parentId ->
-                updateAverageRatingUseCase(parentId)
-            }
-
-            // Get root session (AddSteepUseCase requires root, not a child)
-            val rootSession = if (session.parentSessionId != null) {
-                teaSessionRepository.getById(session.parentSessionId) ?: updatedSession
-            } else {
-                updatedSession
-            }
-
             addSteepUseCase(
-                parentSession = rootSession,
+                sessionId = session.session.id,
                 brewingTime = duration,
                 temperatureCelsius = temperature,
                 waterQuantityMl = waterQuantity,
-            ).onSuccess { nextSteep ->
+            ).onSuccess { updated ->
                 _state.update { it.copy(isLoading = false) }
                 // Reset TimerService singleton state before the next Timer screen starts
                 timerService.stop()
-                _navigationEvents.send(SteepCompleteNavEvent.NavigateToTimer(nextSteep.id))
+                _navigationEvents.send(SteepCompleteNavEvent.NavigateToTimer(updated.session.id))
             }.onFailure { e ->
                 _state.update {
                     it.copy(
@@ -349,64 +310,40 @@ class SteepCompleteViewModel(
         _state.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
-            val updatedSession = session.copy(
-                status = SessionStatus.COMPLETED,
-                rating = _state.value.rating.takeIf { it > 0f },
-                notes = _state.value.notes.takeIf { it.isNotBlank() },
-                photos = _state.value.photos,
-                updatedAt = Clock.System.now(),
-                timerStatus = null,
-                timerStartedAt = null,
-                timerPausedAt = null,
-                timerRemainingMs = null,
-            )
-            teaSessionRepository.upsert(updatedSession)
-            if (updatedSession.usedConfigurationId != null) {
-                brewingConfigurationRepository.incrementTimesUsed(
-                    updatedSession.usedConfigurationId,
-                    updatedSession.updatedAt,
-                )
-            }
-            // Reset TimerService singleton state so the next Timer screen starts clean
-            timerService.stop()
-            timerService.onSessionResolved(session.id)
+            finishSessionUseCase(session.session.id)
+                .onSuccess { finished ->
+                    timerService.onSessionResolved(finished.session.id)
 
-            session.parentSessionId?.let { parentId ->
-                updateAverageRatingUseCase(parentId)
-                val parentSession = teaSessionRepository.getById(parentId)
-                parentSession?.let {
-                    teaSessionRepository.upsert(
-                        it.copy(status = SessionStatus.COMPLETED, updatedAt = Clock.System.now())
-                    )
+                    val shouldPromptConfig = finished.steeps.size == 1 &&
+                        (finished.effectiveRating ?: 0f) >= 3f &&
+                        finished.session.usedConfigurationId == null
+
+                    if (shouldPromptConfig) {
+                        maybeShowSaveConfigDialog(finished)
+                    } else {
+                        _state.update { it.copy(isLoading = false) }
+                        _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
+                    }
                 }
-            }
-
-            updateTeaStatsUseCase(session.teaId)
-
-            // Check if we should show save config dialog
-            val shouldPromptConfig = updatedSession.steepNumber == 1 &&
-                    (updatedSession.rating ?: 0f) >= 3f &&
-                    updatedSession.usedConfigurationId == null
-
-            if (shouldPromptConfig) {
-                maybeShowSaveConfigDialog(updatedSession)
-            } else {
-                _state.update { it.copy(isLoading = false) }
-                _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
-            }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(isLoading = false, error = "Failed to finish session: ${e.message}")
+                    }
+                }
         }
     }
 
-    private suspend fun maybeShowSaveConfigDialog(session: TeaSession) {
+    private suspend fun maybeShowSaveConfigDialog(session: SessionWithSteeps) {
         if (checkDuplicateConfigurationUseCase(session)) {
             _state.update { it.copy(isLoading = false) }
             _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
             return
         }
+        val first = session.steeps.first()
         val label = generateConfigurationLabelUseCase(
-            teaQuantityGrams = session.teaQuantityGrams,
-            waterQuantityMl = session.waterQuantityMl,
-            brewingTime = session.brewingTime,
+            teaQuantityGrams = session.session.teaQuantityGrams,
+            waterQuantityMl = first.waterQuantityMl,
+            brewingTime = first.brewingTime,
         )
         _state.update {
             it.copy(
@@ -423,76 +360,43 @@ class SteepCompleteViewModel(
         _state.update { it.copy(showDiscardConfirmation = false, isLoading = true) }
 
         viewModelScope.launch {
-            try {
-                for (photo in _state.value.photos) {
-                    try {
-                        imageStorage.deleteImage(photo)
-                    } catch (_: Exception) {
-                    }
+            discardSteepUseCase(session.session.id)
+                .onSuccess {
+                    timerService.onSessionResolved(session.session.id)
+                    _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
                 }
-
-                teaSessionRepository.delete(session.id)
-                timerService.onSessionResolved(session.id)
-
-                session.parentSessionId?.let { parentId ->
-                    updateAverageRatingUseCase(parentId)
-                    val parentSession = teaSessionRepository.getById(parentId)
-                    parentSession?.let {
-                        teaSessionRepository.upsert(
-                            it.copy(
-                                status = SessionStatus.COMPLETED,
-                                updatedAt = Clock.System.now()
-                            )
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "Failed to discard session: ${e.message}",
                         )
                     }
                 }
-
-                updateTeaStatsUseCase(session.teaId)
-
-                _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome)
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to discard session: ${e.message}",
-                    )
-                }
-            }
         }
     }
 
     private fun updatePreviousSteepRating(steepId: String, rating: Float) {
-        val session = _state.value.session ?: return
-        val steep = _state.value.previousSteeps.find { it.id == steepId } ?: return
-        val parentId = steep.parentSessionId ?: session.id
-
-        viewModelScope.launch {
-            teaSessionRepository.upsert(
-                steep.copy(rating = rating.takeIf { it > 0f }, updatedAt = Clock.System.now())
-            )
-            updateAverageRatingUseCase(parentId)
-
-            // Reload previous steeps to reflect updated averageRating on parent
-            val updatedSteeps = loadPreviousSteeps(session)
-            _state.update { it.copy(previousSteeps = updatedSteeps) }
-        }
-    }
-
-    private fun updatePreviousSteepNotes(steepId: String, notes: String) {
-        val steep = _state.value.previousSteeps.find { it.id == steepId } ?: return
-        val updatedSteep = steep.copy(
-            notes = notes.takeIf { it.isNotBlank() },
-            updatedAt = Clock.System.now(),
-        )
         _state.update {
             it.copy(
                 previousSteeps = it.previousSteeps.map { s ->
-                    if (s.id == steepId) updatedSteep else s
+                    if (s.id == steepId) s.copy(rating = rating.takeIf { r -> r > 0f }) else s
                 },
             )
         }
-        viewModelScope.launch {
-            teaSessionRepository.upsert(updatedSteep)
+        editSteep(steepId) { it.copy(rating = rating.takeIf { r -> r > 0f }) }
+    }
+
+    private fun updatePreviousSteepNotes(steepId: String, notes: String) {
+        _state.update {
+            it.copy(
+                previousSteeps = it.previousSteeps.map { s ->
+                    if (s.id == steepId) s.copy(notes = notes) else s
+                },
+            )
+        }
+        editSteep(steepId) { steep ->
+            steep.copy(notes = _state.value.previousSteeps.find { it.id == steepId }?.notes)
         }
     }
 
@@ -506,48 +410,69 @@ class SteepCompleteViewModel(
 
     private fun openEditParametersSheet() {
         val session = _state.value.session ?: return
+        val steep = session.currentSteep
         val tempUnit = _state.value.userPreferences.temperatureUnit
         val volUnit = _state.value.userPreferences.volumeUnit
         _state.update {
             it.copy(
                 showEditParametersSheet = true,
-                editBrewingTime = session.brewingTime,
-                editTemperatureCelsius = tempUnit.fromCelsius(session.temperatureCelsius)
-                    .toString(),
-                editWaterQuantityMl = volUnit.fromMilliliters(session.waterQuantityMl).toString(),
-                editTeaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
-                editIsTeaBag = session.teaQuantityGrams == null,
-                editWaterType = session.waterType,
+                editBrewingTime = steep.brewingTime,
+                editTemperatureCelsius = tempUnit.fromCelsius(steep.temperatureCelsius).toString(),
+                editWaterQuantityMl = volUnit.fromMilliliters(steep.waterQuantityMl).toString(),
+                editTeaQuantityGrams = session.session.teaQuantityGrams?.toString() ?: "",
+                editIsTeaBag = session.session.teaQuantityGrams == null,
+                editWaterType = session.session.waterType,
             )
         }
     }
 
     private fun confirmEditParameters() {
         val session = _state.value.session ?: return
+        val steep = session.currentSteep
         val currentState = _state.value
         val tempUnit = currentState.userPreferences.temperatureUnit
         val volUnit = currentState.userPreferences.volumeUnit
 
-        val temperatureCelsius = currentState.editTemperatureCelsius.toIntOrNull()
-            ?.let { tempUnit.toCelsius(it) } ?: session.temperatureCelsius
-        val waterQuantityMl = currentState.editWaterQuantityMl.toIntOrNull()
-            ?.let { volUnit.toMilliliters(it) } ?: session.waterQuantityMl
-        val teaQuantityGrams = if (currentState.editIsTeaBag) null
-        else currentState.editTeaQuantityGrams.toFloatOrNull()
-        val waterType = currentState.editWaterType ?: session.waterType
-        val brewingTime = currentState.editBrewingTime.takeIf { it > Duration.ZERO }
-            ?: session.brewingTime
-
-        val updatedSession = session.copy(
-            brewingTime = brewingTime,
-            temperatureCelsius = temperatureCelsius,
-            waterQuantityMl = waterQuantityMl,
-            teaQuantityGrams = teaQuantityGrams,
-            waterType = waterType,
-            updatedAt = Clock.System.now(),
+        val temperatureCelsius = editedUnitValue(
+            currentState.editTemperatureCelsius,
+            steep.temperatureCelsius,
+            tempUnit::fromCelsius,
+            tempUnit::toCelsius,
         )
-        _state.update { it.copy(showEditParametersSheet = false, session = updatedSession) }
-        viewModelScope.launch { teaSessionRepository.upsert(updatedSession) }
+        val waterQuantityMl = editedUnitValue(
+            currentState.editWaterQuantityMl,
+            steep.waterQuantityMl,
+            volUnit::fromMilliliters,
+            volUnit::toMilliliters,
+        )
+        val brewingTime = currentState.editBrewingTime.takeIf { it > Duration.ZERO }
+        val isTeaBag = currentState.editIsTeaBag
+        val teaQuantityGrams = currentState.editTeaQuantityGrams.toFloatOrNull()
+        val waterType = currentState.editWaterType
+
+        _state.update { it.copy(showEditParametersSheet = false) }
+        viewModelScope.launch {
+            editSteepUseCase(steep.id) {
+                it.copy(
+                    brewingTime = brewingTime ?: it.brewingTime,
+                    temperatureCelsius = temperatureCelsius ?: it.temperatureCelsius,
+                    waterQuantityMl = waterQuantityMl ?: it.waterQuantityMl,
+                )
+            }.onFailure { e ->
+                _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
+                return@launch
+            }
+            editSessionUseCase(session.session.id) {
+                it.copy(
+                    teaQuantityGrams = if (isTeaBag) null else teaQuantityGrams ?: it.teaQuantityGrams,
+                    waterType = waterType ?: it.waterType,
+                )
+            }
+                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
+                }
+        }
     }
 
     private fun toggleVolumeUnit() {

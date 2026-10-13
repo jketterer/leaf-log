@@ -7,6 +7,8 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FakeBrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.usecases.session.FakeTeaRepository
 import dev.jketterer.leaflog.domain.usecases.session.FakeTeaSessionRepository
@@ -36,6 +38,14 @@ class SessionAggregateUseCasesTest {
     private val reopenSession = ReopenSessionUseCase(transactor, sessions, recomputeStats)
     private val deleteSession = DeleteSessionUseCase(transactor, sessions, recomputeStats)
     private val saveTimerState = SaveTimerStateUseCase(transactor, sessions)
+    private val discardSteep = DiscardSteepUseCase(sessions, deleteSession, deleteSteep, finishSession)
+    private val saveConfiguration = SaveBrewingConfigurationUseCase(
+        transactor,
+        configurations,
+        sessions,
+        recomputeStats,
+        GenerateConfigurationLabelUseCase(),
+    )
 
     @Test
     fun `a new session is in progress and unrated and its first steep shares its id`() = runTest {
@@ -216,13 +226,14 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `the timer is saved on its steep and cleared from it`() = runTest {
+    fun `the timer is saved on the steep it names`() = runTest {
         val id = start().session.id
-        val second = addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow().currentSteep
+        addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow()
 
         saveTimerState(
             TimerState(
-                sessionId = second.id,
+                sessionId = id,
+                steepNumber = 2,
                 status = TimerStatus.RUNNING,
                 totalDuration = 25.seconds,
                 remainingDuration = 10.seconds,
@@ -233,9 +244,69 @@ class SessionAggregateUseCasesTest {
         assertNull(timed[0].timerStatus)
         assertEquals(TimerStatus.RUNNING, timed[1].timerStatus)
         assertEquals(10_000L, timed[1].timerRemainingMs)
+    }
 
-        saveTimerState.clear(second.id).getOrThrow()
-        assertNull(sessions.getSession(id)!!.steeps[1].timerStatus)
+    @Test
+    fun `a timer for a steep the session doesn't have is refused`() = runTest {
+        val id = start().session.id
+
+        val result = saveTimerState(TimerState(sessionId = id, steepNumber = 2))
+
+        assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+    }
+
+    @Test
+    fun `quick brew starts unrated and remembers the method`() = runTest {
+        val started = startSession(CONFIG).getOrThrow()
+
+        assertNull(started.effectiveRating)
+        assertEquals(CONFIG.id, started.session.usedConfigurationId)
+    }
+
+    @Test
+    fun `discarding the first steep deletes the session`() = runTest {
+        val id = start().session.id
+
+        discardSteep(id).getOrThrow()
+
+        assertNull(sessions.getSession(id))
+    }
+
+    @Test
+    fun `discarding a later steep keeps the earlier ones and finishes the session`() = runTest {
+        val id = start().session.id
+        addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow()
+
+        discardSteep(id).getOrThrow()
+
+        val kept = sessions.getSession(id)!!
+        assertEquals(listOf(1), kept.steeps.map { it.number })
+        assertEquals(SessionStatus.COMPLETED, kept.session.status)
+        assertEquals(1, tea().totalSessions)
+    }
+
+    @Test
+    fun `a method saved from a session counts that session as its first use`() = runTest {
+        val id = start(status = SessionStatus.COMPLETED).session.id
+        editSteep(id) { it.copy(rating = 4f) }.getOrThrow()
+
+        val saved = saveConfiguration(sessions.getSession(id)!!, customLabel = "Mine").getOrThrow()
+
+        assertEquals(1, saved.timesUsed)
+        assertEquals(4f, saved.rating)
+        assertEquals(saved.id, sessions.getSession(id)!!.session.usedConfigurationId)
+    }
+
+    @Test
+    fun `a method saved from a session that used another leaves that one's count alone`() = runTest {
+        val id = startSession(CONFIG).getOrThrow().session.id
+        editSteep(id) { it.copy(rating = 4f) }.getOrThrow()
+        finishSession(id).getOrThrow()
+
+        val saved = saveConfiguration(sessions.getSession(id)!!, customLabel = "Mine").getOrThrow()
+
+        assertEquals(0, saved.timesUsed)
+        assertEquals(1, config().timesUsed)
     }
 
     private suspend fun start(

@@ -347,11 +347,16 @@ the SQL against the Kotlin rules on the same fixture.
   database `SessionReadsTest` builds (no Robolectric needed). They live in `session/aggregate/`
   until the old names are free, and write the database only: timer stop, reminder withdrawal
   and photo-file deletion are the caller's, after success.
-- [ ] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
+- [x] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
   delegate, Home, Log Tea, Quick Timer, Brew Again. The status meaning flips here, for every writer
-  at once.
+  at once. Routes and `TimerState.sessionId` carry the session id; the timer's steep is
+  `steepNumber`. Saving a method claims its source session as its first use, unless that session
+  used another. Until v7, `saveSession` keeps the parent's `averageRating` filled for the screens
+  still reading `TeaSession`.
 - [ ] `refactor: move the journal onto the aggregate`: History, Session Detail, Edit Session, Tea
-  Detail, Vessel Detail, the vessel delete guard.
+  Detail, Vessel Detail, the vessel delete guard. Home's recent-session cards come too: they share
+  `SessionCard` with History. So do the journal's own deletes, Session Detail's Add Steep and steep
+  delete, and `UpdateAverageRatingUseCase`.
 - [ ] `refactor: move analytics and prefill onto the aggregate`
 - [ ] `refactor: delete TeaSession and the old session use cases`; import goes through the DAO.
   `session/aggregate/` moves up into `session/`; `UseCaseModule` drops its `Aggregate` aliases.
@@ -693,7 +698,7 @@ Things that cost real debugging time and would cost it again. Not history — tr
 - **Never push a Live Activity update as a side effect of cancelling an alarm.** It froze running
   timers into "Paused". Pausing is explicit via `TimerNotificationService.showTimerPaused(state)`.
 - **Derive in-progress status from wall-clock in exactly one place** —
-  `TeaSession.resolvedTimerStatus(now)`. Gate live progress on matching session id. Known residual:
+  `Steep.resolvedTimerStatus(now)`, on the session's current steep. Gate live progress on matching session id. Known residual:
   a Home screen left open with no live timer won't re-resolve from time passing alone.
 - **`AddSteepUseCase` copies `teaQuantityGrams` onto every child steep** (until F2 moves
   session-level fields to the parent). Summing leaf across all rows double-counts; leaf totals count
@@ -741,3 +746,13 @@ Working an item: take the first unchecked one, check it off when it's done.
 
 - [ ] Device pass notes from the 2026-09-23 audit — **Should:** be dumped here as they're found,
   then triaged into F1, a bet, or the polish track.
+- [ ] "Tea is ready!" outlives its steep — the completion alert (`COMPLETION_NOTIFICATION_ID`)
+  stays in the shade after Next, Finish or Discard; nothing in code ever cancels it, only a tap
+  (`AUTO_CANCEL`) clears it. **Should:** be withdrawn once the steep it announced is resolved.
+    - found on the emulator 2026-10-13; predates F2, present at `5cb87a1`
+- [ ] Home banner bar frozen at the last save — with no live timer (app relaunched mid-brew), the
+  bar falls back to the stored `timerRemainingMs`, so it shows progress as of the last save, not
+  now. **Should:** derive elapsed from `timerStartedAt` the way `Steep.resolvedTimerStatus` does.
+    - same family as the Hard-won facts residual (Home doesn't re-resolve as time passes); fix
+      both together
+    - found on the emulator 2026-10-13; predates F2

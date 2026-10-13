@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.quicktimer
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -55,7 +54,7 @@ data class QuickTimerState(
     val nextSteepWaterQuantity: Int? = null,
 
     // Auto-saved in-progress session (persisted when timer completes with required details)
-    val inProgressSession: TeaSession? = null,
+    val inProgressSessionId: String? = null,
 
     // Loading/error
     val isLoading: Boolean = false,

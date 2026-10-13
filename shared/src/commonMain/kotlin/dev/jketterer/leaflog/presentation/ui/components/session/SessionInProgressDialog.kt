@@ -26,15 +26,13 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Thermometer
-import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.SyncStatus
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
@@ -48,7 +46,7 @@ import kotlin.time.Duration.Companion.seconds
 fun SessionInProgressDialog(
     teaName: String,
     vesselName: String,
-    session: TeaSession,
+    session: SessionWithSteeps,
     userPreferences: UserPreferences,
     isProcessing: Boolean,
     onResume: () -> Unit,
@@ -57,6 +55,7 @@ fun SessionInProgressDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val steep = session.currentSteep
     AlertDialog(
         onDismissRequest = { if (!isProcessing) onDismiss() },
         modifier = modifier,
@@ -87,7 +86,7 @@ fun SessionInProgressDialog(
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "Steep ${session.steepNumber} · $vesselName",
+                            text = "Steep ${steep.number} · $vesselName",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -98,18 +97,18 @@ fun SessionInProgressDialog(
                             BrewingParamChip(
                                 FeatherIcons.Thermometer,
                                 TemperatureFormatter.format(
-                                    session.temperatureCelsius,
+                                    steep.temperatureCelsius,
                                     userPreferences.temperatureUnit,
                                 ),
                             )
                             BrewingParamChip(
                                 FeatherIcons.Clock,
-                                formatBrewingTime(session.brewingTime.inWholeSeconds.toInt()),
+                                formatBrewingTime(steep.brewingTime.inWholeSeconds.toInt()),
                             )
                             BrewingParamChip(
                                 FeatherIcons.Droplet,
                                 VolumeFormatter.format(
-                                    session.waterQuantityMl,
+                                    steep.waterQuantityMl,
                                     userPreferences.volumeUnit,
                                 ),
                             )
@@ -168,20 +167,7 @@ private fun SessionInProgressDialogPreview() {
         SessionInProgressDialog(
             teaName = "Dragon Well",
             vesselName = "Gaiwan",
-            session = TeaSession(
-                id = "session-1",
-                teaId = "tea-1",
-                vesselId = "gaiwan",
-                waterType = WaterType.FILTERED,
-                timestamp = Clock.System.now(),
-                brewingTime = 2.minutes + 30.seconds,
-                temperatureCelsius = 80.0,
-                waterQuantityMl = 200.0,
-                status = SessionStatus.IN_PROGRESS,
-                syncStatus = SyncStatus.LOCAL_ONLY,
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now(),
-            ),
+            session = previewSession(brewingTime = 2.minutes + 30.seconds),
             userPreferences = UserPreferences(),
             isProcessing = false,
             onResume = {},
@@ -199,19 +185,11 @@ private fun SessionInProgressDialogProcessingPreview() {
         SessionInProgressDialog(
             teaName = "Sencha",
             vesselName = "Kyusu",
-            session = TeaSession(
+            session = previewSession(
                 id = "session-2",
-                teaId = "tea-2",
-                vesselId = "kyusu",
-                waterType = WaterType.SPRING,
-                timestamp = Clock.System.now(),
                 brewingTime = 1.minutes,
                 temperatureCelsius = 75.0,
                 waterQuantityMl = 150.0,
-                status = SessionStatus.IN_PROGRESS,
-                syncStatus = SyncStatus.LOCAL_ONLY,
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now(),
             ),
             userPreferences = UserPreferences(),
             isProcessing = true,

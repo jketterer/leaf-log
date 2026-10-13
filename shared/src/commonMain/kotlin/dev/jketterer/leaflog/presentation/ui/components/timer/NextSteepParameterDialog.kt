@@ -18,22 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.SyncStatus
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.Instant
 
 @Composable
 fun NextSteepParameterDialog(
-    currentSession: TeaSession,
+    nextSteepNumber: Int,
     duration: Duration?,
     temperature: Double,
     temperatureUnit: TemperatureUnit,
@@ -57,7 +52,7 @@ fun NextSteepParameterDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
-                    text = "Adjust brewing parameters for Steep ${currentSession.steepNumber + 1}",
+                    text = "Adjust brewing parameters for Steep $nextSteepNumber",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -158,7 +153,7 @@ fun NextSteepParameterDialog(
                 onClick = onConfirm,
                 enabled = isValid,
             ) {
-                Text("Start Steep ${currentSession.steepNumber + 1}")
+                Text("Start Steep $nextSteepNumber")
             }
         },
         dismissButton = {
@@ -169,30 +164,12 @@ fun NextSteepParameterDialog(
     )
 }
 
-private val previewSession = TeaSession(
-    id = "1",
-    teaId = "tea-1",
-    steepNumber = 1,
-    vesselId = "vessel-1",
-    waterType = WaterType.FILTERED,
-    timestamp = Instant.fromEpochMilliseconds(1),
-    status = SessionStatus.IN_PROGRESS,
-    brewingTime = 60.seconds,
-    updatedAt = Instant.fromEpochMilliseconds(1),
-    deletedAt = null,
-    createdAt = Instant.fromEpochMilliseconds(1),
-    temperatureCelsius = 80.0,
-    waterQuantityMl = 200.0,
-    photos = emptyList(),
-    syncStatus = SyncStatus.LOCAL_ONLY,
-)
-
 @Preview
 @Composable
 private fun NextSteepParameterDialogCelsiusPreview() {
     LeafLogTheme {
         NextSteepParameterDialog(
-            currentSession = previewSession,
+            nextSteepNumber = 2,
             duration = 60.seconds,
             temperature = 80.0,
             temperatureUnit = TemperatureUnit.CELSIUS,
@@ -210,7 +187,7 @@ private fun NextSteepParameterDialogCelsiusPreview() {
 private fun NextSteepParameterDialogFahrenheitPreview() {
     LeafLogTheme {
         NextSteepParameterDialog(
-            currentSession = previewSession.copy(steepNumber = 2),
+            nextSteepNumber = 3,
             duration = 1.minutes + 30.seconds,
             temperature = 95.0,
             temperatureUnit = TemperatureUnit.FAHRENHEIT,

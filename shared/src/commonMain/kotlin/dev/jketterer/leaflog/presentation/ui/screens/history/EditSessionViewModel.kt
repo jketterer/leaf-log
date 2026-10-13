@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -423,15 +424,20 @@ class EditSessionViewModel(
                     }
                     newlyAddedPhotos.clear()
 
-                    _state.update { it.copy(isSaving = false, savedSession = updatedSession) }
+                    // Methods are saved from the whole session, so the dialog shows its first steep
+                    val savedSession = teaSessionRepository.getSession(
+                        updatedSession.parentSessionId ?: updatedSession.id,
+                    )
+                    _state.update { it.copy(isSaving = false, savedSession = savedSession) }
 
                     // Check if we should show the save configuration dialog
                     // Only for steep edits with rating >= 5
                     if (!currentState.isParentSession &&
+                        savedSession != null &&
                         updatedSession.rating != null &&
                         updatedSession.rating >= 5f
                     ) {
-                        maybeShowSaveConfigDialog(updatedSession)
+                        maybeShowSaveConfigDialog(savedSession)
                     } else {
                         _navEvents.send(EditSessionNavEvent.NavigateBack)
                     }
@@ -447,15 +453,18 @@ class EditSessionViewModel(
         }
     }
 
-    private suspend fun maybeShowSaveConfigDialog(session: dev.jketterer.leaflog.domain.models.TeaSession) {
+    private suspend fun maybeShowSaveConfigDialog(
+        session: SessionWithSteeps,
+    ) {
         if (checkDuplicateConfigurationUseCase(session)) {
             _navEvents.send(EditSessionNavEvent.NavigateBack)
             return
         }
+        val first = session.steeps.first()
         val label = generateConfigurationLabelUseCase(
-            teaQuantityGrams = session.teaQuantityGrams,
-            waterQuantityMl = session.waterQuantityMl,
-            brewingTime = session.brewingTime,
+            teaQuantityGrams = session.session.teaQuantityGrams,
+            waterQuantityMl = first.waterQuantityMl,
+            brewingTime = first.brewingTime,
         )
         _state.update {
             it.copy(

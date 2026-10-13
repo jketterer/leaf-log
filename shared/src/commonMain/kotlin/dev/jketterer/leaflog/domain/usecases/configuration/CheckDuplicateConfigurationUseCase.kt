@@ -1,7 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases.configuration
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import kotlin.math.abs
 
@@ -18,21 +18,26 @@ import kotlin.math.abs
 class CheckDuplicateConfigurationUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
 ) {
-    suspend operator fun invoke(session: TeaSession): Boolean {
-        val existing = brewingConfigurationRepository.getByTeaAndVessel(session.teaId, session.vesselId)
+    suspend operator fun invoke(session: SessionWithSteeps): Boolean {
+        val existing = brewingConfigurationRepository.getByTeaAndVessel(
+            session.session.teaId,
+            session.session.vesselId,
+        )
         return existing.any { it.isDuplicateOf(session) }
     }
 
-    private fun BrewingConfiguration.isDuplicateOf(session: TeaSession): Boolean {
+    // A method holds one steep's parameters: the first
+    private fun BrewingConfiguration.isDuplicateOf(session: SessionWithSteeps): Boolean {
+        val leaf = session.session.teaQuantityGrams
+        val steep = session.steeps.first()
         val quantityMatch = when {
-            teaQuantityGrams == null && session.teaQuantityGrams == null -> true
-            teaQuantityGrams != null && session.teaQuantityGrams != null ->
-                abs(teaQuantityGrams - session.teaQuantityGrams) <= 0.5f
+            teaQuantityGrams == null && leaf == null -> true
+            teaQuantityGrams != null && leaf != null -> abs(teaQuantityGrams - leaf) <= 0.5f
             else -> false
         }
         return quantityMatch &&
-            abs(waterQuantityMl - session.waterQuantityMl) <= 10.0 &&
-            abs(temperatureCelsius - session.temperatureCelsius) <= 1.0 &&
-            abs(brewingTime.inWholeSeconds - session.brewingTime.inWholeSeconds) <= 5
+            abs(waterQuantityMl - steep.waterQuantityMl) <= 10.0 &&
+            abs(temperatureCelsius - steep.temperatureCelsius) <= 1.0 &&
+            abs(brewingTime.inWholeSeconds - steep.brewingTime.inWholeSeconds) <= 5
     }
 }

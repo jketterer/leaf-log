@@ -430,7 +430,7 @@ private fun SessionDetailContent(
     val lastSteep = state.allSteeps.lastOrNull()
     if (state.showAddSteepDialog && lastSteep != null) {
         NextSteepParameterDialog(
-            currentSession = lastSteep,
+            nextSteepNumber = lastSteep.steepNumber + 1,
             duration = state.nextSteepDuration,
             temperature = state.nextSteepTemperature ?: lastSteep.temperatureCelsius,
             temperatureUnit = state.userPreferences.temperatureUnit,

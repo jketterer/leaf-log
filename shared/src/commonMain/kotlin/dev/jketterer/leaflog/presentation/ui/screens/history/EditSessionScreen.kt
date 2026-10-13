@@ -420,16 +420,17 @@ private fun EditSessionContent(
     // Save Configuration Dialog
     if (state.showSaveConfigurationDialog && state.savedSession != null) {
         val session = state.savedSession
+        val first = session.steeps.first()
         val vessel = state.selectedVessel
         if (vessel != null && state.teaName != null) {
             SaveConfigurationDialog(
                 teaName = state.teaName,
                 vesselName = vessel.name,
-                teaQuantityGrams = session.teaQuantityGrams,
-                waterQuantityMl = session.waterQuantityMl,
-                temperatureCelsius = session.temperatureCelsius,
-                brewingTimeSeconds = session.brewingTime.inWholeSeconds.toInt(),
-                rating = session.rating,
+                teaQuantityGrams = session.session.teaQuantityGrams,
+                waterQuantityMl = first.waterQuantityMl,
+                temperatureCelsius = first.temperatureCelsius,
+                brewingTimeSeconds = first.brewingTime.inWholeSeconds.toInt(),
+                rating = session.effectiveRating,
                 suggestedLabel = state.suggestedConfigurationLabel,
                 userPreferences = state.userPreferences,
                 onSave = { label ->

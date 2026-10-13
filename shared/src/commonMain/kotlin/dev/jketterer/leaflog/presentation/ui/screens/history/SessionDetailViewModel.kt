@@ -14,11 +14,13 @@ import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigu
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
+import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,12 +42,14 @@ class SessionDetailViewModel(
     private val imageStorage: ImageStorage,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val updateAverageRatingUseCase: UpdateAverageRatingUseCase,
-    private val brewAgainUseCase: BrewAgainUseCase,
+    private val startSessionUseCase: StartSessionUseCase,
     private val addSteepUseCase: AddSteepUseCase,
     private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
-    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val finishSessionUseCase: FinishSessionUseCase,
+    private val discardSteepUseCase: DiscardSteepUseCase,
+    private val timerService: TimerService,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
@@ -62,14 +66,15 @@ class SessionDetailViewModel(
     private val inProgressDelegate =
         createInProgressSessionDelegate<SessionDetailState, PendingAction>(
             getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
-            completeSessionUseCase = completeSessionUseCase,
-            deleteSessionUseCase = deleteSessionUseCase,
+            finishSessionUseCase = finishSessionUseCase,
+            discardSteepUseCase = discardSteepUseCase,
+            timerService = timerService,
             stateFlow = _state,
             getDialogState = { it.inProgressDialogState },
             setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
             setError = { state, error -> state.copy(error = error) },
             onResume = { session ->
-                _navEvents.trySend(SessionDetailNavEvent.NavigateToTimer(session.id))
+                _navEvents.trySend(SessionDetailNavEvent.NavigateToTimer(session.session.id))
             },
             executePendingAction = { action ->
                 when (action) {
@@ -448,7 +453,8 @@ class SessionDetailViewModel(
         val session = _state.value.parentSession ?: return
 
         viewModelScope.launch {
-            val isDuplicate = checkDuplicateConfigurationUseCase(session)
+            val source = teaSessionRepository.getSession(session.id) ?: return@launch
+            val isDuplicate = checkDuplicateConfigurationUseCase(source)
             if (isDuplicate) {
                 _state.update { it.copy(error = "A matching configuration already exists") }
                 return@launch
@@ -473,8 +479,9 @@ class SessionDetailViewModel(
 
         viewModelScope.launch {
             _state.update { it.copy(showSaveConfigurationDialog = false) }
+            val source = teaSessionRepository.getSession(session.id) ?: return@launch
             saveBrewingConfigurationUseCase(
-                session = session,
+                session = source,
                 customLabel = label,
                 skipRatingCheck = true,
             ).onFailure { e ->
@@ -487,9 +494,10 @@ class SessionDetailViewModel(
         val session = _state.value.parentSession ?: return
 
         viewModelScope.launch {
-            brewAgainUseCase(session)
+            val source = teaSessionRepository.getSession(session.id) ?: return@launch
+            startSessionUseCase(source)
                 .onSuccess {
-                    _navEvents.send(SessionDetailNavEvent.NavigateToTimer(it.id))
+                    _navEvents.send(SessionDetailNavEvent.NavigateToTimer(it.session.id))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to create new session: ${e.message}") }

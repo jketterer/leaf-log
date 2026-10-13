@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -50,7 +51,7 @@ data class EditSessionState(
     val showDiscardDialog: Boolean = false,
     val showSaveConfigurationDialog: Boolean = false,
     val suggestedConfigurationLabel: String = "",
-    val savedSession: TeaSession? = null, // Session that was just saved
+    val savedSession: SessionWithSteeps? = null, // Session that was just saved
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
     val hasChanges: Boolean

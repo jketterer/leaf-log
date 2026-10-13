@@ -13,11 +13,12 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
@@ -41,10 +42,11 @@ class LogTeaViewModel(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val createTeaUseCase: CreateTeaUseCase,
-    private val createSessionUseCase: CreateSessionUseCase,
+    private val startSessionUseCase: StartSessionUseCase,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
-    private val completeSessionUseCase: CompleteSessionUseCase,
-    private val deleteSessionUseCase: DeleteSessionUseCase,
+    private val finishSessionUseCase: FinishSessionUseCase,
+    private val discardSteepUseCase: DiscardSteepUseCase,
+    private val timerService: TimerService,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
@@ -61,14 +63,15 @@ class LogTeaViewModel(
 
     private val inProgressDelegate = createInProgressSessionDelegate<LogTeaState, PendingAction>(
         getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
-        completeSessionUseCase = completeSessionUseCase,
-        deleteSessionUseCase = deleteSessionUseCase,
+        finishSessionUseCase = finishSessionUseCase,
+        discardSteepUseCase = discardSteepUseCase,
+        timerService = timerService,
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
         setError = { state, error -> state.copy(error = error) },
         onResume = { session ->
-            _navEvents.trySend(LogTeaNavigationEvent.NavigateToTimer(session.id))
+            _navEvents.trySend(LogTeaNavigationEvent.NavigateToTimer(session.session.id))
         },
         executePendingAction = { action ->
             when (action) {
@@ -595,7 +598,7 @@ class LogTeaViewModel(
             val waterQuantityMl = currentState.waterQuantityMl.toDouble()
 
             // Use the use case - it has business logic (validation, ID generation, timestamps)
-            createSessionUseCase(
+            startSessionUseCase(
                 teaId = currentState.selectedTea!!.id,
                 teaQuantityGrams = if (currentState.isTeaBag) null else currentState.teaQuantityGrams.toFloatOrNull(),
                 vesselId = currentState.selectedVessel!!.id,
@@ -620,7 +623,7 @@ class LogTeaViewModel(
                     }
 
                     if (startTimer) {
-                        _navEvents.send(LogTeaNavigationEvent.NavigateToTimer(it.id))
+                        _navEvents.send(LogTeaNavigationEvent.NavigateToTimer(it.session.id))
                     } else {
                         _navEvents.send(LogTeaNavigationEvent.NavigateBack)
                     }

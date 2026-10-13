@@ -10,14 +10,16 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
-import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
-import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
-import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
+import dev.jketterer.leaflog.presentation.ui.components.common.editedUnitValue
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,10 +43,11 @@ class TimerViewModel(
     private val pauseTimerUseCase: PauseTimerUseCase,
     private val resumeTimerUseCase: ResumeTimerUseCase,
     private val adjustTimeUseCase: AdjustTimeUseCase,
-    private val completeTimerUseCase: CompleteTimerUseCase,
-    private val cancelTimerUseCase: CancelTimerUseCase,
     private val saveTimerStateUseCase: SaveTimerStateUseCase,
     private val restoreTimerStateUseCase: RestoreTimerStateUseCase,
+    private val editSteepUseCase: EditSteepUseCase,
+    private val editSessionUseCase: EditSessionUseCase,
+    private val discardSteepUseCase: DiscardSteepUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimerScreenState())
@@ -128,7 +131,8 @@ class TimerViewModel(
                     val currentSession = _state.value.session
                     if (timerState.status == TimerStatus.COMPLETE &&
                         currentSession != null &&
-                        timerState.sessionId == currentSession.id
+                        timerState.sessionId == currentSession.session.id &&
+                        timerState.steepNumber == currentSession.currentSteep.number
                     ) {
                         handleTimerComplete()
                     }
@@ -136,12 +140,13 @@ class TimerViewModel(
         }
     }
 
-    private fun initialize(sessionId: String) {
+    // Takes a steep's id too: steep 1's id is the session's, and older notifications carry a steep's
+    private fun initialize(id: String) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
             try {
-                val session = teaSessionRepository.getById(sessionId)
+                val session = teaSessionRepository.getSessionOfSteep(id)
                 if (session == null) {
                     _state.update {
                         it.copy(
@@ -152,29 +157,31 @@ class TimerViewModel(
                     return@launch
                 }
 
-                val tea = teaRepository.getById(session.teaId)
-                val vessel = brewingVesselRepository.getById(session.vesselId)
+                val sessionId = session.session.id
+                val steep = session.currentSteep
+                val tea = teaRepository.getById(session.session.teaId)
+                val vessel = brewingVesselRepository.getById(session.session.vesselId)
                 val hasNotificationPermission = notificationService.hasNotificationPermission()
 
-                // Prefer live TimerService state if it's already tracking this session
+                // Prefer live TimerService state if it's already tracking this steep
                 // (e.g., navigating back while timer is still running)
                 val currentTimerState = timerService.getCurrentState()
                 val initialTimerState = if (currentTimerState.sessionId == sessionId &&
+                    currentTimerState.steepNumber == steep.number &&
                     currentTimerState.status != TimerStatus.NOT_STARTED
                 ) {
                     currentTimerState.copy(teaName = tea?.name ?: "")
                 } else {
                     // Fall back to restoring from database (e.g., app was killed)
-                    val restoredTimerState = restoreTimerStateUseCase(sessionId).getOrNull()
-                    restoredTimerState?.copy(teaName = tea?.name ?: "")
+                    restoreTimerStateUseCase(session)?.copy(teaName = tea?.name ?: "")
                         ?: TimerState(
-                            sessionId = session.id,
-                            teaId = session.teaId,
+                            sessionId = sessionId,
+                            teaId = session.session.teaId,
                             teaName = tea?.name ?: "",
-                            steepNumber = session.steepNumber,
-                            totalDuration = session.brewingTime,
-                            remainingDuration = session.brewingTime,
-                            brewingTemperatureCelsius = session.temperatureCelsius,
+                            steepNumber = steep.number,
+                            totalDuration = steep.brewingTime,
+                            remainingDuration = steep.brewingTime,
+                            brewingTemperatureCelsius = steep.temperatureCelsius,
                         )
                 }
 
@@ -324,9 +331,10 @@ class TimerViewModel(
         _state.update { it.copy(showResetConfirmation = false) }
 
         // Reset is simple state change - no use case needed
+        val brewingTime = session.currentSteep.brewingTime
         val resetState = timerService.getCurrentState().copy(
-            totalDuration = session.brewingTime,
-            remainingDuration = session.brewingTime,
+            totalDuration = brewingTime,
+            remainingDuration = brewingTime,
             status = TimerStatus.NOT_STARTED,
             startedAt = null,
             pausedAt = null,
@@ -350,22 +358,9 @@ class TimerViewModel(
         _state.update { it.copy(showDiscardSessionConfirmation = false) }
 
         viewModelScope.launch {
-            // 1. Call use case - handles cleanup logic
-            cancelTimerUseCase(timerService.getCurrentState())
-                .onSuccess { newState ->
-                    // 2. Update TimerService
-                    timerService.updateState(newState)
-
-                    // 3. Stop countdown
-                    timerService.stop()
-                    timerService.onSessionResolved(session.id)
-
-                    // 4. Clear persisted timer state
-                    saveTimerStateUseCase.clear(session.id)
-
-                    // 5. Delete the session from the database
-                    teaSessionRepository.delete(session.id)
-
+            discardSteepUseCase(session.session.id)
+                .onSuccess {
+                    timerService.onSessionResolved(session.session.id)
                     _navigationEvents.send(TimerNavEvent.NavigateBack)
                 }
                 .onFailure { e ->
@@ -380,23 +375,17 @@ class TimerViewModel(
         val session = _state.value.session ?: return
 
         viewModelScope.launch {
-            completeTimerUseCase(
-                currentState = timerService.getCurrentState(),
-                session = session,
+            val completedState = timerService.getCurrentState().copy(
+                status = TimerStatus.COMPLETE,
+                remainingDuration = Duration.ZERO,
             )
-                .onSuccess { newState ->
-                    timerService.updateState(newState)
-                    // Persist completed state for restoration
-                    saveTimerStateUseCase(newState)
-                    // Reset singleton state so the next Timer screen (e.g., next steep) starts
-                    // clean and doesn't receive a stale COMPLETE emission in collectTimerState()
-                    timerService.stop()
-                    // Navigate to SteepComplete screen
-                    _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(session.id))
-                }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to complete timer: ${e.message}") }
-                }
+            timerService.updateState(completedState)
+            // Persist completed state for restoration
+            saveTimerStateUseCase(completedState)
+            // Reset singleton state so the next Timer screen (e.g., next steep) starts
+            // clean and doesn't receive a stale COMPLETE emission in collectTimerState()
+            timerService.stop()
+            _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(session.session.id))
         }
     }
 
@@ -440,55 +429,68 @@ class TimerViewModel(
 
     private fun openEditSheet() {
         val session = _state.value.session ?: return
+        val steep = session.currentSteep
         val tempUnit = _state.value.userPreferences.temperatureUnit
         val volUnit = _state.value.userPreferences.volumeUnit
         _state.update {
             it.copy(
                 showEditSheet = true,
-                editTemperatureCelsius = tempUnit.fromCelsius(session.temperatureCelsius)
-                    .toString(),
-                editWaterQuantityMl = volUnit.fromMilliliters(session.waterQuantityMl).toString(),
-                editTeaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
-                editIsTeaBag = session.teaQuantityGrams == null,
-                editWaterType = session.waterType,
+                editTemperatureCelsius = tempUnit.fromCelsius(steep.temperatureCelsius).toString(),
+                editWaterQuantityMl = volUnit.fromMilliliters(steep.waterQuantityMl).toString(),
+                editTeaQuantityGrams = session.session.teaQuantityGrams?.toString() ?: "",
+                editIsTeaBag = session.session.teaQuantityGrams == null,
+                editWaterType = session.session.waterType,
             )
         }
     }
 
     private fun confirmEditSession() {
         val session = _state.value.session ?: return
+        val steep = session.currentSteep
         val currentState = _state.value
         val tempUnit = currentState.userPreferences.temperatureUnit
         val volUnit = currentState.userPreferences.volumeUnit
 
-        val temperatureCelsius = currentState.editTemperatureCelsius.toIntOrNull()?.let {
-            tempUnit.toCelsius(it)
-        } ?: session.temperatureCelsius
-
-        val waterQuantityMl = currentState.editWaterQuantityMl.toIntOrNull()?.let {
-            volUnit.toMilliliters(it)
-        } ?: session.waterQuantityMl
-
-        val teaQuantityGrams = if (currentState.editIsTeaBag) null
-        else currentState.editTeaQuantityGrams.toFloatOrNull()
-
-        val waterType = currentState.editWaterType ?: session.waterType
+        val temperatureCelsius = editedUnitValue(
+            currentState.editTemperatureCelsius,
+            steep.temperatureCelsius,
+            tempUnit::fromCelsius,
+            tempUnit::toCelsius,
+        )
+        val waterQuantityMl = editedUnitValue(
+            currentState.editWaterQuantityMl,
+            steep.waterQuantityMl,
+            volUnit::fromMilliliters,
+            volUnit::toMilliliters,
+        )
+        val isTeaBag = currentState.editIsTeaBag
+        val teaQuantityGrams = currentState.editTeaQuantityGrams.toFloatOrNull()
+        val waterType = currentState.editWaterType
 
         _state.update { it.copy(showEditSheet = false) }
 
         viewModelScope.launch {
-            // Re-read rather than copy state.session: the timer fields have been saved since it
-            // was loaded, and writing the stale copy back would wipe them
-            val latest = teaSessionRepository.getById(session.id) ?: return@launch
-            val updatedSession = latest.copy(
-                temperatureCelsius = temperatureCelsius,
-                waterQuantityMl = waterQuantityMl,
-                teaQuantityGrams = teaQuantityGrams,
-                waterType = waterType,
-                updatedAt = Clock.System.now(),
-            )
-            teaSessionRepository.upsert(updatedSession)
-            _state.update { it.copy(session = updatedSession) }
+            if (temperatureCelsius != null || waterQuantityMl != null) {
+                editSteepUseCase(steep.id) {
+                    it.copy(
+                        temperatureCelsius = temperatureCelsius ?: it.temperatureCelsius,
+                        waterQuantityMl = waterQuantityMl ?: it.waterQuantityMl,
+                    )
+                }.onFailure { e ->
+                    _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
+                    return@launch
+                }
+            }
+            editSessionUseCase(session.session.id) {
+                it.copy(
+                    teaQuantityGrams = if (isTeaBag) null else teaQuantityGrams ?: it.teaQuantityGrams,
+                    waterType = waterType ?: it.waterType,
+                )
+            }
+                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
+                }
         }
     }
 
@@ -501,9 +503,10 @@ class TimerViewModel(
         val session = _state.value.session ?: return
 
         // Reset to original duration and restart
+        val brewingTime = session.currentSteep.brewingTime
         val resetState = timerService.getCurrentState().copy(
-            totalDuration = session.brewingTime,
-            remainingDuration = session.brewingTime,
+            totalDuration = brewingTime,
+            remainingDuration = brewingTime,
             status = TimerStatus.NOT_STARTED,
             startedAt = null,
             pausedAt = null,

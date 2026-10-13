@@ -1,84 +1,62 @@
 package dev.jketterer.leaflog.domain.usecases.timer
 
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Restores timer state from an in-progress session.
+ * Restores the timer saved on the session's current steep, or null if none was saved.
  * Recalculates remaining time based on when the timer was last saved.
  */
-class RestoreTimerStateUseCase(
-    private val teaSessionRepository: TeaSessionRepository,
-) {
-    suspend operator fun invoke(sessionId: String): Result<TimerState?> {
-        return try {
-            val session = teaSessionRepository.getById(sessionId)
-                ?: return Result.failure(IllegalStateException("Session not found: $sessionId"))
+class RestoreTimerStateUseCase {
+    operator fun invoke(session: SessionWithSteeps): TimerState? {
+        val steep = session.currentSteep
+        val now = Clock.System.now()
+        val savedRemainingMs = steep.timerRemainingMs ?: 0L
 
+        val (newStatus, newRemainingMs) = when (steep.timerStatus) {
             // No timer state saved
-            if (session.timerStatus == null) {
-                return Result.success(null)
-            }
+            null, TimerStatus.NOT_STARTED -> return null
 
-            val now = Clock.System.now()
-            val savedRemainingMs = session.timerRemainingMs ?: 0L
+            TimerStatus.RUNNING -> {
+                // Timer was running - recalculate based on elapsed time since started
+                val startedAt = steep.timerStartedAt
+                if (startedAt != null) {
+                    val elapsedSinceStart = now - startedAt
+                    val totalDurationMs = steep.timerTotalMs ?: steep.brewingTime.inWholeMilliseconds
+                    val newRemaining = totalDurationMs - elapsedSinceStart.inWholeMilliseconds
 
-            val (newStatus, newRemainingMs) = when (session.timerStatus) {
-                TimerStatus.RUNNING -> {
-                    // Timer was running - recalculate based on elapsed time since started
-                    val startedAt = session.timerStartedAt
-                    if (startedAt != null) {
-                        val elapsedSinceStart = now - startedAt
-                        val totalDurationMs = session.timerTotalMs ?: session.brewingTime.inWholeMilliseconds
-                        val newRemaining = totalDurationMs - elapsedSinceStart.inWholeMilliseconds
-
-                        if (newRemaining <= 0) {
-                            // Timer has completed while app was closed
-                            TimerStatus.COMPLETE to 0L
-                        } else {
-                            TimerStatus.RUNNING to newRemaining
-                        }
+                    if (newRemaining <= 0) {
+                        // Timer has completed while app was closed
+                        TimerStatus.COMPLETE to 0L
                     } else {
-                        // No start time - use saved remaining as fallback
-                        TimerStatus.RUNNING to savedRemainingMs
+                        TimerStatus.RUNNING to newRemaining
                     }
-                }
-
-                TimerStatus.PAUSED -> {
-                    // Timer was paused - use saved remaining time directly
-                    TimerStatus.PAUSED to savedRemainingMs
-                }
-
-                TimerStatus.COMPLETE -> {
-                    // Timer was already complete
-                    TimerStatus.COMPLETE to 0L
-                }
-
-                TimerStatus.NOT_STARTED -> {
-                    // Should not happen, but handle it
-                    return Result.success(null)
+                } else {
+                    // No start time - use saved remaining as fallback
+                    TimerStatus.RUNNING to savedRemainingMs
                 }
             }
 
-            val timerState = TimerState(
-                sessionId = session.id,
-                teaId = session.teaId,
-                teaName = "", // Will be populated by caller
-                steepNumber = session.steepNumber,
-                totalDuration = session.timerTotalMs?.milliseconds ?: session.brewingTime,
-                remainingDuration = newRemainingMs.milliseconds,
-                status = newStatus,
-                startedAt = session.timerStartedAt,
-                pausedAt = session.timerPausedAt,
-                brewingTemperatureCelsius = session.temperatureCelsius,
-            )
+            // Timer was paused - use saved remaining time directly
+            TimerStatus.PAUSED -> TimerStatus.PAUSED to savedRemainingMs
 
-            Result.success(timerState)
-        } catch (e: Exception) {
-            Result.failure(e)
+            TimerStatus.COMPLETE -> TimerStatus.COMPLETE to 0L
         }
+
+        return TimerState(
+            sessionId = session.session.id,
+            teaId = session.session.teaId,
+            teaName = "", // Will be populated by caller
+            steepNumber = steep.number,
+            totalDuration = steep.timerTotalMs?.milliseconds ?: steep.brewingTime,
+            remainingDuration = newRemainingMs.milliseconds,
+            status = newStatus,
+            startedAt = steep.timerStartedAt,
+            pausedAt = steep.timerPausedAt,
+            brewingTemperatureCelsius = steep.temperatureCelsius,
+        )
     }
 }

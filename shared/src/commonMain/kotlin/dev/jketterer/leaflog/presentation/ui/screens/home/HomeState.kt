@@ -49,6 +49,6 @@ data class HomeState(
      */
     val inProgressTimerProgress: Float?
         get() = liveTimerState
-            ?.takeIf { it.sessionId == mostRecentInProgress?.session?.id }
+            ?.takeIf { it.sessionId == mostRecentInProgress?.session?.session?.id }
             ?.progress
 }

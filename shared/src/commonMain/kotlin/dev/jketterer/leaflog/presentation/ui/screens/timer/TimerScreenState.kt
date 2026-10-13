@@ -2,7 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.timer
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -15,7 +15,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
  */
 data class TimerScreenState(
     val timerState: TimerState = TimerState(),
-    val session: TeaSession? = null,
+    val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
     val vessel: BrewingVessel? = null,
     val showCompleteNowConfirmation: Boolean = false,

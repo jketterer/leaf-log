@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
@@ -19,12 +20,12 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.BrewAgainUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CreateSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -48,7 +50,7 @@ import kotlin.time.Clock
 private sealed interface HomePendingAction {
     data object NavigateToLogTea : HomePendingAction
     data object ShowDurationSheet : HomePendingAction
-    data class BrewAgain(val session: TeaSession) : HomePendingAction
+    data class BrewAgain(val sessionId: String) : HomePendingAction
     data class QuickBrew(
         val teaId: String,
         val vesselId: String,
@@ -64,10 +66,10 @@ class HomeViewModel(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
-    private val brewAgainUseCase: BrewAgainUseCase,
-    private val createSessionUseCase: CreateSessionUseCase,
+    private val startSessionUseCase: StartSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
-    private val completeSessionUseCase: CompleteSessionUseCase,
+    private val finishSessionUseCase: FinishSessionUseCase,
+    private val discardSteepUseCase: DiscardSteepUseCase,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
     private val pinBrewingConfigurationUseCase: PinBrewingConfigurationUseCase,
     private val timerService: TimerService,
@@ -83,8 +85,9 @@ class HomeViewModel(
 
     private val inProgressDelegate = createInProgressSessionDelegate<HomeState, HomePendingAction>(
         getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
-        completeSessionUseCase = completeSessionUseCase,
-        deleteSessionUseCase = deleteSessionUseCase,
+        finishSessionUseCase = finishSessionUseCase,
+        discardSteepUseCase = discardSteepUseCase,
+        timerService = timerService,
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
@@ -99,7 +102,7 @@ class HomeViewModel(
                     _state.update { it.copy(showDurationSheet = true) }
 
                 is HomePendingAction.BrewAgain ->
-                    brewAgain(action.session)
+                    brewAgain(action.sessionId)
 
                 is HomePendingAction.QuickBrew ->
                     quickBrew(action.configurationId)
@@ -156,11 +159,8 @@ class HomeViewModel(
                 _state.update { it.copy(isFabExpanded = intent.expanded) }
             }
 
-            is HomeIntent.BrewAgainClicked -> {
-                val session = _state.value.recentSessionsWithTea
-                    .find { it.session.id == intent.sessionId }?.session ?: return
-                inProgressDelegate.checkAndProceed(HomePendingAction.BrewAgain(session))
-            }
+            is HomeIntent.BrewAgainClicked ->
+                inProgressDelegate.checkAndProceed(HomePendingAction.BrewAgain(intent.sessionId))
 
             is HomeIntent.QuickBrewClicked -> {
                 inProgressDelegate.checkAndProceed(
@@ -233,10 +233,11 @@ class HomeViewModel(
         handleResumeSession(inProgress)
     }
 
-    private fun handleResumeSession(session: TeaSession) {
-        when (session.resolvedTimerStatus(Clock.System.now())) {
-            TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(session.id))
-            else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(session.id))
+    private fun handleResumeSession(session: SessionWithSteeps) {
+        val sessionId = session.session.id
+        when (session.currentSteep.resolvedTimerStatus(Clock.System.now())) {
+            TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(sessionId))
+            else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(sessionId))
         }
     }
 
@@ -245,11 +246,7 @@ class HomeViewModel(
             _state.value.recentSessionsWithTea.find { it.session.id == sessionId }?.session
         if (session?.status == SessionStatus.IN_PROGRESS) {
             viewModelScope.launch {
-                // Find the active child steep to navigate to, if any
-                val activeChildSteep = teaSessionRepository.getChildSteeps(sessionId)
-                    .find { it.status == SessionStatus.IN_PROGRESS }
-                val targetSession = activeChildSteep ?: session
-                handleResumeSession(targetSession)
+                teaSessionRepository.getSession(sessionId)?.let { handleResumeSession(it) }
             }
         } else {
             _navEvents.trySend(HomeNavEvent.NavigateToSession(sessionId))
@@ -361,7 +358,8 @@ class HomeViewModel(
     }
 
     private suspend fun collectInProgressCount(loaded: MutableStateFlow<Boolean>) {
-        teaSessionRepository.getInProgressCountFlow()
+        teaSessionRepository.getInProgressSessionsFlow()
+            .map { it.size }
             .catch { e ->
                 Logger.w(tag = "Home") { "Failed to load in-progress count: ${e.message}" }
                 loaded.value = true
@@ -374,13 +372,13 @@ class HomeViewModel(
 
     private suspend fun collectMostRecentInProgress(loaded: MutableStateFlow<Boolean>) {
         combine(
-            teaSessionRepository.getInProgressFlow(),
+            teaSessionRepository.getInProgressSessionsFlow(),
             teaRepository.getAllFlow(),
             vesselRepository.getAllFlow(),
         ) { inProgressSessions, teas, vessels ->
             val mostRecent = inProgressSessions.firstOrNull() ?: return@combine null
-            val tea = teas.find { it.id == mostRecent.teaId }
-            val vessel = vessels.find { it.id == mostRecent.vesselId }
+            val tea = teas.find { it.id == mostRecent.session.teaId }
+            val vessel = vessels.find { it.id == mostRecent.session.vesselId }
             InProgressSessionDetails(
                 session = mostRecent,
                 teaName = tea?.name ?: "Unknown Tea",
@@ -392,7 +390,8 @@ class HomeViewModel(
                 loaded.value = true
             }
             .collect { inProgressInfo ->
-                val resolvedStatus = inProgressInfo?.session?.resolvedTimerStatus(Clock.System.now())
+                val resolvedStatus = inProgressInfo?.session?.currentSteep
+                    ?.resolvedTimerStatus(Clock.System.now())
                 _state.update {
                     it.copy(
                         mostRecentInProgress = inProgressInfo,
@@ -474,11 +473,12 @@ class HomeViewModel(
         }
     }
 
-    private fun brewAgain(session: TeaSession) = viewModelScope.launch {
-        brewAgainUseCase(session)
+    private fun brewAgain(sessionId: String) = viewModelScope.launch {
+        val source = teaSessionRepository.getSession(sessionId) ?: return@launch
+        startSessionUseCase(source)
             .onSuccess {
                 _state.update { state -> state.copy(isFabExpanded = false) }
-                _navEvents.send(HomeNavEvent.NavigateToTimer(it.id))
+                _navEvents.send(HomeNavEvent.NavigateToTimer(it.session.id))
             }
             .onFailure { e ->
                 _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
@@ -487,11 +487,11 @@ class HomeViewModel(
 
     private fun quickBrew(configurationId: String) = viewModelScope.launch {
         brewingConfigurationRepository.getById(configurationId)?.let {
-            createSessionUseCase.invoke(it)
+            startSessionUseCase(it)
         }?.onSuccess {
             _navEvents.trySend(
                 HomeNavEvent.NavigateToTimer(
-                    sessionId = it.id
+                    sessionId = it.session.id
                 )
             )
         }?.onFailure { e ->
@@ -503,6 +503,7 @@ class HomeViewModel(
         val sessionId = _state.value.sessionPendingDelete ?: return@launch
         _state.update { it.copy(sessionPendingDelete = null) }
         deleteSessionUseCase(sessionId)
+            .onSuccess { timerService.onSessionResolved(sessionId) }
             .onFailure { e ->
                 _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
             }

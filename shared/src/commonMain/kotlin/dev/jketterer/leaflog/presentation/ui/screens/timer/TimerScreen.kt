@@ -42,15 +42,14 @@ import compose.icons.feathericons.CheckCircle
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
 import compose.icons.feathericons.X
-import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
@@ -220,9 +219,14 @@ private fun TimerContent(
 
     // Discard session confirmation dialog
     if (state.showDiscardSessionConfirmation) {
+        val steepNumber = state.session?.currentSteep?.number ?: 1
         TimerStopConfirmationDialog(
-            title = "Cancel Session?",
-            text = "This will permanently delete the session. This action cannot be undone.",
+            title = if (steepNumber == 1) "Cancel Session?" else "Discard Steep $steepNumber?",
+            text = if (steepNumber == 1) {
+                "This will permanently delete the session. This action cannot be undone."
+            } else {
+                "Steep $steepNumber will be deleted and the session finished with the steeps before it."
+            },
             confirmText = "Delete",
             onConfirm = { onIntent(TimerIntent.ConfirmStop) },
             onDismiss = { onIntent(TimerIntent.CancelStop) },
@@ -232,7 +236,7 @@ private fun TimerContent(
     // Reset confirmation dialog
     if (state.showResetConfirmation) {
         TimerResetConfirmationDialog(
-            durationText = "${state.session?.brewingTime}",
+            durationText = "${state.session?.currentSteep?.brewingTime}",
             onConfirm = { onIntent(TimerIntent.ConfirmReset) },
             onDismiss = { onIntent(TimerIntent.CancelReset) },
         )
@@ -388,20 +392,7 @@ private fun TimerScreenRunningPreview() {
                     status = TimerStatus.RUNNING,
                     startedAt = Clock.System.now(),
                 ),
-                session = TeaSession(
-                    id = "session-1",
-                    teaId = "tea-1",
-                    vesselId = "gaiwan",
-                    waterType = WaterType.FILTERED,
-                    timestamp = Clock.System.now(),
-                    brewingTime = 2.minutes,
-                    temperatureCelsius = 80.0,
-                    waterQuantityMl = 200.0,
-                    status = SessionStatus.IN_PROGRESS,
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
-                ),
+                session = previewSession(),
                 tea = Tea(
                     id = "tea-1",
                     name = "Dragon Well",
@@ -433,20 +424,7 @@ private fun TimerScreenPausedPreview() {
                     startedAt = Clock.System.now(),
                     pausedAt = Clock.System.now(),
                 ),
-                session = TeaSession(
-                    id = "session-1",
-                    teaId = "tea-1",
-                    vesselId = "gaiwan",
-                    waterType = WaterType.FILTERED,
-                    timestamp = Clock.System.now(),
-                    brewingTime = 2.minutes,
-                    temperatureCelsius = 80.0,
-                    waterQuantityMl = 200.0,
-                    status = SessionStatus.IN_PROGRESS,
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
-                ),
+                session = previewSession(),
                 tea = Tea(
                     id = "tea-1",
                     name = "Dragon Well",

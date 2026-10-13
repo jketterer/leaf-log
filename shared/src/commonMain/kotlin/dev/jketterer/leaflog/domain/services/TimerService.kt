@@ -5,7 +5,7 @@ import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.session.GetSessionReminderDelayUseCase
-import dev.jketterer.leaflog.domain.usecases.timer.SaveTimerStateUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -173,11 +173,13 @@ class TimerService(
     }
 
     /**
-     * The session has been finished or discarded, so withdraw its finish-your-session reminder.
-     * Skipped when a different session's timer is live, since that brew's reminder is still owed.
+     * The session has been finished or discarded, so stop its timer if it has one running and
+     * withdraw its finish-your-session reminder. A different session's live timer is left alone,
+     * along with its reminder, which that brew is still owed.
      */
     fun onSessionResolved(sessionId: String) {
         val activeSessionId = _timerState.value.sessionId
+        if (activeSessionId == sessionId) stop()
         if (activeSessionId == null || activeSessionId == sessionId) {
             notificationService.cancelSessionReminder()
         }

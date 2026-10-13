@@ -2,13 +2,14 @@ package dev.jketterer.leaflog.presentation.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.CompleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
@@ -107,10 +108,10 @@ fun <T> ViewModel.loadPreferences(
 fun <T, NavEvent> ViewModel.createConfigurationSaveDelegate(
     saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
     stateFlow: MutableStateFlow<T>,
-    getSavedSession: (T) -> TeaSession?,
+    getSavedSession: (T) -> SessionWithSteeps?,
     dismissDialog: (T) -> T,
     setError: (T, String) -> T,
-    createSuccessNavEvent: (TeaSession) -> NavEvent,
+    createSuccessNavEvent: (SessionWithSteeps) -> NavEvent,
     sendNavEvent: (NavEvent) -> Unit,
 ): ConfigurationSaveDelegate<T, NavEvent> {
     return ConfigurationSaveDelegate(
@@ -135,8 +136,9 @@ fun <T, NavEvent> ViewModel.createConfigurationSaveDelegate(
  * @param T The type of the state
  * @param PendingAction The ViewModel-specific pending action type
  * @param getInProgressSessionInfoUseCase Use case to fetch in-progress session info
- * @param completeSessionUseCase Use case to complete a session
- * @param deleteSessionUseCase Use case to delete/discard a session
+ * @param finishSessionUseCase Use case to finish the in-progress session
+ * @param discardSteepUseCase Use case to discard the steep being brewed
+ * @param timerService Stops the session's timer and withdraws its reminder once it's resolved
  * @param stateFlow The state flow to update
  * @param getDialogState Lambda to extract dialog state from ViewModel state
  * @param setDialogState Lambda to set dialog state in ViewModel state
@@ -146,20 +148,22 @@ fun <T, NavEvent> ViewModel.createConfigurationSaveDelegate(
  */
 fun <T, PendingAction> ViewModel.createInProgressSessionDelegate(
     getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
-    completeSessionUseCase: CompleteSessionUseCase,
-    deleteSessionUseCase: DeleteSessionUseCase,
+    finishSessionUseCase: FinishSessionUseCase,
+    discardSteepUseCase: DiscardSteepUseCase,
+    timerService: TimerService,
     stateFlow: MutableStateFlow<T>,
     getDialogState: (T) -> InProgressDialogState?,
     setDialogState: (T, InProgressDialogState?) -> T,
     setError: (T, String) -> T,
-    onResume: (TeaSession) -> Unit,
+    onResume: (SessionWithSteeps) -> Unit,
     executePendingAction: suspend (PendingAction) -> Unit,
 ): InProgressSessionDelegate<T, PendingAction> {
     return InProgressSessionDelegate(
         viewModelScope = viewModelScope,
         getInProgressSessionInfoUseCase = getInProgressSessionInfoUseCase,
-        completeSessionUseCase = completeSessionUseCase,
-        deleteSessionUseCase = deleteSessionUseCase,
+        finishSessionUseCase = finishSessionUseCase,
+        discardSteepUseCase = discardSteepUseCase,
+        timerService = timerService,
         stateFlow = stateFlow,
         getDialogState = getDialogState,
         setDialogState = setDialogState,

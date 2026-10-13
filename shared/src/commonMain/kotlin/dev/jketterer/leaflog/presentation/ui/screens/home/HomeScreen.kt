@@ -45,7 +45,6 @@ import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.TeaSession
-import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
@@ -58,6 +57,7 @@ import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDur
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
@@ -558,23 +558,7 @@ private fun HomeScreenPreview() {
                 ),
                 inProgressSessionsCount = 1,
                 mostRecentInProgress = InProgressSessionDetails(
-                    session = TeaSession(
-                        id = "in-progress-1",
-                        teaId = "tea-3",
-                        vesselId = "gaiwan",
-                        waterType = WaterType.FILTERED,
-                        timestamp = now,
-                        brewingTime = 3.minutes,
-                        temperatureCelsius = 85.0,
-                        waterQuantityMl = 150.0,
-                        status = SessionStatus.IN_PROGRESS,
-                        syncStatus = SyncStatus.LOCAL_ONLY,
-                        createdAt = now,
-                        updatedAt = now,
-                        steepNumber = 2,
-                        timerStatus = TimerStatus.PAUSED,
-                        timerRemainingMs = 90_000L,
-                    ),
+                    session = previewSession(id = "in-progress-1", ratings = listOf(4f, null)),
                     teaName = "Dragon Well Green",
                     vesselName = "Gaiwan",
                 ),

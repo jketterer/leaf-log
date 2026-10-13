@@ -25,14 +25,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Coffee
-import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.SyncStatus
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Clock
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -64,9 +61,10 @@ fun InProgressSessionsBanner(
                 // Caller resolves the status against the clock so this label and the screen the
                 // button opens cannot disagree. Falling back to the stored status keeps previews
                 // and any caller that has not resolved yet rendering something sensible.
-                val timerStatus = resolvedTimerStatus ?: inProgressInfo.session.timerStatus
-                val timerRemainingMs = inProgressInfo.session.timerRemainingMs
-                val totalDurationMs = inProgressInfo.session.timerTotalMs ?: inProgressInfo.session.brewingTime.inWholeMilliseconds
+                val steep = inProgressInfo.session.currentSteep
+                val timerStatus = resolvedTimerStatus ?: steep.timerStatus
+                val timerRemainingMs = steep.timerRemainingMs
+                val totalDurationMs = steep.timerTotalMs ?: steep.brewingTime.inWholeMilliseconds
 
                 val isTimerComplete = timerStatus == TimerStatus.COMPLETE
 
@@ -87,7 +85,7 @@ fun InProgressSessionsBanner(
                             color = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
                         Text(
-                            text = "Steep ${inProgressInfo.session.steepNumber}",
+                            text = "Steep ${steep.number}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
                         )
@@ -145,10 +143,22 @@ fun InProgressSessionsBanner(
     }
 }
 
+private fun previewInProgress(
+    steeps: Int,
+    timerStatus: TimerStatus?,
+    timerRemainingMs: Long?,
+): SessionWithSteeps {
+    val session = previewSession(ratings = List(steeps) { null }, brewingTime = 3.minutes)
+    val current = session.currentSteep.copy(
+        timerStatus = timerStatus,
+        timerRemainingMs = timerRemainingMs,
+    )
+    return session.copy(steeps = session.steeps.dropLast(1) + current)
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun InProgressSessionsBannerPreview() {
-    val now = Clock.System.now()
     LeafLogTheme {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -157,20 +167,8 @@ private fun InProgressSessionsBannerPreview() {
             // With info - timer paused
             InProgressSessionsBanner(
                 inProgressInfo = InProgressSessionDetails(
-                    session = TeaSession(
-                        id = "1",
-                        teaId = "tea1",
-                        vesselId = "vessel1",
-                        waterType = WaterType.FILTERED,
-                        timestamp = now,
-                        brewingTime = 3.minutes,
-                        temperatureCelsius = 85.0,
-                        waterQuantityMl = 150.0,
-                        syncStatus = SyncStatus.PENDING,
-                        createdAt = now,
-                        updatedAt = now,
-                        steepNumber = 2,
-                        status = SessionStatus.IN_PROGRESS,
+                    session = previewInProgress(
+                        steeps = 2,
                         timerStatus = TimerStatus.PAUSED,
                         timerRemainingMs = 90_000L,
                     ),
@@ -184,20 +182,8 @@ private fun InProgressSessionsBannerPreview() {
             // With info - timer complete
             InProgressSessionsBanner(
                 inProgressInfo = InProgressSessionDetails(
-                    session = TeaSession(
-                        id = "2",
-                        teaId = "tea2",
-                        vesselId = "vessel1",
-                        waterType = WaterType.FILTERED,
-                        timestamp = now,
-                        brewingTime = 2.minutes,
-                        temperatureCelsius = 90.0,
-                        waterQuantityMl = 100.0,
-                        syncStatus = SyncStatus.PENDING,
-                        createdAt = now,
-                        updatedAt = now,
-                        steepNumber = 1,
-                        status = SessionStatus.IN_PROGRESS,
+                    session = previewInProgress(
+                        steeps = 1,
                         timerStatus = TimerStatus.COMPLETE,
                         timerRemainingMs = 0L,
                     ),
@@ -211,21 +197,7 @@ private fun InProgressSessionsBannerPreview() {
             // Without timer state
             InProgressSessionsBanner(
                 inProgressInfo = InProgressSessionDetails(
-                    session = TeaSession(
-                        id = "3",
-                        teaId = "tea3",
-                        vesselId = "vessel1",
-                        waterType = WaterType.SPRING,
-                        timestamp = now,
-                        brewingTime = 5.minutes,
-                        temperatureCelsius = 100.0,
-                        waterQuantityMl = 200.0,
-                        syncStatus = SyncStatus.PENDING,
-                        createdAt = now,
-                        updatedAt = now,
-                        steepNumber = 1,
-                        status = SessionStatus.IN_PROGRESS,
-                    ),
+                    session = previewInProgress(steeps = 1, timerStatus = null, timerRemainingMs = null),
                     teaName = "Aged Pu-erh",
                     vesselName = "Gaiwan",
                 ),

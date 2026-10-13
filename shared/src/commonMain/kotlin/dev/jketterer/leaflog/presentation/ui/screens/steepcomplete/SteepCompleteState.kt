@@ -2,19 +2,20 @@ package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 data class SteepCompleteState(
-    val session: TeaSession? = null,
+    val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
     val vessel: BrewingVessel? = null,
     val rating: Float = 0f,
     val notes: String = "",
     val photos: List<String> = emptyList(),
-    val previousSteeps: List<TeaSession> = emptyList(),
+    val previousSteeps: List<Steep> = emptyList(),
     // Next steep dialog
     val showNextSteepDialog: Boolean = false,
     val nextSteepDuration: Duration? = null,
@@ -23,7 +24,7 @@ data class SteepCompleteState(
     // Config save dialog
     val showSaveConfigurationDialog: Boolean = false,
     val suggestedConfigurationLabel: String = "",
-    val savedSession: TeaSession? = null,
+    val savedSession: SessionWithSteeps? = null,
     // Edit parameters sheet
     val showEditParametersSheet: Boolean = false,
     val editBrewingTime: Duration = Duration.ZERO,

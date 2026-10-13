@@ -1,9 +1,11 @@
 package dev.jketterer.leaflog.data.repositories
 
 import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
+import dev.jketterer.leaflog.data.mappers.toAggregates
 import dev.jketterer.leaflog.data.mappers.toEntity
 import dev.jketterer.leaflog.data.mappers.toTeaSession
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlinx.coroutines.flow.Flow
@@ -123,4 +125,39 @@ class TeaSessionRepositoryImpl(
     override suspend fun hasInProgressSession(): Boolean {
         return teaSessionDao.countInProgressParentSessions() > 0
     }
+
+    override fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>> =
+        teaSessionDao.getAllSessionsFlow().map { it.toAggregates() }
+
+    override suspend fun getAllSessions(): List<SessionWithSteeps> =
+        teaSessionDao.getAllSessions().toAggregates()
+
+    override fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>> =
+        teaSessionDao.getRecentSessionsFlow(limit).map { it.toAggregates() }
+
+    override suspend fun getSession(id: String): SessionWithSteeps? =
+        teaSessionDao.getSession(id).toAggregates().singleOrNull()
+
+    override fun getSessionFlow(id: String): Flow<SessionWithSteeps?> =
+        teaSessionDao.getSessionFlow(id).map { it.toAggregates().singleOrNull() }
+
+    override suspend fun getSessionsByTea(teaId: String): List<SessionWithSteeps> =
+        teaSessionDao.getSessionsByTea(teaId).toAggregates()
+
+    override fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>> =
+        teaSessionDao.getSessionsByTeaFlow(teaId).map { it.toAggregates() }
+
+    override suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps> =
+        teaSessionDao.getSessionsByVessel(vesselId).toAggregates()
+
+    override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> =
+        teaSessionDao.getInProgressSessionsFlow().map { it.toAggregates() }
+
+    override suspend fun getSessionsStartedBetween(
+        start: Instant,
+        end: Instant,
+    ): List<SessionWithSteeps> = teaSessionDao.getSessionsStartedBetween(
+        startTimestamp = start.toEpochMilliseconds(),
+        endTimestamp = end.toEpochMilliseconds(),
+    ).toAggregates()
 }

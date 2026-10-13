@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
@@ -67,6 +68,16 @@ class FakeTeaSessionRepository(
     override suspend fun delete(id: String) = TODO("unused by these tests")
     override suspend fun countByDateRange(start: Instant, end: Instant): Int = TODO("unused by these tests")
     override suspend fun hasInProgressSession(): Boolean = TODO("unused by these tests")
+    override fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
+    override suspend fun getAllSessions(): List<SessionWithSteeps> = TODO("unused by these tests")
+    override fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
+    override suspend fun getSession(id: String): SessionWithSteeps? = TODO("unused by these tests")
+    override fun getSessionFlow(id: String): Flow<SessionWithSteeps?> = TODO("unused by these tests")
+    override suspend fun getSessionsByTea(teaId: String): List<SessionWithSteeps> = TODO("unused by these tests")
+    override fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
+    override suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps> = TODO("unused by these tests")
+    override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
+    override suspend fun getSessionsStartedBetween(start: Instant, end: Instant): List<SessionWithSteeps> = TODO("unused by these tests")
 }
 
 class FakeBrewingConfigurationRepository(

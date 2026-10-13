@@ -341,9 +341,10 @@ the SQL against the Kotlin rules on the same fixture.
 - [x] `fix: start the Log Session rating unrated`
 - [x] `refactor: add the Session, Steep and SessionWithSteeps domain types`: the rating and stats
   rules as pure functions, the mapper, `Transactor`.
-- [ ] `feat: read sessions as aggregates`
+- [x] `feat: read sessions as aggregates`
 - [ ] `feat: add the session aggregate use cases`, alongside the old ones. A host test proves
-  `RoomTransactor` rolls back and shares its connection with DAO calls (Robolectric if needed).
+  `RoomTransactor` rolls back and shares its connection with DAO calls, on the in-memory Room
+  database `SessionReadsTest` builds (no Robolectric needed).
 - [ ] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
   delegate, Home, Log Tea, Quick Timer, Brew Again. The status meaning flips here, for every writer
   at once.

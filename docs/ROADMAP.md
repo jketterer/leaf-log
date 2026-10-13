@@ -362,8 +362,9 @@ the SQL against the Kotlin rules on the same fixture.
 - [x] `refactor: move analytics and prefill onto the aggregate`: the Analytics use cases, Home's
   daily stats and prefill's best session. A session's steeps all land in the period and day it
   started; ratings are `effectiveRating`. Only export still reads `TeaSession`.
-- [ ] `refactor: delete TeaSession`, `RecentSessionsCard` and the `TeaSession` reads; import goes
-  through the DAO. `session/aggregate/` moves up into `session/`.
+- [x] `refactor: delete TeaSession`, `RecentSessionsCard` and the `TeaSession` reads; import goes
+  through the DAO. `session/aggregate/` moves up into `session/`. `CompleteDraftDialog` went too,
+  and the DAO queries only those reads used. The repository's `delete` is now `deleteSession`.
 - [ ] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
   platforms, the migration test, the transitional copy removed, import normalisation, the Track B
   line, the Hard-won facts entry on `AddSteepUseCase` deleted.

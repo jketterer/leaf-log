@@ -13,11 +13,11 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea

@@ -2,9 +2,9 @@ package dev.jketterer.leaflog.presentation.ui.viewmodel
 
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update

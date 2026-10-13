@@ -13,11 +13,11 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.AddSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.components.common.editedUnitValue
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences

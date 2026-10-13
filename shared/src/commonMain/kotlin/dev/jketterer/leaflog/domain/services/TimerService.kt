@@ -5,7 +5,7 @@ import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.session.GetSessionReminderDelayUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase
+import dev.jketterer.leaflog.domain.usecases.session.SaveTimerStateUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

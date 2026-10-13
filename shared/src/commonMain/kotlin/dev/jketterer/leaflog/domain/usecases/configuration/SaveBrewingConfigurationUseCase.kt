@@ -5,8 +5,8 @@ import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.RecomputeStatsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.withSession
+import dev.jketterer.leaflog.domain.usecases.session.RecomputeStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.withSession
 import kotlin.time.Clock
 
 /**

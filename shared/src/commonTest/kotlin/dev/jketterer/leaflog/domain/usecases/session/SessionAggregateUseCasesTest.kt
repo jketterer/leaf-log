@@ -1,4 +1,4 @@
-package dev.jketterer.leaflog.domain.usecases.session.aggregate
+package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.SessionStatus
@@ -9,10 +9,6 @@ import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.FakeBrewingConfigurationRepository
-import dev.jketterer.leaflog.domain.usecases.session.FakeTeaRepository
-import dev.jketterer.leaflog.domain.usecases.session.FakeTeaSessionRepository
-import dev.jketterer.leaflog.domain.usecases.session.FakeTransactor
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

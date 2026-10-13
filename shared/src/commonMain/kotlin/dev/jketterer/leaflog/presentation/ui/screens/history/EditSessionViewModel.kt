@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
@@ -14,8 +14,8 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel

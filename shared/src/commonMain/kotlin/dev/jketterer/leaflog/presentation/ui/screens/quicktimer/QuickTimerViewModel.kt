@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.quicktimer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -9,10 +10,10 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.domain.usecases.session.SaveTimerStateUseCase
+import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
@@ -21,7 +22,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update

@@ -1,4 +1,4 @@
-package dev.jketterer.leaflog.domain.usecases.session.aggregate
+package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
@@ -16,7 +16,7 @@ class DeleteSessionUseCase(
         transactor {
             val current = teaSessionRepository.getSession(sessionId)
                 ?: error("Session not found: $sessionId")
-            teaSessionRepository.delete(sessionId)
+            teaSessionRepository.deleteSession(sessionId)
             recomputeStats(current.session.teaId)
         }
     }

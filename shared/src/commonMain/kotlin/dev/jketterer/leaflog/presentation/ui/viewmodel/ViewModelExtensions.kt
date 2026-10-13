@@ -2,16 +2,16 @@ package dev.jketterer.leaflog.presentation.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
-import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch

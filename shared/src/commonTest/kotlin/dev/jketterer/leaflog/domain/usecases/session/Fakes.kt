@@ -6,7 +6,6 @@ import dev.jketterer.leaflog.data.mappers.toEntity
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaSession
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -90,28 +89,11 @@ class FakeTeaSessionRepository(
         rows[steepId] = rows.getValue(steepId).copy(deletedAt = DELETED_AT)
     }
 
-    override suspend fun delete(id: String) {
-        rows.values.filter { (it.parentSessionId ?: it.id) == id }
+    override suspend fun deleteSession(sessionId: String) {
+        rows.values.filter { (it.parentSessionId ?: it.id) == sessionId }
             .forEach { rows[it.id] = it.copy(deletedAt = DELETED_AT) }
     }
 
-    override fun getAllFlow(): Flow<List<TeaSession>> = TODO("unused by these tests")
-    override suspend fun getAll(): List<TeaSession> = TODO("unused by these tests")
-    override fun getRecentFlow(limit: Int): Flow<List<TeaSession>> = TODO("unused by these tests")
-    override suspend fun getRecent(limit: Int): List<TeaSession> = TODO("unused by these tests")
-    override suspend fun getById(id: String): TeaSession? = TODO("unused by these tests")
-    override fun getByIdFlow(id: String): Flow<TeaSession?> = TODO("unused by these tests")
-    override fun getByTeaIdFlow(teaId: String): Flow<List<TeaSession>> = TODO("unused by these tests")
-    override suspend fun getByVesselId(vesselId: String): List<TeaSession> = TODO("unused by these tests")
-    override fun getByVesselIdFlow(vesselId: String): Flow<List<TeaSession>> = TODO("unused by these tests")
-    override suspend fun getChildSteeps(parentId: String): List<TeaSession> = TODO("unused by these tests")
-    override fun getInProgressFlow(): Flow<List<TeaSession>> = TODO("unused by these tests")
-    override fun getInProgressCountFlow(): Flow<Int> = TODO("unused by these tests")
-    override suspend fun getByDateRange(start: Instant, end: Instant): List<TeaSession> = TODO("unused by these tests")
-    override suspend fun getByTeaId(teaId: String, limit: Int?): List<TeaSession> = TODO("unused by these tests")
-    override suspend fun upsert(session: TeaSession) {}
-    override suspend fun countByDateRange(start: Instant, end: Instant): Int = TODO("unused by these tests")
-    override suspend fun hasInProgressSession(): Boolean = TODO("unused by these tests")
     override fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getSessionFlow(id: String): Flow<SessionWithSteeps?> = TODO("unused by these tests")

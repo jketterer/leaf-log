@@ -3,11 +3,11 @@ package dev.jketterer.leaflog.data.repositories
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.ZipEntry
+import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
 import dev.jketterer.leaflog.data.mappers.toBrewingConfiguration
 import dev.jketterer.leaflog.data.mappers.toBrewingVessel
 import dev.jketterer.leaflog.data.mappers.toEntity
 import dev.jketterer.leaflog.data.mappers.toTea
-import dev.jketterer.leaflog.data.mappers.toTeaSession
 import dev.jketterer.leaflog.data.mappers.toTeaType
 import dev.jketterer.leaflog.data.models.LeafLogExportData
 import dev.jketterer.leaflog.domain.models.ImportResult
@@ -15,7 +15,6 @@ import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.DataExportRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
-import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
@@ -24,7 +23,7 @@ class DataExportRepositoryImpl(
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val teaRepository: TeaRepository,
-    private val teaSessionRepository: TeaSessionRepository,
+    private val teaSessionDao: TeaSessionDao,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val imageStorage: ImageStorage,
     private val zipArchiver: ZipArchiver,
@@ -43,15 +42,15 @@ class DataExportRepositoryImpl(
         val teaTypes = teaTypeRepository.getAll().map { it.toEntity() }
         val vessels = brewingVesselRepository.getAll().map { it.toEntity() }
         val teas = teaRepository.getAll().map { it.toEntity() }
-        val sessions = teaSessionRepository.getAll().map { it.toEntity() }
+        val sessions = teaSessionDao.getAllSessions()
         val configurations = brewingConfigurationRepository.getAll().map { it.toEntity() }
 
         // Collect all image paths and build a remap: absolutePath → archivePath
         val pathRemap = mutableMapOf<String, String>()
         var imageIndex = 0
 
-        for (session in sessions) {
-            for (photo in session.photos) {
+        for ((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, photos) in sessions) {
+            for (photo in photos) {
                 if (photo.isNotBlank() && photo !in pathRemap) {
                     val ext = photo.substringAfterLast('.', "jpg")
                     pathRemap[photo] = "images/session_photos/${imageIndex++}.$ext"
@@ -59,8 +58,8 @@ class DataExportRepositoryImpl(
             }
         }
 
-        for (tea in teas) {
-            for (photo in tea.photos) {
+        for ((_, _, _, _, _, _, _, _, _, _, photos) in teas) {
+            for (photo in photos) {
                 if (photo.isNotBlank() && photo !in pathRemap) {
                     val ext = photo.substringAfterLast('.', "jpg")
                     pathRemap[photo] = "images/tea_photos/${imageIndex++}.$ext"
@@ -68,9 +67,8 @@ class DataExportRepositoryImpl(
             }
         }
 
-        for (vessel in vessels) {
-            val path = vessel.imagePath
-            if (path != null && path.isNotBlank() && path !in pathRemap) {
+        for ((_, _, _, path) in vessels) {
+            if (!path.isNullOrBlank() && path !in pathRemap) {
                 val ext = path.substringAfterLast('.', "jpg")
                 pathRemap[path] = "images/vessel_images/${imageIndex++}.$ext"
             }
@@ -125,7 +123,7 @@ class DataExportRepositoryImpl(
     override suspend fun importFrom(filePath: String): Result<ImportResult> = runCatching {
         val header = zipArchiver.readFileHeader(filePath, 4)
         val isZip = header != null && header.size >= 4 &&
-            header[0] == 0x50.toByte() && header[1] == 0x4B.toByte()
+                header[0] == 0x50.toByte() && header[1] == 0x4B.toByte()
 
         val exportData: LeafLogExportData
         val imageRemap: Map<String, String>
@@ -141,16 +139,16 @@ class DataExportRepositoryImpl(
             // Restore images and build remap: archivePath → newAbsolutePath
             val remap = mutableMapOf<String, String>()
             val imageEntries = entries.filter { it.name.startsWith("images/") }
-            for (entry in imageEntries) {
-                val fileName = entry.name.substringAfterLast('/')
+            for ((name, data) in imageEntries) {
+                val fileName = name.substringAfterLast('/')
                 val subdirectory = when {
-                    entry.name.startsWith("images/session_photos/") -> "session_images"
-                    entry.name.startsWith("images/tea_photos/") -> "tea_photos"
-                    entry.name.startsWith("images/vessel_images/") -> "vessel_images"
+                    name.startsWith("images/session_photos/") -> "session_images"
+                    name.startsWith("images/tea_photos/") -> "tea_photos"
+                    name.startsWith("images/vessel_images/") -> "vessel_images"
                     else -> "imported_images"
                 }
-                val newPath = imageStorage.saveImage(entry.data, fileName, subdirectory)
-                remap[entry.name] = newPath
+                val newPath = imageStorage.saveImage(data, fileName, subdirectory)
+                remap[name] = newPath
             }
             imageRemap = remap
         } else {
@@ -166,21 +164,27 @@ class DataExportRepositoryImpl(
         // Apply image remap to entities
         val remappedSessions = exportData.teaSessions.map { session ->
             if (isZip) {
-                session.copy(photos = session.photos.mapNotNull { imageRemap[it] ?: it.takeIf { p -> !p.startsWith("images/") } })
+                session.copy(photos = session.photos.mapNotNull {
+                    imageRemap[it] ?: it.takeIf { p -> !p.startsWith("images/") }
+                })
             } else {
                 session.copy(photos = emptyList())
             }
         }
         val remappedTeas = exportData.teas.map { tea ->
             if (isZip) {
-                tea.copy(photos = tea.photos.mapNotNull { imageRemap[it] ?: it.takeIf { p -> !p.startsWith("images/") } })
+                tea.copy(photos = tea.photos.mapNotNull {
+                    imageRemap[it] ?: it.takeIf { p -> !p.startsWith("images/") }
+                })
             } else {
                 tea.copy(photos = emptyList())
             }
         }
         val remappedVessels = exportData.brewingVessels.map { vessel ->
             if (isZip && vessel.imagePath != null) {
-                vessel.copy(imagePath = imageRemap[vessel.imagePath] ?: vessel.imagePath.takeIf { !it.startsWith("images/") })
+                vessel.copy(
+                    imagePath = imageRemap[vessel.imagePath]
+                        ?: vessel.imagePath.takeIf { !it.startsWith("images/") })
             } else if (!isZip) {
                 vessel.copy(imagePath = null)
             } else {
@@ -205,12 +209,7 @@ class DataExportRepositoryImpl(
 
         // 4. Tea sessions — parents first, then children
         val (parents, children) = remappedSessions.partition { it.parentSessionId == null }
-        parents.forEach { entity ->
-            teaSessionRepository.upsert(entity.toTeaSession())
-        }
-        children.forEach { entity ->
-            teaSessionRepository.upsert(entity.toTeaSession())
-        }
+        teaSessionDao.upsertAll(parents + children)
 
         // 5. Brewing configurations (FK → Tea, FK → Vessel)
         exportData.brewingConfigurations.forEach { entity ->

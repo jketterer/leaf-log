@@ -1,4 +1,4 @@
-package dev.jketterer.leaflog.domain.usecases.session.aggregate
+package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository

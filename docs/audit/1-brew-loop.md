@@ -29,7 +29,7 @@ I checked every finding by reading the code. Anything that also needs a device o
 | polish | state | `ui/components/session/SessionCard.kt:131-137,147-151,185-193` | (1) The " • " separator depends on `session.rating`, but the value shown prefers `averageRating`. A parent with steep 1 unrated renders "2h ago4.5". (2) `"$teaTypeName • $vesselName"` has no `maxLines`. (3) The "IN PROGRESS" chip uses `errorContainer` for a normal state and has `onClick = {}`. (4) Grams render as "5.0g". | — |
 | a11y | a11y | `AppNavigation.kt:494-540`, `QuickBrewCard.kt:58`, `DailyStatsCard.kt` | Nav icons use `contentDescription = ""` (the labels still read, but `null` is the idiom). The long-press edit has no semantic label, and the stat tiles have no `onClickLabel`, so their hidden actions can't be discovered. | — |
 | consistency | errors | `HomeScreen.kt:353-367` | Errors use a hand-made `Snackbar` showing the raw `e.message`, and it stays until dismissed. Screens outside this slice (EditTea, EditVessel, TeaTypeList) use `SnackbarHost`. | — |
-| arch | dead code | `ui/components/home/RecentSessionsCard.kt` (168 lines, no references); `HomeIntent.Refresh` / `HomeState.isRefreshing` (never dispatched or set by the UI); `HomeScreen.kt:215` `userName = null // TODO` | Dead weight. The file `DraftSessionsBanner.kt` actually holds `InProgressSessionsBanner`. | — |
+| arch | dead code | ~~`ui/components/home/RecentSessionsCard.kt` (168 lines, no references);~~ `HomeIntent.Refresh` / `HomeState.isRefreshing` (never dispatched or set by the UI); `HomeScreen.kt:215` `userName = null // TODO` | Dead weight. The file `DraftSessionsBanner.kt` actually holds `InProgressSessionsBanner`. | — |
 | consistency | roadmap | `HomeScreen.kt:347` (`visible = true`, since commit 558d194) | **ROADMAP 2.7 is stale:** it says the FAB is hidden during an in-progress session, but it is always visible now and the conflict dialog replaced that behaviour. | New evidence. |
 
 **Opportunities**
@@ -148,7 +148,7 @@ I checked every finding by reading the code. Anything that also needs a device o
 | polish | copy | screen + `ui/components/session/RatingSelector.kt:42` | Nothing marks the pre-filled stars as a suggestion, and tapping the current star to clear it isn't discoverable. | — |
 | a11y | a11y | `RatingSelector.kt:51` | All five stars have `contentDescription = "Star"`, with no selected state or value semantics. A screen-reader user can't tell or set the rating, and rating is the loop's central input. | — |
 | polish | previews | `SteepCompleteScreen.kt:555,579` | The gongfu previews use 30, 40 and 45 **minutes**. The previous-steep chips show "5.0g". | — |
-| arch | dead code | `ui/components/session/CompleteDraftDialog.kt` (`CompleteInProgressDialog`, 201 lines) | Unused; only its own previews reference it. | — |
+| ~~arch~~ | ~~dead code~~ | ~~`ui/components/session/CompleteDraftDialog.kt` (`CompleteInProgressDialog`, 201 lines)~~ | ~~Unused; only its own previews reference it.~~ | — |
 
 **Opportunities** (beyond ROADMAP 2.1's best-brew comparison)
 - **Stop guessing ratings.** Store null and show "Suggested ★4, tap to confirm". A skipped review then stays honest, and 2.1's comparison works on clean data.
@@ -208,7 +208,7 @@ I checked every finding by reading the code. Anything that also needs a device o
 11. **Duplicated preset tables** between `LogTeaSections` and `QuickTimerDetailsSheet`, with different brew-time presets in each.
 12. **CLAUDE.md "public component has a `modifier` param" is missed** by ChooseMethodDialog, ManageQuickBrewSheet, QuickTimerDurationSheet and QuickTimerDetailsSheet.
 13. **Dead code in this slice:**
-    - `RecentSessionsCard.kt` and `CompleteDraftDialog.kt` (about 370 lines together)
+    - ~~`RecentSessionsCard.kt` and `CompleteDraftDialog.kt` (about 370 lines together)~~
     - `HomeIntent.Refresh` and `isRefreshing`
     - Log Tea's photo intents, `hasUnsavedChanges`, and the route's `configurationId`
     - Quick Timer's dead fields and `NavigateToTimer` event

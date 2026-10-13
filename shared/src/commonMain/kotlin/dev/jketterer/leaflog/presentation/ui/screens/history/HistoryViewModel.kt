@@ -12,12 +12,12 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.services.TimerService
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.DiscardSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
+import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

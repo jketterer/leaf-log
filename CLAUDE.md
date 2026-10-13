@@ -35,7 +35,7 @@ presentation/ (UI Layer - MVI Pattern)
 │   └── theme/            # Material 3 theming
 
 domain/ (Business Logic Layer)
-├── models/               # Domain entities (Tea, TeaSession, etc.)
+├── models/               # Domain entities (Tea, SessionWithSteeps, etc.)
 ├── repositories/         # Repository interfaces
 ├── usecases/            # Business logic operations
 │   ├── session/         # Session-related use cases
@@ -78,7 +78,7 @@ di/ (Dependency Injection)
   NOT ViewModels
 - Should NEVER be simple wrappers for a lone single repository function
     - ViewModels can use repository calls directly instead
-- Example: `UpdateAverageRatingUseCase` handles rating calculations across steeps
+- Example: `RecomputeStatsUseCase` rebuilds a tea's and a method's stats from their sessions
 
 **Repository Pattern**
 
@@ -130,8 +130,9 @@ Tea sessions can have multiple steeps:
 
 - First steep = parent session (`parentSessionId = null`, `steepNumber = 1`)
 - Subsequent steeps are children (`parentSessionId = parent.id`, `steepNumber = 2, 3, ...`)
-- Parent sessions track `averageRating` (truncated to 1 decimal)
-- Use `UpdateAverageRatingUseCase` to recalculate averages when steeps change
+- The domain reads them as `SessionWithSteeps(session, steeps)`; `Session.id` is steep 1's id
+- A session's rating is `effectiveRating`, computed from its steeps and never stored
+- Every session write goes through a use case in `usecases/session/`, inside a `Transactor`
 
 ## Platform-Specific Code
 
@@ -236,4 +237,4 @@ When modifying entities:
 
 - One feature per package (e.g., `screens/timer/` contains all timer-related files)
 - Group related files together (Screen, ViewModel, State, Intent)
-- Use descriptive names: `UpdateAverageRatingUseCase` over `UpdateRatingUseCase`
+- Use descriptive names: `RecomputeStatsUseCase` over `UpdateStatsUseCase`

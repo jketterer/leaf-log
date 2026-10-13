@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.data.local.database
 
 import androidx.room.util.TableInfo
 import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import kotlinx.serialization.json.Json
@@ -39,7 +40,85 @@ class MigrationTest {
         }
         connection.close()
     }
+
+    @Test
+    fun `6 to 7 produces the exported version 7 schema and moves session fields to the parent`() {
+        val connection = createFromSchema(6)
+        connection.execSQL(
+            "INSERT INTO tea (id, name, teaTypeId, photos, isFavorite, totalSessions, " +
+                "createdAt, updatedAt, syncStatus) " +
+                "VALUES ('t1', 'Tea', 'type', '[]', 0, 0, 0, 0, 'LOCAL')",
+        )
+        // Left mid-steep on steep 1
+        connection.insertV6Steep("one", null, 1, "IN_PROGRESS")
+        // Version 6 completed the parent when steep 2 started
+        connection.insertV6Steep("gongfu", null, 1, "COMPLETED")
+        connection.insertV6Steep("gongfu-2", "gongfu", 2, "COMPLETED")
+        connection.insertV6Steep("gongfu-3", "gongfu", 3, "IN_PROGRESS")
+        connection.insertV6Steep("done", null, 1, "COMPLETED")
+        connection.insertV6Steep("done-2", "done", 2, "COMPLETED")
+        // A deleted steep doesn't keep its session open
+        connection.insertV6Steep("gone", null, 1, "COMPLETED")
+        connection.insertV6Steep("gone-2", "gone", 2, "IN_PROGRESS", deletedAt = 1)
+
+        MIGRATION_6_7.migrate(connection)
+
+        assertSchemaMatches(connection, 7)
+        val rows = connection.prepare(
+            "SELECT id, status, vesselId, waterType, teaQuantityGrams, location, " +
+                "usedConfigurationId, actualBrewingTimeMs FROM tea_session ORDER BY id",
+        ).use { statement ->
+            buildMap {
+                while (statement.step()) {
+                    put(
+                        statement.getText(0),
+                        List(7) { statement.textOrNull(it + 1) },
+                    )
+                }
+            }
+        }
+        val sessionFields = listOf("v1", "FILTERED", "5.0", "desk", "c1")
+
+        assertEquals(
+            mapOf(
+                "done" to listOf("COMPLETED") + sessionFields + null,
+                "done-2" to listOf("COMPLETED", null, null, null, null, null, null),
+                "gone" to listOf("COMPLETED") + sessionFields + null,
+                "gone-2" to listOf("IN_PROGRESS", null, null, null, null, null, null),
+                "gongfu" to listOf("IN_PROGRESS") + sessionFields + null,
+                "gongfu-2" to listOf("COMPLETED", null, null, null, null, null, null),
+                "gongfu-3" to listOf("IN_PROGRESS", null, null, null, null, null, null),
+                "one" to listOf("IN_PROGRESS") + sessionFields + null,
+            ),
+            rows,
+        )
+        connection.prepare("SELECT totalSessions FROM tea").use {
+            assertTrue(it.step())
+            assertEquals(2, it.getLong(0))
+        }
+        connection.close()
+    }
 }
+
+private fun SQLiteStatement.textOrNull(index: Int) = if (isNull(index)) null else getText(index)
+
+private fun SQLiteConnection.insertV6Steep(
+    id: String,
+    parentId: String?,
+    steepNumber: Int,
+    status: String,
+    deletedAt: Long? = null,
+) = execSQL(
+    """
+    INSERT INTO tea_session (id, teaId, parentSessionId, steepNumber, status, teaQuantityGrams,
+        vesselId, waterType, location, usedConfigurationId, averageRating, timestamp,
+        brewingTime, temperatureCelsius, waterQuantityMl, photos, syncStatus, createdAt,
+        updatedAt, deletedAt)
+    VALUES ('$id', 't1', ${parentId?.let { "'$it'" }}, $steepNumber, '$status', 5.0, 'v1',
+        'FILTERED', 'desk', 'c1', 4.0, $steepNumber, 30000, 95.0, 100.0, '[]', 'LOCAL', 0, 0,
+        $deletedAt)
+    """,
+)
 
 private val schemaDir = File("schemas/${LeafLogDatabase::class.qualifiedName}")
 

@@ -3,6 +3,8 @@ package dev.jketterer.leaflog.data.local.database
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
+import dev.jketterer.leaflog.data.local.database.dao.RECOMPUTE_CONFIGURATION_STATS
+import dev.jketterer.leaflog.data.local.database.dao.RECOMPUTE_TEA_STATS
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
@@ -168,5 +170,86 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         connection.execSQL(
             "CREATE INDEX IF NOT EXISTS `index_brewing_configurations_is_pinned` ON `brewing_configurations` (`is_pinned`)"
         )
+    }
+}
+
+/**
+ * Session fields move to the parent row only, and a parent's status comes to mean its session's.
+ * Drops `averageRating` (session ratings are computed) and adds `actualBrewingTimeMs`, unfilled:
+ * an old row can't tell a natural finish from Complete Now.
+ *
+ * The old table is renamed away before the copy rather than dropped after it. Dropping
+ * `tea_session` while the new table's self-reference points at that name would cascade-delete
+ * every child steep if foreign keys are enforced during the migration.
+ */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `tea_session` RENAME TO `tea_session_v6`")
+        connection.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `tea_session` (`id` TEXT NOT NULL, `teaId` TEXT NOT NULL,
+                `parentSessionId` TEXT, `steepNumber` INTEGER NOT NULL, `status` TEXT NOT NULL,
+                `teaQuantityGrams` REAL, `vesselId` TEXT, `waterType` TEXT, `location` TEXT,
+                `usedConfigurationId` TEXT, `rating` REAL, `timestamp` INTEGER NOT NULL,
+                `brewingTime` INTEGER NOT NULL, `temperatureCelsius` REAL NOT NULL,
+                `waterQuantityMl` REAL NOT NULL, `notes` TEXT, `photos` TEXT NOT NULL,
+                `userId` TEXT, `syncStatus` TEXT NOT NULL, `createdAt` INTEGER NOT NULL,
+                `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, `timerStatus` TEXT,
+                `timerStartedAt` INTEGER, `timerPausedAt` INTEGER, `timerRemainingMs` INTEGER,
+                `timerTotalMs` INTEGER, `actualBrewingTimeMs` INTEGER, PRIMARY KEY(`id`),
+                FOREIGN KEY(`teaId`) REFERENCES `tea`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE ,
+                FOREIGN KEY(`vesselId`) REFERENCES `brewing_vessel`(`id`)
+                    ON UPDATE NO ACTION ON DELETE RESTRICT ,
+                FOREIGN KEY(`parentSessionId`) REFERENCES `tea_session`(`id`)
+                    ON UPDATE NO ACTION ON DELETE CASCADE )
+            """
+        )
+        // Version 6 completed the parent as soon as steep 2 started, so a session is in
+        // progress if its parent or any live steep still is. Parents go first for the
+        // self-reference.
+        connection.execSQL(
+            """
+            INSERT INTO `tea_session` (`id`, `teaId`, `parentSessionId`, `steepNumber`, `status`,
+                `teaQuantityGrams`, `vesselId`, `waterType`, `location`, `usedConfigurationId`,
+                `rating`, `timestamp`, `brewingTime`, `temperatureCelsius`, `waterQuantityMl`,
+                `notes`, `photos`, `userId`, `syncStatus`, `createdAt`, `updatedAt`, `deletedAt`,
+                `timerStatus`, `timerStartedAt`, `timerPausedAt`, `timerRemainingMs`,
+                `timerTotalMs`)
+            SELECT `id`, `teaId`, `parentSessionId`, `steepNumber`,
+                CASE
+                    WHEN `parentSessionId` IS NOT NULL THEN `status`
+                    WHEN `status` = 'IN_PROGRESS' OR EXISTS (
+                        SELECT 1 FROM `tea_session_v6` c
+                        WHERE c.`parentSessionId` = s.`id` AND c.`deletedAt` IS NULL
+                        AND c.`status` = 'IN_PROGRESS'
+                    ) THEN 'IN_PROGRESS'
+                    ELSE 'COMPLETED'
+                END,
+                CASE WHEN `parentSessionId` IS NULL THEN `teaQuantityGrams` END,
+                CASE WHEN `parentSessionId` IS NULL THEN `vesselId` END,
+                CASE WHEN `parentSessionId` IS NULL THEN `waterType` END,
+                CASE WHEN `parentSessionId` IS NULL THEN `location` END,
+                CASE WHEN `parentSessionId` IS NULL THEN `usedConfigurationId` END,
+                `rating`, `timestamp`, `brewingTime`, `temperatureCelsius`, `waterQuantityMl`,
+                `notes`, `photos`, `userId`, `syncStatus`, `createdAt`, `updatedAt`, `deletedAt`,
+                `timerStatus`, `timerStartedAt`, `timerPausedAt`, `timerRemainingMs`,
+                `timerTotalMs`
+            FROM `tea_session_v6` s
+            ORDER BY `parentSessionId` IS NOT NULL
+            """
+        )
+        connection.execSQL("DROP TABLE `tea_session_v6`")
+        listOf(
+            "teaId", "vesselId", "parentSessionId", "steepNumber", "status", "timestamp",
+            "userId", "deletedAt", "usedConfigurationId",
+        ).forEach { column ->
+            connection.execSQL(
+                "CREATE INDEX IF NOT EXISTS `index_tea_session_$column` " +
+                    "ON `tea_session` (`$column`)"
+            )
+        }
+
+        connection.execSQL(RECOMPUTE_TEA_STATS)
+        connection.execSQL(RECOMPUTE_CONFIGURATION_STATS)
     }
 }

@@ -6,6 +6,42 @@ import androidx.room.Upsert
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import kotlinx.coroutines.flow.Flow
 
+// The stats rules of `List<SessionWithSteeps>.stats()` in SQL, for the v7 migration and import,
+// where there are no aggregates to hand. MigrationTest checks the two agree.
+
+/** The parent rows of completed, live sessions. */
+private const val COMPLETED_SESSIONS = """
+    FROM tea_session s
+    WHERE s.parentSessionId IS NULL AND s.deletedAt IS NULL AND s.status = 'COMPLETED'
+"""
+
+/** Mean of the live, rated steeps of session `s`. */
+private const val SESSION_RATING = """
+    (SELECT AVG(x.rating) FROM tea_session x
+     WHERE x.deletedAt IS NULL AND (x.id = s.id OR x.parentSessionId = s.id))
+"""
+
+internal const val RECOMPUTE_TEA_STATS = """
+    UPDATE tea SET
+        totalSessions = (SELECT COUNT(*) $COMPLETED_SESSIONS AND s.teaId = tea.id),
+        averageRating = (SELECT AVG($SESSION_RATING) $COMPLETED_SESSIONS AND s.teaId = tea.id),
+        lastBrewedAt = (SELECT MAX(s.timestamp) $COMPLETED_SESSIONS AND s.teaId = tea.id)
+"""
+
+internal const val RECOMPUTE_CONFIGURATION_STATS = """
+    UPDATE brewing_configurations SET
+        times_used = (
+            SELECT COUNT(*) $COMPLETED_SESSIONS
+            AND s.usedConfigurationId = brewing_configurations.id
+            AND s.teaId = brewing_configurations.tea_id
+        ),
+        last_used_at = (
+            SELECT MAX(s.timestamp) $COMPLETED_SESSIONS
+            AND s.usedConfigurationId = brewing_configurations.id
+            AND s.teaId = brewing_configurations.tea_id
+        )
+"""
+
 @Dao
 interface TeaSessionDao {
 
@@ -161,6 +197,12 @@ interface TeaSessionDao {
 
     @Upsert
     suspend fun upsert(teaSession: TeaSessionEntity)
+
+    @Query(RECOMPUTE_TEA_STATS)
+    suspend fun recomputeTeaStats()
+
+    @Query(RECOMPUTE_CONFIGURATION_STATS)
+    suspend fun recomputeConfigurationStats()
 
     @Upsert
     suspend fun upsertAll(teaSessions: List<TeaSessionEntity>)

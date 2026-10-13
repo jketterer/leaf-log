@@ -55,13 +55,14 @@ data class TeaSessionEntity(
     val steepNumber: Int,
     val status: SessionStatus,
 
+    // Session fields: set on the parent row, NULL on its children
     val teaQuantityGrams: Float?,
-    val vesselId: String,
-    val waterType: WaterType,
+    val vesselId: String?,
+    val waterType: WaterType?,
     val location: String?,
-    val rating: Float?,
-    val averageRating: Float?,
     val usedConfigurationId: String?, // Configuration that was used for this session
+
+    val rating: Float?,
 
     val timestamp: Instant,
     val brewingTime: Duration,
@@ -82,4 +83,7 @@ data class TeaSessionEntity(
     val timerPausedAt: Instant? = null,
     val timerRemainingMs: Long? = null,
     val timerTotalMs: Long? = null,
+
+    // Brewed time once the timer completed; null without a timer record
+    val actualBrewingTimeMs: Long? = null,
 )

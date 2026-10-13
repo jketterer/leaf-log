@@ -49,7 +49,7 @@ class DataExportRepositoryImpl(
         val pathRemap = mutableMapOf<String, String>()
         var imageIndex = 0
 
-        for ((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, photos) in sessions) {
+        for ((_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, photos) in sessions) {
             for (photo in photos) {
                 if (photo.isNotBlank() && photo !in pathRemap) {
                     val ext = photo.substringAfterLast('.', "jpg")
@@ -207,14 +207,29 @@ class DataExportRepositoryImpl(
             teaRepository.upsert(entity.toTea())
         }
 
-        // 4. Tea sessions — parents first, then children
+        // 4. Tea sessions: parents first, then children. Backups before schema v7 copied the
+        // session's fields onto every steep; they live on the parent only.
         val (parents, children) = remappedSessions.partition { it.parentSessionId == null }
-        teaSessionDao.upsertAll(parents + children)
+        teaSessionDao.upsertAll(
+            parents + children.map {
+                it.copy(
+                    teaQuantityGrams = null,
+                    vesselId = null,
+                    waterType = null,
+                    location = null,
+                    usedConfigurationId = null,
+                )
+            },
+        )
 
         // 5. Brewing configurations (FK → Tea, FK → Vessel)
         exportData.brewingConfigurations.forEach { entity ->
             brewingConfigurationRepository.upsert(entity.toBrewingConfiguration())
         }
+
+        // 6. Stats, rebuilt from the sessions now in the database rather than taken on trust
+        teaSessionDao.recomputeTeaStats()
+        teaSessionDao.recomputeConfigurationStats()
 
         ImportResult(
             teaTypesImported = exportData.teaTypes.size,

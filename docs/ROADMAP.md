@@ -365,9 +365,12 @@ the SQL against the Kotlin rules on the same fixture.
 - [x] `refactor: delete TeaSession`, `RecentSessionsCard` and the `TeaSession` reads; import goes
   through the DAO. `session/aggregate/` moves up into `session/`. `CompleteDraftDialog` went too,
   and the DAO queries only those reads used. The repository's `delete` is now `deleteSession`.
-- [ ] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
+- [x] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
   platforms, the migration test, the transitional copy removed, import normalisation, the Track B
-  line, the Hard-won facts entry on `AddSteepUseCase` deleted.
+  line, the Hard-won facts entry on `AddSteepUseCase` deleted. The table is renamed away before
+  the copy, so dropping it can't cascade into the new one. A parent left `IN_PROGRESS` on steep 1
+  stays in progress too. The stats SQL lives in `TeaSessionDao` and import reuses it.
+  `actualBrewingTimeMs` is in the entity, unmapped until the next item.
 - [ ] `feat: record actual brew time`
 - [ ] `feat: undo an accidental finish`
 - [ ] `chore: release 0.2.0`: audit rows #4–7 struck.
@@ -705,9 +708,6 @@ Things that cost real debugging time and would cost it again. Not history — tr
 - **Derive in-progress status from wall-clock in exactly one place** —
   `Steep.resolvedTimerStatus(now)`, on the session's current steep. Gate live progress on matching session id. Known residual:
   a Home screen left open with no live timer won't re-resolve from time passing alone.
-- **`AddSteepUseCase` copies `teaQuantityGrams` onto every child steep** (until F2 moves
-  session-level fields to the parent). Summing leaf across all rows double-counts; leaf totals count
-  parents only. Water is correctly summed across steeps.
 - **Room KMP does not support enum parameters in raw `@Query` SQL.** The `'COMPLETED'` /
   `'IN_PROGRESS'` string literals in DAOs are correct.
 - **Process-kill edge case, unfixed:** if the process is killed and the session is completed via the

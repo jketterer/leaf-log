@@ -104,6 +104,13 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Export → system save dialog → file written. Reopen it from the Files app; size is non-zero.
 - [ ] Export from [A], import on [iOS], and the reverse. All teas, sessions, vessels, methods,
       and photos arrive (F4 bug: DEFLATE vs STORE fails today).
+- [ ] Upgrade from `v0.1.1` (schema 6). Before installing over it, seed a single-steep session, a
+      gongfu session with a deleted middle steep, a parent edited after steeps were added, an
+      unrated session, a session left mid-steep and a saved method used across several steeps.
+      After: the app opens, the mid-steep session is still in progress, and History, Tea Detail,
+      Collection and the method agree on every count and rating.
+- [ ] Import a backup exported by `v0.1.1`. It imports, and tea and method stats match the
+      sessions that arrived.
 - [ ] Import picker → cancel. Nothing changes, no error shown.
 - [ ] Import a non-backup file. A readable error; nothing changes.
 - [ ] Open the import picker → rotate or switch dark mode while it's open → pick a file. The

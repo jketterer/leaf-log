@@ -44,12 +44,16 @@ class SessionMapperTest {
     }
 
     @Test
-    fun `a steep written back takes its session columns from the parent`() {
-        val rows = listOf(row("a", vesselId = "gaiwan"), row("a-2", "a", 2, vesselId = "old"))
+    fun `a later steep is written without the session's columns, which stay on the parent`() {
+        val aggregate = listOf(row("a"), row("a-2", "a", 2)).toAggregates().single()
 
-        val aggregate = rows.toAggregates().single()
+        val child = aggregate.steeps[1].toEntity(aggregate.session)
 
-        assertEquals("gaiwan", aggregate.steeps[1].toEntity(aggregate.session).vesselId)
+        val sessionColumns = with(child) {
+            listOf(teaQuantityGrams, vesselId, waterType, location, usedConfigurationId)
+        }
+        assertEquals(List(5) { null }, sessionColumns)
+        assertEquals("vessel", aggregate.session.vesselId)
     }
 }
 
@@ -60,20 +64,19 @@ private fun row(
     parentSessionId: String? = null,
     steepNumber: Int = 1,
     rating: Float? = null,
-    vesselId: String = "vessel",
 ) = TeaSessionEntity(
     id = id,
     teaId = "tea",
     parentSessionId = parentSessionId,
     steepNumber = steepNumber,
     status = SessionStatus.COMPLETED,
-    teaQuantityGrams = 5f,
-    vesselId = vesselId,
-    waterType = WaterType.FILTERED,
-    location = "desk",
+    // Session columns are the parent's alone
+    teaQuantityGrams = 5f.takeIf { parentSessionId == null },
+    vesselId = "vessel".takeIf { parentSessionId == null },
+    waterType = WaterType.FILTERED.takeIf { parentSessionId == null },
+    location = "desk".takeIf { parentSessionId == null },
     rating = rating,
-    averageRating = null,
-    usedConfigurationId = "config",
+    usedConfigurationId = "config".takeIf { parentSessionId == null },
     timestamp = start + (steepNumber * 60).seconds,
     brewingTime = 20.seconds,
     temperatureCelsius = 95.0,

@@ -243,6 +243,45 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
+    fun `a completed timer records how long the steep brewed and leaves the plan alone`() = runTest {
+        val id = start().session.id
+        val timer = TimerState(sessionId = id, totalDuration = 25.seconds, remainingDuration = 10.seconds)
+
+        saveTimerState(timer.copy(status = TimerStatus.RUNNING)).getOrThrow()
+        assertNull(sessions.getSession(id)!!.currentSteep.actualTime)
+
+        saveTimerState(timer.copy(status = TimerStatus.COMPLETE, remainingDuration = 0.seconds)).getOrThrow()
+        val steep = sessions.getSession(id)!!.currentSteep
+        assertEquals(25.seconds, steep.actualTime)
+        assertEquals(20.seconds, steep.brewingTime)
+    }
+
+    @Test
+    fun `a timer completed before it started records no brew time`() = runTest {
+        val id = start().session.id
+
+        saveTimerState(TimerState(sessionId = id, status = TimerStatus.COMPLETE)).getOrThrow()
+
+        assertNull(sessions.getSession(id)!!.currentSteep.actualTime)
+    }
+
+    @Test
+    fun `brew again and a forgotten steep follow the time it actually brewed`() = runTest {
+        val source = start()
+        val id = source.session.id
+        saveTimerState(TimerState(sessionId = id, totalDuration = 35.seconds, status = TimerStatus.COMPLETE))
+            .getOrThrow()
+        finishSession(id).getOrThrow()
+        val brewed = sessions.getSession(id)!!
+
+        val again = startSession(brewed).getOrThrow()
+        val forgotten = addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow()
+
+        assertEquals(35.seconds, again.steeps.single().brewingTime)
+        assertEquals(source.steeps.single().timestamp + 35.seconds, forgotten.currentSteep.timestamp)
+    }
+
+    @Test
     fun `a timer for a steep the session doesn't have is refused`() = runTest {
         val id = start().session.id
 

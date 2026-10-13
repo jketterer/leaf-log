@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Groups parent rows with their steeps. Sessions keep the order their parent rows came in;
@@ -51,6 +52,7 @@ private fun TeaSessionEntity.toSteep() = Steep(
     timerPausedAt = timerPausedAt,
     timerRemainingMs = timerRemainingMs,
     timerTotalMs = timerTotalMs,
+    actualTime = actualBrewingTimeMs?.milliseconds,
 )
 
 /** The row for this steep. Steep 1 is the session row; the rest point at it. */
@@ -84,5 +86,6 @@ fun Steep.toEntity(session: Session): TeaSessionEntity {
         timerPausedAt = timerPausedAt,
         timerRemainingMs = timerRemainingMs,
         timerTotalMs = timerTotalMs,
+        actualBrewingTimeMs = actualTime?.inWholeMilliseconds,
     )
 }

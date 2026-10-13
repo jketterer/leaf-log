@@ -371,7 +371,10 @@ the SQL against the Kotlin rules on the same fixture.
   the copy, so dropping it can't cascade into the new one. A parent left `IN_PROGRESS` on steep 1
   stays in progress too. The stats SQL lives in `TeaSessionDao` and import reuses it.
   `actualBrewingTimeMs` is in the entity, unmapped until the next item.
-- [ ] `feat: record actual brew time`
+- [x] `feat: record actual brew time`: `SaveTimerStateUseCase` stores it on completion, and
+  `TimerState.completedAt` shrinks a Complete Now timer to what had elapsed. `Steep.brewedTime` is
+  the replay. Add Steep's stamp uses it too. A steep that ran out while the process was dead is
+  never saved as complete, so it keeps `null`.
 - [ ] `feat: undo an accidental finish`
 - [ ] `chore: release 0.2.0`: audit rows #4–7 struck.
 

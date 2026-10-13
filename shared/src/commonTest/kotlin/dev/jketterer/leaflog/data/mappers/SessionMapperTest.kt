@@ -44,7 +44,7 @@ class SessionMapperTest {
     }
 
     @Test
-    fun `a later steep is written without the session's columns, which stay on the parent`() {
+    fun `a later steep is written without the session's columns which stay on the parent`() {
         val aggregate = listOf(row("a"), row("a-2", "a", 2)).toAggregates().single()
 
         val child = aggregate.steeps[1].toEntity(aggregate.session)
@@ -88,4 +88,5 @@ private fun row(
     createdAt = start,
     updatedAt = start,
     deletedAt = null,
+    actualBrewingTimeMs = 23_000L.takeIf { parentSessionId == null },
 )

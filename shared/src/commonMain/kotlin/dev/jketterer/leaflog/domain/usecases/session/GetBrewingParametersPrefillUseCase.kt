@@ -51,7 +51,7 @@ class GetBrewingParametersPrefillUseCase(
                 teaQuantityGrams = bestSession.session.teaQuantityGrams,
                 waterQuantityMl = firstSteep.waterQuantityMl,
                 temperatureCelsius = firstSteep.temperatureCelsius,
-                brewingTime = firstSteep.brewingTime,
+                brewingTime = firstSteep.brewedTime,
                 waterType = bestSession.session.waterType,
                 source = PrefillSource.BestRatedSession(bestSession.effectiveRating!!),
             )
@@ -63,9 +63,9 @@ class GetBrewingParametersPrefillUseCase(
         if (teaType != null) {
             val sameTypeTeas = teaRepository.getAll()
                 .filter { it.teaTypeId == tea.teaTypeId && it.id != tea.id }
-            for (otherTea in sameTypeTeas) {
+            for ((id, name) in sameTypeTeas) {
                 val typeConfig =
-                    brewingConfigurationRepository.getBestByTeaAndVessel(otherTea.id, vessel.id)
+                    brewingConfigurationRepository.getBestByTeaAndVessel(id, vessel.id)
                 if (typeConfig != null) {
                     return BrewingParametersPrefill(
                         teaQuantityGrams = typeConfig.teaQuantityGrams,
@@ -73,7 +73,7 @@ class GetBrewingParametersPrefillUseCase(
                         temperatureCelsius = typeConfig.temperatureCelsius,
                         brewingTime = typeConfig.brewingTime,
                         waterType = typeConfig.waterType,
-                        source = PrefillSource.SameTypeConfig(teaName = otherTea.name),
+                        source = PrefillSource.SameTypeConfig(teaName = name),
                     )
                 }
             }
@@ -115,8 +115,8 @@ class GetBrewingParametersPrefillUseCase(
         return teaSessionRepository.getSessionsByTea(teaId)
             .filter {
                 it.session.status == SessionStatus.COMPLETED &&
-                    it.session.vesselId == vesselId &&
-                    (it.effectiveRating ?: 0f) >= MINIMUM_RATING
+                        it.session.vesselId == vesselId &&
+                        (it.effectiveRating ?: 0f) >= MINIMUM_RATING
             }
             .maxWithOrNull(
                 compareBy<SessionWithSteeps> { it.effectiveRating ?: 0f }.thenBy { it.startedAt },

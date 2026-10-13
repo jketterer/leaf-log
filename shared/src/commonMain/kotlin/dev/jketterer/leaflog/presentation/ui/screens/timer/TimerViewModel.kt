@@ -375,10 +375,7 @@ class TimerViewModel(
         val session = _state.value.session ?: return
 
         viewModelScope.launch {
-            val completedState = timerService.getCurrentState().copy(
-                status = TimerStatus.COMPLETE,
-                remainingDuration = Duration.ZERO,
-            )
+            val completedState = timerService.getCurrentState().completedAt(Clock.System.now())
             timerService.updateState(completedState)
             // Persist completed state for restoration
             saveTimerStateUseCase(completedState)

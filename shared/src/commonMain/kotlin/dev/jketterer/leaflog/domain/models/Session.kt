@@ -42,7 +42,13 @@ data class Steep(
     val timerPausedAt: Instant? = null,
     val timerRemainingMs: Long? = null,
     val timerTotalMs: Long? = null,
+
+    // How long it brewed once the timer completed: adjustments in, pauses out. Null without a timer
+    val actualTime: Duration? = null,
 ) {
+    /** What to repeat to brew this steep again: how long it actually brewed, if known. */
+    val brewedTime: Duration get() = actualTime ?: brewingTime
+
     /**
      * The timer status as of [now], rather than as of the last time it was written.
      *

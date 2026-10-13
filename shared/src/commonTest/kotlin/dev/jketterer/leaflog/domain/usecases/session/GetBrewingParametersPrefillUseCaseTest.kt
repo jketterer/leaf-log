@@ -98,6 +98,17 @@ class GetBrewingParametersPrefillUseCaseTest {
         assertEquals(PrefillSource.BestRatedSession(4.5f), prefill.source)
     }
 
+    @Test
+    fun `a past brew is suggested at the time it actually brewed`() = runTest {
+        val brew = session(temperatureCelsius = 88.0, 4.5f).let {
+            it.copy(steeps = listOf(it.steeps.single().copy(actualTime = 47.seconds)))
+        }
+
+        val prefill = prefillFor(tea = tea(defaultTemperatureCelsius = null), sessions = listOf(brew))
+
+        assertEquals(47.seconds, prefill.brewingTime)
+    }
+
     // A brew you did not enjoy is skipped, and the default is the next thing down.
     @Test
     fun aPoorlyRatedBrewFallsThroughToTheTeaDefault() = runTest {

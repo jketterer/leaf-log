@@ -95,7 +95,7 @@ class StartSessionUseCase(
             teaId = source.session.teaId,
             vesselId = source.session.vesselId,
             waterType = source.session.waterType,
-            brewingTime = first.brewingTime,
+            brewingTime = first.brewedTime,
             temperatureCelsius = first.temperatureCelsius,
             waterQuantityMl = first.waterQuantityMl,
             teaQuantityGrams = source.session.teaQuantityGrams,

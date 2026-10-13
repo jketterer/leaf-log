@@ -577,7 +577,7 @@ class QuickTimerViewModel(
                         TimerState(
                             sessionId = sessionId,
                             teaId = tea.id,
-                            totalDuration = brewingTime,
+                            totalDuration = current.totalDuration,
                             status = TimerStatus.COMPLETE,
                         ),
                     )

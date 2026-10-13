@@ -16,12 +16,15 @@ data class TimerState(
     // Drives how long after the steep to remind the user to finish the session
     val brewingTemperatureCelsius: Double? = null,
 ) {
+    /** Time brewed so far: adjustments count, pauses don't. */
+    val elapsed: Duration
+        get() = totalDuration - remainingDuration
+
     /**
      * Progress from 0.0 (start) to 1.0 (complete).
      */
     val progress: Float
         get() = if (totalDuration > Duration.ZERO) {
-            val elapsed = totalDuration - remainingDuration
             (elapsed.inWholeMilliseconds / totalDuration.inWholeMilliseconds.toFloat()).coerceIn(
                 0f,
                 1f
@@ -56,6 +59,16 @@ data class TimerState(
         } else {
             copy(remainingDuration = remaining)
         }
+    }
+
+    /** Completes the timer at [now]. One stopped early ran for what had [elapsed], not its total. */
+    fun completedAt(now: Instant): TimerState {
+        val resolved = resolvedAt(now)
+        return resolved.copy(
+            status = TimerStatus.COMPLETE,
+            totalDuration = resolved.elapsed,
+            remainingDuration = Duration.ZERO,
+        )
     }
 }
 

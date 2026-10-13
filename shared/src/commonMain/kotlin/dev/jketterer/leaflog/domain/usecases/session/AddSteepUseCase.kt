@@ -35,7 +35,7 @@ class AddSteepUseCase(
                 id = Uuid.random().toString(),
                 number = last.number + 1,
                 timestamp = when (current.session.status) {
-                    SessionStatus.COMPLETED -> last.timestamp + last.brewingTime
+                    SessionStatus.COMPLETED -> last.timestamp + last.brewedTime
                     SessionStatus.IN_PROGRESS -> now
                 },
                 brewingTime = brewingTime,

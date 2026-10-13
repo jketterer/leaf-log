@@ -1,0 +1,105 @@
+package dev.jketterer.leaflog.domain.usecases.session.aggregate
+
+import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.Session
+import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.SyncStatus
+import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.Transactor
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.uuid.Uuid
+
+/** Creates a session and its first steep. Pass [SessionStatus.COMPLETED] to log one after the fact. */
+class StartSessionUseCase(
+    private val transactor: Transactor,
+    private val teaSessionRepository: TeaSessionRepository,
+    private val recomputeStats: RecomputeStatsUseCase,
+) {
+    suspend operator fun invoke(
+        teaId: String,
+        vesselId: String,
+        waterType: WaterType,
+        brewingTime: Duration,
+        temperatureCelsius: Double,
+        waterQuantityMl: Double,
+        teaQuantityGrams: Float? = null,
+        location: String? = null,
+        notes: String? = null,
+        rating: Float? = null,
+        photos: List<String> = emptyList(),
+        status: SessionStatus = SessionStatus.IN_PROGRESS,
+        usedConfigurationId: String? = null,
+    ): Result<SessionWithSteeps> = runCatching {
+        require(teaId.isNotBlank()) { "Tea must be selected" }
+
+        val now = Clock.System.now()
+        val id = Uuid.random().toString()
+        val started = SessionWithSteeps(
+            session = Session(
+                id = id,
+                teaId = teaId,
+                status = status,
+                vesselId = vesselId,
+                waterType = waterType,
+                teaQuantityGrams = teaQuantityGrams,
+                location = location.blankToNull(),
+                usedConfigurationId = usedConfigurationId,
+                syncStatus = SyncStatus.LOCAL_ONLY,
+            ),
+            steeps = listOf(
+                Steep(
+                    id = id,
+                    number = 1,
+                    timestamp = now,
+                    brewingTime = brewingTime,
+                    temperatureCelsius = temperatureCelsius,
+                    waterQuantityMl = waterQuantityMl,
+                    rating = rating,
+                    notes = notes.blankToNull(),
+                    photos = photos,
+                    createdAt = now,
+                    updatedAt = now,
+                ),
+            ),
+        )
+        started.session.requireValid()
+        started.steeps.single().requireValid()
+
+        transactor {
+            teaSessionRepository.saveSession(started)
+            recomputeStats(teaId)
+        }
+        started
+    }
+
+    /** Quick brew from a saved method. */
+    suspend operator fun invoke(configuration: BrewingConfiguration) = invoke(
+        teaId = configuration.teaId,
+        vesselId = configuration.vesselId,
+        waterType = configuration.waterType,
+        brewingTime = configuration.brewingTime,
+        temperatureCelsius = configuration.temperatureCelsius,
+        waterQuantityMl = configuration.waterQuantityMl,
+        teaQuantityGrams = configuration.teaQuantityGrams,
+        usedConfigurationId = configuration.id,
+    )
+
+    /** Brew Again: [source]'s set-up and first steep, with nothing it recorded about how it went. */
+    suspend operator fun invoke(source: SessionWithSteeps): Result<SessionWithSteeps> {
+        val first = source.steeps.first()
+        return invoke(
+            teaId = source.session.teaId,
+            vesselId = source.session.vesselId,
+            waterType = source.session.waterType,
+            brewingTime = first.brewingTime,
+            temperatureCelsius = first.temperatureCelsius,
+            waterQuantityMl = first.waterQuantityMl,
+            teaQuantityGrams = source.session.teaQuantityGrams,
+            location = source.session.location,
+        )
+    }
+}

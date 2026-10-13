@@ -160,4 +160,13 @@ class TeaSessionRepositoryImpl(
         startTimestamp = start.toEpochMilliseconds(),
         endTimestamp = end.toEpochMilliseconds(),
     ).toAggregates()
+
+    override suspend fun getSessionOfSteep(steepId: String): SessionWithSteeps? =
+        teaSessionDao.getSessionOfSteep(steepId).toAggregates().singleOrNull()
+
+    override suspend fun saveSession(session: SessionWithSteeps) =
+        teaSessionDao.upsertAll(session.steeps.map { it.toEntity(session.session) })
+
+    override suspend fun deleteSteep(steepId: String) =
+        teaSessionDao.softDelete(steepId, Clock.System.now().toEpochMilliseconds())
 }

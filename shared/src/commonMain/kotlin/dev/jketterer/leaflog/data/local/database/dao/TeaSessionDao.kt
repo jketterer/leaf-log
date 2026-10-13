@@ -263,6 +263,19 @@ interface TeaSessionDao {
         endTimestamp: Long,
     ): List<TeaSessionEntity>
 
+    @Query(
+        """
+        SELECT * FROM tea_session
+        WHERE deletedAt IS NULL
+        AND COALESCE(parentSessionId, id) = (
+            SELECT COALESCE(parentSessionId, id) FROM tea_session
+            WHERE deletedAt IS NULL
+            AND id = :steepId
+        )
+    """
+    )
+    suspend fun getSessionOfSteep(steepId: String): List<TeaSessionEntity>
+
     @Upsert
     suspend fun upsert(teaSession: TeaSessionEntity)
 

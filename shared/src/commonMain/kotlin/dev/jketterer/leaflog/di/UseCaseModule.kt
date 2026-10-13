@@ -36,6 +36,16 @@ import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCas
 import dev.jketterer.leaflog.domain.usecases.session.UpdateAverageRatingUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.UpdateTeaStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.AddSteepUseCase as AggregateAddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSessionUseCase as AggregateDeleteSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.DeleteSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.EditSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.RecomputeStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.ReopenSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.SaveTimerStateUseCase as AggregateSaveTimerStateUseCase
+import dev.jketterer.leaflog.domain.usecases.session.aggregate.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CancelTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.CompleteTimerUseCase
@@ -73,6 +83,18 @@ val useCaseModule = module {
     factoryOf(::GetBrewingParametersPrefillUseCase)
     factoryOf(::GetInProgressSessionInfoUseCase)
     factoryOf(::GetSessionReminderDelayUseCase)
+
+    // Session aggregate writes. The Aggregate aliases share a name with an old use case
+    factoryOf(::RecomputeStatsUseCase)
+    factoryOf(::StartSessionUseCase)
+    factoryOf(::AggregateAddSteepUseCase)
+    factoryOf(::EditSteepUseCase)
+    factoryOf(::EditSessionUseCase)
+    factoryOf(::DeleteSteepUseCase)
+    factoryOf(::FinishSessionUseCase)
+    factoryOf(::ReopenSessionUseCase)
+    factoryOf(::AggregateDeleteSessionUseCase)
+    factoryOf(::AggregateSaveTimerStateUseCase)
 
     // Home screen use cases
     factoryOf(::GetDailyStatsUseCase)

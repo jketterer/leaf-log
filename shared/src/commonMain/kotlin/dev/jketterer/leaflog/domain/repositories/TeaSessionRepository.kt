@@ -38,4 +38,13 @@ interface TeaSessionRepository {
 
     /** Sessions that started in [start, end], inclusive. */
     suspend fun getSessionsStartedBetween(start: Instant, end: Instant): List<SessionWithSteeps>
+
+    /** The session [steepId] belongs to. Steep 1's id is the session's own. */
+    suspend fun getSessionOfSteep(steepId: String): SessionWithSteeps?
+
+    // Writes for the session use cases only, made inside their Transactor block
+
+    /** Writes every steep of [session]. Steeps it no longer holds are left as they are. */
+    suspend fun saveSession(session: SessionWithSteeps)
+    suspend fun deleteSteep(steepId: String)
 }

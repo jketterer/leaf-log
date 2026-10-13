@@ -342,9 +342,11 @@ the SQL against the Kotlin rules on the same fixture.
 - [x] `refactor: add the Session, Steep and SessionWithSteeps domain types`: the rating and stats
   rules as pure functions, the mapper, `Transactor`.
 - [x] `feat: read sessions as aggregates`
-- [ ] `feat: add the session aggregate use cases`, alongside the old ones. A host test proves
+- [x] `feat: add the session aggregate use cases`, alongside the old ones. A host test proves
   `RoomTransactor` rolls back and shares its connection with DAO calls, on the in-memory Room
-  database `SessionReadsTest` builds (no Robolectric needed).
+  database `SessionReadsTest` builds (no Robolectric needed). They live in `session/aggregate/`
+  until the old names are free, and write the database only: timer stop, reminder withdrawal
+  and photo-file deletion are the caller's, after success.
 - [ ] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
   delegate, Home, Log Tea, Quick Timer, Brew Again. The status meaning flips here, for every writer
   at once.
@@ -352,6 +354,7 @@ the SQL against the Kotlin rules on the same fixture.
   Detail, Vessel Detail, the vessel delete guard.
 - [ ] `refactor: move analytics and prefill onto the aggregate`
 - [ ] `refactor: delete TeaSession and the old session use cases`; import goes through the DAO.
+  `session/aggregate/` moves up into `session/`; `UseCaseModule` drops its `Aggregate` aliases.
 - [ ] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
   platforms, the migration test, the transitional copy removed, import normalisation, the Track B
   line, the Hard-won facts entry on `AddSteepUseCase` deleted.

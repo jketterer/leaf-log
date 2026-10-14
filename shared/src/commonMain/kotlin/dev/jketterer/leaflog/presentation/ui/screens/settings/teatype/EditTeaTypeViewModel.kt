@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.MergeTeaTypeUseCase
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +23,7 @@ class EditTeaTypeViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val teaRepository: TeaRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val mergeTeaTypeUseCase: MergeTeaTypeUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditTeaTypeState())
@@ -50,7 +52,13 @@ class EditTeaTypeViewModel(
             is EditTeaTypeIntent.CancelDiscard -> _state.update { it.copy(showDiscardDialog = false) }
             is EditTeaTypeIntent.DeleteClicked -> onDeleteClicked()
             is EditTeaTypeIntent.ConfirmDelete -> confirmDelete()
-            is EditTeaTypeIntent.CancelDelete -> _state.update { it.copy(showDeleteConfirmation = false) }
+            is EditTeaTypeIntent.CancelDelete -> _state.update {
+                it.copy(showDeleteConfirmation = false, mergeTargetId = null)
+            }
+            is EditTeaTypeIntent.MergeTargetSelected -> _state.update {
+                it.copy(mergeTargetId = intent.teaTypeId)
+            }
+            is EditTeaTypeIntent.ConfirmMerge -> confirmMerge()
             is EditTeaTypeIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
         }
     }
@@ -215,11 +223,14 @@ class EditTeaTypeViewModel(
 
         viewModelScope.launch {
             val teaCount = teaRepository.getByTypeFlow(currentState.existingTeaType.id).first().size
+            val mergeTargets = teaTypeRepository.getAll()
+                .filter { it.id != currentState.existingTeaType.id }
             _state.update {
                 it.copy(
                     showDeleteConfirmation = true,
                     canDelete = teaCount == 0,
                     teaCount = teaCount,
+                    mergeTargets = mergeTargets,
                 )
             }
         }
@@ -240,6 +251,24 @@ class EditTeaTypeViewModel(
                     )
                 }
             }
+        }
+    }
+
+    private fun confirmMerge() {
+        val teaType = _state.value.existingTeaType ?: return
+        val targetId = _state.value.mergeTargetId ?: return
+
+        viewModelScope.launch {
+            mergeTeaTypeUseCase(sourceId = teaType.id, targetId = targetId)
+                .onSuccess { _navigationEvent.value = EditTeaTypeNavigationEvent.NavigateBack }
+                .onFailure { e ->
+                    _state.update {
+                        it.copy(
+                            showDeleteConfirmation = false,
+                            error = e.message ?: "Failed to merge tea type",
+                        )
+                    }
+                }
         }
     }
 

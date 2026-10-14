@@ -126,7 +126,11 @@ private fun EditTeaTypeContent(
             teaTypeName = state.name,
             canDelete = state.canDelete,
             teaCount = state.teaCount,
-            onConfirm = { onIntent(EditTeaTypeIntent.ConfirmDelete) },
+            mergeTargets = state.mergeTargets,
+            mergeTargetId = state.mergeTargetId,
+            onMergeTargetSelected = { onIntent(EditTeaTypeIntent.MergeTargetSelected(it)) },
+            onConfirmDelete = { onIntent(EditTeaTypeIntent.ConfirmDelete) },
+            onConfirmMerge = { onIntent(EditTeaTypeIntent.ConfirmMerge) },
             onDismiss = { onIntent(EditTeaTypeIntent.CancelDelete) },
         )
     }
@@ -310,43 +314,6 @@ private fun DiscardChangesDialog(
     )
 }
 
-@Composable
-private fun DeleteTeaTypeDialog(
-    teaTypeName: String,
-    canDelete: Boolean,
-    teaCount: Int,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete Tea Type") },
-        text = {
-            if (canDelete) {
-                Text("Are you sure you want to delete \"$teaTypeName\"?")
-            } else {
-                Text(
-                    "Cannot delete \"$teaTypeName\" because it is used by $teaCount " +
-                            "${if (teaCount == 1) "tea" else "teas"}. " +
-                            "Remove or reassign those teas first."
-                )
-            }
-        },
-        confirmButton = {
-            if (canDelete) {
-                TextButton(onClick = onConfirm) {
-                    Text("Delete")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(if (canDelete) "Cancel" else "OK")
-            }
-        },
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun EditTeaTypeAddPreview() {
@@ -374,34 +341,6 @@ private fun EditTeaTypeEditPreview() {
                 temperature = "80",
             ),
             onIntent = {},
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DeleteDialogCanDeletePreview() {
-    LeafLogTheme {
-        DeleteTeaTypeDialog(
-            teaTypeName = "Herbal",
-            canDelete = true,
-            teaCount = 0,
-            onConfirm = {},
-            onDismiss = {},
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DeleteDialogCannotDeletePreview() {
-    LeafLogTheme {
-        DeleteTeaTypeDialog(
-            teaTypeName = "Green",
-            canDelete = false,
-            teaCount = 5,
-            onConfirm = {},
-            onDismiss = {},
         )
     }
 }

@@ -26,6 +26,9 @@ data class EditTeaTypeState(
     val showDeleteConfirmation: Boolean = false,
     val canDelete: Boolean = false,
     val teaCount: Int = 0,
+    /** The types a type still in use can be merged into, offered instead of deleting it. */
+    val mergeTargets: List<TeaType> = emptyList(),
+    val mergeTargetId: String? = null,
 ) {
     val hasChanges: Boolean
         get() = if (isEditMode && existingTeaType != null) {

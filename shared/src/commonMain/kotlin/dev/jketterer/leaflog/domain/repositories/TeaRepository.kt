@@ -15,6 +15,9 @@ interface TeaRepository {
     suspend fun upsert(tea: Tea)
     suspend fun delete(id: String)
 
+    /** Moves every tea of [fromTypeId] to [toTypeId], deleted teas included. */
+    suspend fun reassignType(fromTypeId: String, toTypeId: String)
+
     /** Stamps [id] finished now, or clears it when [finished] is false. */
     suspend fun setFinished(id: String, finished: Boolean)
     fun getDistinctProducersFlow(): Flow<List<String>>

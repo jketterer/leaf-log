@@ -12,5 +12,7 @@ sealed interface EditTeaTypeIntent {
     data object DeleteClicked : EditTeaTypeIntent
     data object ConfirmDelete : EditTeaTypeIntent
     data object CancelDelete : EditTeaTypeIntent
+    data class MergeTargetSelected(val teaTypeId: String) : EditTeaTypeIntent
+    data object ConfirmMerge : EditTeaTypeIntent
     data object ToggleTemperatureUnit : EditTeaTypeIntent
 }

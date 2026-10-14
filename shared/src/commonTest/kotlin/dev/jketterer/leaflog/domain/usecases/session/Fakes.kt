@@ -35,6 +35,10 @@ class FakeTeaRepository(teas: List<Tea> = emptyList()) : TeaRepository {
     override suspend fun upsert(tea: Tea) {
         teas[tea.id] = tea
     }
+    override suspend fun reassignType(fromTypeId: String, toTypeId: String) {
+        teas.values.filter { it.teaTypeId == fromTypeId }
+            .forEach { teas[it.id] = it.copy(teaTypeId = toTypeId) }
+    }
     override suspend fun setFinished(id: String, finished: Boolean) {
         teas[id] = teas.getValue(id).copy(finishedAt = FINISHED_AT.takeIf { finished })
     }
@@ -48,14 +52,18 @@ class FakeTeaRepository(teas: List<Tea> = emptyList()) : TeaRepository {
     override fun getDistinctProducersFlow(): Flow<List<String>> = TODO("unused by these tests")
 }
 
-class FakeTeaTypeRepository(private val teaTypes: List<TeaType> = emptyList()) : TeaTypeRepository {
-    override suspend fun getById(id: String): TeaType? = teaTypes.find { it.id == id }
+class FakeTeaTypeRepository(teaTypes: List<TeaType> = emptyList()) : TeaTypeRepository {
+    private val teaTypes = teaTypes.associateBy { it.id }.toMutableMap()
+
+    override suspend fun getById(id: String): TeaType? = teaTypes[id]?.takeIf { it.deletedAt == null }
+    override suspend fun delete(id: String) {
+        teaTypes[id] = teaTypes.getValue(id).copy(deletedAt = DELETED_AT)
+    }
 
     override fun getAllFlow(): Flow<List<TeaType>> = TODO("unused by these tests")
     override suspend fun getAll(): List<TeaType> = TODO("unused by these tests")
     override fun getByIdFlow(id: String): Flow<TeaType?> = TODO("unused by these tests")
     override suspend fun upsert(teaType: TeaType) = TODO("unused by these tests")
-    override suspend fun delete(id: String) = TODO("unused by these tests")
     override suspend fun initializeDefaults() = TODO("unused by these tests")
 }
 

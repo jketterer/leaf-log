@@ -61,6 +61,10 @@ class TeaRepositoryImpl(
         teaDao.softDelete(id, timestamp)
     }
 
+    override suspend fun reassignType(fromTypeId: String, toTypeId: String) {
+        teaDao.reassignType(fromTypeId, toTypeId, Clock.System.now().toEpochMilliseconds())
+    }
+
     override suspend fun setFinished(id: String, finished: Boolean) {
         val now = Clock.System.now().toEpochMilliseconds()
         teaDao.setFinishedAt(id, finishedAt = now.takeIf { finished }, updatedAt = now)

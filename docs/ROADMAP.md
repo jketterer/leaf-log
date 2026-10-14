@@ -441,7 +441,7 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 - [x] `feat: deleting a vessel takes its methods`
 - [x] `feat: mark a tea finished`: Tea Detail, and `StartSessionUseCase` clears it.
 - [x] `feat: show finished teas as finished`: Collection, Log Tea picker, Quick Brew.
-- [ ] `feat: merge a tea type into another`
+- [x] `feat: merge a tea type into another`
 - [ ] `chore: release 0.2.0`: Track B line — on 0.1.2 delete a tea that has sessions, upgrade, and
   find it in Collection as finished with its sessions named.
 
@@ -809,3 +809,7 @@ Working an item: take the first unchecked one, check it off when it's done.
     - same family as the Hard-won facts residual (Home doesn't re-resolve as time passes); fix
       both together
     - found on the emulator 2026-10-13; predates F2
+- [ ] Test files split per function — `SortTeasTest` tests one function pulled out of
+  `TeaCollectionViewModel.kt`, and others may be the same. **Should:** a source file's tests all
+  live in one test file named after it (`TeaCollectionViewModelTest`), not one file per function.
+    - audit every test file; noted during F3 on 2026-10-14

@@ -72,6 +72,10 @@ interface TeaDao {
     @Query("UPDATE tea SET deletedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
+    /** Deleted teas too, so none is left pointing at a deleted type. */
+    @Query("UPDATE tea SET teaTypeId = :toTypeId, updatedAt = :updatedAt WHERE teaTypeId = :fromTypeId")
+    suspend fun reassignType(fromTypeId: String, toTypeId: String, updatedAt: Long)
+
     @Query("UPDATE tea SET finishedAt = :finishedAt, updatedAt = :updatedAt WHERE id = :id")
     suspend fun setFinishedAt(id: String, finishedAt: Long?, updatedAt: Long)
 

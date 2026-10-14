@@ -20,10 +20,10 @@ interface BrewingConfigurationDao {
     @Query("SELECT * FROM brewing_configurations WHERE tea_id = :teaId AND deleted_at IS NULL ORDER BY rating DESC, times_used DESC")
     fun getByTeaIdFlow(teaId: String): Flow<List<BrewingConfigurationEntity>>
 
-    @Query("SELECT * FROM brewing_configurations WHERE id = :id")
+    @Query("SELECT * FROM brewing_configurations WHERE id = :id AND deleted_at IS NULL")
     suspend fun getById(id: String): BrewingConfigurationEntity?
 
-    @Query("SELECT * FROM brewing_configurations WHERE id = :id")
+    @Query("SELECT * FROM brewing_configurations WHERE id = :id AND deleted_at IS NULL")
     fun getByIdFlow(id: String): Flow<BrewingConfigurationEntity?>
 
     @Upsert

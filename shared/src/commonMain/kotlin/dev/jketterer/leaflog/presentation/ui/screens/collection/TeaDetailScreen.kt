@@ -572,7 +572,7 @@ private fun TeaDetailContent(
             AlertDialog(
                 onDismissRequest = { onIntent(TeaDetailIntent.CancelDelete) },
                 title = { Text("Delete Tea?") },
-                text = { Text("This will delete the tea and all its information. Sessions will remain but show 'Unknown Tea'.") },
+                text = { Text("This will delete the tea and all its information.") },
                 confirmButton = {
                     TextButton(
                         onClick = {

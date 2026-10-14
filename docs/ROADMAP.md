@@ -435,7 +435,7 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 - [x] `feat: tea finishedAt and method deletedAt (schema v8)`: entity, migration, `8.json`, both
   platforms, mapper, domain, method queries on `deleted_at`, method delete made soft. Migration test
   seeds one of each repair case.
-- [ ] `fix: by-id reads skip soft-deleted rows`: tea, vessel, type, method; Tea Detail closes.
+- [x] `fix: by-id reads skip soft-deleted rows`: tea, vessel, type, method; Tea Detail closes.
   Strike #8.
 - [ ] `feat: a tea with sessions can't be deleted`, and its methods go with it.
 - [ ] `feat: deleting a vessel takes its methods`

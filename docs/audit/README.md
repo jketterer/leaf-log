@@ -47,7 +47,7 @@ Ordered by damage. None of these needs design; all are small.
 | 5 | ~~**Edit Session can't clear anything.** Blank notes/rating/location or Loose→Bag is a silent no-op, because `null` means "unchanged".~~ | `UpdateSessionUseCase.kt:35-64` | 2 |
 | 6 | ~~**Rating edits never recompute averages** (session `averageRating`, tea stats). Only Steep Complete does.~~ | `EditSessionViewModel` | 2 |
 | 7 | ~~**Tea average uses steep 1 only**; prefill uses `averageRating ?: rating`. Tea page and prefill disagree on what was good.~~ | `UpdateTeaStatsUseCase.kt:15-19` | 1, 3 |
-| 8 | **Delete Tea leaves you on the deleted tea's live page** (can still brew it). `getByIdFlow` doesn't filter `deletedAt`. | `TeaDetailViewModel.kt:235`, `TeaDao.kt:33` | 3 |
+| 8 | ~~**Delete Tea leaves you on the deleted tea's live page** (can still brew it). `getByIdFlow` doesn't filter `deletedAt`.~~ | `TeaDetailViewModel.kt:235`, `TeaDao.kt:33` | 3 |
 | 9 | ~~**iOS relative dates wrong for most sessions** — compares year + day-of-*month*. Sep 23 shows every earlier 23rd as "today". ✔~~ | `TimeFormatter.ios.kt:33-47` | 2, 4 |
 | 10 | **Android backups can't be imported on iOS** — Android writes DEFLATE, iOS parser accepts STORE only. ✔ | `ZipArchiver.ios.kt:233` | 4 |
 | 11 | **Backups can't be fully restored after deleting a tea** — its sessions export with a dangling `teaId` → FK failure on a fresh device. Import is non-transactional, so it half-applies. | `DataExportRepositoryImpl.kt:43-47,191-218` | 4 |

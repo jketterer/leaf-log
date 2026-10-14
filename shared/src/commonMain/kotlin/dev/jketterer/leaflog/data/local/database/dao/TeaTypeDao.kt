@@ -27,10 +27,10 @@ interface TeaTypeDao {
     )
     suspend fun getAll(): List<TeaTypeEntity>
 
-    @Query("SELECT * FROM tea_type WHERE id = :id")
+    @Query("SELECT * FROM tea_type WHERE id = :id AND deletedAt IS NULL")
     suspend fun getById(id: String): TeaTypeEntity?
 
-    @Query("SELECT * FROM tea_type WHERE id = :id")
+    @Query("SELECT * FROM tea_type WHERE id = :id AND deletedAt IS NULL")
     fun getByIdFlow(id: String): Flow<TeaTypeEntity?>
 
     @Upsert

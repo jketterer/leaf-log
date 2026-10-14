@@ -27,10 +27,10 @@ interface BrewingVesselDao {
     )
     suspend fun getAll(): List<BrewingVesselEntity>
 
-    @Query("SELECT * FROM brewing_vessel WHERE id = :id")
+    @Query("SELECT * FROM brewing_vessel WHERE id = :id AND deletedAt IS NULL")
     suspend fun getById(id: String): BrewingVesselEntity?
 
-    @Query("SELECT * FROM brewing_vessel WHERE id = :id")
+    @Query("SELECT * FROM brewing_vessel WHERE id = :id AND deletedAt IS NULL")
     fun getByIdFlow(id: String): Flow<BrewingVesselEntity?>
 
     @Upsert

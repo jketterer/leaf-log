@@ -186,6 +186,9 @@ class TeaDetailViewModel(
                             loadRecentSessions(teaId)
                             loadConfigurations(teaId)
                             loadVessels()
+                        } else if (_state.value.tea != null) {
+                            // Deleted while open, from here or anywhere else
+                            _navEvents.trySend(NavigateBack)
                         } else {
                             _state.update {
                                 it.copy(
@@ -267,8 +270,8 @@ class TeaDetailViewModel(
         viewModelScope.launch {
             _state.update { it.copy(showDeleteConfirmation = false, isLoading = true) }
 
+            // On success the tea flow emits null, which closes the page
             deleteTeaUseCase(tea.id)
-                .onSuccess { /* navigation handled by UI */ }
                 .onFailure { e ->
                     _state.update {
                         it.copy(

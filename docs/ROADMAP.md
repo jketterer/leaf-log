@@ -437,7 +437,7 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
   seeds one of each repair case.
 - [x] `fix: by-id reads skip soft-deleted rows`: tea, vessel, type, method; Tea Detail closes.
   Strike #8.
-- [ ] `feat: a tea with sessions can't be deleted`, and its methods go with it.
+- [x] `feat: a tea with sessions can't be deleted`, and its methods go with it.
 - [ ] `feat: deleting a vessel takes its methods`
 - [ ] `feat: mark a tea finished`: Tea Detail, and `StartSessionUseCase` clears it.
 - [ ] `feat: show finished teas as finished`: Collection, Log Tea picker, Quick Brew.

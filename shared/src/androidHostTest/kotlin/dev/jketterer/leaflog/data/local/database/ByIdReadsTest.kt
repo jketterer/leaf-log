@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.local.database
 
+import androidx.room.useReaderConnection
 import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEntity
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlinx.coroutines.flow.first
@@ -7,6 +8,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.seconds
@@ -84,5 +86,22 @@ class ByIdReadsTest {
 
         assertNull(dao.getById("method"))
         assertNull(dao.getByIdFlow("method").first())
+    }
+
+    @Test
+    fun `a tea's methods are deleted with the tea's own stamp`() = runTest {
+        database.teaDao().softDelete("tea", timestamp = 5)
+
+        database.brewingConfigurationDao().softDeleteWithTea("tea")
+
+        val deletedAt = database.useReaderConnection { connection ->
+            connection.usePrepared(
+                "SELECT deleted_at FROM brewing_configurations WHERE id = 'method'",
+            ) {
+                it.step()
+                it.getLong(0)
+            }
+        }
+        assertEquals(5L, deletedAt)
     }
 }

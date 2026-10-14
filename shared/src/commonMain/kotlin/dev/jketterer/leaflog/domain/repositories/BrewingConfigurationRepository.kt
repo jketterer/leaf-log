@@ -49,6 +49,12 @@ interface BrewingConfigurationRepository {
     suspend fun delete(id: String)
 
     /**
+     * Deletes [teaId]'s configurations, stamped as the tea was so they can be restored with it.
+     * Call after deleting the tea.
+     */
+    suspend fun deleteWithTea(teaId: String)
+
+    /**
      * Increment the times used counter and update last used timestamp
      */
     suspend fun incrementTimesUsed(id: String, timestamp: Instant)

@@ -61,6 +61,10 @@ class BrewingConfigurationRepositoryImpl(
         brewingConfigurationDao.softDelete(id, Clock.System.now().toEpochMilliseconds())
     }
 
+    override suspend fun deleteWithTea(teaId: String) {
+        brewingConfigurationDao.softDeleteWithTea(teaId)
+    }
+
     override suspend fun incrementTimesUsed(id: String, timestamp: Instant) {
         brewingConfigurationDao.incrementTimesUsed(id, timestamp.toEpochMilliseconds())
     }

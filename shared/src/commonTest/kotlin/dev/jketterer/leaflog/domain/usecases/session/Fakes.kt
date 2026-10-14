@@ -25,8 +25,11 @@ import kotlin.time.Instant
 class FakeTeaRepository(teas: List<Tea> = emptyList()) : TeaRepository {
     private val teas = teas.associateBy { it.id }.toMutableMap()
 
-    override suspend fun getAll(): List<Tea> = teas.values.toList()
-    override suspend fun getById(id: String): Tea? = teas[id]
+    override suspend fun getAll(): List<Tea> = teas.values.filter { it.deletedAt == null }
+    override suspend fun getById(id: String): Tea? = teas[id]?.takeIf { it.deletedAt == null }
+    override suspend fun delete(id: String) {
+        teas[id] = teas.getValue(id).copy(deletedAt = DELETED_AT)
+    }
     override suspend fun upsert(tea: Tea) {
         teas[tea.id] = tea
     }
@@ -37,7 +40,6 @@ class FakeTeaRepository(teas: List<Tea> = emptyList()) : TeaRepository {
     override fun getFavoritesFlow(): Flow<List<Tea>> = TODO("unused by these tests")
     override fun getRecentlyBrewedFlow(limit: Int): Flow<List<Tea>> = TODO("unused by these tests")
     override suspend fun search(query: String): List<Tea> = TODO("unused by these tests")
-    override suspend fun delete(id: String) = TODO("unused by these tests")
     override fun getDistinctProducersFlow(): Flow<List<String>> = TODO("unused by these tests")
 }
 
@@ -101,9 +103,6 @@ class FakeTeaSessionRepository(
     override suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps> = TODO("unused by these tests")
     override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
 
-    private companion object {
-        val DELETED_AT = Instant.fromEpochMilliseconds(1)
-    }
 }
 
 class FakeBrewingConfigurationRepository(
@@ -118,9 +117,15 @@ class FakeBrewingConfigurationRepository(
         configurations.values.firstOrNull { it.teaId == teaId && it.vesselId == vesselId }
 
     override suspend fun getByTeaId(teaId: String): List<BrewingConfiguration> =
-        configurations.values.filter { it.teaId == teaId }
+        configurations.values.filter { it.teaId == teaId && it.deletedAt == null }
 
-    override suspend fun getById(id: String): BrewingConfiguration? = configurations[id]
+    override suspend fun getById(id: String): BrewingConfiguration? =
+        configurations[id]?.takeIf { it.deletedAt == null }
+
+    override suspend fun deleteWithTea(teaId: String) {
+        configurations.values.filter { it.teaId == teaId && it.deletedAt == null }
+            .forEach { configurations[it.id] = it.copy(deletedAt = DELETED_AT) }
+    }
     override suspend fun upsert(configuration: BrewingConfiguration) {
         configurations[configuration.id] = configuration
     }
@@ -138,6 +143,8 @@ class FakeBrewingConfigurationRepository(
     override suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int) = TODO("unused by these tests")
     override suspend fun reorderPinnedConfigurations(orderedIds: List<String>) = TODO("unused by these tests")
 }
+
+private val DELETED_AT = Instant.fromEpochMilliseconds(1)
 
 /** Runs the block with no rollback: what a rollback undoes is RoomTransactorTest's to prove. */
 class FakeTransactor : Transactor {

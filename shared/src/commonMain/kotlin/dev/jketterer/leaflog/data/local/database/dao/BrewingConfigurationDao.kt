@@ -38,6 +38,15 @@ interface BrewingConfigurationDao {
     @Query("UPDATE brewing_configurations SET deleted_at = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
+    @Query(
+        """
+        UPDATE brewing_configurations
+        SET deleted_at = (SELECT deletedAt FROM tea WHERE id = :teaId)
+        WHERE tea_id = :teaId AND deleted_at IS NULL
+    """
+    )
+    suspend fun softDeleteWithTea(teaId: String)
+
     @Query("UPDATE brewing_configurations SET times_used = times_used + 1, last_used_at = :timestamp WHERE id = :id")
     suspend fun incrementTimesUsed(id: String, timestamp: Long)
 

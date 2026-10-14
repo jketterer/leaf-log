@@ -221,26 +221,28 @@ private fun TeaDetailContent(
                         )
                     }
 
-                    // More menu
-                    var showMenu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(
-                            imageVector = FeatherIcons.MoreVertical,
-                            contentDescription = "More",
-                        )
-                    }
+                    // More menu: only a tea that was never brewed can be deleted
+                    if (state.recentSessions.isEmpty()) {
+                        var showMenu by remember { mutableStateOf(false) }
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(
+                                imageVector = FeatherIcons.MoreVertical,
+                                contentDescription = "More",
+                            )
+                        }
 
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Delete Tea") },
-                            onClick = {
-                                showMenu = false
-                                onIntent(TeaDetailIntent.DeleteTeaClicked)
-                            },
-                        )
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Delete Tea") },
+                                onClick = {
+                                    showMenu = false
+                                    onIntent(TeaDetailIntent.DeleteTeaClicked)
+                                },
+                            )
+                        }
                     }
                 },
             )

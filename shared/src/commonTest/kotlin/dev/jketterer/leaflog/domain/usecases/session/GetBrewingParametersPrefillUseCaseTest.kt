@@ -207,7 +207,6 @@ class GetBrewingParametersPrefillUseCaseTest {
         timesUsed = 0,
         lastUsedAt = null,
         label = null,
-        isActive = true,
         createdAt = EPOCH,
         updatedAt = EPOCH,
     )

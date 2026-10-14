@@ -64,10 +64,6 @@ class BrewingConfigurationRepositoryImpl(
         brewingConfigurationDao.incrementTimesUsed(id, timestamp.toEpochMilliseconds())
     }
 
-    override suspend fun setActive(id: String, isActive: Boolean) {
-        brewingConfigurationDao.setActive(id, isActive)
-    }
-
     override fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfiguration>> {
         return brewingConfigurationDao.getMostUsedFlow(limit)
             .map { entities -> entities.map { it.toBrewingConfiguration() } }

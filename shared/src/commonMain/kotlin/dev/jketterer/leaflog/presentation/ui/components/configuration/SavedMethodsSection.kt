@@ -119,7 +119,6 @@ private fun SavedMethodsSectionWithItemsPreview() {
                     timesUsed = 12,
                     lastUsedAt = now,
                     label = "Morning Gongfu",
-                    isActive = true,
                     createdAt = now,
                     updatedAt = now,
                 ),

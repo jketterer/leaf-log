@@ -57,11 +57,7 @@ fun ConfigurationCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (configuration.isActive) {
-                MaterialTheme.colorScheme.surfaceVariant
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            }
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
         )
     ) {
         Column(
@@ -177,7 +173,7 @@ fun ConfigurationCard(
 
 @Preview
 @Composable
-private fun ConfigurationCardActivePreview() {
+private fun ConfigurationCardPreview() {
     LeafLogTheme {
         ConfigurationCard(
             configuration = BrewingConfiguration(
@@ -194,45 +190,10 @@ private fun ConfigurationCardActivePreview() {
                 timesUsed = 12,
                 lastUsedAt = Clock.System.now(),
                 label = "Morning Gongfu",
-                isActive = true,
                 createdAt = Clock.System.now(),
                 updatedAt = Clock.System.now()
             ),
             vesselName = "Gaiwan (100ml)",
-            userPreferences = UserPreferences(
-                temperatureUnit = TemperatureUnit.CELSIUS,
-                volumeUnit = VolumeUnit.MILLILITERS
-            ),
-            onEdit = {},
-            onDelete = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun ConfigurationCardInactivePreview() {
-    LeafLogTheme {
-        ConfigurationCard(
-            configuration = BrewingConfiguration(
-                id = "2",
-                teaId = "tea-2",
-                vesselId = "vessel-2",
-                teaQuantityGrams = null,
-                waterQuantityMl = 355.0,
-                temperatureCelsius = 85.0,
-                brewingTime = 45.seconds,
-                waterType = WaterType.SPRING,
-                sourceSessionId = "session-2",
-                rating = 3.0f,
-                timesUsed = 3,
-                lastUsedAt = null,
-                label = "Quick Steep",
-                isActive = false,
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now()
-            ),
-            vesselName = "Teapot",
             userPreferences = UserPreferences(
                 temperatureUnit = TemperatureUnit.CELSIUS,
                 volumeUnit = VolumeUnit.MILLILITERS
@@ -262,7 +223,6 @@ private fun ConfigurationCardImperialUnitsPreview() {
                 timesUsed = 25,
                 lastUsedAt = Clock.System.now() - 800.days,
                 label = "Perfect Black Tea",
-                isActive = true,
                 createdAt = Clock.System.now(),
                 updatedAt = Clock.System.now()
             ),
@@ -296,7 +256,6 @@ private fun ConfigurationCardUnnamedPreview() {
                 timesUsed = 1,
                 lastUsedAt = Clock.System.now() - 365.minutes,
                 label = null,
-                isActive = true,
                 createdAt = Clock.System.now(),
                 updatedAt = Clock.System.now()
             ),

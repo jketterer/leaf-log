@@ -11,8 +11,6 @@ data class Tea(
     val origin: String? = null,
     val producer: String? = null,
     val purchaseDate: LocalDate? = null,
-    val purchasePrice: Double? = null,
-    val stockAmount: Int? = null,
     val defaultTemperatureCelsius: Double? = null,
     val description: String? = null,
     val photos: List<String> = emptyList(),

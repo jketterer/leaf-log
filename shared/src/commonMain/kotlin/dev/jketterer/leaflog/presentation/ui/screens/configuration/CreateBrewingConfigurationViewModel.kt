@@ -225,7 +225,6 @@ class CreateBrewingConfigurationViewModel(
                     temperatureCelsius = temperatureCelsius,
                     brewingTime = brewingTime,
                     waterType = currentState.waterType,
-                    isActive = null,
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
                 }.onFailure { e ->

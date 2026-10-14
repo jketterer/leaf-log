@@ -22,7 +22,6 @@ class UpdateBrewingConfigurationUseCase(
      * @param temperatureCelsius Optional new temperature
      * @param brewingTime Optional new brewing time
      * @param waterType Optional new water type
-     * @param isActive Optional new active status
      * @return Result with the updated configuration
      */
     suspend operator fun invoke(
@@ -34,7 +33,6 @@ class UpdateBrewingConfigurationUseCase(
         temperatureCelsius: Double? = null,
         brewingTime: Duration? = null,
         waterType: WaterType? = null,
-        isActive: Boolean? = null,
     ): Result<BrewingConfiguration> {
         return try {
             val existing = brewingConfigurationRepository.getById(configurationId)
@@ -48,7 +46,6 @@ class UpdateBrewingConfigurationUseCase(
                 temperatureCelsius = temperatureCelsius ?: existing.temperatureCelsius,
                 brewingTime = brewingTime ?: existing.brewingTime,
                 waterType = waterType ?: existing.waterType,
-                isActive = isActive ?: existing.isActive,
                 updatedAt = Clock.System.now(),
             )
 

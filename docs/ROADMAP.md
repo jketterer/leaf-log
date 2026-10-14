@@ -429,8 +429,8 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 
 **Commits.** Each compiles, passes tests and leaves the app working. 4–9 depend only on 3.
 
-- [ ] `docs: record the F3 design`
-- [ ] `refactor: delete purchasePrice, stockAmount and isActive from the domain`: the entity keeps its
+- [x] `docs: record the F3 design`
+- [x] `refactor: delete purchasePrice, stockAmount and isActive from the domain`: the entity keeps its
   columns until v8; the mapper writes defaults.
 - [ ] `feat: tea finishedAt and method deletedAt (schema v8)`: entity, migration, `8.json`, both
   platforms, mapper, domain, method queries on `deleted_at`, method delete made soft. Migration test

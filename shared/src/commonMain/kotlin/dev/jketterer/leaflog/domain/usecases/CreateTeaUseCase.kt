@@ -43,8 +43,6 @@ class CreateTeaUseCase(
             origin = origin?.takeIf { it.isNotBlank() }?.trim(),
             producer = producer?.takeIf { it.isNotBlank() }?.trim(),
             purchaseDate = purchaseDate,
-            purchasePrice = null,
-            stockAmount = null,
             defaultTemperatureCelsius = defaultTemperatureCelsius,
             description = description?.takeIf { it.isNotBlank() }?.trim(),
             photos = photos,

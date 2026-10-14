@@ -147,7 +147,6 @@ private fun QuickBrewCardPreview() {
                     sourceSessionId = null,
                     rating = null,
                     label = "Gaiwan · Gong-fu",
-                    isActive = true,
                     timesUsed = 12,
                     lastUsedAt = null,
                     createdAt = Instant.fromEpochMilliseconds(0),

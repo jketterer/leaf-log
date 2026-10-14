@@ -389,7 +389,6 @@ class SessionAggregateUseCasesTest {
             timesUsed = 7,
             lastUsedAt = EPOCH,
             label = null,
-            isActive = true,
             createdAt = EPOCH,
             updatedAt = EPOCH,
         )

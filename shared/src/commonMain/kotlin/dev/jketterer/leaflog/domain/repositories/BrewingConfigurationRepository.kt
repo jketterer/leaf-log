@@ -54,11 +54,6 @@ interface BrewingConfigurationRepository {
     suspend fun incrementTimesUsed(id: String, timestamp: Instant)
 
     /**
-     * Set the active status of a configuration
-     */
-    suspend fun setActive(id: String, isActive: Boolean)
-
-    /**
      * Get the most frequently used active configurations as a reactive flow
      */
     fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfiguration>>

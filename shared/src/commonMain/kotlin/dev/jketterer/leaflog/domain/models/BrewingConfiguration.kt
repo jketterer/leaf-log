@@ -26,7 +26,6 @@ data class BrewingConfiguration(
 
     // User customization
     val label: String?, // User-provided or auto-generated name
-    val isActive: Boolean, // User can disable configs without deleting
     val isPinned: Boolean = false, // User can pin configs to the top of the Quick Brew section
     val pinnedSortOrder: Int = 0, // Order of pinned configs (lower = first)
 

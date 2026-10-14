@@ -62,7 +62,6 @@ class CreateBrewingConfigurationUseCase(
                 timesUsed = 0,
                 lastUsedAt = null,
                 label = label,
-                isActive = true,
                 createdAt = now,
                 updatedAt = now,
             )

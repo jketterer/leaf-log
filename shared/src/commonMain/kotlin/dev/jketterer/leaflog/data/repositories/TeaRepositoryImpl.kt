@@ -61,6 +61,11 @@ class TeaRepositoryImpl(
         teaDao.softDelete(id, timestamp)
     }
 
+    override suspend fun setFinished(id: String, finished: Boolean) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        teaDao.setFinishedAt(id, finishedAt = now.takeIf { finished }, updatedAt = now)
+    }
+
     override fun getDistinctProducersFlow(): Flow<List<String>> {
         return teaDao.getDistinctProducersFlow()
     }

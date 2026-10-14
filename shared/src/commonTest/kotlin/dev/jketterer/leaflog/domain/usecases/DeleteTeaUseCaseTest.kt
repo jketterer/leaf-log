@@ -28,6 +28,7 @@ class DeleteTeaUseCaseTest {
     private val startSession = StartSessionUseCase(
         transactor,
         sessions,
+        teas,
         RecomputeStatsUseCase(sessions, teas, configurations),
     )
 

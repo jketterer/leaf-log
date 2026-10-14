@@ -7,16 +7,21 @@ import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.uuid.Uuid
 
-/** Creates a session and its first steep. Pass [SessionStatus.COMPLETED] to log one after the fact. */
+/**
+ * Creates a session and its first steep. Pass [SessionStatus.COMPLETED] to log one after the fact.
+ * Brewing a finished tea puts it back in stock.
+ */
 class StartSessionUseCase(
     private val transactor: Transactor,
     private val teaSessionRepository: TeaSessionRepository,
+    private val teaRepository: TeaRepository,
     private val recomputeStats: RecomputeStatsUseCase,
 ) {
     suspend operator fun invoke(
@@ -71,6 +76,7 @@ class StartSessionUseCase(
 
         transactor {
             teaSessionRepository.saveSession(started)
+            teaRepository.setFinished(teaId, finished = false)
             recomputeStats(teaId)
         }
         started

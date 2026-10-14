@@ -109,6 +109,7 @@ class TeaDetailViewModel(
             is TeaDetailIntent.ConfirmDelete -> confirmDelete()
             is TeaDetailIntent.CancelDelete -> cancelDelete()
             is TeaDetailIntent.ToggleFavorite -> toggleFavorite()
+            is TeaDetailIntent.ToggleFinished -> toggleFinished()
 
             is TeaDetailIntent.EditTeaClicked -> _navEvents.trySend(NavigateToEditTea)
             is TeaDetailIntent.SessionClicked -> handleSessionClick(intent.sessionId)
@@ -290,6 +291,17 @@ class TeaDetailViewModel(
             toggleFavoriteUseCase(tea)
                 .onFailure { e ->
                     _state.update { it.copy(error = "Failed to toggle favorite: ${e.message}") }
+                }
+        }
+    }
+
+    private fun toggleFinished() {
+        val tea = _state.value.tea ?: return
+
+        viewModelScope.launch {
+            runCatching { teaRepository.setFinished(tea.id, finished = tea.finishedAt == null) }
+                .onFailure { e ->
+                    _state.update { it.copy(error = "Failed to update tea: ${e.message}") }
                 }
         }
     }

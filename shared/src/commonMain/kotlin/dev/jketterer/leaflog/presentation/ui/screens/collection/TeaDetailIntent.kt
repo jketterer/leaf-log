@@ -7,6 +7,7 @@ sealed interface TeaDetailIntent {
     data object ConfirmDelete : TeaDetailIntent
     data object CancelDelete : TeaDetailIntent
     data object ToggleFavorite : TeaDetailIntent
+    data object ToggleFinished : TeaDetailIntent
     data class SessionClicked(val sessionId: String) : TeaDetailIntent
     data class DeleteSessionClicked(val sessionId: String) : TeaDetailIntent
     data object ConfirmDeleteSession : TeaDetailIntent

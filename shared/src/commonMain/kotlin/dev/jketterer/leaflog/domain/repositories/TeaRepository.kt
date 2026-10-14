@@ -14,5 +14,8 @@ interface TeaRepository {
     suspend fun search(query: String): List<Tea>
     suspend fun upsert(tea: Tea)
     suspend fun delete(id: String)
+
+    /** Stamps [id] finished now, or clears it when [finished] is false. */
+    suspend fun setFinished(id: String, finished: Boolean)
     fun getDistinctProducersFlow(): Flow<List<String>>
 }

@@ -35,6 +35,9 @@ class FakeTeaRepository(teas: List<Tea> = emptyList()) : TeaRepository {
     override suspend fun upsert(tea: Tea) {
         teas[tea.id] = tea
     }
+    override suspend fun setFinished(id: String, finished: Boolean) {
+        teas[id] = teas.getValue(id).copy(finishedAt = FINISHED_AT.takeIf { finished })
+    }
 
     override fun getAllFlow(): Flow<List<Tea>> = TODO("unused by these tests")
     override fun getByIdFlow(id: String): Flow<Tea?> = TODO("unused by these tests")
@@ -175,6 +178,7 @@ class FakeBrewingConfigurationRepository(
 }
 
 private val DELETED_AT = Instant.fromEpochMilliseconds(1)
+private val FINISHED_AT = Instant.fromEpochMilliseconds(2)
 
 /** Runs the block with no rollback: what a rollback undoes is RoomTransactorTest's to prove. */
 class FakeTransactor : Transactor {

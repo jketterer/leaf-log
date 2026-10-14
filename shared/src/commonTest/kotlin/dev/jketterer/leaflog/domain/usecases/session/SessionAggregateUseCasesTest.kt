@@ -25,7 +25,7 @@ class SessionAggregateUseCasesTest {
     private val transactor = FakeTransactor()
     private val recomputeStats = RecomputeStatsUseCase(sessions, teas, configurations)
 
-    private val startSession = StartSessionUseCase(transactor, sessions, recomputeStats)
+    private val startSession = StartSessionUseCase(transactor, sessions, teas, recomputeStats)
     private val addSteep = AddSteepUseCase(transactor, sessions, recomputeStats)
     private val editSteep = EditSteepUseCase(transactor, sessions, recomputeStats)
     private val editSession = EditSessionUseCase(transactor, sessions, recomputeStats)
@@ -64,6 +64,15 @@ class SessionAggregateUseCasesTest {
         assertEquals(source.steeps.single().brewingTime, again.steeps.single().brewingTime)
         assertNull(again.steeps.single().rating)
         assertNull(again.steeps.single().notes)
+    }
+
+    @Test
+    fun `brewing a finished tea puts it back in stock`() = runTest {
+        teas.setFinished(TEA.id, finished = true)
+
+        start()
+
+        assertNull(tea().finishedAt)
     }
 
     @Test

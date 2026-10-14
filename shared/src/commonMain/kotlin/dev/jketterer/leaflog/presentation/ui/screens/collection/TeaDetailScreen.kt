@@ -73,6 +73,7 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
@@ -221,20 +222,32 @@ private fun TeaDetailContent(
                         )
                     }
 
-                    // More menu: only a tea that was never brewed can be deleted
-                    if (state.recentSessions.isEmpty()) {
-                        var showMenu by remember { mutableStateOf(false) }
-                        IconButton(onClick = { showMenu = true }) {
-                            Icon(
-                                imageVector = FeatherIcons.MoreVertical,
-                                contentDescription = "More",
-                            )
-                        }
+                    // More menu
+                    var showMenu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = FeatherIcons.MoreVertical,
+                            contentDescription = "More",
+                        )
+                    }
 
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
-                        ) {
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    if (state.tea?.finishedAt == null) "Mark Finished" else "Back in Stock",
+                                )
+                            },
+                            onClick = {
+                                showMenu = false
+                                onIntent(TeaDetailIntent.ToggleFinished)
+                            },
+                        )
+                        // Only a tea that was never brewed can be deleted
+                        if (state.recentSessions.isEmpty()) {
                             DropdownMenuItem(
                                 text = { Text("Delete Tea") },
                                 onClick = {
@@ -301,6 +314,13 @@ private fun TeaDetailContent(
                                     modifier = Modifier.padding(16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
                                 ) {
+                                    if (state.tea.finishedAt != null) {
+                                        DetailRow(
+                                            label = "Finished",
+                                            value = TimeFormatter.formatRelativeTimestamp(state.tea.finishedAt),
+                                        )
+                                    }
+
                                     // Type
                                     DetailRow(
                                         label = "Type",
@@ -672,6 +692,7 @@ private fun TeaDetailScreenPreview() {
                     isFavorite = true,
                     totalSessions = 12,
                     averageRating = 4.5f,
+                    finishedAt = Clock.System.now(),
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now(),
                     syncStatus = SyncStatus.LOCAL_ONLY,

@@ -72,6 +72,9 @@ interface TeaDao {
     @Query("UPDATE tea SET deletedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
+    @Query("UPDATE tea SET finishedAt = :finishedAt, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun setFinishedAt(id: String, finishedAt: Long?, updatedAt: Long)
+
     @Query(
         """
         DELETE FROM tea

@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-13 (F2 design)
+> **Last updated:** 2026-10-14 (F3 design)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -379,7 +379,7 @@ the SQL against the Kotlin rules on the same fixture.
   the save-method prompt. Discard does not. A `rememberSaveable` flag keeps it to once per Home
   entry. Home's `CompleteSession` now goes straight to Steep Complete instead of bouncing off the
   Timer.
-- [ ] `chore: release 0.2.0`: audit rows #4–7 struck.
+- [x] `chore: release 0.1.2`: audit rows #4–7 struck.
 
 **Exit:** the six paths are gone; Track A tests cover every steep mutation, the rating rule and the
 migration; the emulator upgrade passes; History, Tea Detail and prefill agree on every tea's rating.
@@ -388,20 +388,62 @@ migration; the emulator upgrade passes; History, Tea Detail and prefill agree on
 
 **Outcome:** the journal never loses a name, and soft-delete stops leaking.
 
+**Design** (decided 2026-10-14):
+
 - **`Tea.finishedAt: Instant?`.** Null = in stock. Timestamp, not boolean — tells you *when*, and
   matches the `deletedAt` idiom.
     - Excluded from dormant-tea prompts (Bet 4) — the reason the field exists.
-    - Auto-clears when a session is logged with that tea.
-    - Collection: sorted last, dimmed, still searchable.
-    - Log Tea picker: stays visible and marked; tapping asks "Still have this?" and clears the flag.
-      Hiding it would make the auto-clear unreachable.
-- **A tea with sessions cannot be deleted** — only finished. Delete is offered only for teas with
-  zero sessions (typos, duplicates). Same rule for vessels (archive exists; forbid delete when used)
-  and tea types (merge instead of delete when used).
-- **By-id queries filter soft-deleted rows** like list queries do; a deleted tea's page closes.
-- **Photo files are only removed on hard purge**, never on soft delete. Prerequisite for Undo.
-- **Brewing configurations get `deletedAt`** (they hard-delete today).
-- Same migration drops `purchasePrice`, `stockAmount`, and `BrewingConfiguration.isActive`.
+    - Set and cleared only from Tea Detail ("Mark finished" / "Back in stock", plus a "Finished
+      <date>" line). A plain repository write from the ViewModel; it bumps `updatedAt`.
+    - `StartSessionUseCase` clears it inside its transaction, so Log Tea, Quick Brew, Brew Again and
+      Quick Timer all clear it. Add Steep, Reopen and import don't: they don't prove you still have
+      the tea.
+    - Collection: sorted last under every sort option, dimmed, labelled "Finished" (dimming alone is
+      colour-only meaning), still searchable.
+    - Log Tea picker: stays visible with the same label. No "Still have this?" dialog: starting
+      clears the flag anyway, and a "last of it" choice wasn't worth threading through every
+      start path. Quick Brew dims finished teas' methods.
+- **A tea with sessions cannot be deleted** — only finished. "Has sessions" means any live parent
+  row of any status: `totalSessions` counts completed ones only and would let an in-progress tea go.
+  Delete is offered only at zero (typos, duplicates).
+    - Vessels already follow the rule (`DeleteBrewingVesselUseCase`, `canDelete`).
+    - Tea types already refuse delete when used. F3 adds **merge**: the blocked-delete dialog lists
+      every other live type, system defaults included; `MergeTeaTypeUseCase` moves every tea,
+      deleted ones too, and soft-deletes the source in one transaction. Teas keep their own
+      temperatures.
+- **Deletes take their methods.** Soft-deleting a tea or a vessel soft-deletes its configurations in
+  the same transaction, so method lists need only `deleted_at IS NULL` and Undo restores both.
+- **By-id queries filter soft-deleted rows** like list queries do. Tea Detail closes when its tea
+  goes null after loading (#8). The "Unknown Tea" fallbacks stay as defensive code; the migration's
+  repair and the delete rule are what keep them unreachable.
+- **Photo files are only removed on hard purge**, never on soft delete. Already true: F2 stopped the
+  session deletes, the others never did, and hard purge (`deleteSyncedOldItems`) never runs.
+- **Brewing configurations get `deleted_at`**, replacing `is_active` (no UI ever set it false).
+
+**Migration:** v7 → v8 with `ALTER TABLE ADD/DROP COLUMN` (bundled SQLite on both platforms, no
+rebuild). Adds `tea.finishedAt` and `brewing_configurations.deleted_at`; drops `purchasePrice`,
+`stockAmount` and `is_active`, mapping `is_active = 0` to `deleted_at = updated_at`. It repairs rows
+the old delete paths left behind: a deleted tea with live sessions comes back finished
+(`finishedAt = deletedAt`), a deleted vessel a live session uses comes back archived, a deleted type
+a live tea uses comes back, and methods whose tea or vessel is still deleted are soft-deleted.
+
+**Commits.** Each compiles, passes tests and leaves the app working. 4–9 depend only on 3.
+
+- [ ] `docs: record the F3 design`
+- [ ] `refactor: delete purchasePrice, stockAmount and isActive from the domain`: the entity keeps its
+  columns until v8; the mapper writes defaults.
+- [ ] `feat: tea finishedAt and method deletedAt (schema v8)`: entity, migration, `8.json`, both
+  platforms, mapper, domain, method queries on `deleted_at`, method delete made soft. Migration test
+  seeds one of each repair case.
+- [ ] `fix: by-id reads skip soft-deleted rows`: tea, vessel, type, method; Tea Detail closes.
+  Strike #8.
+- [ ] `feat: a tea with sessions can't be deleted`, and its methods go with it.
+- [ ] `feat: deleting a vessel takes its methods`
+- [ ] `feat: mark a tea finished`: Tea Detail, and `StartSessionUseCase` clears it.
+- [ ] `feat: show finished teas as finished`: Collection, Log Tea picker, Quick Brew.
+- [ ] `feat: merge a tea type into another`
+- [ ] `chore: release 0.2.0`: Track B line — on 0.1.2 delete a tea that has sessions, upgrade, and
+  find it in Collection as finished with its sessions named.
 
 **Exit:** no screen can show "Unknown Tea"; Undo is purely UI work; Track A tests for each rule.
 
@@ -518,7 +560,7 @@ Timer → Start (about three taps and two screens), and each steep's time is typ
 - The between-steep flow clears the brew-loop audit findings (report 1) for every screen it
   rewrites.
 
-**Migration:** v7 → v8 — plan columns on `brewing_configurations`, the two tag tables, seeded
+**Migration:** v8 → v9 — plan columns on `brewing_configurations`, the two tag tables, seeded
 curated vocabulary.
 
 **Exit:** a 10-steep gongfu session from a saved plan takes one tap per steep to advance; a western

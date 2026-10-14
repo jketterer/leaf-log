@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 class BrewingConfigurationRepositoryImpl(
@@ -57,7 +58,7 @@ class BrewingConfigurationRepositoryImpl(
     }
 
     override suspend fun delete(id: String) {
-        brewingConfigurationDao.delete(id)
+        brewingConfigurationDao.softDelete(id, Clock.System.now().toEpochMilliseconds())
     }
 
     override suspend fun incrementTimesUsed(id: String, timestamp: Instant) {

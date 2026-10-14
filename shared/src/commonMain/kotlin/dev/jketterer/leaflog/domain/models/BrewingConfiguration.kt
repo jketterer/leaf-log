@@ -31,4 +31,5 @@ data class BrewingConfiguration(
 
     val createdAt: Instant,
     val updatedAt: Instant,
+    val deletedAt: Instant? = null,
 )

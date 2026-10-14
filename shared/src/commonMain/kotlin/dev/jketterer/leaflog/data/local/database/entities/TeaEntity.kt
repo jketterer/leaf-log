@@ -37,8 +37,6 @@ data class TeaEntity(
     val origin: String? = null,
     val producer: String? = null,
     val purchaseDate: LocalDate? = null,
-    val purchasePrice: Double? = null,
-    val stockAmount: Int? = null,
     val defaultTemperatureCelsius: Double? = null,
     val description: String? = null,
     val photos: List<String> = emptyList(),
@@ -46,6 +44,7 @@ data class TeaEntity(
     val totalSessions: Int = 0,
     val averageRating: Float? = null,
     val lastBrewedAt: Instant? = null,
+    val finishedAt: Instant? = null,
 
     val userId: String? = null,
     val createdAt: Instant,

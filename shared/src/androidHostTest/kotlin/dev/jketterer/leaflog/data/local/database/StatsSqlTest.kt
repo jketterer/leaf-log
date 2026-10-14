@@ -28,9 +28,9 @@ class StatsSqlTest {
         database.useWriterConnection { connection ->
             connection.usePrepared(
                 "INSERT INTO brewing_configurations (id, tea_id, vessel_id, water_quantity_ml, " +
-                    "temperature_celsius, brewing_time, water_type, times_used, is_active, " +
-                    "created_at, updated_at) " +
-                    "VALUES ('method', 'tea', 'vessel', 100, 95, 20000, 'FILTERED', 99, 1, 0, 0)",
+                    "temperature_celsius, brewing_time, water_type, times_used, created_at, " +
+                    "updated_at) " +
+                    "VALUES ('method', 'tea', 'vessel', 100, 95, 20000, 'FILTERED', 99, 0, 0)",
             ) { it.step() }
         }
         dao.upsertAll(

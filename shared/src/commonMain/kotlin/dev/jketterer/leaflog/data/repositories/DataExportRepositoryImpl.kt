@@ -58,7 +58,7 @@ class DataExportRepositoryImpl(
             }
         }
 
-        for ((_, _, _, _, _, _, _, _, _, _, photos) in teas) {
+        for ((_, _, _, _, _, _, _, _, photos) in teas) {
             for (photo in photos) {
                 if (photo.isNotBlank() && photo !in pathRemap) {
                     val ext = photo.substringAfterLast('.', "jpg")

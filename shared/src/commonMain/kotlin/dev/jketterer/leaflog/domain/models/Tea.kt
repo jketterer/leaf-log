@@ -18,6 +18,7 @@ data class Tea(
     val totalSessions: Int = 0,
     val averageRating: Float? = null,
     val lastBrewedAt: Instant? = null,
+    val finishedAt: Instant? = null,
 
     val userId: String? = null,
     val createdAt: Instant,

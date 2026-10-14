@@ -432,7 +432,7 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 - [x] `docs: record the F3 design`
 - [x] `refactor: delete purchasePrice, stockAmount and isActive from the domain`: the entity keeps its
   columns until v8; the mapper writes defaults.
-- [ ] `feat: tea finishedAt and method deletedAt (schema v8)`: entity, migration, `8.json`, both
+- [x] `feat: tea finishedAt and method deletedAt (schema v8)`: entity, migration, `8.json`, both
   platforms, mapper, domain, method queries on `deleted_at`, method delete made soft. Migration test
   seeds one of each repair case.
 - [ ] `fix: by-id reads skip soft-deleted rows`: tea, vessel, type, method; Tea Detail closes.

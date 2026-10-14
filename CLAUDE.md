@@ -96,7 +96,7 @@ di/ (Dependency Injection)
 
 ### Database
 
-**Room Database (Version 7)**
+**Room Database (Version 8)**
 
 - Entities in `data/local/database/entities/`
 - DAOs in `data/local/database/dao/`

@@ -78,9 +78,6 @@ data class BrewingConfigurationEntity(
     // User customization
     val label: String?, // e.g., "My Gong-fu Method", "Quick Western"
 
-    @ColumnInfo(name = "is_active")
-    val isActive: Boolean, // User can disable configs without deleting
-
     @ColumnInfo(name = "is_pinned", defaultValue = "0")
     val isPinned: Boolean = false, // User can pin configs to the top of the Quick Brew section
 
@@ -92,4 +89,7 @@ data class BrewingConfigurationEntity(
 
     @ColumnInfo(name = "updated_at")
     val updatedAt: Instant, // TypeConverter: Instant ↔ Long
+
+    @ColumnInfo(name = "deleted_at")
+    val deletedAt: Instant? = null,
 )

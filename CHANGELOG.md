@@ -16,6 +16,63 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-14
+
+Teas are marked finished instead of deleted, so the journal keeps the name of every tea it mentions.
+
+### Added
+
+- Mark a tea finished from the menu on Tea Detail, and bring it back with "Back in Stock". Tea Detail
+  shows when it was finished, and brewing a finished tea puts it back in stock.
+- Finished teas are faded and listed last in Collection, carry a "Finished" chip in Collection and
+  the Log Tea picker, and their Quick Brew cards are faded.
+- A tea type that teas still use can be merged into another type: its teas move to the type you
+  choose and keep their own temperatures.
+
+### Changed
+
+- A tea with sessions can no longer be deleted. Tea Detail offers Delete only for a tea that was
+  never brewed.
+- Deleting a tea or a vessel also deletes its saved brewing methods.
+
+### Fixed
+
+- Teas deleted in earlier versions that still have sessions come back as finished, so those sessions
+  show their tea again. Vessels deleted while sessions used them come back archived, and tea types
+  still used by a tea come back.
+- A deleted tea, vessel, tea type or brewing method no longer opens from a screen that still pointed
+  at it. Tea Detail closes when its tea is deleted.
+
+## [0.1.2] - 2026-10-13
+
+Sessions and their steeps now follow one set of rules everywhere in the app.
+
+### Added
+
+- Finishing a session from Steep Complete offers Undo on Home, which reopens the session and returns
+  to Steep Complete.
+- The timer records how long each steep actually brewed, counting adjustments and Complete Now.
+  Brew Again and the Log Tea prefill start from that time instead of the planned one.
+
+### Changed
+
+- A session stays in progress until you finish it. Starting a second steep no longer marks it
+  complete, and tea stats count finished sessions only.
+- A session's rating is the average of its rated steeps, and a tea's rating is the average of its
+  sessions' ratings, each session counting once. Unrated sessions are left out.
+- Tea and brewing method stats are recalculated from sessions whenever one changes, so editing,
+  reopening or deleting a session keeps them right. A method's "times used" no longer goes up once
+  per steep.
+- History, Tea Detail and Home show one card per session, and Vessel Detail counts sessions rather
+  than steeps.
+- Add Steep in Session Detail records a forgotten steep on a finished session, and only shows there.
+
+### Fixed
+
+- Log Session's rating starts unrated instead of filled in.
+- A session in progress on its second or later steep is now recognised as in progress.
+- A failed save no longer leaves a session half-updated.
+
 ## [0.1.1] - 2026-10-08
 
 Bug fixes from the first full audit of the app.
@@ -65,6 +122,8 @@ summarises them by period, and export/import provides backup.
 The app was first written in Flutter and published on Google Play as `com.jketterer.leaf_log`.
 That code is tagged `flutter-1.1.1`. An abandoned 2022 Flutter rewrite is tagged `flutter-2.0-wip`.
 
-[Unreleased]: https://github.com/jketterer/leaf-log/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/jketterer/leaf-log/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/jketterer/leaf-log/compare/v0.1.2...v0.2.0
+[0.1.2]: https://github.com/jketterer/leaf-log/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/jketterer/leaf-log/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jketterer/leaf-log/releases/tag/v0.1.0

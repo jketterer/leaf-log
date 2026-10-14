@@ -440,7 +440,7 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 - [x] `feat: a tea with sessions can't be deleted`, and its methods go with it.
 - [x] `feat: deleting a vessel takes its methods`
 - [x] `feat: mark a tea finished`: Tea Detail, and `StartSessionUseCase` clears it.
-- [ ] `feat: show finished teas as finished`: Collection, Log Tea picker, Quick Brew.
+- [x] `feat: show finished teas as finished`: Collection, Log Tea picker, Quick Brew.
 - [ ] `feat: merge a tea type into another`
 - [ ] `chore: release 0.2.0`: Track B line — on 0.1.2 delete a tea that has sessions, upgrade, and
   find it in Collection as finished with its sessions named.

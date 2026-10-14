@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -35,11 +36,13 @@ import compose.icons.fontawesomeicons.Regular
 import compose.icons.fontawesomeicons.Solid
 import compose.icons.fontawesomeicons.regular.Heart
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Check
 import compose.icons.feathericons.Star
 import compose.icons.fontawesomeicons.solid.Heart
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Instant
 import org.koin.compose.koinInject
@@ -67,6 +70,7 @@ fun TeaCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .alpha(if (tea.finishedAt != null) FINISHED_ALPHA else 1f)
             .clickable(onClick = onTeaClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -106,12 +110,21 @@ fun TeaCard(
 
                 // Tea info
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = tea.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = tea.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (tea.finishedAt != null) {
+                            BrewingParamChip(icon = FeatherIcons.Check, text = "Finished")
+                        }
+                    }
                     val detailInfo = buildList {
                         add(teaTypeName)
                         tea.origin?.let { add(it) }
@@ -192,6 +205,9 @@ fun TeaCard(
     }
 }
 
+/** How far a finished tea fades, so the ones in stock stand out. */
+internal const val FINISHED_ALPHA = 0.6f
+
 internal fun Float.formatOneDecimal(): String {
     val tenths = (this * 10).toInt()
     return "${tenths / 10}.${tenths % 10}"
@@ -232,6 +248,31 @@ private fun TeaCardWithBorderPreview() {
                 origin = "India",
                 totalSessions = 8,
                 averageRating = 4.5f,
+                createdAt = Instant.fromEpochMilliseconds(1),
+                updatedAt = Instant.fromEpochMilliseconds(1),
+            ),
+            teaTypeName = "Green",
+            teaTypeColorHex = "#4CAF50",
+            onTeaClick = {},
+            onFavoriteClick = {},
+            imageStorage = null,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TeaCardFinishedPreview() {
+    LeafLogTheme {
+        TeaCard(
+            tea = Tea(
+                id = "1",
+                name = "Dragon Well",
+                teaTypeId = "green",
+                origin = "China",
+                totalSessions = 8,
+                averageRating = 4.5f,
+                finishedAt = Instant.fromEpochMilliseconds(1),
                 createdAt = Instant.fromEpochMilliseconds(1),
                 updatedAt = Instant.fromEpochMilliseconds(1),
             ),

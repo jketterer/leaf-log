@@ -432,6 +432,7 @@ class HomeViewModel(
                     teaTypeName = type?.name ?: "Unknown",
                     teaTypeColorHex = type?.colorHex,
                     vesselName = vessel.name,
+                    isFinished = tea.finishedAt != null,
                 )
             }
         }
@@ -543,6 +544,7 @@ data class QuickBrewCardData(
     val teaTypeName: String,
     val teaTypeColorHex: String?,
     val vesselName: String,
+    val isFinished: Boolean = false,
 )
 
 sealed interface HomeNavEvent {

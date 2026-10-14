@@ -63,6 +63,7 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -426,12 +427,21 @@ private fun TeaPickerRow(
                 .weight(1f)
                 .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         ) {
-            Text(
-                text = tea.name,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = tea.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                if (tea.finishedAt != null) {
+                    BrewingParamChip(icon = FeatherIcons.Check, text = "Finished")
+                }
+            }
             val details = listOfNotNull(teaTypeName.takeIf { it.isNotBlank() }, tea.origin)
             if (details.isNotEmpty()) {
                 Text(
@@ -525,6 +535,7 @@ private val previewTeas = listOf(
     previewTea("tea-2", "Sencha", "green", "Japan", 4.1f, 8),
     previewTea("tea-3", "Assam Second Flush", "black", "India", 3.9f, 3),
     previewTea("tea-4", "Keemun", "black", "China", null, 0),
+    previewTea("tea-5", "Lapsang Souchong", "black", "China", 4.0f, 5, isFinished = true),
 )
 
 @Preview(showBackground = true)
@@ -623,6 +634,7 @@ private fun previewTea(
     averageRating: Float?,
     totalSessions: Int,
     isFavorite: Boolean = false,
+    isFinished: Boolean = false,
 ) = Tea(
     id = id,
     name = name,
@@ -631,6 +643,7 @@ private fun previewTea(
     isFavorite = isFavorite,
     totalSessions = totalSessions,
     averageRating = averageRating,
+    finishedAt = Instant.fromEpochMilliseconds(1).takeIf { isFinished },
     createdAt = Instant.fromEpochMilliseconds(1),
     updatedAt = Instant.fromEpochMilliseconds(1),
     syncStatus = SyncStatus.LOCAL_ONLY,

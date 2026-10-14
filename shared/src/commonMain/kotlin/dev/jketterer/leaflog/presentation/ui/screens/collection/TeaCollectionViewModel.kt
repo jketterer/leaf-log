@@ -181,17 +181,20 @@ class TeaCollectionViewModel(
         }
     }
 
-    private fun sortTeas(teas: List<Tea>, option: TeaSortOption): List<Tea> {
-        return when (option) {
-            TeaSortOption.NAME_ASC -> teas.sortedBy { it.name.lowercase() }
-            TeaSortOption.RATING_DESC -> teas.sortedByDescending { it.averageRating }
-            TeaSortOption.TIMES_BREWED_DESC -> teas.sortedByDescending { it.totalSessions }
-            TeaSortOption.MOST_RECENT -> teas.sortedByDescending { it.lastBrewedAt }
-            TeaSortOption.OLDEST -> teas.sortedBy { it.createdAt }
-        }
-    }
-
     private fun clearError() {
         _state.update { it.copy(error = null) }
     }
+}
+
+/** Sorts by [option], with finished teas after the rest in the same order. */
+internal fun sortTeas(teas: List<Tea>, option: TeaSortOption): List<Tea> {
+    val sorted = when (option) {
+        TeaSortOption.NAME_ASC -> teas.sortedBy { it.name.lowercase() }
+        TeaSortOption.RATING_DESC -> teas.sortedByDescending { it.averageRating }
+        TeaSortOption.TIMES_BREWED_DESC -> teas.sortedByDescending { it.totalSessions }
+        TeaSortOption.MOST_RECENT -> teas.sortedByDescending { it.lastBrewedAt }
+        TeaSortOption.OLDEST -> teas.sortedBy { it.createdAt }
+    }
+    // sortedBy is stable
+    return sorted.sortedBy { it.finishedAt != null }
 }

@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +34,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
+import dev.jketterer.leaflog.presentation.ui.components.collection.FINISHED_ALPHA
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.screens.home.QuickBrewCardData
@@ -55,6 +57,7 @@ fun QuickBrewCard(
     Card(
         modifier = modifier
             .widthIn(min = cardWidth)
+            .alpha(if (data.isFinished) FINISHED_ALPHA else 1f)
             .combinedClickable(
                 enabled = true,
                 onClick = onClick,
@@ -156,6 +159,42 @@ private fun QuickBrewCardPreview() {
                 teaTypeName = "Oolong",
                 teaTypeColorHex = "#FF9800",
                 vesselName = "Gaiwan",
+            ),
+            userPreferences = UserPreferences(temperatureUnit = TemperatureUnit.CELSIUS),
+            onClick = {},
+            onLongClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun QuickBrewCardFinishedPreview() {
+    LeafLogTheme {
+        QuickBrewCard(
+            data = QuickBrewCardData(
+                configuration = BrewingConfiguration(
+                    id = "1",
+                    teaId = "tea1",
+                    vesselId = "vessel1",
+                    teaQuantityGrams = 5f,
+                    waterQuantityMl = 100.0,
+                    temperatureCelsius = 90.0,
+                    brewingTime = 30.seconds,
+                    waterType = WaterType.FILTERED,
+                    sourceSessionId = null,
+                    rating = null,
+                    label = "Gaiwan · Gong-fu",
+                    timesUsed = 12,
+                    lastUsedAt = null,
+                    createdAt = Instant.fromEpochMilliseconds(0),
+                    updatedAt = Instant.fromEpochMilliseconds(0),
+                ),
+                teaName = "Tie Guan Yin",
+                teaTypeName = "Oolong",
+                teaTypeColorHex = "#FF9800",
+                vesselName = "Gaiwan",
+                isFinished = true,
             ),
             userPreferences = UserPreferences(temperatureUnit = TemperatureUnit.CELSIUS),
             onClick = {},

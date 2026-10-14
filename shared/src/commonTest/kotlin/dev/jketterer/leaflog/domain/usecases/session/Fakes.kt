@@ -4,10 +4,12 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.data.mappers.toAggregates
 import dev.jketterer.leaflog.data.mappers.toEntity
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -55,6 +57,29 @@ class FakeTeaTypeRepository(private val teaTypes: List<TeaType> = emptyList()) :
 }
 
 /** Aggregates are kept as rows, the way Room stores them. */
+class FakeBrewingVesselRepository(vessels: List<BrewingVessel> = emptyList()) :
+    BrewingVesselRepository {
+    private val vessels = vessels.associateBy { it.id }.toMutableMap()
+
+    override suspend fun getById(id: String): BrewingVessel? =
+        vessels[id]?.takeIf { it.deletedAt == null }
+
+    override suspend fun countActive(): Int =
+        vessels.values.count { it.deletedAt == null && !it.isArchived }
+
+    override suspend fun delete(id: String) {
+        vessels[id] = vessels.getValue(id).copy(deletedAt = DELETED_AT)
+    }
+
+    override fun getAllFlow(): Flow<List<BrewingVessel>> = TODO("unused by these tests")
+    override suspend fun getAll(): List<BrewingVessel> = TODO("unused by these tests")
+    override fun getByIdFlow(id: String): Flow<BrewingVessel?> = TODO("unused by these tests")
+    override suspend fun upsert(vessel: BrewingVessel) = TODO("unused by these tests")
+    override suspend fun initializeDefaults() = TODO("unused by these tests")
+    override fun getActiveFlow(): Flow<List<BrewingVessel>> = TODO("unused by these tests")
+    override suspend fun getActive(): List<BrewingVessel> = TODO("unused by these tests")
+}
+
 class FakeTeaSessionRepository(
     sessions: List<SessionWithSteeps> = emptyList(),
 ) : TeaSessionRepository {
@@ -83,6 +108,9 @@ class FakeTeaSessionRepository(
     override suspend fun getSessionsByTea(teaId: String): List<SessionWithSteeps> =
         liveRows.filter { it.teaId == teaId }.toAggregates()
 
+    override suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps> =
+        getAllSessions().filter { it.session.vesselId == vesselId }
+
     override suspend fun saveSession(session: SessionWithSteeps) {
         session.steeps.forEach { rows[it.id] = it.toEntity(session.session) }
     }
@@ -100,7 +128,6 @@ class FakeTeaSessionRepository(
     override fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getSessionFlow(id: String): Flow<SessionWithSteeps?> = TODO("unused by these tests")
     override fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
-    override suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps> = TODO("unused by these tests")
     override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
 
 }
@@ -122,8 +149,11 @@ class FakeBrewingConfigurationRepository(
     override suspend fun getById(id: String): BrewingConfiguration? =
         configurations[id]?.takeIf { it.deletedAt == null }
 
-    override suspend fun deleteWithTea(teaId: String) {
-        configurations.values.filter { it.teaId == teaId && it.deletedAt == null }
+    override suspend fun deleteWithTea(teaId: String) = deleteWhere { it.teaId == teaId }
+    override suspend fun deleteWithVessel(vesselId: String) = deleteWhere { it.vesselId == vesselId }
+
+    private fun deleteWhere(predicate: (BrewingConfiguration) -> Boolean) {
+        configurations.values.filter { it.deletedAt == null && predicate(it) }
             .forEach { configurations[it.id] = it.copy(deletedAt = DELETED_AT) }
     }
     override suspend fun upsert(configuration: BrewingConfiguration) {

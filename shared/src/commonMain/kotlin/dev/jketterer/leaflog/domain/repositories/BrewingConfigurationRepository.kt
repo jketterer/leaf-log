@@ -54,6 +54,9 @@ interface BrewingConfigurationRepository {
      */
     suspend fun deleteWithTea(teaId: String)
 
+    /** As [deleteWithTea], for [vesselId]'s configurations. Call after deleting the vessel. */
+    suspend fun deleteWithVessel(vesselId: String)
+
     /**
      * Increment the times used counter and update last used timestamp
      */

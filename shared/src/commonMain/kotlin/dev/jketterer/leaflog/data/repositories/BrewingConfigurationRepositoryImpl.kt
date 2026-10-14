@@ -65,6 +65,10 @@ class BrewingConfigurationRepositoryImpl(
         brewingConfigurationDao.softDeleteWithTea(teaId)
     }
 
+    override suspend fun deleteWithVessel(vesselId: String) {
+        brewingConfigurationDao.softDeleteWithVessel(vesselId)
+    }
+
     override suspend fun incrementTimesUsed(id: String, timestamp: Instant) {
         brewingConfigurationDao.incrementTimesUsed(id, timestamp.toEpochMilliseconds())
     }

@@ -47,6 +47,15 @@ interface BrewingConfigurationDao {
     )
     suspend fun softDeleteWithTea(teaId: String)
 
+    @Query(
+        """
+        UPDATE brewing_configurations
+        SET deleted_at = (SELECT deletedAt FROM brewing_vessel WHERE id = :vesselId)
+        WHERE vessel_id = :vesselId AND deleted_at IS NULL
+    """
+    )
+    suspend fun softDeleteWithVessel(vesselId: String)
+
     @Query("UPDATE brewing_configurations SET times_used = times_used + 1, last_used_at = :timestamp WHERE id = :id")
     suspend fun incrementTimesUsed(id: String, timestamp: Long)
 

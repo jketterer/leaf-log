@@ -94,14 +94,24 @@ class ByIdReadsTest {
 
         database.brewingConfigurationDao().softDeleteWithTea("tea")
 
-        val deletedAt = database.useReaderConnection { connection ->
-            connection.usePrepared(
-                "SELECT deleted_at FROM brewing_configurations WHERE id = 'method'",
-            ) {
-                it.step()
-                it.getLong(0)
-            }
+        assertEquals(5L, methodDeletedAt())
+    }
+
+    @Test
+    fun `a vessel's methods are deleted with the vessel's own stamp`() = runTest {
+        database.brewingVesselDao().softDelete("vessel", timestamp = 7)
+
+        database.brewingConfigurationDao().softDeleteWithVessel("vessel")
+
+        assertEquals(7L, methodDeletedAt())
+    }
+
+    private suspend fun methodDeletedAt() = database.useReaderConnection { connection ->
+        connection.usePrepared(
+            "SELECT deleted_at FROM brewing_configurations WHERE id = 'method'",
+        ) {
+            it.step()
+            it.getLong(0)
         }
-        assertEquals(5L, deletedAt)
     }
 }

@@ -2,7 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.jketterer.leaflog.domain.repositories.DataExportRepository
+import dev.jketterer.leaflog.domain.repositories.BackupRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val preferencesRepository: PreferencesRepository,
-    private val dataExportRepository: DataExportRepository,
+    private val backupRepository: BackupRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
@@ -122,7 +122,7 @@ class SettingsViewModel(
     private fun exportData() {
         viewModelScope.launch {
             _state.update { it.copy(isExporting = true) }
-            dataExportRepository.exportAll()
+            backupRepository.export()
                 .onSuccess { filePath ->
                     _state.update { it.copy(exportFilePath = filePath, isExporting = false) }
                 }
@@ -140,7 +140,7 @@ class SettingsViewModel(
     private fun importData(filePath: String) {
         viewModelScope.launch {
             _state.update { it.copy(showImportPicker = false, isImporting = true) }
-            dataExportRepository.importFrom(filePath)
+            backupRepository.import(filePath)
                 .onSuccess { result ->
                     _state.update { it.copy(isImporting = false, importResult = result) }
                 }

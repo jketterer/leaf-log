@@ -6,4 +6,6 @@ data class ImportResult(
     val teasImported: Int,
     val teaSessionsImported: Int,
     val configurationsImported: Int,
+    /** Rows left out because their tea, type or vessel is in neither the backup nor the app. */
+    val skipped: Int = 0,
 )

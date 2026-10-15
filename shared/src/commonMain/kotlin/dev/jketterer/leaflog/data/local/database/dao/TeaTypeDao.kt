@@ -33,6 +33,10 @@ interface TeaTypeDao {
     @Query("SELECT * FROM tea_type WHERE id = :id AND deletedAt IS NULL")
     fun getByIdFlow(id: String): Flow<TeaTypeEntity?>
 
+    /** Deleted rows too: a backup carries them. */
+    @Query("SELECT * FROM tea_type")
+    suspend fun getAllIncludingDeleted(): List<TeaTypeEntity>
+
     @Upsert
     suspend fun upsert(teaType: TeaTypeEntity)
 

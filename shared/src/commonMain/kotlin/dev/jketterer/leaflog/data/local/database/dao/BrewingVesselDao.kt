@@ -33,6 +33,10 @@ interface BrewingVesselDao {
     @Query("SELECT * FROM brewing_vessel WHERE id = :id AND deletedAt IS NULL")
     fun getByIdFlow(id: String): Flow<BrewingVesselEntity?>
 
+    /** Deleted rows too: a backup carries them. */
+    @Query("SELECT * FROM brewing_vessel")
+    suspend fun getAllIncludingDeleted(): List<BrewingVesselEntity>
+
     @Upsert
     suspend fun upsert(vessel: BrewingVesselEntity)
 

@@ -473,6 +473,10 @@ anything. Export is the only backup under the no-sync decision, so this is data 
   restore with their tea (#11), and a later Undo finds its photos. Export reads its snapshot inside
   one transaction. The file is named with the export date. Photo paths whose file is missing are
   dropped.
+- **Orphans are skipped and counted.** Version 1 never carried deleted rows, so it can hold
+  sessions of a tea or vessel deleted before it was made. A row whose tea, type or vessel is in
+  neither the backup nor the app is left out with what hangs off it, and the result says how many.
+  The recovery is a fresh export from 0.3.0.
 - **Last-writer-wins per row on `updatedAt`; a tie is skipped**, so importing twice changes nothing.
   Devices aren't synced, so each one's timestamps only move forward and per-row is consistent.
     - **Every write stamps `updatedAt`, soft deletes included.** Today `softDelete` sets only
@@ -494,9 +498,10 @@ anything. Export is the only backup under the no-sync decision, so this is data 
   while hashing it (okio `HashingSink`), then moves it to `photos/<sha256>.<ext>`, or drops it if
   that file exists. V1 and V2 archives share the path; export doesn't hash. Imports stop writing
   `tea_photos/`. Existing photos keep their names.
-- **Files through an injected okio `FileSystem`** plus files and cache roots from
-  `PlatformModule`, so round trips run on the host JVM against a temp dir and the in-memory Room
-  database. `DataExportRepository` becomes `BackupRepository`; Settings calls it directly.
+- **Files through an injected okio `FileSystem`**, with paths from `ImageStorage`, which already
+  resolves stored paths (iOS's legacy absolute ones included) and the cache dir. Round trips run
+  on the host JVM: the Android `ImageStorage` over a temp dir, and the in-memory Room database.
+  `DataExportRepository` becomes `BackupRepository`; Settings calls it directly.
 - **Preferences travel in the backup and apply only when the database has no tea rows** (a
   fresh-device restore). They carry no timestamp, so importing into a device with data leaves its
   settings alone.
@@ -538,11 +543,17 @@ stand alone.
   so only import's own target naming can slip; that test moved to the next item, which rewrites
   it. `FileSystem.SYSTEM` isn't visible from commonMain (`openZip` is), so the platform modules
   provide it. The repository's file work runs on `Dispatchers.IO`, as the actuals' did.
-- [ ] `feat: back up to a versioned format`: V2 DTOs, V1 → V2, version dispatch, deleted rows and
+- [x] `feat: back up to a versioned format`: V2 DTOs, V1 → V2, version dispatch, deleted rows and
   their photos exported, one import transaction, the shared repair SQL, `photos/` with hash names,
   injected `FileSystem`, dated filename, temp files cleaned up. Tests: full export → wipe → import;
   a V1 fixture with a deleted tea that has sessions → empty DB → the tea finished, its sessions
   named; a newer version refused; an entry named `../../x` lands in `photos/`. Strike #11.
+  As built: V1 holds no deleted rows, so the deleted-tea case is a device that still has the tea
+  deleted (it comes back finished); on an empty DB those sessions are orphans, skipped and
+  counted (`ImportResult.skipped`). V1 is schema 6 (March 2026) onward; its rows decode straight
+  into the V2 types, except methods' `isActive`. Repair SQL lives in `TeaSessionDao` as `REPAIRS`,
+  and keeps an existing `finishedAt`. The picker's copy is deleted after import; the export
+  temp file and the filename remembered at screen open stay for the file-handling item.
 - [ ] `feat: newer data wins on import`: `planMerge`, in-progress sessions landed completed, photos
   copied only for winning rows. Tests: import twice = no change; older backup over newer data =
   newer wins; a newer backup's delete lands; a local in-progress session is untouched. Strike #12.

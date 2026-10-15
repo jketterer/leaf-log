@@ -42,6 +42,49 @@ internal const val RECOMPUTE_CONFIGURATION_STATS = """
         )
 """
 
+// Deletes before schema 8 ignored what still pointed at the row, and an old backup can bring such rows
+// back. Run in this order, after the v8 migration and after import: teas before types, so a
+// restored tea keeps its type. Derived, like stats, so none of them stamps updatedAt.
+
+internal const val RESTORE_TEAS_WITH_LIVE_SESSIONS = """
+    UPDATE tea SET finishedAt = COALESCE(finishedAt, deletedAt), deletedAt = NULL
+    WHERE deletedAt IS NOT NULL AND EXISTS (
+        SELECT 1 FROM tea_session s
+        WHERE s.teaId = tea.id AND s.parentSessionId IS NULL AND s.deletedAt IS NULL
+    )
+"""
+
+internal const val RESTORE_VESSELS_WITH_LIVE_SESSIONS = """
+    UPDATE brewing_vessel SET deletedAt = NULL, isArchived = 1
+    WHERE deletedAt IS NOT NULL AND EXISTS (
+        SELECT 1 FROM tea_session s
+        WHERE s.vesselId = brewing_vessel.id AND s.deletedAt IS NULL
+    )
+"""
+
+internal const val RESTORE_TYPES_WITH_LIVE_TEAS = """
+    UPDATE tea_type SET deletedAt = NULL
+    WHERE deletedAt IS NOT NULL AND EXISTS (
+        SELECT 1 FROM tea t WHERE t.teaTypeId = tea_type.id AND t.deletedAt IS NULL
+    )
+"""
+
+/** A method goes with its tea or vessel, stamped the same so they restore together. */
+internal const val DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS = """
+    UPDATE brewing_configurations SET deleted_at = COALESCE(
+        (SELECT deletedAt FROM tea WHERE id = tea_id),
+        (SELECT deletedAt FROM brewing_vessel WHERE id = vessel_id)
+    )
+    WHERE deleted_at IS NULL
+"""
+
+internal val REPAIRS = listOf(
+    RESTORE_TEAS_WITH_LIVE_SESSIONS,
+    RESTORE_VESSELS_WITH_LIVE_SESSIONS,
+    RESTORE_TYPES_WITH_LIVE_TEAS,
+    DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS,
+)
+
 @Dao
 interface TeaSessionDao {
 
@@ -195,6 +238,10 @@ interface TeaSessionDao {
     )
     suspend fun getSessionOfSteep(steepId: String): List<TeaSessionEntity>
 
+    /** Deleted rows too: a backup carries them. */
+    @Query("SELECT * FROM tea_session")
+    suspend fun getAllIncludingDeleted(): List<TeaSessionEntity>
+
     @Upsert
     suspend fun upsert(teaSession: TeaSessionEntity)
 
@@ -203,6 +250,20 @@ interface TeaSessionDao {
 
     @Query(RECOMPUTE_CONFIGURATION_STATS)
     suspend fun recomputeConfigurationStats()
+
+    // The REPAIRS, one statement per query, called in the same order
+
+    @Query(RESTORE_TEAS_WITH_LIVE_SESSIONS)
+    suspend fun restoreTeasWithLiveSessions()
+
+    @Query(RESTORE_VESSELS_WITH_LIVE_SESSIONS)
+    suspend fun restoreVesselsWithLiveSessions()
+
+    @Query(RESTORE_TYPES_WITH_LIVE_TEAS)
+    suspend fun restoreTypesWithLiveTeas()
+
+    @Query(DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS)
+    suspend fun deleteMethodsOfDeletedTeasAndVessels()
 
     @Upsert
     suspend fun upsertAll(teaSessions: List<TeaSessionEntity>)

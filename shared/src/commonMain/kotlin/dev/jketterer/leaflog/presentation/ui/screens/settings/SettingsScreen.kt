@@ -47,6 +47,7 @@ import androidx.compose.material3.IconButton
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.ChevronRight
+import dev.jketterer.leaflog.presentation.ui.components.common.DialogPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.components.common.ExportFileEffect
 import dev.jketterer.leaflog.presentation.ui.components.common.ImportFileLauncher
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -325,22 +326,31 @@ private fun ImportResultDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Import Complete") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Successfully imported:")
-                Text("  ${result.teaTypesImported} tea types")
-                Text("  ${result.brewingVesselsImported} brewing vessels")
-                Text("  ${result.teasImported} teas")
-                Text("  ${result.teaSessionsImported} tea sessions")
-                Text("  ${result.configurationsImported} brewing configurations")
-            }
-        },
+        text = { ImportResultDialogContent(result) },
         confirmButton = {
             Button(onClick = onDismiss) {
                 Text("OK")
             }
         },
     )
+}
+
+@Composable
+private fun ImportResultDialogContent(result: ImportResult) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Successfully imported:")
+        Text("  ${result.teaTypesImported} tea types")
+        Text("  ${result.brewingVesselsImported} brewing vessels")
+        Text("  ${result.teasImported} teas")
+        Text("  ${result.teaSessionsImported} tea sessions")
+        Text("  ${result.configurationsImported} brewing configurations")
+        if (result.skipped > 0) {
+            Text(
+                "${result.skipped} records were skipped: what they belonged to was " +
+                    "deleted before this backup was made.",
+            )
+        }
+    }
 }
 
 @Composable
@@ -516,16 +526,21 @@ private fun DataSectionExportingPreview() {
 @Composable
 private fun ImportResultDialogPreview() {
     LeafLogTheme {
-        ImportResultDialog(
-            result = ImportResult(
-                teaTypesImported = 6,
-                brewingVesselsImported = 4,
-                teasImported = 12,
-                teaSessionsImported = 45,
-                configurationsImported = 8,
-            ),
-            onDismiss = {},
-        )
+        DialogPreviewContainer(
+            title = "Import Complete",
+            buttons = { Button(onClick = {}) { Text("OK") } },
+        ) {
+            ImportResultDialogContent(
+                ImportResult(
+                    teaTypesImported = 6,
+                    brewingVesselsImported = 4,
+                    teasImported = 12,
+                    teaSessionsImported = 45,
+                    configurationsImported = 8,
+                    skipped = 3,
+                ),
+            )
+        }
     }
 }
 

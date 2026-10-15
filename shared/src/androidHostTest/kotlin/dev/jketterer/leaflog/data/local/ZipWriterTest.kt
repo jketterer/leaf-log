@@ -56,7 +56,7 @@ class ZipWriterTest {
     @Test
     fun `an Android backup written with DEFLATE and data descriptors reads on the common path`() {
         val zipPath = dir / "android.zip"
-        // ZipOutputStream's defaults are what Android exports wrote before F4
+        // ZipOutputStream's defaults are what Android exported for backup version 1
         ZipOutputStream(fileSystem.sink(zipPath).buffer().outputStream()).use {
             it.putNextEntry(ZipEntry("data.json"))
             it.write(json)

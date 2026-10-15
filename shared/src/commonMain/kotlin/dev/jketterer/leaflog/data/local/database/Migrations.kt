@@ -5,6 +5,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
 import dev.jketterer.leaflog.data.local.database.dao.RECOMPUTE_CONFIGURATION_STATS
 import dev.jketterer.leaflog.data.local.database.dao.RECOMPUTE_TEA_STATS
+import dev.jketterer.leaflog.data.local.database.dao.REPAIRS
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
@@ -265,45 +266,6 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         )
         connection.execSQL("ALTER TABLE `brewing_configurations` DROP COLUMN `is_active`")
 
-        // Deletes used to ignore what still pointed at the row. Bring back whatever live rows
-        // use, teas before types so a restored tea keeps its type.
-        connection.execSQL(
-            """
-            UPDATE `tea` SET `finishedAt` = `deletedAt`, `deletedAt` = NULL
-            WHERE `deletedAt` IS NOT NULL AND EXISTS (
-                SELECT 1 FROM `tea_session` s
-                WHERE s.`teaId` = `tea`.`id` AND s.`parentSessionId` IS NULL
-                AND s.`deletedAt` IS NULL
-            )
-            """
-        )
-        connection.execSQL(
-            """
-            UPDATE `brewing_vessel` SET `deletedAt` = NULL, `isArchived` = 1
-            WHERE `deletedAt` IS NOT NULL AND EXISTS (
-                SELECT 1 FROM `tea_session` s
-                WHERE s.`vesselId` = `brewing_vessel`.`id` AND s.`deletedAt` IS NULL
-            )
-            """
-        )
-        connection.execSQL(
-            """
-            UPDATE `tea_type` SET `deletedAt` = NULL
-            WHERE `deletedAt` IS NOT NULL AND EXISTS (
-                SELECT 1 FROM `tea` t
-                WHERE t.`teaTypeId` = `tea_type`.`id` AND t.`deletedAt` IS NULL
-            )
-            """
-        )
-        // A method goes with its tea or vessel, stamped the same so they restore together
-        connection.execSQL(
-            """
-            UPDATE `brewing_configurations` SET `deleted_at` = COALESCE(
-                (SELECT `deletedAt` FROM `tea` WHERE `id` = `tea_id`),
-                (SELECT `deletedAt` FROM `brewing_vessel` WHERE `id` = `vessel_id`)
-            )
-            WHERE `deleted_at` IS NULL
-            """
-        )
+        REPAIRS.forEach(connection::execSQL)
     }
 }

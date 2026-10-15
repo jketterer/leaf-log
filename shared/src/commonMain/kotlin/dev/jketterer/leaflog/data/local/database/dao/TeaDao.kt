@@ -63,6 +63,10 @@ interface TeaDao {
     )
     suspend fun search(query: String): List<TeaEntity>
 
+    /** Deleted rows too: a backup carries them. */
+    @Query("SELECT * FROM tea")
+    suspend fun getAllIncludingDeleted(): List<TeaEntity>
+
     @Upsert
     suspend fun upsert(tea: TeaEntity)
 

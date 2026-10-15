@@ -26,6 +26,10 @@ interface BrewingConfigurationDao {
     @Query("SELECT * FROM brewing_configurations WHERE id = :id AND deleted_at IS NULL")
     fun getByIdFlow(id: String): Flow<BrewingConfigurationEntity?>
 
+    /** Deleted rows too: a backup carries them. */
+    @Query("SELECT * FROM brewing_configurations")
+    suspend fun getAllIncludingDeleted(): List<BrewingConfigurationEntity>
+
     @Upsert
     suspend fun upsert(configuration: BrewingConfigurationEntity)
 

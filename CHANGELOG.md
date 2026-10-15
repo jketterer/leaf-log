@@ -16,6 +16,49 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-15
+
+Backups restore on either platform, onto a fresh device, without losing or reverting anything.
+
+### Added
+
+- Importing a backup shows what it will do first: when the backup was made, and how many records
+  are new, updated or removed. Import is turned off when the device already has everything in it.
+- Backups carry your settings. They're restored only onto a device with no teas yet, so a device
+  you already use keeps its own.
+- Settings shows how long ago you last backed up. After 14 days, or if you never have, it turns red
+  and the Export button reads "Back up now".
+- Settings shows how much space your photos take on this device.
+- "Backup exported" confirms an export once it has been saved.
+
+### Changed
+
+- Import keeps whichever copy of each record changed last. An older backup no longer reverts what
+  you've changed since, a delete made after the backup stays deleted, and importing the same backup
+  twice changes nothing.
+- Backups include deleted teas, vessels, tea types and brewing methods with their photos, so the
+  sessions of a deleted tea restore with their tea.
+- An import happens all at once: if it fails, nothing changes and no photos are left behind.
+- A session that was in progress when the backup was made arrives finished. A session in progress
+  on the device you import into is never touched.
+- An older backup can hold sessions of a tea or vessel deleted before it was made. Those are left
+  out, and the import says how many; a fresh export from this version brings everything.
+- Edits to the built-in tea types and vessels survive a restore onto a fresh install.
+- Export files are named with the date and time they were made.
+- Photos added from now on are saved as JPEGs no longer than 2048 pixels on their longest side, so
+  they take less space and backups are smaller. Photos already in the app are left as they are.
+
+### Fixed
+
+- A backup made on Android now imports on iOS.
+- A photo that can't be saved shows an error. On iOS, a photo that failed to save is no longer kept
+  as a missing image.
+- Exporting on Android no longer freezes the screen while the file is copied.
+- Rotating or switching dark mode while the export or import picker is open no longer opens it a
+  second time.
+- On iOS, an export counts as done only once the share sheet saves or sends it, and a failed copy
+  is reported.
+
 ## [0.2.0] - 2026-10-14
 
 Teas are marked finished instead of deleted, so the journal keeps the name of every tea it mentions.

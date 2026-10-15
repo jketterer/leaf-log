@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-15 (F3 released)
+> **Last updated:** 2026-10-15 (F4 designed)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -303,15 +303,16 @@ disagreeing copies of the rules.
   Session Detail's child-to-parent walk is deleted. History and Tea Detail get one card per session
   without a layout change, and Vessel Detail stops counting steeps as sessions. Analytics ports
   mechanically; Bet 4 restructures it.
-- **Actual brew time.** `Steep.actualTime` = `totalDuration − remainingDuration` at timer completion:
+- **Actual brew time.** `Steep.actualTime` = `totalDuration − remainingDuration` at timer
+  completion:
   includes ±adjust, excludes paused time, and is the elapsed time for Complete Now. The planned
   `brewingTime` is never rewritten. `null` means no timer record. Prefill and Brew Again replay
   `actualTime ?: plannedTime`; Quick Timer passes it too. Nothing displays it until Bet 3.
 - **Session Detail's Add Steep records a forgotten steep:** no timer, stamped
   `last.timestamp + (actual ?: planned)`, and the session stays completed.
-- **Undo an accidental finish.** Home's route takes `finishedSessionId`; a long snackbar offers Undo,
-  which runs `ReopenSession` and returns to Steep Complete. This is not a general way to re-open old
-  sessions, and it doesn't re-arm the reminder.
+- **Undo an accidental finish.** Home's route takes `finishedSessionId`; a long snackbar offers
+  Undo, which runs `ReopenSession` and returns to Steep Complete. This is not a general way to
+  re-open old sessions, and it doesn't re-arm the reminder.
 - **Backups stay importable** (the minimum; F4 does the rest). Import writes rows through the DAO,
   NULLs children's session fields and recomputes all stats. The new column defaults to null, so v6
   backups still parse.
@@ -319,8 +320,8 @@ disagreeing copies of the rules.
 **Migration:** v6 → v7 rebuilds `tea_session`. Session columns become nullable and are NULLed on
 children; `averageRating` is dropped; `actualBrewingTimeMs` is added with no backfill (an old total
 can't tell Complete Now from a natural finish). A parent with an `IN_PROGRESS` child becomes
-`IN_PROGRESS`, the rest `COMPLETED`. Tea and configuration stats are recomputed in SQL; a test checks
-the SQL against the Kotlin rules on the same fixture.
+`IN_PROGRESS`, the rest `COMPLETED`. Tea and configuration stats are recomputed in SQL; a test
+checks the SQL against the Kotlin rules on the same fixture.
 
 **Verification:**
 
@@ -328,11 +329,12 @@ the SQL against the Kotlin rules on the same fixture.
   the migration on a synthetic fixture (host JVM, bundled SQLite), and an F2 export → import round
   trip.
 - Track B: install `v0.1.1` on an emulator and seed by hand a single-steep session, a gongfu session
-  with a deleted middle steep, a parent edited after steeps were added, an unrated session, a session
-  left mid-steep, and a saved method used across several steeps. Install the F2 build over it and
-  check the screens and stats.
+  with a deleted middle steep, a parent edited after steeps were added, an unrated session, a
+  session left mid-steep, and a saved method used across several steeps. Install the F2 build over
+  it and check the screens and stats.
 
-**Commits.** Each compiles, passes tests and leaves the app working. The schema lands late: until v7,
+**Commits.** Each compiles, passes tests and leaves the app working. The schema lands late: until
+v7,
 `upsertSteep` fills children's NOT NULL vessel and water columns from the parent.
 
 - [x] `test: run Room migrations on the host JVM`: the harness, proven on 5 → 6. First choice is
@@ -345,8 +347,8 @@ the SQL against the Kotlin rules on the same fixture.
 - [x] `feat: add the session aggregate use cases`, alongside the old ones. A host test proves
   `RoomTransactor` rolls back and shares its connection with DAO calls, on the in-memory Room
   database `SessionReadsTest` builds (no Robolectric needed). They live in `session/aggregate/`
-  until the old names are free, and write the database only: timer stop, reminder withdrawal
-  and photo-file deletion are the caller's, after success.
+  until the old names are free, and write the database only: timer stop, reminder withdrawal and
+  photo-file deletion are the caller's, after success.
 - [x] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
   delegate, Home, Log Tea, Quick Timer, Brew Again. The status meaning flips here, for every writer
   at once. Routes and `TimerState.sessionId` carry the session id; the timer's steep is
@@ -367,18 +369,17 @@ the SQL against the Kotlin rules on the same fixture.
   and the DAO queries only those reads used. The repository's `delete` is now `deleteSession`.
 - [x] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
   platforms, the migration test, the transitional copy removed, import normalisation, the Track B
-  line, the Hard-won facts entry on `AddSteepUseCase` deleted. The table is renamed away before
-  the copy, so dropping it can't cascade into the new one. A parent left `IN_PROGRESS` on steep 1
-  stays in progress too. The stats SQL lives in `TeaSessionDao` and import reuses it.
+  line, the Hard-won facts entry on `AddSteepUseCase` deleted. The table is renamed away before the
+  copy, so dropping it can't cascade into the new one. A parent left `IN_PROGRESS` on steep 1 stays
+  in progress too. The stats SQL lives in `TeaSessionDao` and import reuses it.
   `actualBrewingTimeMs` is in the entity, unmapped until the next item.
 - [x] `feat: record actual brew time`: `SaveTimerStateUseCase` stores it on completion, and
   `TimerState.completedAt` shrinks a Complete Now timer to what had elapsed. `Steep.brewedTime` is
   the replay. Add Steep's stamp uses it too. A steep that ran out while the process was dead is
   never saved as complete, so it keeps `null`.
-- [x] `feat: undo an accidental finish`: only Steep Complete's Finish offers it, with or without
-  the save-method prompt. Discard does not. A `rememberSaveable` flag keeps it to once per Home
-  entry. Home's `CompleteSession` now goes straight to Steep Complete instead of bouncing off the
-  Timer.
+- [x] `feat: undo an accidental finish`: only Steep Complete's Finish offers it, with or without the
+  save-method prompt. Discard does not. A `rememberSaveable` flag keeps it to once per Home entry.
+  Home's `CompleteSession` now goes straight to Steep Complete instead of bouncing off the Timer.
 - [x] `chore: release 0.1.2`: audit rows #4–7 struck.
 
 **Exit:** the six paths are gone; Track A tests cover every steep mutation, the rating rule and the
@@ -401,8 +402,8 @@ migration; the emulator upgrade passes; History, Tea Detail and prefill agree on
     - Collection: sorted last under every sort option, dimmed, labelled "Finished" (dimming alone is
       colour-only meaning), still searchable.
     - Log Tea picker: stays visible with the same label. No "Still have this?" dialog: starting
-      clears the flag anyway, and a "last of it" choice wasn't worth threading through every
-      start path. Quick Brew dims finished teas' methods.
+      clears the flag anyway, and a "last of it" choice wasn't worth threading through every start
+      path. Quick Brew dims finished teas' methods.
 - **A tea with sessions cannot be deleted** — only finished. "Has sessions" means any live parent
   row of any status: `totalSessions` counts completed ones only and would let an in-progress tea go.
   Delete is offered only at zero (typos, duplicates).
@@ -430,8 +431,8 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 **Commits.** Each compiles, passes tests and leaves the app working. 4–9 depend only on 3.
 
 - [x] `docs: record the F3 design`
-- [x] `refactor: delete purchasePrice, stockAmount and isActive from the domain`: the entity keeps its
-  columns until v8; the mapper writes defaults.
+- [x] `refactor: delete purchasePrice, stockAmount and isActive from the domain`: the entity keeps
+  its columns until v8; the mapper writes defaults.
 - [x] `feat: tea finishedAt and method deletedAt (schema v8)`: entity, migration, `8.json`, both
   platforms, mapper, domain, method queries on `deleted_at`, method delete made soft. Migration test
   seeds one of each repair case.
@@ -452,24 +453,108 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 **Outcome:** a backup restores on either platform, onto a fresh device, without losing or reverting
 anything. Export is the only backup under the no-sync decision, so this is data safety, not polish.
 
-- **Explicit export DTOs with a version**, decoupled from Room entities. Unknown future version →
-  refuse with a clear message. Older versions → migrate the DTO.
-- **One ZIP format on both platforms.** Android writes DEFLATE today and iOS reads STORE only.
-  Photos don't compress; STORE on both is the lazy correct answer.
-- **Import in one transaction.** A failure leaves the database untouched.
-- **Last-writer-wins on `updatedAt`**, and `deletedAt` travels in the backup. An older backup no
-  longer reverts edits or un-deletes rows.
-- **Stream entries file-to-file.** No whole-archive `ByteArray`; no OOM at hundreds of photos.
-- **Content-hash image names.** No collisions across imports, no duplicate storage on re-import.
-- Export preferences too. Clean up temp files. Settings shows **"Last backup: 42 days ago"**
-  and a gentle nudge past a threshold.
-- **Import preview:** backup date, counts, and "N existing records will be updated".
-- **Photo safety** (previous 2.6): size cap and compression on import to the app, picker error
-  handling, storage shown in Settings.
+**Design** (decided 2026-10-15):
 
-**Exit:** Track A round-trips for: full export → wipe → import; Android archive read by the iOS
-parser path; tea finished-with-sessions restored to an empty DB; import twice = no change; older
-backup over newer data = newer data wins.
+- **One ZIP implementation, on okio, in commonMain.** Both `ZipArchiver` actuals are deleted.
+  Reading is okio's `openZip`, which handles STORE and DEFLATE, so existing Android backups import
+  on iOS. Writing is a small streaming STORE writer: photos don't compress, and STORE needs each
+  entry's CRC up front, so it reads each photo twice (CRC, then copy). okio 3.17 already arrives
+  through DataStore; it is declared in the catalog. Entries stream file-to-file: no whole-archive
+  `ByteArray`. Entry names are checked against zip-slip.
+    - Java's `ZipInputStream` can't read STORED entries that use data descriptors, so the writer
+      never uses them.
+- **Versioned DTOs, decoupled from Room.** `version = 2`. The DTOs carry facts only: no derived
+  stats (tea `totalSessions`, `averageRating`, `lastBrewedAt`; method `timesUsed`, `lastUsedAt`), no
+  `userId` or `syncStatus`. Today's entity JSON is frozen as `BackupV1` (lenient, defaults for
+  fields added since schema 6) and migrated to V2, the pre-v7 child normalisation with it. A newer
+  version is refused with "update the app". The plain-JSON import path is deleted: every export
+  since Feb 2026 is a ZIP.
+- **Export everything, deleted rows included**, and their photos. A deleted tea's sessions then
+  restore with their tea (#11), and a later Undo finds its photos. Export reads its snapshot inside
+  one transaction. The file is named with the export date. Photo paths whose file is missing are
+  dropped.
+- **Last-writer-wins per row on `updatedAt`; a tie is skipped**, so importing twice changes nothing.
+  Devices aren't synced, so each one's timestamps only move forward and per-row is consistent.
+    - **Every write stamps `updatedAt`, soft deletes included.** Today `softDelete` sets only
+      `deletedAt`, so a newer backup's delete would tie and be skipped.
+    - **Seeded tea types and vessels are created at epoch 0**, so any real row beats an untouched
+      seed and edits to defaults survive a fresh-device restore. Existing installs are unaffected.
+- **Import runs in order:** plan → copy the photos winning rows need → one transaction (re-plan,
+  upsert, repair, recompute stats) → preferences → temp cleanup. A failure leaves the database
+  untouched and deletes the photo files that import created.
+    - The plan is a pure `planMerge(incoming, local)`: insert, update or skip per row.
+    - **Repair** is F3's v7 → v8 repair SQL, moved into `TeaSessionDao` like the stats SQL and
+      shared with the migration: a deleted tea with live sessions comes back finished, a used vessel
+      archived, a used type restored, orphaned methods soft-deleted. Like stats it is derived, so it
+      doesn't stamp `updatedAt`.
+    - A backup's `IN_PROGRESS` session lands `COMPLETED` with its timer fields cleared: its timer is
+      gone, and two in-progress sessions would break the current-steep rule. A local in-progress
+      session is never touched.
+- **Photos are content-addressed on the device.** Import streams each needed entry into a temp file
+  while hashing it (okio `HashingSink`), then moves it to `photos/<sha256>.<ext>`, or drops it if
+  that file exists. V1 and V2 archives share the path; export doesn't hash. Imports stop writing
+  `tea_photos/`. Existing photos keep their names.
+- **Files through an injected okio `FileSystem`** plus files and cache roots from
+  `PlatformModule`, so round trips run on the host JVM against a temp dir and the in-memory Room
+  database. `DataExportRepository` becomes `BackupRepository`; Settings calls it directly.
+- **Preferences travel in the backup and apply only when the database has no tea rows** (a
+  fresh-device restore). They carry no timestamp, so importing into a device with data leaves its
+  settings alone.
+- **Import preview:** pick → plan (read-only) → dialog → Confirm. It shows the backup date,
+  "N new · M updated · K removed · rest unchanged" across all records, and whether settings will be
+  restored. Rows that arrive already deleted don't count as new. The result reports the same
+  numbers, not rows in the file.
+- **"Last backup: 42 days ago"** (or "Never") in Settings' Data section, recorded only when the file
+  is delivered: Android's SAF write succeeded, iOS's share sheet completed. Past **14 days**
+  it turns to the warning colour with "Back up now". Nothing on Home: no nagging.
+- **Photo safety** (previous 2.6):
+    - `ImageStorage.saveImage` downscales every photo added to the app to a 2048px long edge, JPEG
+      quality 85, so `.jpg` is finally true for HEIC and PNG picks. Existing photos aren't
+      re-encoded.
+    - Android applies EXIF orientation itself with the framework `ExifInterface(InputStream)`:
+      `BitmapFactory` ignores it, and `ImageDecoder` needs API 28 (minSdk is 24).
+    - Save failures reach the user: `EditTeaViewModel.addPhoto` is unguarded, and iOS ignores
+      `writeToFile` returning false, storing a path to a missing file.
+    - Settings shows the storage photos take.
+- **Settings' data section clears its audit findings** (Rule 1): the whole-file copy on the main
+  thread, `pendingFilePath` lost on recreation, the filename remembered at screen open, iOS
+  `onExported` firing on presentation and ignoring copy errors, deprecated `keyWindow`, and no
+  success confirmation.
+
+**Migration:** none. No schema change.
+
+**Commits.** Each compiles, passes tests and leaves the app working. 3 → 4 → 5 → 6 → 7; 2 and 8–11
+stand alone.
+
+- [x] `docs: record the F4 design`
+- [ ] `fix: stamp updatedAt on every write`: soft-delete queries take it, writers that skip it are
+  fixed, seeds go to epoch 0. Test: each DAO soft delete stamps it.
+- [ ] `refactor: one ZIP implementation on okio`: both actuals deleted, entries stream. Tests:
+  writer → reader round trip; a DEFLATE archive with data descriptors written by `java.util.zip`
+  read by the common reader (the old Android format through the one iOS also runs); zip-slip names
+  rejected. Strike #10.
+- [ ] `feat: back up to a versioned format`: V2 DTOs, V1 → V2, version dispatch, deleted rows and
+  their photos exported, one import transaction, the shared repair SQL, `photos/` with hash names,
+  injected `FileSystem`, dated filename, temp files cleaned up. Tests: full export → wipe → import;
+  a V1 fixture with a deleted tea that has sessions → empty DB → the tea finished, its sessions
+  named; a newer version refused. Strike #11.
+- [ ] `feat: newer data wins on import`: `planMerge`, in-progress sessions landed completed, photos
+  copied only for winning rows. Tests: import twice = no change; older backup over newer data =
+  newer wins; a newer backup's delete lands; a local in-progress session is untouched. Strike #12.
+- [ ] `feat: preview an import before it runs`: the two-step flow, the dialog, honest result counts.
+- [ ] `feat: back up preferences`: applied only to an empty database, shown in the preview.
+- [ ] `fix: export and import file handling`: the Settings data-section audit rows.
+- [ ] `feat: show when the last backup was`
+- [ ] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size
+  math. Track B line: a portrait photo stays upright on both platforms.
+- [ ] `feat: show photo storage in Settings`
+- [ ] `chore: release 0.3.0`: Track B lines — an Android backup restored on iOS, an iOS backup
+  restored on Android, a 0.2.0 backup restored onto a fresh install.
+
+**Exit:** Track A round-trips for: full export → wipe → import; the old Android archive read by the
+common reader; tea finished-with-sessions restored to an empty DB; import twice = no change; older
+backup over newer data = newer data wins. The F2 plan promised an export → import round trip that
+was never written; these are the first.
 
 ---
 
@@ -706,35 +791,35 @@ Gated. Nothing ships to strangers until these are done. Blocks nothing before th
 
 Recorded so future sessions don't re-argue them. Each was decided against a real alternative.
 
-| Decision                                                                            | Reasoning                                                                                                                                                                                                                                                                  |
-|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Sync is deferred, not planned**                                                   | Backup is covered by export/import (made trustworthy in F4). Multi-device sync matters only if you brew from two devices, which you don't. Sync costs auth, a backend, conflict resolution, a privacy policy, and ongoing money. `SyncStatus` and `userId` can sit unused. |
-| **Purposes stay ranked, public launch stays undated**                               | Revisited 2026-09-23. Personal tool first; a date would let strangers' needs override the author's.                                                                                                                                                                        |
-| **Thin foundation, then bets**                                                      | Only what every bet stands on goes first. Other foundations are paid for by the first bet that touches them. Considered: all foundations first (weeks of invisible work, some shaped better by features) and features first (built on the six-way session logic).          |
-| **Design system before brewing plans**                                              | Bets 2–3 rewrite most screens; building them after the system means building them once.                                                                                                                                                                                    |
-| **Only a user tap stores a rating**                                                 | Four code paths wrote ratings the user never gave, and one fed back into itself. Unrated steeps stay null and are excluded from averages and best brew. Cost: less rating data. Worth it: the data means something.                                                        |
-| **Stored derived stats are recomputed, never incremented**                         | Tea and configuration stats are rebuilt from sessions inside each mutation's transaction. Increments drifted: `timesUsed` rose once per steep and never fell on delete. Recomputing makes re-finish, Undo and delete correct with no special cases. Session ratings aren't stored at all.  |
-| **Discarding steep N ≥ 2 finishes the session**                                     | Steeps 1…N−1 happened; only the next one was abandoned. Discarding steep 1 deletes the session. Considered: discarding the whole session from any steep.                                                                                                                  |
-| **Undo is the only way to re-open a finished session**                              | An accidental Finish needs a way back; re-opening old sessions doesn't. Session Detail's Add Steep records a forgotten steep without a timer instead.                                                                                                                       |
-| **A brewing style lives on the method, not the tea**                                | A tea brewed both ways needs two methods; the vessel usually implies the style.                                                                                                                                                                                            |
-| **Plans are base + increment with overrides**                                       | Matches how the author actually brews gongfu.                                                                                                                                                                                                                              |
-| **Timer waits for Start**                                                           | Pouring takes time. Auto-start considered and rejected.                                                                                                                                                                                                                    |
-| **Review stays between steeps, slimmed**                                            | Considered: rating during the next countdown (no screen at all) and session-end-only (memory fades by steep 10). A one-screen stars + tags + Next keeps capture high at one tap.                                                                                           |
-| **Lock-screen Next opens the review**                                               | Considered: advancing from the lock screen with the rating left null. Rejected to keep rating capture in the loop.                                                                                                                                                         |
-| **Tags are per steep, carried forward unconfirmed**                                 | Per-steep shows how flavour evolves; carry-forward makes it cost zero taps when nothing changed; "unconfirmed" keeps it honest. Vocabulary is curated plus custom.                                                                                                         |
-| **Quick Timer is "timer now, tea later" on the one engine**                         | Keeps the no-friction entry point the author values, deletes the second timer engine the audit found weak. Considered: nullable-tea draft rows in the database (a migration and nullable tea everywhere) and keeping the separate screen.                                  |
-| **Teas with sessions are finished, never deleted**                                  | The journal must never lose a name, and deleting caused "Unknown Tea" and unrestorable backups. Delete remains for zero-session teas.                                                                                                                                      |
-| **`purchasePrice` is deleted, not built**                                           | Cost-per-cup analytics is a feature nobody asked for.                                                                                                                                                                                                                      |
-| **Stock is `finishedAt`, not a quantity**                                           | Marking "I ran out" is the whole need, and it's what feeds the dormant-tea prompt.                                                                                                                                                                                         |
-| **Finished teas stay in the Log Tea picker**                                        | Hiding them makes the auto-clear unreachable.                                                                                                                                                                                                                              |
-| **Host-JVM tests; screenshot tests from previews; no interactive Compose UI suite** | Revisited 2026-09-23. Screenshot tests reuse mandatory previews, run without an emulator, and catch the polish regressions that matter. Interaction suites still aren't worth their brittleness.                                                                           |
-| **Accessibility basics are definition-of-done, not a launch gate**                  | Revisited 2026-09-23. Cheap per touch; the rating control — the loop's main input — is unusable with a screen reader today. One full screen-reader pass before store launch.                                                                                               |
-| **Photos get safety, not features**                                                 | The author doesn't reread photos. They matter only because unchecked they break backups and storage.                                                                                                                                                                       |
-| **Freeform journal entries are rejected**                                           | The author rarely writes notes attached to sessions; detached entries would be emptier. Tags and session notes cover the journal.                                                                                                                                          |
-| **History grouping revived; the rest of the stashed redesign stays dead**           | Three of its five summary fields were Analytics content in a History costume.                                                                                                                                                                                              |
-| **No streaks**                                                                      | An engagement mechanic that says nothing about tea. The shipped streak insight is removed in F1.                                                                                                                                                                           |
-| **The session reminder stays inexact**                                              | `setAndAllowWhileIdle`; Doze spaces these ~9 minutes apart. Not worth the exact-alarm allowance for a soft nudge. The fix if it annoys is `setExactAndAllowWhileIdle`, mirroring the completion alarm.                                                                     |
-| **Notifications get two switches, not one**                                         | Turning off the soft nudge must not kill the alert the app exists to deliver.                                                                                                                                                                                              |
+| Decision                                                                            | Reasoning                                                                                                                                                                                                                                                                                 |
+|-------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Sync is deferred, not planned**                                                   | Backup is covered by export/import (made trustworthy in F4). Multi-device sync matters only if you brew from two devices, which you don't. Sync costs auth, a backend, conflict resolution, a privacy policy, and ongoing money. `SyncStatus` and `userId` can sit unused.                |
+| **Purposes stay ranked, public launch stays undated**                               | Revisited 2026-09-23. Personal tool first; a date would let strangers' needs override the author's.                                                                                                                                                                                       |
+| **Thin foundation, then bets**                                                      | Only what every bet stands on goes first. Other foundations are paid for by the first bet that touches them. Considered: all foundations first (weeks of invisible work, some shaped better by features) and features first (built on the six-way session logic).                         |
+| **Design system before brewing plans**                                              | Bets 2–3 rewrite most screens; building them after the system means building them once.                                                                                                                                                                                                   |
+| **Only a user tap stores a rating**                                                 | Four code paths wrote ratings the user never gave, and one fed back into itself. Unrated steeps stay null and are excluded from averages and best brew. Cost: less rating data. Worth it: the data means something.                                                                       |
+| **Stored derived stats are recomputed, never incremented**                          | Tea and configuration stats are rebuilt from sessions inside each mutation's transaction. Increments drifted: `timesUsed` rose once per steep and never fell on delete. Recomputing makes re-finish, Undo and delete correct with no special cases. Session ratings aren't stored at all. |
+| **Discarding steep N ≥ 2 finishes the session**                                     | Steeps 1…N−1 happened; only the next one was abandoned. Discarding steep 1 deletes the session. Considered: discarding the whole session from any steep.                                                                                                                                  |
+| **Undo is the only way to re-open a finished session**                              | An accidental Finish needs a way back; re-opening old sessions doesn't. Session Detail's Add Steep records a forgotten steep without a timer instead.                                                                                                                                     |
+| **A brewing style lives on the method, not the tea**                                | A tea brewed both ways needs two methods; the vessel usually implies the style.                                                                                                                                                                                                           |
+| **Plans are base + increment with overrides**                                       | Matches how the author actually brews gongfu.                                                                                                                                                                                                                                             |
+| **Timer waits for Start**                                                           | Pouring takes time. Auto-start considered and rejected.                                                                                                                                                                                                                                   |
+| **Review stays between steeps, slimmed**                                            | Considered: rating during the next countdown (no screen at all) and session-end-only (memory fades by steep 10). A one-screen stars + tags + Next keeps capture high at one tap.                                                                                                          |
+| **Lock-screen Next opens the review**                                               | Considered: advancing from the lock screen with the rating left null. Rejected to keep rating capture in the loop.                                                                                                                                                                        |
+| **Tags are per steep, carried forward unconfirmed**                                 | Per-steep shows how flavour evolves; carry-forward makes it cost zero taps when nothing changed; "unconfirmed" keeps it honest. Vocabulary is curated plus custom.                                                                                                                        |
+| **Quick Timer is "timer now, tea later" on the one engine**                         | Keeps the no-friction entry point the author values, deletes the second timer engine the audit found weak. Considered: nullable-tea draft rows in the database (a migration and nullable tea everywhere) and keeping the separate screen.                                                 |
+| **Teas with sessions are finished, never deleted**                                  | The journal must never lose a name, and deleting caused "Unknown Tea" and unrestorable backups. Delete remains for zero-session teas.                                                                                                                                                     |
+| **`purchasePrice` is deleted, not built**                                           | Cost-per-cup analytics is a feature nobody asked for.                                                                                                                                                                                                                                     |
+| **Stock is `finishedAt`, not a quantity**                                           | Marking "I ran out" is the whole need, and it's what feeds the dormant-tea prompt.                                                                                                                                                                                                        |
+| **Finished teas stay in the Log Tea picker**                                        | Hiding them makes the auto-clear unreachable.                                                                                                                                                                                                                                             |
+| **Host-JVM tests; screenshot tests from previews; no interactive Compose UI suite** | Revisited 2026-09-23. Screenshot tests reuse mandatory previews, run without an emulator, and catch the polish regressions that matter. Interaction suites still aren't worth their brittleness.                                                                                          |
+| **Accessibility basics are definition-of-done, not a launch gate**                  | Revisited 2026-09-23. Cheap per touch; the rating control — the loop's main input — is unusable with a screen reader today. One full screen-reader pass before store launch.                                                                                                              |
+| **Photos get safety, not features**                                                 | The author doesn't reread photos. They matter only because unchecked they break backups and storage.                                                                                                                                                                                      |
+| **Freeform journal entries are rejected**                                           | The author rarely writes notes attached to sessions; detached entries would be emptier. Tags and session notes cover the journal.                                                                                                                                                         |
+| **History grouping revived; the rest of the stashed redesign stays dead**           | Three of its five summary fields were Analytics content in a History costume.                                                                                                                                                                                                             |
+| **No streaks**                                                                      | An engagement mechanic that says nothing about tea. The shipped streak insight is removed in F1.                                                                                                                                                                                          |
+| **The session reminder stays inexact**                                              | `setAndAllowWhileIdle`; Doze spaces these ~9 minutes apart. Not worth the exact-alarm allowance for a soft nudge. The fix if it annoys is `setExactAndAllowWhileIdle`, mirroring the completion alarm.                                                                                    |
+| **Notifications get two switches, not one**                                         | Turning off the soft nudge must not kill the alert the app exists to deliver.                                                                                                                                                                                                             |
 
 ---
 
@@ -754,7 +839,8 @@ Things that cost real debugging time and would cost it again. Not history — tr
 - **Never push a Live Activity update as a side effect of cancelling an alarm.** It froze running
   timers into "Paused". Pausing is explicit via `TimerNotificationService.showTimerPaused(state)`.
 - **Derive in-progress status from wall-clock in exactly one place** —
-  `Steep.resolvedTimerStatus(now)`, on the session's current steep. Gate live progress on matching session id. Known residual:
+  `Steep.resolvedTimerStatus(now)`, on the session's current steep. Gate live progress on matching
+  session id. Known residual:
   a Home screen left open with no live timer won't re-resolve from time passing alone.
 - **Room KMP does not support enum parameters in raw `@Query` SQL.** The `'COMPLETED'` /
   `'IN_PROGRESS'` string literals in DAOs are correct.
@@ -806,8 +892,8 @@ Working an item: take the first unchecked one, check it off when it's done.
 - [ ] Home banner bar frozen at the last save — with no live timer (app relaunched mid-brew), the
   bar falls back to the stored `timerRemainingMs`, so it shows progress as of the last save, not
   now. **Should:** derive elapsed from `timerStartedAt` the way `Steep.resolvedTimerStatus` does.
-    - same family as the Hard-won facts residual (Home doesn't re-resolve as time passes); fix
-      both together
+    - same family as the Hard-won facts residual (Home doesn't re-resolve as time passes); fix both
+      together
     - found on the emulator 2026-10-13; predates F2
 - [ ] Test files split per function — `SortTeasTest` tests one function pulled out of
   `TeaCollectionViewModel.kt`, and others may be the same. **Should:** a source file's tests all

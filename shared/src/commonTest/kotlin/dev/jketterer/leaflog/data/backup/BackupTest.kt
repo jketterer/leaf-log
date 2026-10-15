@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.data.backup
 
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,7 +12,7 @@ class BackupTest {
 
     @Test
     fun `a backup whose rows all resolve keeps everything`() {
-        val (kept, dropped) = backup().withoutOrphans(LocalIds())
+        val (kept, dropped) = backup().withoutOrphans(LocalRows())
 
         assertEquals(backup(), kept)
         assertEquals(0, dropped)
@@ -21,7 +22,7 @@ class BackupTest {
     fun `a session whose tea is nowhere is dropped with its steeps`() {
         val backup = backup(teas = emptyList())
 
-        val (kept, dropped) = backup.withoutOrphans(LocalIds())
+        val (kept, dropped) = backup.withoutOrphans(LocalRows())
 
         assertEquals(emptyList(), kept.steeps)
         assertEquals(emptyList(), kept.methods)
@@ -30,7 +31,7 @@ class BackupTest {
 
     @Test
     fun `a tea already in the app keeps its sessions`() {
-        val (kept, dropped) = backup(teas = emptyList()).withoutOrphans(LocalIds(teas = setOf("tea")))
+        val (kept, dropped) = backup(teas = emptyList()).withoutOrphans(LocalRows(teas = mapOf("tea" to at)))
 
         assertEquals(listOf("s1", "s2"), kept.steeps.map { it.id })
         assertEquals(0, dropped)
@@ -38,7 +39,7 @@ class BackupTest {
 
     @Test
     fun `a session whose vessel is nowhere is dropped with its steeps`() {
-        val (kept, dropped) = backup(vessels = emptyList()).withoutOrphans(LocalIds())
+        val (kept, dropped) = backup(vessels = emptyList()).withoutOrphans(LocalRows())
 
         assertEquals(emptyList(), kept.steeps)
         assertEquals(3, dropped)
@@ -46,10 +47,31 @@ class BackupTest {
 
     @Test
     fun `a tea whose type is nowhere takes its sessions and methods with it`() {
-        val (kept, dropped) = backup(teaTypes = emptyList()).withoutOrphans(LocalIds())
+        val (kept, dropped) = backup(teaTypes = emptyList()).withoutOrphans(LocalRows())
 
         assertEquals(emptyList(), kept.teas)
         assertEquals(4, dropped)
+    }
+
+    @Test
+    fun `a session being brewed in the backup lands completed without its running timer`() {
+        val brewed = steep("s1", null).copy(
+            status = SessionStatus.IN_PROGRESS,
+            timerStatus = TimerStatus.COMPLETE,
+            timerTotalMs = 20_000,
+        )
+        val running = steep("s2", "s1").copy(
+            timerStatus = TimerStatus.RUNNING,
+            timerStartedAt = at,
+            timerRemainingMs = 5_000,
+            timerTotalMs = 20_000,
+        )
+
+        val steeps = planMerge(backup().copy(steeps = listOf(brewed, running)), LocalRows()).steeps
+
+        assertEquals(listOf(SessionStatus.COMPLETED, SessionStatus.COMPLETED), steeps.map { it.status })
+        assertEquals(brewed.copy(status = SessionStatus.COMPLETED), steeps[0])
+        assertEquals(steep("s2", "s1"), steeps[1])
     }
 
     @Test

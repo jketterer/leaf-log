@@ -13,6 +13,7 @@ import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEn
 import dev.jketterer.leaflog.data.local.database.inMemoryDatabase
 import dev.jketterer.leaflog.data.local.database.row
 import dev.jketterer.leaflog.data.local.database.seedForeignKeys
+import dev.jketterer.leaflog.domain.models.ImportResult
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.Transactor
@@ -66,6 +67,66 @@ class BackupRepositoryImplTest {
         // Stats are recomputed rather than carried
         assertEquals(1, fresh.database.teaDao().getById("tea")?.totalSessions)
         assertEquals(1, fresh.database.brewingConfigurationDao().getById("method")?.timesUsed)
+    }
+
+    @Test
+    fun `importing the same backup twice changes nothing`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val fresh = Device("fresh")
+        fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
+        val once = fresh.snapshot()
+
+        val result = fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
+
+        assertEquals(once, fresh.snapshot())
+        assertEquals(ImportResult(0, 0, 0, 0, 0), result)
+    }
+
+    @Test
+    fun `an older backup doesn't revert what changed since`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val old = phone.repository.export().getOrThrow()
+        val tea = assertNotNull(phone.database.teaDao().getById("tea"))
+        phone.database.teaDao().upsert(tea.copy(name = "Renamed", updatedAt = at(5)))
+        phone.database.teaSessionDao().softDelete("s2", timestamp = at(5).toEpochMilliseconds())
+
+        phone.repository.import(old).getOrThrow()
+
+        assertEquals("Renamed", phone.database.teaDao().getById("tea")?.name)
+        assertNotNull(phone.database.teaSessionDao().getById("s2")?.deletedAt)
+    }
+
+    @Test
+    fun `a newer backup's delete lands`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val fresh = Device("fresh")
+        fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
+        phone.database.brewingConfigurationDao()
+            .softDelete("method", timestamp = at(5).toEpochMilliseconds())
+
+        fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
+
+        assertNull(fresh.database.brewingConfigurationDao().getById("method"))
+    }
+
+    @Test
+    fun `a session being brewed here is left alone`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val s1 = assertNotNull(phone.database.teaSessionDao().getById("s1"))
+        phone.database.teaSessionDao().upsert(s1.copy(notes = "edited", updatedAt = at(5)))
+        val brewing = Device("brewing")
+        brewing.seedJournal()
+        brewing.database.teaSessionDao().upsert(s1.copy(status = SessionStatus.IN_PROGRESS))
+
+        brewing.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
+
+        val kept = assertNotNull(brewing.database.teaSessionDao().getById("s1"))
+        assertEquals(SessionStatus.IN_PROGRESS, kept.status)
+        assertNull(kept.notes)
     }
 
     @Test

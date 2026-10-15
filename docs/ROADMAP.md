@@ -473,10 +473,10 @@ anything. Export is the only backup under the no-sync decision, so this is data 
   restore with their tea (#11), and a later Undo finds its photos. Export reads its snapshot inside
   one transaction. The file is named with the export date. Photo paths whose file is missing are
   dropped.
-- **Orphans are skipped and counted.** Version 1 never carried deleted rows, so it can hold
-  sessions of a tea or vessel deleted before it was made. A row whose tea, type or vessel is in
-  neither the backup nor the app is left out with what hangs off it, and the result says how many.
-  The recovery is a fresh export from 0.3.0.
+- **Orphans are skipped and counted.** Version 1 never carried deleted rows, so it can hold sessions
+  of a tea or vessel deleted before it was made. A row whose tea, type or vessel is in neither the
+  backup nor the app is left out with what hangs off it, and the result says how many. The recovery
+  is a fresh export from 0.3.0.
 - **Last-writer-wins per row on `updatedAt`; a tie is skipped**, so importing twice changes nothing.
   Devices aren't synced, so each one's timestamps only move forward and per-row is consistent.
     - **Every write stamps `updatedAt`, soft deletes included.** Today `softDelete` sets only
@@ -499,8 +499,8 @@ anything. Export is the only backup under the no-sync decision, so this is data 
   that file exists. V1 and V2 archives share the path; export doesn't hash. Imports stop writing
   `tea_photos/`. Existing photos keep their names.
 - **Files through an injected okio `FileSystem`**, with paths from `ImageStorage`, which already
-  resolves stored paths (iOS's legacy absolute ones included) and the cache dir. Round trips run
-  on the host JVM: the Android `ImageStorage` over a temp dir, and the in-memory Room database.
+  resolves stored paths (iOS's legacy absolute ones included) and the cache dir. Round trips run on
+  the host JVM: the Android `ImageStorage` over a temp dir, and the in-memory Room database.
   `DataExportRepository` becomes `BackupRepository`; Settings calls it directly.
 - **Preferences travel in the backup and apply only when the database has no tea rows** (a
   fresh-device restore). They carry no timestamp, so importing into a device with data leaves its
@@ -540,23 +540,28 @@ stand alone.
   writer → reader round trip; a DEFLATE archive with data descriptors written by `java.util.zip`
   read by the common reader (the old Android format through the one iOS also runs). Strike #10.
   `java.util.zip` also reads the writer's output, CRCs checked. okio's reader canonicalises names,
-  so only import's own target naming can slip; that test moved to the next item, which rewrites
-  it. `FileSystem.SYSTEM` isn't visible from commonMain (`openZip` is), so the platform modules
-  provide it. The repository's file work runs on `Dispatchers.IO`, as the actuals' did.
+  so only import's own target naming can slip; that test moved to the next item, which rewrites it.
+  `FileSystem.SYSTEM` isn't visible from commonMain (`openZip` is), so the platform modules provide
+  it. The repository's file work runs on `Dispatchers.IO`, as the actuals' did.
 - [x] `feat: back up to a versioned format`: V2 DTOs, V1 → V2, version dispatch, deleted rows and
   their photos exported, one import transaction, the shared repair SQL, `photos/` with hash names,
   injected `FileSystem`, dated filename, temp files cleaned up. Tests: full export → wipe → import;
   a V1 fixture with a deleted tea that has sessions → empty DB → the tea finished, its sessions
-  named; a newer version refused; an entry named `../../x` lands in `photos/`. Strike #11.
-  As built: V1 holds no deleted rows, so the deleted-tea case is a device that still has the tea
-  deleted (it comes back finished); on an empty DB those sessions are orphans, skipped and
-  counted (`ImportResult.skipped`). V1 is schema 6 (March 2026) onward; its rows decode straight
-  into the V2 types, except methods' `isActive`. Repair SQL lives in `TeaSessionDao` as `REPAIRS`,
-  and keeps an existing `finishedAt`. The picker's copy is deleted after import; the export
-  temp file and the filename remembered at screen open stay for the file-handling item.
-- [ ] `feat: newer data wins on import`: `planMerge`, in-progress sessions landed completed, photos
+  named; a newer version refused; an entry named `../../x` lands in `photos/`. Strike #11. As built:
+  V1 holds no deleted rows, so the deleted-tea case is a device that still has the tea deleted (it
+  comes back finished); on an empty DB those sessions are orphans, skipped and counted
+  (`ImportResult.skipped`). V1 is schema 6 (March 2026) onward; its rows decode straight into the V2
+  types, except methods' `isActive`. Repair SQL lives in `TeaSessionDao` as `REPAIRS`, and keeps an
+  existing `finishedAt`. The picker's copy is deleted after import; the export temp file and the
+  filename remembered at screen open stay for the file-handling item.
+- [x] `feat: newer data wins on import`: `planMerge`, in-progress sessions landed completed, photos
   copied only for winning rows. Tests: import twice = no change; older backup over newer data =
   newer wins; a newer backup's delete lands; a local in-progress session is untouched. Strike #12.
+  As built: `planMerge` returns the rows to write, as a `Backup`; the transaction re-plans those
+  against a fresh read, so a row changed while photos copied keeps its change. A landed session
+  keeps its steeps' `COMPLETE` timer records and loses any other. The result counts written rows.
+  Host tests shadow `android.database.SQLException`: the mockable android.jar drops its message, and
+  Room's `@Upsert` needs it to update an existing row.
 - [ ] `feat: preview an import before it runs`: the two-step flow, the dialog, honest result counts.
 - [ ] `feat: back up preferences`: applied only to an empty database, shown in the preview.
 - [ ] `fix: export and import file handling`: the Settings data-section audit rows.
@@ -875,6 +880,9 @@ Things that cost real debugging time and would cost it again. Not history — tr
   Intent all route to whichever was built last (suspected; confirm on device).
 - **A `Snackbar` placed after a `fillMaxSize()` sibling in a `Column` gets zero height** and is
   never seen. Use `SnackbarHost` in a `Scaffold`.
+- **Room `@Upsert` onto an existing row fails in host tests** with a bare `SqlException`: the
+  mockable android.jar drops the message Room reads to spot the key conflict. The
+  `androidHostTest` copy of `android.database.SQLException` fixes it; don't delete it.
 - **Never call `MutableList.removeLast()` / `removeFirst()`.** With compileSdk ≥ 35 they may bind to
   JDK 21's `List.removeLast()`, absent below API 35. Use `removeAt(lastIndex)` / `removeAt(0)`.
 

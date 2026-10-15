@@ -51,7 +51,7 @@ Ordered by damage. None of these needs design; all are small.
 | 9 | ~~**iOS relative dates wrong for most sessions** — compares year + day-of-*month*. Sep 23 shows every earlier 23rd as "today". ✔~~ | `TimeFormatter.ios.kt:33-47` | 2, 4 |
 | 10 | ~~**Android backups can't be imported on iOS** — Android writes DEFLATE, iOS parser accepts STORE only. ✔~~ | `ZipArchiver.ios.kt:233` | 4 |
 | 11 | ~~**Backups can't be fully restored after deleting a tea** — its sessions export with a dangling `teaId` → FK failure on a fresh device. Import is non-transactional, so it half-applies.~~ | `DataExportRepositoryImpl.kt:43-47,191-218` | 4 |
-| 12 | **Importing an older backup reverts edits and un-deletes rows** (blind upsert, `deletedAt` not carried). Roadmap calls this "merge". | `DataExportRepositoryImpl.kt:192-218` | 4 |
+| 12 | ~~**Importing an older backup reverts edits and un-deletes rows** (blind upsert, `deletedAt` not carried). Roadmap calls this "merge".~~ | `DataExportRepositoryImpl.kt:192-218` | 4 |
 | 13 | ~~**Analytics "This Week" excludes today on Sundays.** ✔~~ | `AnalyticsViewModel.kt:369-370` | 2 |
 | 14 | ~~**Donut taps open the wrong segment** (90° offset); trend taps pick the left neighbour.~~ | `TeaTypeDistributionChart.kt:185`, `BrewingTrendsChart.kt:142` | 2 |
 | 15 | ~~**Timer edit sheet wipes persisted timer state** (saves stale row with `timerStatus = null`); reset while paused is never persisted.~~ | `TimerViewModel.kt:321-334,454-490` | 1 |

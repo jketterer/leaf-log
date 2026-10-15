@@ -2,10 +2,11 @@ package dev.jketterer.leaflog.data.repositories
 
 import dev.jketterer.leaflog.data.backup.BACKUP_VERSION
 import dev.jketterer.leaflog.data.backup.Backup
-import dev.jketterer.leaflog.data.backup.LocalIds
+import dev.jketterer.leaflog.data.backup.LocalRows
 import dev.jketterer.leaflog.data.backup.decodeBackup
 import dev.jketterer.leaflog.data.backup.encodeBackup
 import dev.jketterer.leaflog.data.backup.mapPhotos
+import dev.jketterer.leaflog.data.backup.planMerge
 import dev.jketterer.leaflog.data.backup.toBackup
 import dev.jketterer.leaflog.data.backup.toEntity
 import dev.jketterer.leaflog.data.backup.withoutOrphans
@@ -17,6 +18,7 @@ import dev.jketterer.leaflog.data.local.database.dao.TeaDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaTypeDao
 import dev.jketterer.leaflog.domain.models.ImportResult
+import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.repositories.BackupRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
 import kotlinx.coroutines.Dispatchers
@@ -94,21 +96,19 @@ class BackupRepositoryImpl(
             val data = "/data.json".toPath()
             if (!zip.exists(data)) throw IllegalArgumentException("This file isn't a Leaf Log backup.")
 
-            // Ids only ever grow (nothing is purged), so reading them outside the transaction is safe
-            val local = LocalIds(
-                teaTypes = teaTypeDao.getAllIncludingDeleted().mapTo(mutableSetOf()) { it.id },
-                vessels = vesselDao.getAllIncludingDeleted().mapTo(mutableSetOf()) { it.id },
-                teas = teaDao.getAllIncludingDeleted().mapTo(mutableSetOf()) { it.id },
-            )
+            val local = localRows()
             val (kept, skipped) = decodeBackup(zip.read(data) { readUtf8() }).withoutOrphans(local)
 
-            // Files can't roll back, so they go first and are deleted if the transaction fails
+            // Files can't roll back, so they go first and are deleted if the transaction fails.
+            // Only rows that will be written need theirs
             val restored = mutableMapOf<String, String?>()
-            val backup = kept.mapPhotos { name ->
+            val planned = planMerge(kept, local).mapPhotos { name ->
                 restored.getOrPut(name) { restorePhoto(zip, name, created) }
             }
 
             transactor {
+                // Planned again: a row this device changed while the photos copied keeps its change
+                val backup = planMerge(planned, localRows())
                 teaTypeDao.upsertAll(backup.teaTypes.map { it.toEntity() })
                 vesselDao.upsertAll(backup.vessels.map { it.toEntity() })
                 teaDao.upsertAll(backup.teas.map { it.toEntity() })
@@ -122,21 +122,36 @@ class BackupRepositoryImpl(
                 sessionDao.deleteMethodsOfDeletedTeasAndVessels()
                 sessionDao.recomputeTeaStats()
                 sessionDao.recomputeConfigurationStats()
-            }
 
-            ImportResult(
-                teaTypesImported = backup.teaTypes.size,
-                brewingVesselsImported = backup.vessels.size,
-                teasImported = backup.teas.size,
-                teaSessionsImported = backup.steeps.size,
-                configurationsImported = backup.methods.size,
-                skipped = skipped,
-            )
+                ImportResult(
+                    teaTypesImported = backup.teaTypes.size,
+                    brewingVesselsImported = backup.vessels.size,
+                    teasImported = backup.teas.size,
+                    teaSessionsImported = backup.steeps.size,
+                    configurationsImported = backup.methods.size,
+                    skipped = skipped,
+                )
+            }
         }.onFailure {
             created.forEach { fileSystem.delete(it) }
         }.also {
             fileSystem.delete(path)
         }
+    }
+
+    private suspend fun localRows(): LocalRows {
+        val steeps = sessionDao.getAllIncludingDeleted()
+        return LocalRows(
+            teaTypes = teaTypeDao.getAllIncludingDeleted().associate { it.id to it.updatedAt },
+            vessels = vesselDao.getAllIncludingDeleted().associate { it.id to it.updatedAt },
+            teas = teaDao.getAllIncludingDeleted().associate { it.id to it.updatedAt },
+            steeps = steeps.associate { it.id to it.updatedAt },
+            methods = methodDao.getAllIncludingDeleted().associate { it.id to it.updatedAt },
+            inProgressSessions = steeps
+                .filter { it.parentSessionId == null && it.deletedAt == null }
+                .filter { it.status == SessionStatus.IN_PROGRESS }
+                .mapTo(mutableSetOf()) { it.id },
+        )
     }
 
     /**

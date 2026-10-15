@@ -142,11 +142,11 @@ internal fun Backup.mapPhotos(transform: (String) -> String?) = copy(
  * and what hangs off them. Version 1 never carried deleted rows, so it can hold sessions of a tea
  * deleted before it was made. Returns what's left and how many rows were dropped.
  */
-internal fun Backup.withoutOrphans(local: LocalIds): Pair<Backup, Int> {
-    val typeIds = local.teaTypes + teaTypes.map { it.id }
-    val vesselIds = local.vessels + vessels.map { it.id }
+internal fun Backup.withoutOrphans(local: LocalRows): Pair<Backup, Int> {
+    val typeIds = local.teaTypes.keys + teaTypes.map { it.id }
+    val vesselIds = local.vessels.keys + vessels.map { it.id }
     val keptTeas = teas.filter { it.teaTypeId in typeIds }
-    val teaIds = local.teas + keptTeas.map { it.id }
+    val teaIds = local.teas.keys + keptTeas.map { it.id }
     val keptParents = steeps
         .filter { it.parentSessionId == null }
         .filter { it.teaId in teaIds && (it.vesselId == null || it.vesselId in vesselIds) }
@@ -160,9 +160,53 @@ internal fun Backup.withoutOrphans(local: LocalIds): Pair<Backup, Int> {
     return kept to dropped
 }
 
-/** The ids already in the database, deleted rows included. */
-internal data class LocalIds(
-    val teaTypes: Set<String> = emptySet(),
-    val vessels: Set<String> = emptySet(),
-    val teas: Set<String> = emptySet(),
+/**
+ * The rows an import writes: those newer than their copy here, or new to it. A tie is skipped, so
+ * importing twice changes nothing. A session being brewed here is left alone, and one that was
+ * being brewed in the backup lands completed, since its timer didn't come with it.
+ */
+internal fun planMerge(incoming: Backup, local: LocalRows): Backup {
+    val brewing = incoming.steeps
+        .filter { it.parentSessionId == null && it.status == SessionStatus.IN_PROGRESS }
+        .mapTo(mutableSetOf()) { it.id }
+    return incoming.copy(
+        teaTypes = incoming.teaTypes.newerThan(local.teaTypes) { it.id to it.updatedAt },
+        vessels = incoming.vessels.newerThan(local.vessels) { it.id to it.updatedAt },
+        teas = incoming.teas.newerThan(local.teas) { it.id to it.updatedAt },
+        steeps = incoming.steeps
+            .filter { (it.parentSessionId ?: it.id) !in local.inProgressSessions }
+            .newerThan(local.steeps) { it.id to it.updatedAt }
+            .map { if ((it.parentSessionId ?: it.id) in brewing) it.landedCompleted() else it },
+        methods = incoming.methods.newerThan(local.methods) { it.id to it.updatedAt },
+    )
+}
+
+private inline fun <T> List<T>.newerThan(
+    local: Map<String, Instant>,
+    version: (T) -> Pair<String, Instant>,
+) = filter { row ->
+    val (id, updatedAt) = version(row)
+    local[id]?.let { updatedAt > it } ?: true
+}
+
+/** A completed timer is a record of the steep; any other was running on the backed-up device. */
+private fun BackupSteep.landedCompleted() = copy(status = SessionStatus.COMPLETED).let {
+    if (timerStatus == TimerStatus.COMPLETE) it else it.copy(
+        timerStatus = null,
+        timerStartedAt = null,
+        timerPausedAt = null,
+        timerRemainingMs = null,
+        timerTotalMs = null,
+    )
+}
+
+/** Each row already in the database, deleted ones included, by id: its `updatedAt`. */
+internal data class LocalRows(
+    val teaTypes: Map<String, Instant> = emptyMap(),
+    val vessels: Map<String, Instant> = emptyMap(),
+    val teas: Map<String, Instant> = emptyMap(),
+    val steeps: Map<String, Instant> = emptyMap(),
+    val methods: Map<String, Instant> = emptyMap(),
+    /** The ids of live sessions being brewed. */
+    val inProgressSessions: Set<String> = emptySet(),
 )

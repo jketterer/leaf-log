@@ -69,7 +69,7 @@ interface TeaDao {
     @Upsert
     suspend fun upsertAll(teas: List<TeaEntity>)
 
-    @Query("UPDATE tea SET deletedAt = :timestamp WHERE id = :id")
+    @Query("UPDATE tea SET deletedAt = :timestamp, updatedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
     /** Deleted teas too, so none is left pointing at a deleted type. */

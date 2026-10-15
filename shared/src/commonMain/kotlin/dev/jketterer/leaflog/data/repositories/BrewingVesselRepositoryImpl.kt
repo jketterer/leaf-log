@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class BrewingVesselRepositoryImpl(
     private val brewingVesselDao: BrewingVesselDao,
@@ -62,7 +63,8 @@ class BrewingVesselRepositoryImpl(
     }
 
     private fun getDefaultVessels(): List<BrewingVessel> {
-        val now = Clock.System.now()
+        // Epoch 0, so any edit restored from a backup beats an untouched seed
+        val now = Instant.fromEpochMilliseconds(0)
         return listOf(
             BrewingVessel(
                 id = "gaiwan",

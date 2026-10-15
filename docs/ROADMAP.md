@@ -527,8 +527,10 @@ anything. Export is the only backup under the no-sync decision, so this is data 
 stand alone.
 
 - [x] `docs: record the F4 design`
-- [ ] `fix: stamp updatedAt on every write`: soft-delete queries take it, writers that skip it are
-  fixed, seeds go to epoch 0. Test: each DAO soft delete stamps it.
+- [x] `fix: stamp updatedAt on every write`: soft-delete queries take it, writers that skip it are
+  fixed, seeds go to epoch 0. Test: each DAO soft delete stamps it. The skippers were the soft
+  deletes and method pin and reorder; F2's `incrementTimesUsed` had survived with no callers and
+  went here. Stats recompute stays unstamped: it is derived.
 - [ ] `refactor: one ZIP implementation on okio`: both actuals deleted, entries stream. Tests:
   writer → reader round trip; a DEFLATE archive with data descriptors written by `java.util.zip`
   read by the common reader (the old Android format through the one iOS also runs); zip-slip names

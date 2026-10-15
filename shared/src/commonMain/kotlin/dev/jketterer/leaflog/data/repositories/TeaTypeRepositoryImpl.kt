@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 class TeaTypeRepositoryImpl(
     private val teaTypeDao: TeaTypeDao,
@@ -48,7 +49,8 @@ class TeaTypeRepositoryImpl(
     }
 
     private fun getDefaultTeaTypes(): List<TeaType> {
-        val now = Clock.System.now()
+        // Epoch 0, so any edit restored from a backup beats an untouched seed
+        val now = Instant.fromEpochMilliseconds(0)
         return listOf(
             TeaType(
                 id = "green",

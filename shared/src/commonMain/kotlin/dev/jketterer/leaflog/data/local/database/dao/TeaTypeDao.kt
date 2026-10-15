@@ -39,7 +39,7 @@ interface TeaTypeDao {
     @Upsert
     suspend fun upsertAll(teaTypes: List<TeaTypeEntity>)
 
-    @Query("UPDATE tea_type SET deletedAt = :timestamp WHERE id = :id")
+    @Query("UPDATE tea_type SET deletedAt = :timestamp, updatedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
     @Query(

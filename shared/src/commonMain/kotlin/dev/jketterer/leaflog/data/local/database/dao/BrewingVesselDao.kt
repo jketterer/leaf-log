@@ -39,7 +39,7 @@ interface BrewingVesselDao {
     @Upsert
     suspend fun upsertAll(vessels: List<BrewingVesselEntity>)
 
-    @Query("UPDATE brewing_vessel SET deletedAt = :timestamp WHERE id = :id")
+    @Query("UPDATE brewing_vessel SET deletedAt = :timestamp, updatedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
     @Query(

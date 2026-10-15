@@ -35,13 +35,14 @@ interface BrewingConfigurationDao {
     @Upsert
     suspend fun upsertAll(configurations: List<BrewingConfigurationEntity>)
 
-    @Query("UPDATE brewing_configurations SET deleted_at = :timestamp WHERE id = :id")
+    @Query("UPDATE brewing_configurations SET deleted_at = :timestamp, updated_at = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
     @Query(
         """
         UPDATE brewing_configurations
-        SET deleted_at = (SELECT deletedAt FROM tea WHERE id = :teaId)
+        SET deleted_at = (SELECT deletedAt FROM tea WHERE id = :teaId),
+            updated_at = (SELECT deletedAt FROM tea WHERE id = :teaId)
         WHERE tea_id = :teaId AND deleted_at IS NULL
     """
     )
@@ -50,14 +51,12 @@ interface BrewingConfigurationDao {
     @Query(
         """
         UPDATE brewing_configurations
-        SET deleted_at = (SELECT deletedAt FROM brewing_vessel WHERE id = :vesselId)
+        SET deleted_at = (SELECT deletedAt FROM brewing_vessel WHERE id = :vesselId),
+            updated_at = (SELECT deletedAt FROM brewing_vessel WHERE id = :vesselId)
         WHERE vessel_id = :vesselId AND deleted_at IS NULL
     """
     )
     suspend fun softDeleteWithVessel(vesselId: String)
-
-    @Query("UPDATE brewing_configurations SET times_used = times_used + 1, last_used_at = :timestamp WHERE id = :id")
-    suspend fun incrementTimesUsed(id: String, timestamp: Long)
 
     @Query("SELECT * FROM brewing_configurations WHERE deleted_at IS NULL AND times_used > 0 ORDER BY times_used DESC, last_used_at DESC LIMIT :limit")
     fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfigurationEntity>>
@@ -74,9 +73,21 @@ interface BrewingConfigurationDao {
     @Query("SELECT MAX(pinned_sort_order) FROM brewing_configurations WHERE is_pinned = 1 AND deleted_at IS NULL")
     suspend fun getMaxPinnedSortOrder(): Int?
 
-    @Query("UPDATE brewing_configurations SET is_pinned = :isPinned, pinned_sort_order = :pinnedSortOrder WHERE id = :id")
-    suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int)
+    @Query(
+        """
+        UPDATE brewing_configurations
+        SET is_pinned = :isPinned, pinned_sort_order = :pinnedSortOrder, updated_at = :updatedAt
+        WHERE id = :id
+    """
+    )
+    suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int, updatedAt: Long)
 
-    @Query("UPDATE brewing_configurations SET pinned_sort_order = :pinnedSortOrder WHERE id = :id")
-    suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int)
+    @Query(
+        """
+        UPDATE brewing_configurations
+        SET pinned_sort_order = :pinnedSortOrder, updated_at = :updatedAt
+        WHERE id = :id
+    """
+    )
+    suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int, updatedAt: Long)
 }

@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.domain.repositories
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import kotlinx.coroutines.flow.Flow
-import kotlin.time.Instant
 
 interface BrewingConfigurationRepository {
     suspend fun getAll(): List<BrewingConfiguration>
@@ -58,11 +57,6 @@ interface BrewingConfigurationRepository {
     suspend fun deleteWithVessel(vesselId: String)
 
     /**
-     * Increment the times used counter and update last used timestamp
-     */
-    suspend fun incrementTimesUsed(id: String, timestamp: Instant)
-
-    /**
      * Get the most frequently used active configurations as a reactive flow
      */
     fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfiguration>>
@@ -82,11 +76,6 @@ interface BrewingConfigurationRepository {
      * Set or clear the pinned status of a configuration
      */
     suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int)
-
-    /**
-     * Update the pinned sort order for a single configuration
-     */
-    suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int)
 
     /**
      * Reorder all pinned configurations. orderedIds defines the new order

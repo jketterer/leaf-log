@@ -176,12 +176,10 @@ class FakeBrewingConfigurationRepository(
     override fun getByTeaIdFlow(teaId: String): Flow<List<BrewingConfiguration>> = TODO("unused by these tests")
     override fun getByIdFlow(id: String): Flow<BrewingConfiguration?> = TODO("unused by these tests")
     override suspend fun delete(id: String) = TODO("unused by these tests")
-    override suspend fun incrementTimesUsed(id: String, timestamp: Instant) = TODO("unused by these tests")
     override fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfiguration>> = TODO("unused by these tests")
     override fun getAllActiveFlow(): Flow<List<BrewingConfiguration>> = TODO("unused by these tests")
     override suspend fun getMaxPinnedSortOrder(): Int? = TODO("unused by these tests")
     override suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int) = TODO("unused by these tests")
-    override suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int) = TODO("unused by these tests")
     override suspend fun reorderPinnedConfigurations(orderedIds: List<String>) = TODO("unused by these tests")
 }
 

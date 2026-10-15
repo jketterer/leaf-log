@@ -207,13 +207,13 @@ interface TeaSessionDao {
     @Upsert
     suspend fun upsertAll(teaSessions: List<TeaSessionEntity>)
 
-    @Query("UPDATE tea_session SET deletedAt = :timestamp WHERE id = :id")
+    @Query("UPDATE tea_session SET deletedAt = :timestamp, updatedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)
 
     @Query(
         """
         UPDATE tea_session
-        SET deletedAt = :timestamp
+        SET deletedAt = :timestamp, updatedAt = :timestamp
         WHERE parentSessionId = :parentId
     """
     )

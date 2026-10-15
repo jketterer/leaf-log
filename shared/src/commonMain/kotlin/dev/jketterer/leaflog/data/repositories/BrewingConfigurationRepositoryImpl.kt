@@ -8,7 +8,6 @@ import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 class BrewingConfigurationRepositoryImpl(
     private val brewingConfigurationDao: BrewingConfigurationDao,
@@ -69,10 +68,6 @@ class BrewingConfigurationRepositoryImpl(
         brewingConfigurationDao.softDeleteWithVessel(vesselId)
     }
 
-    override suspend fun incrementTimesUsed(id: String, timestamp: Instant) {
-        brewingConfigurationDao.incrementTimesUsed(id, timestamp.toEpochMilliseconds())
-    }
-
     override fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfiguration>> {
         return brewingConfigurationDao.getMostUsedFlow(limit)
             .map { entities -> entities.map { it.toBrewingConfiguration() } }
@@ -88,16 +83,14 @@ class BrewingConfigurationRepositoryImpl(
     }
 
     override suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int) {
-        brewingConfigurationDao.setPinned(id, isPinned, pinnedSortOrder)
-    }
-
-    override suspend fun updatePinnedSortOrder(id: String, pinnedSortOrder: Int) {
-        brewingConfigurationDao.updatePinnedSortOrder(id, pinnedSortOrder)
+        val now = Clock.System.now().toEpochMilliseconds()
+        brewingConfigurationDao.setPinned(id, isPinned, pinnedSortOrder, updatedAt = now)
     }
 
     override suspend fun reorderPinnedConfigurations(orderedIds: List<String>) {
+        val now = Clock.System.now().toEpochMilliseconds()
         orderedIds.forEachIndexed { index, id ->
-            brewingConfigurationDao.updatePinnedSortOrder(id, index)
+            brewingConfigurationDao.updatePinnedSortOrder(id, index, updatedAt = now)
         }
     }
 }

@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -91,6 +92,15 @@ class PreferencesRepositoryImpl(
     override suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean): Result<Unit> {
         return try {
             preferencesDataStore.updateSessionReminderNotificationsEnabled(enabled)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateThemeMode(mode: ThemeMode): Result<Unit> {
+        return try {
+            preferencesDataStore.updateThemeMode(mode)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

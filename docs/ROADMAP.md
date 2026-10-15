@@ -584,7 +584,7 @@ state across rotation and process death.
 - [x] `feat: Figtree type scale and shapes`
 - [x] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
   `teaTypeColor` on both themes.
-- [ ] `feat: choose light, dark or system theme`. Test: the backup round trip.
+- [x] `feat: choose light, dark or system theme`. Test: the backup round trip.
 - [ ] `refactor: one icon family`
 - [ ] `feat: string resources and plurals`
 - [ ] `feat: locale-aware dates`

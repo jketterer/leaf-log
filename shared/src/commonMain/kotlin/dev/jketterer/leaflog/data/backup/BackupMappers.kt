@@ -205,6 +205,7 @@ internal fun UserPreferences.toBackup() = BackupPreferences(
     defaultWaterType = defaultWaterType,
     timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
     sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
+    themeMode = themeMode,
 )
 
 internal fun BackupPreferences.toDomain() = UserPreferences(
@@ -216,4 +217,5 @@ internal fun BackupPreferences.toDomain() = UserPreferences(
     defaultWaterType = defaultWaterType,
     timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
     sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
+    themeMode = themeMode,
 )

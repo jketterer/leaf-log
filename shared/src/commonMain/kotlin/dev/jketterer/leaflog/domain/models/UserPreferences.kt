@@ -11,6 +11,7 @@ data class UserPreferences(
     val defaultWaterType: WaterType = WaterType.FILTERED,
     val timerCompletionNotificationsEnabled: Boolean = true,
     val sessionReminderNotificationsEnabled: Boolean = true,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
     /** When an export was last delivered. This device's own fact, so it isn't backed up. */
     val lastBackupAt: Instant? = null,
 ) {

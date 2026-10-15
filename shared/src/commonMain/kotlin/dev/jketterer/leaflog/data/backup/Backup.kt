@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -148,6 +149,8 @@ data class BackupPreferences(
     val defaultWaterType: WaterType,
     val timerCompletionNotificationsEnabled: Boolean,
     val sessionReminderNotificationsEnabled: Boolean,
+    /** Missing from backups made before it was a setting, which followed the system. */
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
 )
 
 /** Rewrites every photo path; a null drops that photo. */

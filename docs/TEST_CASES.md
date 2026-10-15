@@ -149,6 +149,11 @@ the Activity is portrait-locked.
       survive and nothing re-seeds from the database.
 - [ ] Max font scale: Timer ring, Quick Timer duration sheet, and Quick Brew cards with long tea
       names stay readable, with nothing clipped.
+- [ ] Settings → Theme: Light and Dark each hold against the opposite system setting, System
+      follows it, and the status and navigation bar icons stay legible on each. The choice
+      survives a restart with no frame drawn in the other theme.
+- [ ] Cold start with the system in dark mode: the splash is dark, not white.
+- [ ] **[iOS]** Theme set opposite the system: the backup file pickers and share sheet follow it.
 - [ ] **[A]** Large screen or tablet on Android 16 (portrait lock ignored): no screen is unusable
       in landscape.
 

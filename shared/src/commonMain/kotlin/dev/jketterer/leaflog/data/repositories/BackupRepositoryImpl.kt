@@ -192,6 +192,7 @@ class BackupRepositoryImpl(
                     .updateTimerCompletionNotificationsEnabled(timerCompletionNotificationsEnabled),
                 preferencesRepository
                     .updateSessionReminderNotificationsEnabled(sessionReminderNotificationsEnabled),
+                preferencesRepository.updateThemeMode(themeMode),
             )
         }
         results.firstNotNullOfOrNull { it.exceptionOrNull() }?.let { error ->

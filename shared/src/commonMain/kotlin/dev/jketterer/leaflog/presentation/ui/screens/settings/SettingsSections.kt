@@ -15,6 +15,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,23 +29,31 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronRight
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 @Composable
-internal fun PreferencesSection(
+internal fun AppearanceSection(
+    themeMode: ThemeMode,
     temperatureUnit: TemperatureUnit,
     volumeUnit: VolumeUnit,
-    defaultWaterType: WaterType,
+    onThemeModeChange: (ThemeMode) -> Unit,
     onTemperatureUnitChange: (TemperatureUnit) -> Unit,
     onVolumeUnitChange: (VolumeUnit) -> Unit,
-    onDefaultWaterTypeChange: (WaterType) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        SectionHeader(title = "Preferences")
+        SectionHeader(title = "Appearance")
+
+        ThemeModeSetting(
+            currentMode = themeMode,
+            onModeChange = onThemeModeChange,
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
         TemperatureUnitSetting(
             currentUnit = temperatureUnit,
@@ -55,8 +66,17 @@ internal fun PreferencesSection(
             currentUnit = volumeUnit,
             onUnitChange = onVolumeUnitChange,
         )
+    }
+}
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+@Composable
+internal fun BrewingSection(
+    defaultWaterType: WaterType,
+    onDefaultWaterTypeChange: (WaterType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        SectionHeader(title = "Brewing")
 
         DefaultWaterTypeSetting(
             currentWaterType = defaultWaterType,
@@ -219,6 +239,44 @@ internal fun DataSection(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeModeSetting(
+    currentMode: ThemeMode,
+    onModeChange: (ThemeMode) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "Theme",
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            ThemeMode.entries.forEachIndexed { index, mode ->
+                SegmentedButton(
+                    selected = mode == currentMode,
+                    onClick = { onModeChange(mode) },
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = ThemeMode.entries.size,
+                    ),
+                ) {
+                    Text(
+                        when (mode) {
+                            ThemeMode.SYSTEM -> "System"
+                            ThemeMode.LIGHT -> "Light"
+                            ThemeMode.DARK -> "Dark"
+                        },
+                    )
+                }
             }
         }
     }
@@ -393,6 +451,21 @@ private fun DataSectionStalePreview() {
 private fun DataSectionExportingPreview() {
     LeafLogTheme {
         PreviewDataSection(isExporting = true)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppearanceSectionPreview() {
+    LeafLogTheme {
+        AppearanceSection(
+            themeMode = ThemeMode.DARK,
+            temperatureUnit = TemperatureUnit.CELSIUS,
+            volumeUnit = VolumeUnit.MILLILITERS,
+            onThemeModeChange = {},
+            onTemperatureUnitChange = {},
+            onVolumeUnitChange = {},
+        )
     }
 }
 

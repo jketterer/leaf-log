@@ -69,12 +69,17 @@ private fun SettingsContent(
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
         ) {
-            PreferencesSection(
+            AppearanceSection(
+                themeMode = state.preferences.themeMode,
                 temperatureUnit = state.preferences.temperatureUnit,
                 volumeUnit = state.preferences.volumeUnit,
-                defaultWaterType = state.preferences.defaultWaterType,
+                onThemeModeChange = { onIntent(SettingsIntent.UpdateThemeMode(it)) },
                 onTemperatureUnitChange = { onIntent(SettingsIntent.UpdateTemperatureUnit(it)) },
                 onVolumeUnitChange = { onIntent(SettingsIntent.UpdateVolumeUnit(it)) },
+            )
+
+            BrewingSection(
+                defaultWaterType = state.preferences.defaultWaterType,
                 onDefaultWaterTypeChange = { onIntent(SettingsIntent.UpdateDefaultWaterType(it)) },
             )
 

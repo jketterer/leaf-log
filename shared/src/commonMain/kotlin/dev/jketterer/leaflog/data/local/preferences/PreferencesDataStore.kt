@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.data.local.preferences
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -20,5 +21,6 @@ expect class PreferencesDataStore {
     suspend fun updateDefaultWaterType(waterType: WaterType)
     suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean)
     suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean)
+    suspend fun updateThemeMode(mode: ThemeMode)
     suspend fun updateLastBackupAt(at: Instant)
 }

@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.repositories.BackupRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +36,7 @@ class SettingsViewModel(
 
     fun onIntent(intent: SettingsIntent) {
         when (intent) {
+            is SettingsIntent.UpdateThemeMode -> updateThemeMode(intent.mode)
             is SettingsIntent.UpdateTemperatureUnit -> updateTemperatureUnit(intent.unit)
             is SettingsIntent.UpdateVolumeUnit -> updateVolumeUnit(intent.unit)
             is SettingsIntent.UpdateDefaultWaterType -> updateDefaultWaterType(intent.waterType)
@@ -97,6 +99,15 @@ class SettingsViewModel(
                 .onSuccess { bytes -> _state.update { it.copy(photoStorage = formatStorageSize(bytes)) } }
                 .onFailure { e ->
                     Logger.w(tag = "Settings") { "Failed to measure photo storage: ${e.message}" }
+                }
+        }
+    }
+
+    private fun updateThemeMode(mode: ThemeMode) {
+        viewModelScope.launch {
+            preferencesRepository.updateThemeMode(mode)
+                .onFailure { error ->
+                    _state.update { it.copy(error = error.message ?: "Failed to update theme") }
                 }
         }
     }

@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.data.local.preferences
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -27,6 +28,7 @@ actual class PreferencesDataStore {
         private const val DEFAULT_WATER_TYPE_KEY = "default_water_type"
         private const val TIMER_COMPLETION_NOTIFICATIONS_KEY = "timer_completion_notifications_enabled"
         private const val SESSION_REMINDER_NOTIFICATIONS_KEY = "session_reminder_notifications_enabled"
+        private const val THEME_MODE_KEY = "theme_mode"
         private const val LAST_BACKUP_AT_KEY = "last_backup_at"
     }
 
@@ -82,6 +84,12 @@ actual class PreferencesDataStore {
         userDefaults.setBool(enabled, SESSION_REMINDER_NOTIFICATIONS_KEY)
         userDefaults.synchronize()
         _preferencesFlow.update { it.copy(sessionReminderNotificationsEnabled = enabled) }
+    }
+
+    actual suspend fun updateThemeMode(mode: ThemeMode) {
+        userDefaults.setObject(mode.name, THEME_MODE_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(themeMode = mode) }
     }
 
     actual suspend fun updateLastBackupAt(at: Instant) {
@@ -151,6 +159,9 @@ actual class PreferencesDataStore {
                 boolOrDefault(TIMER_COMPLETION_NOTIFICATIONS_KEY, default = true),
             sessionReminderNotificationsEnabled =
                 boolOrDefault(SESSION_REMINDER_NOTIFICATIONS_KEY, default = true),
+            themeMode = userDefaults.stringForKey(THEME_MODE_KEY)
+                ?.let { name -> ThemeMode.entries.find { it.name == name } }
+                ?: ThemeMode.SYSTEM,
             lastBackupAt = if (userDefaults.objectForKey(LAST_BACKUP_AT_KEY) != null) {
                 Instant.fromEpochMilliseconds(userDefaults.integerForKey(LAST_BACKUP_AT_KEY))
             } else {

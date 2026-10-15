@@ -17,6 +17,7 @@ import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -207,7 +208,10 @@ class BackupRepositoryImplTest {
         val phone = Device("phone")
         phone.seedJournal()
         phone.preferences.current =
-            UserPreferences.METRIC.copy(sessionReminderNotificationsEnabled = false)
+            UserPreferences.METRIC.copy(
+                sessionReminderNotificationsEnabled = false,
+                themeMode = ThemeMode.DARK,
+            )
         val zip = phone.repository.export().getOrThrow()
         val fresh = Device("fresh")
 
@@ -470,6 +474,7 @@ private class InMemoryPreferences : PreferencesRepository {
         set { copy(timerCompletionNotificationsEnabled = enabled) }
     override suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) =
         set { copy(sessionReminderNotificationsEnabled = enabled) }
+    override suspend fun updateThemeMode(mode: ThemeMode) = set { copy(themeMode = mode) }
     override suspend fun updateLastBackupAt(at: Instant) = set { copy(lastBackupAt = at) }
 }
 

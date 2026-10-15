@@ -437,6 +437,7 @@ private class InMemoryPreferences : PreferencesRepository {
         set { copy(timerCompletionNotificationsEnabled = enabled) }
     override suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) =
         set { copy(sessionReminderNotificationsEnabled = enabled) }
+    override suspend fun updateLastBackupAt(at: Instant) = set { copy(lastBackupAt = at) }
 }
 
 /** Sessions for the seeded tea, and one for a tea in neither this backup nor the app. */

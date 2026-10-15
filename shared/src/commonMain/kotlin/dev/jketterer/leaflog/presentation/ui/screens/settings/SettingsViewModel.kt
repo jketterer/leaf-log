@@ -11,6 +11,13 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
+
+private const val BACKUP_OVERDUE_AFTER_DAYS = 14
 
 class SettingsViewModel(
     private val preferencesRepository: PreferencesRepository,
@@ -40,7 +47,10 @@ class SettingsViewModel(
             is SettingsIntent.ExportData -> exportData()
             is SettingsIntent.ExportPickerShown ->
                 _state.update { it.copy(showExportPicker = false) }
-            is SettingsIntent.ExportCompleted -> finishExport(notice = "Backup exported")
+            is SettingsIntent.ExportCompleted -> {
+                recordBackup()
+                finishExport(notice = "Backup exported")
+            }
             is SettingsIntent.ExportCancelled -> finishExport()
             is SettingsIntent.ExportFailed -> finishExport(error = intent.message)
             is SettingsIntent.ImportData -> _state.update { it.copy(showImportPicker = true) }
@@ -62,7 +72,19 @@ class SettingsViewModel(
             preferencesRepository.getPreferencesFlow()
                 .catch { e -> Logger.w(tag = "Settings") { "Failed to load preferences: ${e.message}" } }
                 .collect { preferences ->
-                    _state.update { it.copy(preferences = preferences, isLoading = false) }
+                    val days = daysSinceBackup(
+                        preferences.lastBackupAt,
+                        Clock.System.now(),
+                        TimeZone.currentSystemDefault(),
+                    )
+                    _state.update {
+                        it.copy(
+                            preferences = preferences,
+                            isLoading = false,
+                            daysSinceBackup = days,
+                            isBackupOverdue = days == null || days > BACKUP_OVERDUE_AFTER_DAYS,
+                        )
+                    }
                 }
         }
     }
@@ -141,6 +163,15 @@ class SettingsViewModel(
         }
     }
 
+    private fun recordBackup() {
+        viewModelScope.launch {
+            preferencesRepository.updateLastBackupAt(Clock.System.now())
+                .onFailure { e ->
+                    Logger.w(tag = "Settings") { "Failed to record the backup: ${e.message}" }
+                }
+        }
+    }
+
     private fun finishExport(error: String? = null, notice: String? = null) {
         val path = _state.value.exportFilePath
         _state.update {
@@ -200,3 +231,10 @@ class SettingsViewModel(
         viewModelScope.launch { backupRepository.discard(preview.filePath) }
     }
 }
+
+/** Calendar days in [tz] from [lastBackupAt] to [now], or null if there's never been a backup. */
+internal fun daysSinceBackup(lastBackupAt: Instant?, now: Instant, tz: TimeZone): Int? =
+    lastBackupAt?.let {
+        // A clock set back since the backup reads as today, not as a backup from the future
+        it.toLocalDateTime(tz).date.daysUntil(now.toLocalDateTime(tz).date).coerceAtLeast(0)
+    }

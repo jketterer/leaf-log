@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlinx.coroutines.flow.Flow
+import kotlin.time.Instant
 
 interface PreferencesRepository {
     fun getPreferencesFlow(): Flow<UserPreferences>
@@ -20,4 +21,5 @@ interface PreferencesRepository {
     suspend fun updateDefaultWaterType(waterType: WaterType): Result<Unit>
     suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean): Result<Unit>
     suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean): Result<Unit>
+    suspend fun updateLastBackupAt(at: Instant): Result<Unit>
 }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import platform.Foundation.NSUserDefaults
+import kotlin.time.Instant
 
 actual class PreferencesDataStore {
 
@@ -26,6 +27,7 @@ actual class PreferencesDataStore {
         private const val DEFAULT_WATER_TYPE_KEY = "default_water_type"
         private const val TIMER_COMPLETION_NOTIFICATIONS_KEY = "timer_completion_notifications_enabled"
         private const val SESSION_REMINDER_NOTIFICATIONS_KEY = "session_reminder_notifications_enabled"
+        private const val LAST_BACKUP_AT_KEY = "last_backup_at"
     }
 
     private val _preferencesFlow = MutableStateFlow(loadPreferences())
@@ -80,6 +82,12 @@ actual class PreferencesDataStore {
         userDefaults.setBool(enabled, SESSION_REMINDER_NOTIFICATIONS_KEY)
         userDefaults.synchronize()
         _preferencesFlow.update { it.copy(sessionReminderNotificationsEnabled = enabled) }
+    }
+
+    actual suspend fun updateLastBackupAt(at: Instant) {
+        userDefaults.setInteger(at.toEpochMilliseconds(), LAST_BACKUP_AT_KEY)
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(lastBackupAt = at) }
     }
 
     /**
@@ -143,6 +151,11 @@ actual class PreferencesDataStore {
                 boolOrDefault(TIMER_COMPLETION_NOTIFICATIONS_KEY, default = true),
             sessionReminderNotificationsEnabled =
                 boolOrDefault(SESSION_REMINDER_NOTIFICATIONS_KEY, default = true),
+            lastBackupAt = if (userDefaults.objectForKey(LAST_BACKUP_AT_KEY) != null) {
+                Instant.fromEpochMilliseconds(userDefaults.integerForKey(LAST_BACKUP_AT_KEY))
+            } else {
+                null
+            },
         )
     }
 }

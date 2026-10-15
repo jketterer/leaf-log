@@ -105,7 +105,9 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       "Backup exported" snackbar shows. Reopen it from the Files app; size is non-zero. Export
       again in the same visit: the second file gets a later name.
 - [ ] Export → cancel the save dialog **[A]** or close the share sheet **[iOS]**. No snackbar,
-      no error, and the Export button is usable again.
+      no error, the Export button is usable again, and "Last backup" doesn't change.
+- [ ] Fresh install: Settings shows "Last backup: never" in red with "Back up now". Export →
+      "Last backup: today" in grey, the button reads "Export", and it survives an app restart.
 - [ ] **[iOS]** Export → share sheet stays open with no "Backup exported" until a destination
       (Save to Files, AirDrop) completes.
 - [ ] **[A]** Export → rotate or switch dark mode while the save dialog is open → save. The file

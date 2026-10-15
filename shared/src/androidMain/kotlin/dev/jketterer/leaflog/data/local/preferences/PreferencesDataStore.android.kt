@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
@@ -16,6 +17,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlin.time.Instant
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
 
@@ -32,6 +34,7 @@ actual class PreferencesDataStore(private val context: Context) {
             booleanPreferencesKey("timer_completion_notifications_enabled")
         val SESSION_REMINDER_NOTIFICATIONS_KEY =
             booleanPreferencesKey("session_reminder_notifications_enabled")
+        val LAST_BACKUP_AT_KEY = longPreferencesKey("last_backup_at")
     }
 
     actual fun getPreferencesFlow(): Flow<UserPreferences> {
@@ -83,6 +86,7 @@ actual class PreferencesDataStore(private val context: Context) {
                     prefs[TIMER_COMPLETION_NOTIFICATIONS_KEY] ?: true,
                 sessionReminderNotificationsEnabled =
                     prefs[SESSION_REMINDER_NOTIFICATIONS_KEY] ?: true,
+                lastBackupAt = prefs[LAST_BACKUP_AT_KEY]?.let(Instant::fromEpochMilliseconds),
             )
         }
     }
@@ -132,6 +136,12 @@ actual class PreferencesDataStore(private val context: Context) {
     actual suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[SESSION_REMINDER_NOTIFICATIONS_KEY] = enabled
+        }
+    }
+
+    actual suspend fun updateLastBackupAt(at: Instant) {
+        context.dataStore.edit { prefs ->
+            prefs[LAST_BACKUP_AT_KEY] = at.toEpochMilliseconds()
         }
     }
 }

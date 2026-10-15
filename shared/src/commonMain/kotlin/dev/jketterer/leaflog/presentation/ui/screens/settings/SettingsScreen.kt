@@ -289,6 +289,17 @@ private fun DataSection(
         SettingRow(
             title = "Export Data",
             subtitle = "Save all data including photos",
+            status = "Last backup: " + when (val days = state.daysSinceBackup) {
+                null -> "never"
+                0 -> "today"
+                1 -> "yesterday"
+                else -> "$days days ago"
+            },
+            statusColor = if (state.isBackupOverdue) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
         ) {
             OutlinedButton(
                 onClick = { onIntent(SettingsIntent.ExportData) },
@@ -300,7 +311,7 @@ private fun DataSection(
                         strokeWidth = 2.dp,
                     )
                 } else {
-                    Text("Export")
+                    Text(if (state.isBackupOverdue) "Back up now" else "Export")
                 }
             }
         }
@@ -563,6 +574,8 @@ private fun VolumeUnitSetting(
 private fun SettingRow(
     title: String,
     subtitle: String,
+    status: String? = null,
+    statusColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     content: @Composable () -> Unit
 ) {
     Row(
@@ -585,6 +598,13 @@ private fun SettingRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            status?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = statusColor,
+                )
+            }
         }
         content()
     }
@@ -631,6 +651,32 @@ private fun DataSectionPreview() {
     LeafLogTheme {
         DataSection(
             state = SettingsState(isLoading = false),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DataSectionBackedUpPreview() {
+    LeafLogTheme {
+        DataSection(
+            state = SettingsState(isLoading = false, daysSinceBackup = 3),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DataSectionStalePreview() {
+    LeafLogTheme {
+        DataSection(
+            state = SettingsState(
+                isLoading = false,
+                daysSinceBackup = 42,
+                isBackupOverdue = true,
+            ),
             onIntent = {},
         )
     }

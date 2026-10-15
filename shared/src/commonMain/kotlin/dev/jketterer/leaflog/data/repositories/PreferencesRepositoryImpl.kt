@@ -11,6 +11,7 @@ import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlin.time.Instant
 
 class PreferencesRepositoryImpl(
     private val preferencesDataStore: PreferencesDataStore,
@@ -90,6 +91,15 @@ class PreferencesRepositoryImpl(
     override suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean): Result<Unit> {
         return try {
             preferencesDataStore.updateSessionReminderNotificationsEnabled(enabled)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateLastBackupAt(at: Instant): Result<Unit> {
+        return try {
+            preferencesDataStore.updateLastBackupAt(at)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

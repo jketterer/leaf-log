@@ -6,6 +6,9 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 data class SettingsState(
     val preferences: UserPreferences = UserPreferences(),
     val isLoading: Boolean = true,
+    /** Calendar days since the last delivered export; null if there's never been one. */
+    val daysSinceBackup: Int? = null,
+    val isBackupOverdue: Boolean = false,
     val error: String? = null,
     /** Confirms something finished, shown like an error but not one. */
     val notice: String? = null,

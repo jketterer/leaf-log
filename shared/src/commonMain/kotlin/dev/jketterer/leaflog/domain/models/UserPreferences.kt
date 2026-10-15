@@ -1,5 +1,7 @@
 package dev.jketterer.leaflog.domain.models
 
+import kotlin.time.Instant
+
 data class UserPreferences(
     val temperatureUnit: TemperatureUnit = TemperatureUnit.FAHRENHEIT,
     val volumeUnit: VolumeUnit = VolumeUnit.FLUID_OUNCES,
@@ -9,6 +11,8 @@ data class UserPreferences(
     val defaultWaterType: WaterType = WaterType.FILTERED,
     val timerCompletionNotificationsEnabled: Boolean = true,
     val sessionReminderNotificationsEnabled: Boolean = true,
+    /** When an export was last delivered. This device's own fact, so it isn't backed up. */
+    val lastBackupAt: Instant? = null,
 ) {
     companion object {
         val IMPERIAL = UserPreferences(

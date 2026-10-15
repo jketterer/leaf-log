@@ -581,7 +581,11 @@ stand alone.
   partial destination file; iOS reports the share sheet's outcome and finds its presenter
   through the foreground `UIWindowScene`. "Backup exported" shows in the error snackbar's slot
   until Bet 1's message surface. Rows fixed earlier in F1 and F4 are struck with these.
-- [ ] `feat: show when the last backup was`
+- [x] `feat: show when the last backup was`
+  As built: `UserPreferences.lastBackupAt`, stored per device and not backed up, set on
+  `ExportCompleted`. Days are calendar days; "Never" counts as overdue, so it shows in the warning
+  colour (`colorScheme.error`: the theme has no warning colour) and the Export button reads "Back up
+  now". Test: the day count, in `SettingsViewModel`, which puts it in state.
 - [ ] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size
   math. Track B line: a portrait photo stays upright on both platforms.
 - [ ] `feat: show photo storage in Settings`

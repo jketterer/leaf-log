@@ -474,7 +474,7 @@ Scope is **the system, not a restyle of every screen.**
     - Previews are deterministic: the ten that call `Clock.System.now()` take a fixed instant, so
       the IDE shows the same "3 days ago" every day.
 - **Identity:**
-    - **Literata** (OFL, bundled as compose resources, static weights) for display, headline and
+    - **Figtree** (OFL, bundled as compose resources, static weights) for display, headline and
       title styles. Body and labels stay system, for density. Timer and parameter digits use tabular
       figures.
     - A `Shapes` scale (4/8/12/16/28dp) replaces the ad-hoc `RoundedCornerShape`s.
@@ -579,7 +579,7 @@ state across rotation and process death.
 - [x] `docs: record the Bet 1 design`
 - [x] `test: render every preview`: the preview scanner, the three-way render test, fixed-clock
   previews. Proves compose resources render under Robolectric before anything depends on it.
-- [ ] `feat: Literata type scale and shapes`
+- [x] `feat: Figtree type scale and shapes`
 - [ ] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
   `teaTypeColor` on both themes.
 - [ ] `feat: choose light, dark or system theme`. Test: the backup round trip.
@@ -838,7 +838,7 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **The weight unit is honoured everywhere**                                          | A setting that one Analytics card obeys is worse than none. Considered: grams only, deleting the preference — leaf is weighed in grams nearly everywhere.                                                                                                                                 |
 | **Display units come from a CompositionLocal**                                      | Honouring weight everywhere would otherwise thread preferences through every State that shows a value. Considered: formatting in the screen and passing strings down, the earlier rule.                                                                                                   |
 | **Theme mode is a setting**                                                         | Considered: following the system only. It travels in backups like the other preferences.                                                                                                                                                                                                  |
-| **Headings are Literata; body stays system**                                        | A book face suits a journal; system body keeps dense screens scannable. Considered: Fraunces, Newsreader, Lora.                                                                                                                                                                           |
+| **Headings are Figtree; body stays system**                                         | A friendly sans gives the app its own voice without formality; system body keeps dense screens scannable. Considered: Literata, tried and dropped as too formal; Nunito, DM Sans.                                                                                                         |
 | **The brew loop lives on Home's stack**                                             | Notification taps and Home's banner already open the Timer there. Pushing it onto the origin tab could leave two Timers in two stacks.                                                                                                                                                    |
 | **Tablet layouts wait for Store readiness**                                         | The author uses a phone, and nothing ships to strangers before then.                                                                                                                                                                                                                      |
 

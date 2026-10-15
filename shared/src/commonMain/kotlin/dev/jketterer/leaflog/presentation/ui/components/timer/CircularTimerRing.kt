@@ -75,7 +75,8 @@ fun CircularTimerRing(
         // Time text
         Text(
             text = timeText,
-            style = MaterialTheme.typography.displayLarge.copy(fontSize = fontSize),
+            // Tabular figures, so the digits don't shift as they tick
+            style = MaterialTheme.typography.displayLarge.copy(fontSize = fontSize, fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.Bold,
         )
     }

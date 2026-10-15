@@ -16,7 +16,6 @@ import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Star
 import compose.icons.feathericons.Thermometer
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -166,7 +165,7 @@ private fun ConfigurationOption(
 
                 if (isRecommended) {
                     Surface(
-                        shape = RoundedCornerShape(4.dp),
+                        shape = MaterialTheme.shapes.extraSmall,
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                     ) {
                         Text(

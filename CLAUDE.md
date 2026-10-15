@@ -153,6 +153,8 @@ Use `expect`/`actual` pattern for platform differences.
 
 - Always use trailing commas for lists
 - Always include at least one @Preview composable function when creating UI components/screens
+- Corners come from `MaterialTheme.shapes` (4/8/12/16/28dp), never a `RoundedCornerShape` literal;
+  circles use `CircleShape`
 
 ### When Creating Use Cases
 

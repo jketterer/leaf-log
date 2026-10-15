@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -138,7 +137,7 @@ private fun TopTeaRow(
                 modifier = Modifier
                     .fillMaxWidth(barFraction)
                     .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(barColor),
             )
         }

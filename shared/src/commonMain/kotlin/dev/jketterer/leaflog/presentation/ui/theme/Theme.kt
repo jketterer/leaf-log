@@ -88,7 +88,8 @@ fun LeafLogTheme(
     val colors = if (useDarkTheme) DarkColors else LightColors
     MaterialTheme(
         colorScheme = colors,
-        typography = Typography,
+        // Shapes are M3's default scale, 4/8/12/16/28dp; use MaterialTheme.shapes, not a literal
+        typography = leafLogTypography(),
         content = content,
     )
 }

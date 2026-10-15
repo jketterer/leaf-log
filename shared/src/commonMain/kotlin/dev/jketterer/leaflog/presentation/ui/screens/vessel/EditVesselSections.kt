@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.FilterChip
@@ -216,7 +215,7 @@ internal fun VesselPhotoSection(
                     contentDescription = "Vessel photo",
                     modifier = Modifier
                         .size(80.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(MaterialTheme.shapes.small),
                     contentScale = ContentScale.Crop,
                 )
                 Spacer(modifier = Modifier.width(12.dp))

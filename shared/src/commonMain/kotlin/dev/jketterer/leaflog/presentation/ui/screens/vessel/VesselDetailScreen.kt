@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -259,7 +258,7 @@ fun VesselDetailScreen(
                                         contentDescription = null,
                                         modifier = Modifier
                                             .size(80.dp)
-                                            .clip(RoundedCornerShape(12.dp)),
+                                            .clip(MaterialTheme.shapes.medium),
                                         contentScale = ContentScale.Crop,
                                     )
                                 } else {

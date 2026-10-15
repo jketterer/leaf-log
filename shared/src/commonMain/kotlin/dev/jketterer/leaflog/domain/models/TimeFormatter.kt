@@ -20,13 +20,13 @@ expect object TimeFormatter {
     fun formatClockTime(hour: Int, minute: Int): String
 
     /**
-     * Formats a timestamp relative to now:
+     * Formats a timestamp relative to [now]:
      * - Today: "2:30 PM"
      * - Yesterday: "Yesterday"
      * - This year: "Jan 15"
      * - Previous years: "Jan 15, 2024"
      */
-    fun formatRelativeTimestamp(instant: Instant): String
+    fun formatRelativeTimestamp(instant: Instant, now: Instant): String
 }
 
 internal enum class RelativeDay { TODAY, YESTERDAY, THIS_YEAR, OLDER }

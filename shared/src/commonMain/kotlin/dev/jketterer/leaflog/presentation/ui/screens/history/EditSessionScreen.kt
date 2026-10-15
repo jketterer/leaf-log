@@ -49,6 +49,7 @@ import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
@@ -57,7 +58,6 @@ import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfig
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -457,8 +457,8 @@ private fun EditSessionScreenPreview() {
                     iconName = "gaiwan",
                     isSystemDefault = true,
                     displayOrder = 0,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                 ),
                 selectedWaterType = WaterType.FILTERED,
                 waterQuantityMl = "200",
@@ -474,8 +474,8 @@ private fun EditSessionScreenPreview() {
                         iconName = "gaiwan",
                         isSystemDefault = true,
                         displayOrder = 0,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
                     ),
                 ),
             ),

@@ -22,7 +22,10 @@ kotlin {
             enable = true
         }
 
-        withHostTest {}
+        withHostTest {
+            // Robolectric needs the merged resources to render previews
+            isIncludeAndroidResources = true
+        }
     }
 
     listOf(
@@ -45,6 +48,12 @@ kotlin {
             implementation(libs.koin.test)
             // The android variant ships device .so files; the jvm one carries host natives
             implementation(libs.androidx.sqlite.bundled.jvm)
+
+            implementation(libs.composablePreviewScanner)
+            implementation(libs.robolectric)
+            implementation(libs.junit)
+            implementation(libs.androidx.compose.uiTestJunit4)
+            implementation(libs.androidx.compose.uiTestManifest)
         }
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)

@@ -29,8 +29,8 @@ import dev.jketterer.leaflog.domain.models.RelativeDay
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.relativeDayOf
 import dev.jketterer.leaflog.presentation.ui.components.common.DialogPreviewContainer
+import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 
@@ -84,10 +84,11 @@ fun ImportResultDialog(
 private fun ImportSummaryContent(summary: ImportSummary, isPreview: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (isPreview) {
-            val made = TimeFormatter.formatRelativeTimestamp(summary.exportedAt)
+            val now = currentInstant()
+            val made = TimeFormatter.formatRelativeTimestamp(summary.exportedAt, now)
             val day = relativeDayOf(
                 summary.exportedAt,
-                Clock.System.now(),
+                now,
                 TimeZone.currentSystemDefault(),
             )
             val date = when (day) {

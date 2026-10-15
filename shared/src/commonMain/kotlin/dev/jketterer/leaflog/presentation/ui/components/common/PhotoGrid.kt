@@ -27,13 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -110,32 +108,6 @@ fun PhotoGrid(
             photos = photos.map { imageStorage.resolveImagePath(it) },
             initialIndex = expandedPhotoIndex,
             onDismiss = { expandedPhotoIndex = -1 },
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PhotoGridEmptyPreview() {
-    LeafLogTheme {
-        PhotoGrid(
-            photos = emptyList(),
-            onAddPhoto = {},
-            onRemovePhoto = {},
-            imageStorage = null,
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PhotoGridWithPhotosPreview() {
-    LeafLogTheme {
-        PhotoGrid(
-            photos = listOf("/path/to/photo1.jpg", "/path/to/photo2.jpg"),
-            onAddPhoto = {},
-            onRemovePhoto = {},
-            imageStorage = null,
         )
     }
 }

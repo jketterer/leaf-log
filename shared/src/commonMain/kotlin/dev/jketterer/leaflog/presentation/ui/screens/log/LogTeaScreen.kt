@@ -45,13 +45,13 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.CompleteSessionDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -404,8 +404,8 @@ private fun LogTeaScreenPreview() {
                     teaTypeId = "green",
                     totalSessions = 12,
                     averageRating = 4.2f,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 selectedTeaType = TeaType(
@@ -423,8 +423,8 @@ private fun LogTeaScreenPreview() {
                     iconName = "gaiwan",
                     isSystemDefault = true,
                     displayOrder = 0,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                 ),
                 selectedWaterType = WaterType.FILTERED,
                 availableVessels = listOf(
@@ -434,8 +434,8 @@ private fun LogTeaScreenPreview() {
                         iconName = "gaiwan",
                         isSystemDefault = true,
                         displayOrder = 0,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
                     ),
                 ),
             ),
@@ -466,8 +466,8 @@ private fun LogTeaScreenTeaBagPreview() {
                     name = "English Breakfast",
                     teaTypeId = "black",
                     totalSessions = 3,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 selectedTeaType = TeaType(
@@ -485,8 +485,8 @@ private fun LogTeaScreenTeaBagPreview() {
                     iconName = "mug",
                     isSystemDefault = true,
                     displayOrder = 1,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                 ),
                 availableVessels = listOf(
                     BrewingVessel(
@@ -495,8 +495,8 @@ private fun LogTeaScreenTeaBagPreview() {
                         iconName = "mug",
                         isSystemDefault = true,
                         displayOrder = 1,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
                     ),
                 ),
             ),
@@ -516,8 +516,8 @@ private fun LogTeaScreenOptionalFilledPreview() {
                     name = "Dragon Well",
                     teaTypeId = "green",
                     totalSessions = 5,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 selectedTeaType = TeaType(
@@ -537,8 +537,8 @@ private fun LogTeaScreenOptionalFilledPreview() {
                     iconName = "gaiwan",
                     isSystemDefault = true,
                     displayOrder = 0,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                 ),
             ),
             onIntent = {},

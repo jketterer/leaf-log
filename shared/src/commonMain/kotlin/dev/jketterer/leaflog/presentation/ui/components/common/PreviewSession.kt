@@ -8,7 +8,6 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Instant
 
 /** A session for @Preview functions, with one steep per entry of [ratings]. Steep 1 gets [notes] and [photos]. */
 internal fun previewSession(
@@ -22,7 +21,7 @@ internal fun previewSession(
     notes: String? = null,
     photos: List<String> = emptyList(),
 ): SessionWithSteeps {
-    val start = Instant.fromEpochSeconds(1_790_000_000L)
+    val start = PreviewInstant
     return SessionWithSteeps(
         session = Session(
             id = id,

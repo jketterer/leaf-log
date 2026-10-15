@@ -75,6 +75,8 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
@@ -84,7 +86,6 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
 import kotlin.math.roundToInt
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -317,7 +318,7 @@ private fun TeaDetailContent(
                                     if (state.tea.finishedAt != null) {
                                         DetailRow(
                                             label = "Finished",
-                                            value = TimeFormatter.formatRelativeTimestamp(state.tea.finishedAt),
+                                            value = TimeFormatter.formatRelativeTimestamp(state.tea.finishedAt, currentInstant()),
                                         )
                                     }
 
@@ -692,9 +693,9 @@ private fun TeaDetailScreenPreview() {
                     isFavorite = true,
                     totalSessions = 12,
                     averageRating = 4.5f,
-                    finishedAt = Clock.System.now(),
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    finishedAt = PreviewInstant,
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 teaType = TeaType(
@@ -704,8 +705,8 @@ private fun TeaDetailScreenPreview() {
                     colorHex = "#4CAF50",
                     isSystemDefault = true,
                     displayOrder = 0,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                 ),
                 recentSessions = listOf(
                     previewSession(

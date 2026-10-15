@@ -31,7 +31,9 @@ import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
@@ -113,10 +115,11 @@ fun ConfigurationCard(
             )
 
             // Stats row
+            val now = currentInstant()
             val stats = buildList {
                 add("Used ${configuration.timesUsed} times")
                 configuration.lastUsedAt?.let { lastUsed ->
-                    val daysAgo = (Clock.System.now() - lastUsed).inWholeDays
+                    val daysAgo = (now - lastUsed).inWholeDays
                     val timeAgo = when {
                         daysAgo == 0L -> "today"
                         daysAgo == 1L -> "yesterday"
@@ -188,10 +191,10 @@ private fun ConfigurationCardPreview() {
                 sourceSessionId = "session-1",
                 rating = 4.5f,
                 timesUsed = 12,
-                lastUsedAt = Clock.System.now(),
+                lastUsedAt = PreviewInstant,
                 label = "Morning Gongfu",
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now()
+                createdAt = PreviewInstant,
+                updatedAt = PreviewInstant
             ),
             vesselName = "Gaiwan (100ml)",
             userPreferences = UserPreferences(
@@ -221,10 +224,10 @@ private fun ConfigurationCardImperialUnitsPreview() {
                 sourceSessionId = "session-3",
                 rating = 5.0f,
                 timesUsed = 25,
-                lastUsedAt = Clock.System.now() - 800.days,
+                lastUsedAt = PreviewInstant - 800.days,
                 label = "Perfect Black Tea",
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now()
+                createdAt = PreviewInstant,
+                updatedAt = PreviewInstant
             ),
             vesselName = "Ceramic Mug",
             userPreferences = UserPreferences(
@@ -254,10 +257,10 @@ private fun ConfigurationCardUnnamedPreview() {
                 sourceSessionId = "session-4",
                 rating = null,
                 timesUsed = 1,
-                lastUsedAt = Clock.System.now() - 365.minutes,
+                lastUsedAt = PreviewInstant - 365.minutes,
                 label = null,
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now()
+                createdAt = PreviewInstant,
+                updatedAt = PreviewInstant
             ),
             vesselName = "Small Cup",
             userPreferences = UserPreferences(),

@@ -33,10 +33,10 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.DatePickerField
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
-import kotlin.time.Clock
 
 /** Title above a group of fields. Matches the existing Photos heading. */
 @Composable
@@ -368,8 +368,8 @@ private val previewTeaTypes = listOf(
         colorHex = "#4CAF50",
         isSystemDefault = true,
         displayOrder = 0,
-        createdAt = Clock.System.now(),
-        updatedAt = Clock.System.now(),
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
     ),
     TeaType(
         id = "black",
@@ -378,8 +378,8 @@ private val previewTeaTypes = listOf(
         colorHex = "#795548",
         isSystemDefault = true,
         displayOrder = 1,
-        createdAt = Clock.System.now(),
-        updatedAt = Clock.System.now(),
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
     ),
     TeaType(
         id = "oolong",
@@ -388,8 +388,8 @@ private val previewTeaTypes = listOf(
         colorHex = "#FF9800",
         isSystemDefault = true,
         displayOrder = 2,
-        createdAt = Clock.System.now(),
-        updatedAt = Clock.System.now(),
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
     ),
     TeaType(
         id = "puerh",
@@ -398,7 +398,7 @@ private val previewTeaTypes = listOf(
         colorHex = "#5D4037",
         isSystemDefault = true,
         displayOrder = 3,
-        createdAt = Clock.System.now(),
-        updatedAt = Clock.System.now(),
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
     ),
 )

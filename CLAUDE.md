@@ -17,6 +17,11 @@ Multiplatform for UI, Room for local storage, and follows Clean Architecture wit
 ./gradlew :androidApp:assembleDebug
 ```
 
+Every `@Preview` is a smoke test: `PreviewRenderTest` renders it light, dark and at 2× font scale,
+in inspection mode as in the IDE, and fails if it crashes. Build preview data around
+`PreviewInstant`, and read the clock in composables through `currentInstant()`, so a preview looks
+the same every day.
+
 ## Architecture
 
 ### Clean Architecture Layers

@@ -115,13 +115,13 @@ cheaply. Three tracks, each catching a class the others can't.
 Room migrations (`sqlite-bundled` runs on the host), export/import round-trips, the session
 aggregate, use cases, ViewModel state machines, pure date/format/parse functions.
 
-### Track S — screenshots, host JVM, runs in CI
+### Track S — preview smoke tests, host JVM, runs in CI
 
-Every `@Preview` — already mandatory per CLAUDE.md — is rendered as a screenshot test by Roborazzi,
-light, dark and at 2× font scale, against goldens committed to the repo. Components with user text
-add a long-text preview. This catches the polish regressions the author cares about most, with no
-emulator and no interaction scripts. It is **not** the rejected Compose UI test suite: nothing is
-tapped, nothing is flaky. Goes live in Bet 1.
+Every `@Preview` — already mandatory per CLAUDE.md — is rendered on Robolectric light, dark and at
+2× font scale, and the test fails if one crashes. Nothing is compared against a golden: the author
+isn't after pixel parity, and goldens would churn hundreds of PNGs into git on every theme tweak.
+Components with user text add a long-text preview, for eyeballing in the IDE. It is **not** the
+rejected Compose UI test suite: nothing is tapped, nothing is flaky. Goes live in Bet 1.
 
 ### Track B — manual, real device, run rarely and deliberately
 
@@ -464,17 +464,15 @@ Scope is **the system, not a restyle of every screen.**
 
 **Design** (decided 2026-10-15):
 
-- **Track S goes live first**, so every later commit shows its visual diff in review.
-    - Roborazzi's preview scanner reads the `@Preview`s in `commonMain` and runs on Robolectric in
-      `androidHostTest`; Compose Preview Screenshot Testing wants its own source set in an Android
-      module.
-    - A custom tester renders every preview three ways — light, dark, 2× font scale — so no preview
-      is edited and new ones are covered for free. Long-text cases are hand-written previews.
-    - Goldens are committed at renderScale 0.5. CI runs `verifyRoborazzi` and fails on a diff, with
-      a small threshold for font rendering differences between machines. An intended change is
-      re-recorded locally and committed with it.
-    - Previews are deterministic: the ten that call `Clock.System.now()` take a fixed instant, or
-      their goldens change daily.
+- **Track S goes live first**, so every later commit proves its previews still render.
+    - ComposablePreviewScanner reads the `@Preview`s in `commonMain` and a parameterized test
+      renders them on Robolectric in `androidHostTest`.
+    - Every preview renders three ways — light, dark, 2× font scale — so no preview is edited and
+      new ones are covered for free. Long-text cases are hand-written previews.
+    - No goldens; a preview fails only by crashing. Considered: Roborazzi goldens in git, dropped
+      2026-10-15 after the first cut committed 531 PNGs.
+    - Previews are deterministic: the ten that call `Clock.System.now()` take a fixed instant, so
+      the IDE shows the same "3 days ago" every day.
 - **Identity:**
     - **Literata** (OFL, bundled as compose resources, static weights) for display, headline and
       title styles. Body and labels stay system, for density. Timer and parameter digits use tabular
@@ -570,7 +568,7 @@ Scope is **the system, not a restyle of every screen.**
       class: edit forms re-seeding over user input, stacking collectors, re-applied filters.
 - **Not here:** tablet layouts (Store readiness).
 
-**Exit:** every shared component exists once, with its Track S goldens; no screen renders an
+**Exit:** every shared component exists once, with previews Track S renders; no screen renders an
 operation failure any other way; no raw exception text; a unit flipped any number of times saves
 what was typed, and an untouched one saves nothing; tab navigation behaves per the shell rules;
 Track B lines for theme mode and the dark splash on both platforms, the iOS edge swipe, and tab
@@ -579,9 +577,8 @@ state across rotation and process death.
 **Commits.** Each compiles, passes tests and leaves the app working. 7 → 9–13; 6 → 13; 14 → 15 → 16.
 
 - [x] `docs: record the Bet 1 design`
-- [ ] `test: screenshot every preview`: the Roborazzi plugin, the common preview scanner, the
-  three-way tester, fixed-clock previews, CI verify, the re-record command in CLAUDE.md. Proves
-  compose resources render under Robolectric before anything depends on it.
+- [x] `test: render every preview`: the preview scanner, the three-way render test, fixed-clock
+  previews. Proves compose resources render under Robolectric before anything depends on it.
 - [ ] `feat: Literata type scale and shapes`
 - [ ] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
   `teaTypeColor` on both themes.
@@ -784,7 +781,7 @@ Gated. Nothing ships to strangers until these are done. Blocks nothing before th
   `ITSAppUsesNonExemptEncryption`, widget display name, `dataExtractionRules`.
 - [ ] **About screen:** version, licences, privacy policy, support contact.
 - [ ] **One TalkBack and VoiceOver pass** over the whole app.
-- [ ] Store listings and screenshots (Track S makes these cheap).
+- [ ] Store listings and screenshots.
 - [ ] **Large-screen layouts.** Android 16 ignores the portrait lock on large screens, so tablets
   see landscape regardless.
 
@@ -828,7 +825,7 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **`purchasePrice` is deleted, not built**                                           | Cost-per-cup analytics is a feature nobody asked for.                                                                                                                                                                                                                                     |
 | **Stock is `finishedAt`, not a quantity**                                           | Marking "I ran out" is the whole need, and it's what feeds the dormant-tea prompt.                                                                                                                                                                                                        |
 | **Finished teas stay in the Log Tea picker**                                        | Hiding them makes the auto-clear unreachable.                                                                                                                                                                                                                                             |
-| **Host-JVM tests; screenshot tests from previews; no interactive Compose UI suite** | Revisited 2026-09-23. Screenshot tests reuse mandatory previews, run without an emulator, and catch the polish regressions that matter. Interaction suites still aren't worth their brittleness.                                                                                          |
+| **Host-JVM tests; smoke tests from previews; no interactive Compose UI suite**      | Revisited 2026-10-15. Rendering every mandatory preview catches crashes without an emulator. Interaction suites still aren't worth their brittleness. Considered: E2E flows, which need an emulator and duplicate Track B.                                                                |
 | **Accessibility basics are definition-of-done, not a launch gate**                  | Revisited 2026-09-23. Cheap per touch; the rating control — the loop's main input — is unusable with a screen reader today. One full screen-reader pass before store launch.                                                                                                              |
 | **Photos get safety, not features**                                                 | The author doesn't reread photos. They matter only because unchecked they break backups and storage.                                                                                                                                                                                      |
 | **Freeform journal entries are rejected**                                           | The author rarely writes notes attached to sessions; detached entries would be emptier. Tags and session notes cover the journal.                                                                                                                                                         |
@@ -836,7 +833,7 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **No streaks**                                                                      | An engagement mechanic that says nothing about tea. The shipped streak insight is removed in F1.                                                                                                                                                                                          |
 | **The session reminder stays inexact**                                              | `setAndAllowWhileIdle`; Doze spaces these ~9 minutes apart. Not worth the exact-alarm allowance for a soft nudge. The fix if it annoys is `setExactAndAllowWhileIdle`, mirroring the completion alarm.                                                                                    |
 | **Notifications get two switches, not one**                                         | Turning off the soft nudge must not kill the alert the app exists to deliver.                                                                                                                                                                                                             |
-| **Screenshot tests are Roborazzi, with goldens in git**                             | It reads `commonMain` previews under the KMP library plugin; Compose Preview Screenshot Testing needs its own Android source set. Goldens in git at half scale are the simplest setup and verify locally. Considered: Git LFS, CI-only baselines.                                         |
+| **Previews are smoke-tested, not screenshot-tested**                                | Pixel parity isn't the goal, and goldens churn hundreds of PNGs into git on every theme tweak. ComposablePreviewScanner reads `commonMain` previews under the KMP library plugin. Considered: Roborazzi goldens in git, Git LFS, CI-only baselines.                                       |
 | **Unit toggles stay, local to the field**                                           | Converting a vendor's instructions in place is worth having. The bugs came from the toggle writing the global preference and living in every ViewModel, not from the toggle. Considered: Settings as the only way to change units.                                                        |
 | **The weight unit is honoured everywhere**                                          | A setting that one Analytics card obeys is worse than none. Considered: grams only, deleting the preference — leaf is weighed in grams nearly everywhere.                                                                                                                                 |
 | **Display units come from a CompositionLocal**                                      | Honouring weight everywhere would otherwise thread preferences through every State that shows a value. Considered: formatting in the screen and passing strings down, the earlier rule.                                                                                                   |
@@ -890,6 +887,9 @@ Things that cost real debugging time and would cost it again. Not history — tr
   new one**, so dropping the old one can't cascade into the new one (v6 → v7).
 - **okio's `FileSystem.SYSTEM` isn't visible from commonMain** (`openZip` is). The platform modules
   provide it.
+- **Robolectric SDK 36 needs JVM module flags on JDK 21**; `PreviewRenderTest` runs on 35.
+  Roborazzi's `generateComposePreviewRobolectricTests` also breaks the host tests' classpath: its
+  `afterEvaluate` check reads dependencies before KMP wires commonMain into `androidHostTest`.
 - **Never call `MutableList.removeLast()` / `removeFirst()`.** With compileSdk ≥ 35 they may bind to
   JDK 21's `List.removeLast()`, absent below API 35. Use `removeAt(lastIndex)` / `removeAt(0)`.
 

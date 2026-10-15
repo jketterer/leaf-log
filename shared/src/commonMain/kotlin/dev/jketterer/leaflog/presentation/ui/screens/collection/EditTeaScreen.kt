@@ -46,10 +46,10 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
 
 /**
  * Add/Edit Tea Screen - create or edit a tea in the collection.
@@ -333,8 +333,8 @@ private val previewScreenTeaTypes = listOf(
         colorHex = "#4CAF50",
         isSystemDefault = true,
         displayOrder = 0,
-        createdAt = Clock.System.now(),
-        updatedAt = Clock.System.now(),
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
     ),
     TeaType(
         id = "black",
@@ -343,7 +343,7 @@ private val previewScreenTeaTypes = listOf(
         colorHex = "#795548",
         isSystemDefault = true,
         displayOrder = 1,
-        createdAt = Clock.System.now(),
-        updatedAt = Clock.System.now(),
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
     ),
 )

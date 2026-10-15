@@ -6,7 +6,6 @@ import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSDateFormatterShortStyle
 import platform.Foundation.dateWithTimeIntervalSince1970
 import kotlinx.datetime.TimeZone
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 actual object TimeFormatter {
@@ -25,10 +24,10 @@ actual object TimeFormatter {
         return formatter.stringFromDate(date)
     }
 
-    actual fun formatRelativeTimestamp(instant: Instant): String {
+    actual fun formatRelativeTimestamp(instant: Instant, now: Instant): String {
         val date = NSDate.dateWithTimeIntervalSince1970(instant.epochSeconds.toDouble())
         val formatter = NSDateFormatter()
-        return when (relativeDayOf(instant, Clock.System.now(), TimeZone.currentSystemDefault())) {
+        return when (relativeDayOf(instant, now, TimeZone.currentSystemDefault())) {
             RelativeDay.TODAY -> {
                 formatter.timeStyle = NSDateFormatterShortStyle
                 formatter.dateStyle = 0u // NSDateFormatterNoStyle

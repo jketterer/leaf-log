@@ -43,13 +43,13 @@ import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -364,8 +364,8 @@ private fun CreateBrewingConfigurationScreenPreview() {
                         capacityMl = 100,
                         isSystemDefault = true,
                         displayOrder = 0,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
                     ),
                 ),
                 selectedVessel = BrewingVessel(
@@ -375,8 +375,8 @@ private fun CreateBrewingConfigurationScreenPreview() {
                     capacityMl = 100,
                     isSystemDefault = true,
                     displayOrder = 0,
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                 ),
                 temperatureCelsius = "90",
                 waterQuantityMl = "200",

@@ -6,7 +6,6 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlinx.datetime.TimeZone
-import kotlin.time.Clock
 import kotlin.time.Instant
 
 actual object TimeFormatter {
@@ -18,9 +17,9 @@ actual object TimeFormatter {
         return DateFormat.getTimeInstance(DateFormat.SHORT).format(calendar.time)
     }
 
-    actual fun formatRelativeTimestamp(instant: Instant): String {
+    actual fun formatRelativeTimestamp(instant: Instant, now: Instant): String {
         val date = Date(instant.toEpochMilliseconds())
-        return when (relativeDayOf(instant, Clock.System.now(), TimeZone.currentSystemDefault())) {
+        return when (relativeDayOf(instant, now, TimeZone.currentSystemDefault())) {
             RelativeDay.TODAY -> DateFormat.getTimeInstance(DateFormat.SHORT).format(date)
             RelativeDay.YESTERDAY -> "Yesterday"
             RelativeDay.THIS_YEAR -> SimpleDateFormat("MMM d", Locale.getDefault()).format(date)

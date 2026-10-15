@@ -50,6 +50,7 @@ import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -177,7 +178,7 @@ fun SessionCard(
                     )
                 }
 
-                val timeText = TimeFormatter.formatRelativeTimestamp(session.startedAt)
+                val timeText = TimeFormatter.formatRelativeTimestamp(session.startedAt, currentInstant())
 
                 Row(
                     modifier = Modifier.padding(vertical = 4.dp),

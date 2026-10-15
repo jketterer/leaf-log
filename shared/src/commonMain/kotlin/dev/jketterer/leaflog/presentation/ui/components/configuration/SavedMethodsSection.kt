@@ -21,8 +21,8 @@ import compose.icons.feathericons.PlusCircle
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -101,7 +101,7 @@ private fun SavedMethodsSectionEmptyPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun SavedMethodsSectionWithItemsPreview() {
-    val now = Clock.System.now()
+    val now = PreviewInstant
     LeafLogTheme {
         SavedMethodsSection(
             configurations = listOf(

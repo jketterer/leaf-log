@@ -32,8 +32,8 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Clock
 import org.koin.compose.koinInject
 
 @Composable
@@ -127,7 +127,7 @@ fun VesselCard(
 @Preview(showBackground = true)
 @Composable
 private fun VesselCardPreview() {
-    val now = Clock.System.now()
+    val now = PreviewInstant
     LeafLogTheme {
         VesselCard(
             vessel = BrewingVessel(
@@ -149,7 +149,7 @@ private fun VesselCardPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun VesselCardArchivedPreview() {
-    val now = Clock.System.now()
+    val now = PreviewInstant
     LeafLogTheme {
         VesselCard(
             vessel = BrewingVessel(
@@ -172,7 +172,7 @@ private fun VesselCardArchivedPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun VesselCardNoCapacityPreview() {
-    val now = Clock.System.now()
+    val now = PreviewInstant
     LeafLogTheme {
         VesselCard(
             vessel = BrewingVessel(

@@ -59,6 +59,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
@@ -507,8 +508,8 @@ private fun SteepCompleteScreenSingleSteepPreview() {
                     id = "test",
                     name = "Teapot",
                     iconName = "icon",
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     isSystemDefault = false,
                     displayOrder = 0,
                 ),
@@ -517,8 +518,8 @@ private fun SteepCompleteScreenSingleSteepPreview() {
                     id = "tea-1",
                     name = "Dragon Well",
                     teaTypeId = "green",
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 isLoading = false,
@@ -539,8 +540,8 @@ private fun SteepCompleteScreenMultiSteepPreview() {
                     id = "test",
                     name = "Teapot",
                     iconName = "icon",
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     isSystemDefault = false,
                     displayOrder = 0,
                 ),
@@ -554,8 +555,8 @@ private fun SteepCompleteScreenMultiSteepPreview() {
                     id = "tea-1",
                     name = "Tie Guan Yin",
                     teaTypeId = "oolong",
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 previousSteeps = previewSession(ratings = listOf(4f, 5f)).steeps,

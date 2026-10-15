@@ -34,7 +34,6 @@ import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Clock
 import org.koin.compose.koinInject
 
 /**
@@ -161,8 +160,8 @@ private fun VesselSelectorPreview() {
                         iconName = "gaiwan",
                         isSystemDefault = true,
                         displayOrder = 0,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
                     ),
                     BrewingVessel(
                         id = "kyusu",
@@ -170,8 +169,8 @@ private fun VesselSelectorPreview() {
                         iconName = "kyusu",
                         isSystemDefault = true,
                         displayOrder = 1,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
                     ),
                     BrewingVessel(
                         id = "mug",
@@ -179,8 +178,8 @@ private fun VesselSelectorPreview() {
                         iconName = "mug",
                         isSystemDefault = true,
                         displayOrder = 2,
-                        createdAt = Clock.System.now(),
-                        updatedAt = Clock.System.now(),
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
                     ),
                 ),
                 selectedVessel = null,

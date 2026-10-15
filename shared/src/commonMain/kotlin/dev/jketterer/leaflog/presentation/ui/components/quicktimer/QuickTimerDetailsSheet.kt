@@ -46,12 +46,12 @@ import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Clock
 
 /**
  * Two-step bottom sheet for adding details to a quick timer.
@@ -510,8 +510,8 @@ private fun Step1ContentWithSelectionPreview() {
                 id = "tea-1",
                 name = "Dragon Well",
                 teaTypeId = "green",
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now(),
+                createdAt = PreviewInstant,
+                updatedAt = PreviewInstant,
                 syncStatus = dev.jketterer.leaflog.domain.models.SyncStatus.LOCAL_ONLY,
             ),
             selectedVessel = BrewingVessel(
@@ -521,8 +521,8 @@ private fun Step1ContentWithSelectionPreview() {
                 capacityMl = 120,
                 isSystemDefault = true,
                 displayOrder = 0,
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now(),
+                createdAt = PreviewInstant,
+                updatedAt = PreviewInstant,
             ),
             availableTeas = emptyList(),
             availableVessels = emptyList(),
@@ -546,8 +546,8 @@ private fun Step2ContentLooseLeafPreview() {
                 id = "tea-1",
                 name = "Dragon Well",
                 teaTypeId = "green",
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now(),
+                createdAt = PreviewInstant,
+                updatedAt = PreviewInstant,
                 syncStatus = dev.jketterer.leaflog.domain.models.SyncStatus.LOCAL_ONLY,
             ),
             teaQuantityGrams = "5",
@@ -580,8 +580,8 @@ private fun Step2ContentTeaBagPreview() {
                 id = "tea-1",
                 name = "Dragon Well",
                 teaTypeId = "green",
-                createdAt = Clock.System.now(),
-                updatedAt = Clock.System.now(),
+                createdAt = PreviewInstant,
+                updatedAt = PreviewInstant,
                 syncStatus = dev.jketterer.leaflog.domain.models.SyncStatus.LOCAL_ONLY,
             ),
             teaQuantityGrams = "",

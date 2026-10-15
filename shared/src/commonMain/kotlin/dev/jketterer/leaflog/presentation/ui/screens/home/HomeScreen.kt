@@ -52,6 +52,7 @@ import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
 import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
@@ -69,7 +70,6 @@ import leaf_log.shared.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -466,7 +466,7 @@ private fun HomeContent(
 @Preview(showBackground = true)
 @Composable
 private fun HomeScreenPreview() {
-    val now = Clock.System.now()
+    val now = PreviewInstant
     LeafLogTheme {
         HomeContent(
             state = HomeState(

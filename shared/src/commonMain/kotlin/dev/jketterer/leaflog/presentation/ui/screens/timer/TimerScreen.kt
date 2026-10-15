@@ -48,6 +48,7 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
@@ -57,7 +58,6 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirma
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -390,15 +390,15 @@ private fun TimerScreenRunningPreview() {
                     totalDuration = 2.minutes,
                     remainingDuration = 1.minutes + 30.seconds,
                     status = TimerStatus.RUNNING,
-                    startedAt = Clock.System.now(),
+                    startedAt = PreviewInstant,
                 ),
                 session = previewSession(),
                 tea = Tea(
                     id = "tea-1",
                     name = "Dragon Well",
                     teaTypeId = "green",
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
             ),
@@ -421,16 +421,16 @@ private fun TimerScreenPausedPreview() {
                     totalDuration = 2.minutes,
                     remainingDuration = 1.minutes + 23.seconds,
                     status = TimerStatus.PAUSED,
-                    startedAt = Clock.System.now(),
-                    pausedAt = Clock.System.now(),
+                    startedAt = PreviewInstant,
+                    pausedAt = PreviewInstant,
                 ),
                 session = previewSession(),
                 tea = Tea(
                     id = "tea-1",
                     name = "Dragon Well",
                     teaTypeId = "green",
-                    createdAt = Clock.System.now(),
-                    updatedAt = Clock.System.now(),
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
             ),

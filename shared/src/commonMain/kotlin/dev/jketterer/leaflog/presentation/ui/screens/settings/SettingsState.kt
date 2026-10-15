@@ -9,6 +9,8 @@ data class SettingsState(
     /** Calendar days since the last delivered export; null if there's never been one. */
     val daysSinceBackup: Int? = null,
     val isBackupOverdue: Boolean = false,
+    /** What the photos take on this device, null until measured. */
+    val photoStorage: String? = null,
     val error: String? = null,
     /** Confirms something finished, shown like an error but not one. */
     val notice: String? = null,

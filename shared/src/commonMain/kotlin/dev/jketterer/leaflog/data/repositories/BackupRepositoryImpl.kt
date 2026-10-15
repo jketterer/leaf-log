@@ -49,6 +49,9 @@ import kotlin.time.Instant
 /** Where restored photos go, named by content so a re-import never duplicates one. */
 private const val PHOTO_DIR = "photos"
 
+/** Every directory photos have been saved to, earlier imports' `tea_photos` included. */
+private val PHOTO_DIRS = listOf(PHOTO_DIR, "tea_images", "session_images", "vessel_images", "tea_photos")
+
 private val DATA = "/data.json".toPath()
 
 private const val EXPORT_PREFIX = "leaf-log-export-"
@@ -193,6 +196,17 @@ class BackupRepositoryImpl(
         }
         results.firstNotNullOfOrNull { it.exceptionOrNull() }?.let { error ->
             Logger.w(error, tag = "Backup") { "Couldn't restore every setting" }
+        }
+    }
+
+    override suspend fun photoStorageBytes(): Result<Long> = withContext(Dispatchers.IO) {
+        runCatching {
+            PHOTO_DIRS.map { imageStorage.resolveImagePath(it).toPath() }
+                .filter { fileSystem.exists(it) }
+                .flatMap { fileSystem.listRecursively(it).toList() }
+                .sumOf { file ->
+                    fileSystem.metadataOrNull(file)?.takeIf { it.isRegularFile }?.size ?: 0L
+                }
         }
     }
 

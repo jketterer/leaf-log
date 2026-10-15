@@ -23,4 +23,7 @@ interface BackupRepository {
 
     /** Deletes a backup file once it's done with: an export delivered, or a preview not imported. */
     suspend fun discard(filePath: String)
+
+    /** Bytes the photo files on this device take: roughly what an export adds for them. */
+    suspend fun photoStorageBytes(): Result<Long>
 }

@@ -99,6 +99,22 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `photo storage counts every photo directory and nothing else`() = runTest {
+        val phone = Device("phone")
+        fun write(path: Path, size: Int) {
+            fileSystem.createDirectories(path.parent!!)
+            fileSystem.write(path) { write(ByteArray(size)) }
+        }
+        write(phone.files / "photos" / "a.jpg", 1_000)
+        write(phone.files / "tea_images" / "b.jpg", 200)
+        write(phone.files / "tea_photos" / "c.jpg", 30)
+        write(phone.files / "leaf_log.db", 50_000)
+        write(phone.cache / "leaf-log-export-20260101-000000.zip", 50_000)
+
+        assertEquals(1_230L, phone.repository.photoStorageBytes().getOrThrow())
+    }
+
+    @Test
     fun `a preview changes nothing and counts what the import then does`() = runTest {
         val phone = Device("phone")
         phone.seedJournal()

@@ -15,6 +15,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.math.roundToLong
 import kotlin.time.Instant
 
 private const val BACKUP_OVERDUE_AFTER_DAYS = 14
@@ -29,6 +30,7 @@ class SettingsViewModel(
 
     init {
         loadPreferences()
+        measurePhotoStorage()
     }
 
     fun onIntent(intent: SettingsIntent) {
@@ -85,6 +87,16 @@ class SettingsViewModel(
                             isBackupOverdue = days == null || days > BACKUP_OVERDUE_AFTER_DAYS,
                         )
                     }
+                }
+        }
+    }
+
+    private fun measurePhotoStorage() {
+        viewModelScope.launch {
+            backupRepository.photoStorageBytes()
+                .onSuccess { bytes -> _state.update { it.copy(photoStorage = formatStorageSize(bytes)) } }
+                .onFailure { e ->
+                    Logger.w(tag = "Settings") { "Failed to measure photo storage: ${e.message}" }
                 }
         }
     }
@@ -213,6 +225,7 @@ class SettingsViewModel(
             backupRepository.import(preview.filePath)
                 .onSuccess { result ->
                     _state.update { it.copy(isImporting = false, importResult = result) }
+                    measurePhotoStorage()
                 }
                 .onFailure { error ->
                     _state.update {
@@ -238,3 +251,13 @@ internal fun daysSinceBackup(lastBackupAt: Instant?, now: Instant, tz: TimeZone)
         // A clock set back since the backup reads as today, not as a backup from the future
         it.toLocalDateTime(tz).date.daysUntil(now.toLocalDateTime(tz).date).coerceAtLeast(0)
     }
+
+/**
+ * [bytes] in decimal units, as both platforms' storage settings count them. Each unit stops where
+ * rounding would reach 1000 of it.
+ */
+internal fun formatStorageSize(bytes: Long): String = when {
+    bytes <= 999_000 -> "${(bytes + 999) / 1_000} KB"
+    bytes < 999_500_000 -> "${(bytes + 500_000) / 1_000_000} MB"
+    else -> "${(bytes / 100_000_000.0).roundToLong() / 10.0} GB"
+}

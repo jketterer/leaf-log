@@ -336,6 +336,21 @@ private fun DataSection(
                 }
             }
         }
+
+        state.photoStorage?.let { size ->
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+            SettingRow(
+                title = "Photos",
+                subtitle = "Space your photos take on this device",
+            ) {
+                Text(
+                    text = size,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 
@@ -661,7 +676,7 @@ private fun DataSectionPreview() {
 private fun DataSectionBackedUpPreview() {
     LeafLogTheme {
         DataSection(
-            state = SettingsState(isLoading = false, daysSinceBackup = 3),
+            state = SettingsState(isLoading = false, daysSinceBackup = 3, photoStorage = "84 MB"),
             onIntent = {},
         )
     }

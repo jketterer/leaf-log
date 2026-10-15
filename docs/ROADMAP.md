@@ -593,7 +593,11 @@ stand alone.
   rotate it, so it decodes at a power-of-two `inSampleSize`, then scales and applies EXIF orientation
   in one matrix, read with androidx `ExifInterface` (already in the APK through Coil and FileKit; lint flags
   the framework one below API 25). The size math is Android's; iOS still decodes at full size.
-- [ ] `feat: show photo storage in Settings`
+- [x] `feat: show photo storage in Settings`
+  As built: `BackupRepository.photoStorageBytes` sums the files in every photo directory, so
+  orphaned files count: it's the space they take, not what rows reference. The Data section shows
+  it in decimal units like the platforms' storage settings, measured when Settings opens and after
+  an import. Tests: the sum ignores the database and cache; the formatting's unit boundaries.
 - [ ] `chore: release 0.3.0`: Track B lines — an Android backup restored on iOS, an iOS backup
   restored on Android, a 0.2.0 backup restored onto a fresh install.
 

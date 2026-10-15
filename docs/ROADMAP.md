@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-15 (F4 designed)
+> **Last updated:** 2026-10-15 (Bet 1 designed)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -117,11 +117,11 @@ aggregate, use cases, ViewModel state machines, pure date/format/parse functions
 
 ### Track S — screenshots, host JVM, runs in CI
 
-**New.** Every `@Preview` — already mandatory per CLAUDE.md — is rendered as a screenshot test
-(Roborazzi or Compose Preview Screenshot Testing; choose in Bet 1). Previews gain dark and
-max-font-scale variants and a long-text case. This catches the polish regressions the author cares
-about most, with no emulator and no interaction scripts. It is **not** the rejected Compose UI test
-suite: nothing is tapped, nothing is flaky.
+Every `@Preview` — already mandatory per CLAUDE.md — is rendered as a screenshot test by Roborazzi,
+light, dark and at 2× font scale, against goldens committed to the repo. Components with user text
+add a long-text preview. This catches the polish regressions the author cares about most, with no
+emulator and no interaction scripts. It is **not** the rejected Compose UI test suite: nothing is
+tapped, nothing is flaky. Goes live in Bet 1.
 
 ### Track B — manual, real device, run rarely and deliberately
 
@@ -166,17 +166,15 @@ Bet 1 Design system & app shell ─► Bet 2 Brewing plans ─► Bet 3 Journal 
 
 ### F0 — Ground truth
 
-Small; everything after it is worth more once it's done.
+**Done.** Small; everything after it is worth more once it's done.
 
-- [x] **Unstage `EditVesselFormLogic.kt`** (`git rm --cached`). It will break the next commit.
-- [x] **Commit `docs/` as-is, then delete the superseded eight** in a second commit, so the old
-  material is recoverable from history.
-- [x] **GitHub Actions CI**: `./gradlew :shared:allTests :androidApp:assembleDebug` on push and PR.
+- **GitHub Actions CI**: `./gradlew :shared:allTests :androidApp:assembleDebug` on push and PR.
   Without it, every test written later is a thing you *remember* to run.
-- [x] **Test dependencies:** keep and wire `koin-test` (DI graph verification); delete the
-  Android-instrumented scaffolding and the other unused deps listed in § 2.
-- [x] **Trim `TEST_CASES.md`** to the Track B checklist (~150 lines).
-- [x] **Release hygiene.** "Which build is on my phone" must be answerable.
+- **Test dependencies:** `koin-test` wired for DI graph verification; the Android-instrumented
+  scaffolding and the unused deps listed in § 2 deleted.
+- **`TEST_CASES.md`** trimmed to the Track B checklist. The superseded docs were committed, then
+  deleted, so they're recoverable from history.
+- **Release hygiene.** "Which build is on my phone" must be answerable.
     - Semver, bumped by judgement (not tied to milestones), starting at `0.1.0`.
     - `version.properties` at the repo root holds `VERSION_NAME` and nothing else. Android reads it
       in Gradle; `Config.xcconfig` `#include`s it (a comment-free properties file is valid xcconfig)
@@ -192,60 +190,38 @@ Small; everything after it is worth more once it's done.
     - Tags: `v0.1.0` style, annotated. History: `flutter-1.1.1` (the published 2019 Flutter app,
       `com.jketterer.leaf_log`) and `flutter-2.0-wip` (the 2022 `two-point-oh` attempt), kept out of
       the `v*` namespace.
-    - `master` → `main` now; CI triggers on `[main, kmp]` until `kmp` merges. Check the Xcode Cloud
-      workflow's branch start condition after the rename.
+    - `main` is the default branch; CI triggers on `[main, kmp]` until `kmp` merges.
 
-      Exit: both platforms and the widget read `version.properties` (the `#include` confirmed by a
-      local Xcode build and an Xcode Cloud run); `CHANGELOG.md` has a `0.1.0` entry; the three tags
-      are pushed; `main` exists and CI and Xcode Cloud trigger from it.
+**Exit:** both platforms and the widget read `version.properties`; `CHANGELOG.md` has a `0.1.0`
+entry; the three tags are pushed; CI and Xcode Cloud trigger from `main`.
 
 ### F1 — Fix now
 
-The verified bugs in `docs/audit/README.md` §2 that no later item rewrites. No design needed; all
-small. One conventional commit per item, its test in the same commit. Strike the audit row as it
-closes.
+**Done, released as 0.1.1.** The verified bugs in `docs/audit/README.md` §2 that no later item
+rewrites. No design needed; all small.
 
-- [x] **Stop writing ratings the user didn't give** (#2, #3). F2's migration can't tell a guess from
-  a real rating, so every day these run is unrecoverable. Deletions only:
-    - Steep Complete's guess-and-upsert on open (`SteepCompleteViewModel` `suggestedRating`).
-    - Quick Brew: `rating = null`, and pass `usedConfigurationId = config.id` so `timesUsed` /
-      `lastUsedAt` finally rise (increments only fire on `COMPLETED`, so no double count).
-    - `SaveConfigurationDialog` gets `session.rating`, not `?: 5f`; its `rating` becomes nullable.
-    - The Log Session dialog prefill stays for F2 — the user sees it and submits it.
-- [x] **iOS relative dates** (#9). A pure commonMain function classifies an instant as Today /
-  Yesterday / This year / Older given `now` and `tz`; the actuals only format. Test: year boundary,
-  Aug 23 vs Sep 23.
-- [x] **Weeks start on Monday, everywhere** (#13). One `LocalDate.startOfWeek()` replaces the three
-  `ordinal` copies (Analytics `THIS_WEEK`, trend buckets, activity). Heatmap grid and labels go
-  Monday-first. History's "This Week" filter is renamed "Last 7 Days" — that's what it does.
-  `calculateDateRange` takes `now` and `tz`. Test: Sunday, Monday, month and year edges.
-- [x] **Chart taps** (#14). Donut segment and trend point hit-testing become pure functions. Each
-  Canvas gets a `contentDescription` summary (definition of done). Test: angle offset, nearest-point
-  rounding.
-- [x] **Timer edit sheet** (#15). Re-read the session inside the launch, copy the edited fields onto
-  it, then upsert. Reset while paused persists via `saveTimerStateUseCase`.
-- [x] **Steep Complete discard withdraws the reminder** (#17). `timerService.onSessionResolved`.
-- [x] **Live Activity deployment target** 26.2 → 18.2 (#18). Exit: an Xcode Cloud build; a Track B
-  line for the Live Activity on an iOS 18 device.
-- [x] **Errors you can see** (#19). Minimal visibility only — Bet 1 replaces the source, not the
-  placement:
-    - Collection, History: inline `Snackbar` → `Scaffold` `snackbarHost`.
-    - Timer, Brewing Method, Edit Session, Vessels: render `state.error` in a `SnackbarHost`.
-    - Settings: export and import picker failures get their own intents instead of
-      `ExportCompleted` / `ImportCancelled`.
-- [x] **Remove the streak insight** (#20): the block, `computeMaxStreak`,
-  `InsightType.CONSISTENCY` if otherwise unused, the preview string.
-- [x] **`removeLast()` → `removeAt(lastIndex)`** in `AppNavigation.kt` (18 sites). Safe whether or
-  not the API < 35 crash is real; move the Hard-won facts entry from "unverified" to a rule.
-- [x] **Release `0.1.1`**: CHANGELOG entry, tag `v0.1.1`.
+- **Ratings the user didn't give stopped being written** (#2, #3): Steep Complete's guess on open,
+  Quick Brew's, and `SaveConfigurationDialog`'s `?: 5f`. F2's migration couldn't tell a guess from a
+  real rating, so this went first.
+- **iOS relative dates** (#9): a pure commonMain classifier (Today / Yesterday / This year / Older,
+  given `now` and `tz`); the actuals only format.
+- **Weeks start on Monday, everywhere** (#13): one `LocalDate.startOfWeek()`. History's "This Week"
+  filter became "Last 7 Days" — that's what it does.
+- **Chart taps** (#14): hit-testing as pure functions; each Canvas has a semantic summary.
+- **Timer edit sheet** (#15), **Steep Complete discard withdraws the reminder** (#17), **Live
+  Activity deployment target** 18.2 (#18).
+- **Errors you can see** (#19): minimal visibility only. Bet 1 replaces the source.
+- **Streak insight removed** (#20) and **`removeLast()` → `removeAt(lastIndex)`** (see Hard-won
+  facts).
 
-**Moved, not fixed here:** #2–7 → F2 (except the rating writes stopped above), #8 → F3, #10–12 → F4,
-#16 Quick Timer notification → Bet 2 (which deletes that engine). #1 closed in F0.
+**Moved, not fixed here:** #2–7 → F2 (except the rating writes), #8 → F3, #10–12 → F4, #16 Quick
+Timer notification → Bet 2 (which deletes that engine). #1 closed in F0.
 
-Exit: every item above checked; each fix that involved a branch, loop, or date calculation has a
-Track A test.
+**Exit:** each fix that involved a branch, loop, or date calculation has a Track A test.
 
 ### F2 — The session aggregate
+
+**Done, released as 0.1.2.**
 
 **Outcome:** one definition of a session and its steeps, owned in one place. The prerequisite for
 brewing plans, best brew, the journal, and recap — all of which would otherwise be built on six
@@ -333,59 +309,12 @@ checks the SQL against the Kotlin rules on the same fixture.
   session left mid-steep, and a saved method used across several steeps. Install the F2 build over
   it and check the screens and stats.
 
-**Commits.** Each compiles, passes tests and leaves the app working. The schema lands late: until
-v7,
-`upsertSteep` fills children's NOT NULL vessel and water columns from the parent.
-
-- [x] `test: run Room migrations on the host JVM`: the harness, proven on 5 → 6. First choice is
-  `MIGRATION_x_y.migrate()` on a `BundledSQLiteDriver` connection with the JVM natives; the fallback
-  is Robolectric + `room-testing`.
-- [x] `fix: start the Log Session rating unrated`
-- [x] `refactor: add the Session, Steep and SessionWithSteeps domain types`: the rating and stats
-  rules as pure functions, the mapper, `Transactor`.
-- [x] `feat: read sessions as aggregates`
-- [x] `feat: add the session aggregate use cases`, alongside the old ones. A host test proves
-  `RoomTransactor` rolls back and shares its connection with DAO calls, on the in-memory Room
-  database `SessionReadsTest` builds (no Robolectric needed). They live in `session/aggregate/`
-  until the old names are free, and write the database only: timer stop, reminder withdrawal and
-  photo-file deletion are the caller's, after success.
-- [x] `refactor: move the brew loop onto the aggregate`: Timer, Steep Complete, the in-progress
-  delegate, Home, Log Tea, Quick Timer, Brew Again. The status meaning flips here, for every writer
-  at once. Routes and `TimerState.sessionId` carry the session id; the timer's steep is
-  `steepNumber`. Saving a method claims its source session as its first use, unless that session
-  used another. Until v7, `saveSession` keeps the parent's `averageRating` filled for the screens
-  still reading `TeaSession`.
-- [x] `refactor: move the journal onto the aggregate`: History, Session Detail, Edit Session, Tea
-  Detail, Vessel Detail, the vessel delete guard. Home's recent-session cards come too: they share
-  `SessionCard` with History. So do the journal's own deletes, Session Detail's Add Steep and steep
-  delete, and `UpdateAverageRatingUseCase`. The old write use cases had no callers left, so they
-  went here, and `UseCaseModule`'s `Aggregate` aliases with them. Add Steep shows on completed
-  sessions only.
-- [x] `refactor: move analytics and prefill onto the aggregate`: the Analytics use cases, Home's
-  daily stats and prefill's best session. A session's steeps all land in the period and day it
-  started; ratings are `effectiveRating`. Only export still reads `TeaSession`.
-- [x] `refactor: delete TeaSession`, `RecentSessionsCard` and the `TeaSession` reads; import goes
-  through the DAO. `session/aggregate/` moves up into `session/`. `CompleteDraftDialog` went too,
-  and the DAO queries only those reads used. The repository's `delete` is now `deleteSession`.
-- [x] `feat: keep session fields on the parent only (schema v7)`: entity, migration, `7.json`, both
-  platforms, the migration test, the transitional copy removed, import normalisation, the Track B
-  line, the Hard-won facts entry on `AddSteepUseCase` deleted. The table is renamed away before the
-  copy, so dropping it can't cascade into the new one. A parent left `IN_PROGRESS` on steep 1 stays
-  in progress too. The stats SQL lives in `TeaSessionDao` and import reuses it.
-  `actualBrewingTimeMs` is in the entity, unmapped until the next item.
-- [x] `feat: record actual brew time`: `SaveTimerStateUseCase` stores it on completion, and
-  `TimerState.completedAt` shrinks a Complete Now timer to what had elapsed. `Steep.brewedTime` is
-  the replay. Add Steep's stamp uses it too. A steep that ran out while the process was dead is
-  never saved as complete, so it keeps `null`.
-- [x] `feat: undo an accidental finish`: only Steep Complete's Finish offers it, with or without the
-  save-method prompt. Discard does not. A `rememberSaveable` flag keeps it to once per Home entry.
-  Home's `CompleteSession` now goes straight to Steep Complete instead of bouncing off the Timer.
-- [x] `chore: release 0.1.2`: audit rows #4–7 struck.
-
 **Exit:** the six paths are gone; Track A tests cover every steep mutation, the rating rule and the
 migration; the emulator upgrade passes; History, Tea Detail and prefill agree on every tea's rating.
 
 ### F3 — Tea lifecycle: finished, not deleted
+
+**Done, released as 0.2.0.**
 
 **Outcome:** the journal never loses a name, and soft-delete stops leaking.
 
@@ -428,27 +357,11 @@ the old delete paths left behind: a deleted tea with live sessions comes back fi
 (`finishedAt = deletedAt`), a deleted vessel a live session uses comes back archived, a deleted type
 a live tea uses comes back, and methods whose tea or vessel is still deleted are soft-deleted.
 
-**Commits.** Each compiles, passes tests and leaves the app working. 4–9 depend only on 3.
-
-- [x] `docs: record the F3 design`
-- [x] `refactor: delete purchasePrice, stockAmount and isActive from the domain`: the entity keeps
-  its columns until v8; the mapper writes defaults.
-- [x] `feat: tea finishedAt and method deletedAt (schema v8)`: entity, migration, `8.json`, both
-  platforms, mapper, domain, method queries on `deleted_at`, method delete made soft. Migration test
-  seeds one of each repair case.
-- [x] `fix: by-id reads skip soft-deleted rows`: tea, vessel, type, method; Tea Detail closes.
-  Strike #8.
-- [x] `feat: a tea with sessions can't be deleted`, and its methods go with it.
-- [x] `feat: deleting a vessel takes its methods`
-- [x] `feat: mark a tea finished`: Tea Detail, and `StartSessionUseCase` clears it.
-- [x] `feat: show finished teas as finished`: Collection, Log Tea picker, Quick Brew.
-- [x] `feat: merge a tea type into another`
-- [x] `chore: release 0.2.0`: Track B line — on 0.1.2 delete a tea that has sessions, upgrade, and
-  find it in Collection as finished with its sessions named.
-
 **Exit:** no screen can show "Unknown Tea"; Undo is purely UI work; Track A tests for each rule.
 
 ### F4 — Backup integrity
+
+**Done, released as 0.3.0.**
 
 **Outcome:** a backup restores on either platform, onto a fresh device, without losing or reverting
 anything. Export is the only backup under the no-sync decision, so this is data safety, not polish.
@@ -511,13 +424,16 @@ anything. Export is the only backup under the no-sync decision, so this is data 
   numbers, not rows in the file.
 - **"Last backup: 42 days ago"** (or "Never") in Settings' Data section, recorded only when the file
   is delivered: Android's SAF write succeeded, iOS's share sheet completed. Past **14 days**
-  it turns to the warning colour with "Back up now". Nothing on Home: no nagging.
+  it turns to the error colour with "Back up now". Nothing on Home: no nagging.
 - **Photo safety** (previous 2.6):
     - `ImageStorage.saveImage` downscales every photo added to the app to a 2048px long edge, JPEG
       quality 85, so `.jpg` is finally true for HEIC and PNG picks. Existing photos aren't
       re-encoded.
-    - Android applies EXIF orientation itself with the framework `ExifInterface(InputStream)`:
-      `BitmapFactory` ignores it, and `ImageDecoder` needs API 28 (minSdk is 24).
+    - Android decodes at a power-of-two `inSampleSize`, then scales and applies EXIF orientation in
+      one matrix, read with androidx `ExifInterface`: `BitmapFactory` ignores orientation,
+      `ImageDecoder` needs API 28 (minSdk is 24), and lint flags the framework `ExifInterface` below
+      API 25. iOS uses FileKit's `compressImage`, which draws through `UIImage` and comes out
+      upright.
     - Save failures reach the user: `EditTeaViewModel.addPhoto` is unguarded, and iOS ignores
       `writeToFile` returning false, storing a path to a missing file.
     - Settings shows the storage photos take.
@@ -527,80 +443,6 @@ anything. Export is the only backup under the no-sync decision, so this is data 
   success confirmation.
 
 **Migration:** none. No schema change.
-
-**Commits.** Each compiles, passes tests and leaves the app working. 3 → 4 → 5 → 6 → 7; 2 and 8–11
-stand alone.
-
-- [x] `docs: record the F4 design`
-- [x] `fix: stamp updatedAt on every write`: soft-delete queries take it, writers that skip it are
-  fixed, seeds go to epoch 0. Test: each DAO soft delete stamps it. The skippers were the soft
-  deletes and method pin and reorder; F2's `incrementTimesUsed` had survived with no callers and
-  went here. Stats recompute stays unstamped: it is derived.
-- [x] `refactor: one ZIP implementation on okio`: both actuals deleted, entries stream. Tests:
-  writer → reader round trip; a DEFLATE archive with data descriptors written by `java.util.zip`
-  read by the common reader (the old Android format through the one iOS also runs). Strike #10.
-  `java.util.zip` also reads the writer's output, CRCs checked. okio's reader canonicalises names,
-  so only import's own target naming can slip; that test moved to the next item, which rewrites it.
-  `FileSystem.SYSTEM` isn't visible from commonMain (`openZip` is), so the platform modules provide
-  it. The repository's file work runs on `Dispatchers.IO`, as the actuals' did.
-- [x] `feat: back up to a versioned format`: V2 DTOs, V1 → V2, version dispatch, deleted rows and
-  their photos exported, one import transaction, the shared repair SQL, `photos/` with hash names,
-  injected `FileSystem`, dated filename, temp files cleaned up. Tests: full export → wipe → import;
-  a V1 fixture with a deleted tea that has sessions → empty DB → the tea finished, its sessions
-  named; a newer version refused; an entry named `../../x` lands in `photos/`. Strike #11. As built:
-  V1 holds no deleted rows, so the deleted-tea case is a device that still has the tea deleted (it
-  comes back finished); on an empty DB those sessions are orphans, skipped and counted
-  (`ImportResult.skipped`). V1 is schema 6 (March 2026) onward; its rows decode straight into the V2
-  types, except methods' `isActive`. Repair SQL lives in `TeaSessionDao` as `REPAIRS`, and keeps an
-  existing `finishedAt`. The picker's copy is deleted after import; the export temp file and the
-  filename remembered at screen open stay for the file-handling item.
-- [x] `feat: newer data wins on import`: `planMerge`, in-progress sessions landed completed, photos
-  copied only for winning rows. Tests: import twice = no change; older backup over newer data =
-  newer wins; a newer backup's delete lands; a local in-progress session is untouched. Strike #12.
-  As built: `planMerge` returns the rows to write, as a `Backup`; the transaction re-plans those
-  against a fresh read, so a row changed while photos copied keeps its change. A landed session
-  keeps its steeps' `COMPLETE` timer records and loses any other. The result counts written rows.
-  Host tests shadow `android.database.SQLException`: the mockable android.jar drops its message, and
-  Room's `@Upsert` needs it to update an existing row.
-- [x] `feat: preview an import before it runs`: the two-step flow, the dialog, honest result counts.
-  As built: `BackupRepository` gains `preview` (keeps the file, deletes it only if unreadable) and
-  `discard`; `ImportResult` became `ImportSummary`, which both return. Counts follow what the app
-  shows: a row restored from deleted is new, a row arriving deleted counts only when it removes a
-  live one. Import is disabled when nothing would change. The import counts its own re-plan, so it
-  matches the preview unless the device changed in between.
-- [x] `feat: back up preferences`: applied only to an empty database, shown in the preview. As
-  built: an optional `preferences` block in version 2, which no release has written yet; null in
-  older files. "Empty" means no tea rows, deleted ones included. They're applied after the
-  transaction through `PreferencesRepository`'s setters, and a setter's failure is logged rather
-  than failing an import whose data already landed.
-- [x] `fix: export and import file handling`: the Settings data-section audit rows. As built: the
-  repository names the export file (`exportFileName`) and deletes earlier ones, so iOS shares it as
-  it is and both platforms take the name from the path. The path waits in
-  `SettingsState` until delivered, then `discard` deletes it. Each picker's flag is cleared as it
-  opens, so recreation doesn't reopen it. Android copies on `Dispatchers.IO` and deletes a partial
-  destination file; iOS reports the share sheet's outcome and finds its presenter through the
-  foreground `UIWindowScene`. "Backup exported" shows in the error snackbar's slot until Bet 1's
-  message surface. Rows fixed earlier in F1 and F4 are struck with these.
-- [x] `feat: show when the last backup was`
-  As built: `UserPreferences.lastBackupAt`, stored per device and not backed up, set on
-  `ExportCompleted`. Days are calendar days; "Never" counts as overdue, so it shows in the warning
-  colour (`colorScheme.error`: the theme has no warning colour) and the Export button reads "Back up
-  now". Test: the day count, in `SettingsViewModel`, which puts it in state.
-- [x] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size
-  math. Track B line: a portrait photo stays upright on both platforms. As built: iOS uses FileKit's
-  `compressImage`, already installed, which draws through `UIImage`
-  and so comes out upright. Android doesn't: FileKit decodes at full size and copies the bitmap to
-  rotate it, so it decodes at a power-of-two `inSampleSize`, then scales and applies EXIF
-  orientation in one matrix, read with androidx `ExifInterface` (already in the APK through Coil and
-  FileKit; lint flags the framework one below API 25). The size math is Android's; iOS still decodes
-  at full size.
-- [x] `feat: show photo storage in Settings`
-  As built: `BackupRepository.photoStorageBytes` sums the files in every photo directory, so
-  orphaned files count: it's the space they take, not what rows reference. The Data section shows it
-  in decimal units like the platforms' storage settings, measured when Settings opens and after an
-  import. Tests: the sum ignores the database and cache; the formatting's unit boundaries.
-- [x] `chore: release 0.3.0`: Track B lines — an Android backup restored on iOS, an iOS backup
-  restored on Android, a 0.2.0 backup restored onto a fresh install.
 
 **Exit:** Track A round-trips for: full export → wipe → import; the old Android archive read by the
 common reader; a finished tea with sessions restored to an empty DB, still finished with its
@@ -620,33 +462,152 @@ this first means they're built once, in the final style.
 
 Scope is **the system, not a restyle of every screen.**
 
-- **Identity:** a display typeface suited to a journal, a type scale, `Shapes`, all colour roles
-  set, tea-type colours toned per theme (White `#FFFDE7` is invisible on light surfaces today),
-  dark-mode splash, one icon family.
-- **One component per pattern:** section header, unit input field (replaces Temperature / Volume /
-  Capacity variants), confirm-destructive dialog, discard-changes dialog, empty state (with an icon
-  slot), rating display with correct rounding and semantics, formatted weight/time/date.
-- **One error surface:** a `UiMessage` channel per ViewModel, one `SnackbarHost` per screen, and a
-  small set of typed domain failures (`NotFound`, `InUse(n)`, `LastRemaining`, `Io`) mapped to copy
-  in the UI. No raw `e.message` reaches a user.
-- **Strings:** string-resource infrastructure and plurals in place ("1 brews", "Used 1 times" die
-  here). Screens migrate as later bets touch them. Locale-aware date formatting behind one
-  `expect`/`actual`.
-- **Unit toggles stop changing global preferences from inside forms.** Units are a Settings concern,
-  with a weight row that is actually honoured everywhere.
-- **App shell:** per-tab back stacks (back from a tab returns Home, tabs keep their state), Up
-  arrows on pushed tab screens, fade-through for tab changes, one safe `navigateUp()`. Route args go
-  into ViewModels and load in `init`, killing the `LaunchedEffect`-reload bug class (edit forms
-  re-seeding over user input, stacking collectors, re-applied filters).
-- **Track S goes live** here, locking the system in.
+**Design** (decided 2026-10-15):
 
-**Exit:** every shared component exists once, with preview variants in Track S; no screen renders
-errors any other way; no raw exception text; tab navigation behaves per the shell rules.
+- **Track S goes live first**, so every later commit shows its visual diff in review.
+    - Roborazzi's preview scanner reads the `@Preview`s in `commonMain` and runs on Robolectric in
+      `androidHostTest`; Compose Preview Screenshot Testing wants its own source set in an Android
+      module.
+    - A custom tester renders every preview three ways — light, dark, 2× font scale — so no preview
+      is edited and new ones are covered for free. Long-text cases are hand-written previews.
+    - Goldens are committed at renderScale 0.5. CI runs `verifyRoborazzi` and fails on a diff, with
+      a small threshold for font rendering differences between machines. An intended change is
+      re-recorded locally and committed with it.
+    - Previews are deterministic: the ten that call `Clock.System.now()` take a fixed instant, or
+      their goldens change daily.
+- **Identity:**
+    - **Literata** (OFL, bundled as compose resources, static weights) for display, headline and
+      title styles. Body and labels stay system, for density. Timer and parameter digits use tabular
+      figures.
+    - A `Shapes` scale (4/8/12/16/28dp) replaces the ad-hoc `RoundedCornerShape`s.
+    - The colour scheme is re-exported from the same seed (`#4C662B`), so the palette stays and
+      every role is set. No dynamic colour.
+    - **Tea-type colours stay user-picked and are toned per theme** by a pure
+      `teaTypeColor(hex, dark)` that clamps lightness. Text on them uses `Color.luminance()`,
+      replacing the three hand-rolled "is this light?" checks. Stored data doesn't change.
+    - Dark-mode splash: a `values-night` theme with `windowBackground` on Android (no
+      `core-splashscreen`), a launch colour asset with a dark appearance on iOS.
+    - **One icon family: Feather**, plus filled star, half star and filled heart drawn in its style.
+      FontAwesome existed only because Feather is outline-only; it's removed.
+- **Theme mode: Light / Dark / System**, in a Settings Appearance section with the units. It travels
+  in the backup's preferences block as a nullable field (null = System). The root renders a plain
+  background until preferences first load, so the app never flashes the wrong theme; the OS splash
+  still follows the system. System bars follow the chosen mode on both platforms.
+- **Units: Settings owns the default; forms can toggle locally.** The toggle is a feature. Its bugs
+  came from where its state lived: forms wrote the global preference, cleared typed text to
+  "reconvert from storage", converted from rounded display text, and validated in whichever unit was
+  showing — once per ViewModel.
+    - **One `UnitInputField`** for temperature, volume and weight, replacing the Temperature /
+      Volume / Capacity variants. It owns its text and toggled unit — CLAUDE.md's `DurationPicker`
+      rule, "extract the logic, not the state". ViewModels hold `Double?` in °C / ml / g and lose
+      their toggle intents and string fields.
+    - A form reads units once when it opens. Per-tab back stacks let a form stay open while Settings
+      changes in another tab; typed text must not change meaning.
+    - The field keeps the exact canonical value and re-renders from it on a toggle, so flipping
+      never drifts (85 °C → 185 °F → 85 °C). **Toggling alone never changes stored data:** the field
+      reports a value only when typed, and only if it differs at display precision from the value it
+      opened with. This absorbs F2's `editedUnitValue`.
+    - A toggle lasts until the form closes (saveable), then resets to Settings. Nothing remembers
+      it — that would be a hidden second preference.
+    - The suffix is a chip with a swap glyph, a 48dp target and a spoken label; it takes the
+      tertiary colour when it differs from Settings.
+    - Precision: whole °C/°F and ml, one decimal for fl oz and g, two for oz. Input accepts that
+      many decimals. Presets follow the field's current unit; ounce leaf presets are 0.05 / 0.1 /
+      0.15 / 0.2 / 0.25 / 0.35 / 0.5.
+    - Validation ranges are in canonical units, in the ViewModel.
+    - **The weight unit is honoured everywhere** and gets a Settings row. A `LocalUnits`
+      CompositionLocal, provided at the root, feeds the formatted-value components, so display-only
+      screens stop carrying `userPreferences` in State. This replaces CLAUDE.md's "derivations that
+      depend on `userPreferences` stay in the screen".
+    - Display toggles (Analytics totals, Home's stat tile) become the same local chip: they last
+      while on the screen and never write the preference.
+- **One message surface.**
+    - A small `UiMessages` class per ViewModel wraps a `Channel` + `receiveAsFlow`, the nav-event
+      idiom. One `UiMessageEffect` per screen feeds the `Scaffold`'s `SnackbarHost`. No base
+      ViewModel.
+    - A `UiMessage` carries a string or plural resource plus args, resolved by the screen, so
+      ViewModels stay locale-free and tests assert on the resource. It may carry an action label and
+      an intent to send back; Home's Undo moves onto it, and the polish track's Undo-for-deletes is
+      then purely UI.
+    - Typed domain failures — `NotFound`, `InUse(n)`, `LastRemaining`, `Io` — mapped to copy in the
+      UI. They replace the copy `DeleteBrewingVesselUseCase` puts in the domain, and the tea, vessel
+      and tea-type delete guards throw them. Tea types can no longer lose their last type.
+    - Anything else reads "Couldn't <action>", and the exception goes to Kermit's log.
+    - A failed load shows the snackbar over the screen's empty state; there's no retry, because a
+      local database failing is a bug, not a flaky network. Success messages ("Backup exported")
+      use the same channel. Field validation stays inline as `supportingText`.
+- **Strings and dates.** Compose resources' `strings.xml` and plurals. What moves in Bet 1 is what
+  Bet 1 writes or edits, plus every plural bug ("1 brews", "Used 1 times", "(s)"); screens migrate
+  as later bets rewrite them. One `expect`/`actual` formats a `LocalDate` by skeleton (`MONTH_DAY`,
+  `MONTH_DAY_YEAR`, `MONTH_YEAR`, …): Android's `DateFormat.getBestDateTimePattern`, iOS's
+  `setLocalizedDateFormatFromTemplate`. It replaces the hardcoded `"MMM d"` patterns and the three
+  month-name arrays, with no java.time (minSdk 24). `GenerateInsightsUseCase`'s sentences wait for
+  Bet 4.
+- **Components**, each once, with a modifier and previews:
+    - `ConfirmDestructiveDialog`, and `DiscardChangesGuard(hasChanges, onDiscard)`, which owns the
+      back handler as well as the dialog, so adopting it fixes system back silently discarding Edit
+      Tea Type and Edit Session.
+    - `SectionHeader`, and `EmptyState` with an icon slot.
+    - `RatingDisplay`: stars to the nearest half, one trimmed decimal ("4.3", "4"), "Rated 4.3 out
+      of 5" to a screen reader, a muted "Unrated" for null — never zero stars. `RatingSelector` gets
+      value semantics; Bet 2's review is built on it.
+    - Formatted temperature, volume and weight values, reading `LocalUnits`.
+- **App shell**, on the Nav3 multiple-back-stacks recipe: one `NavBackStack` per tab, each with its
+  own decorators, shown as `[Home stack] + [current tab stack]`, so hidden tabs keep their
+  ViewModels (see Hard-won facts).
+    - Back from a tab's root returns Home; back from Home exits. Re-tapping the current tab pops it
+      to its root.
+    - The bottom bar shows across a tab's stack and hides on editors and the brew loop.
+    - The brew loop and notification deep links always use Home's stack; the origin tab keeps its
+      own.
+    - A destination with no args (Home → Collection) switches tabs. One with args (Tea Detail →
+      History for this tea) pushes onto the current stack with an Up arrow, leaving that tab's own
+      search and filters alone.
+    - One `navigateUp()` that pops only when the calling entry is on top and isn't a root.
+      Fade-through for tab switches, slides for push and pop. `MoreRoute` is deleted.
+    - Route args reach ViewModels through `parametersOf(route)` (`viewModelOf` resolves a
+      route-typed constructor param) and load in `init`, killing the `LaunchedEffect`-reload bug
+      class: edit forms re-seeding over user input, stacking collectors, re-applied filters.
+- **Not here:** tablet layouts (Store readiness).
 
-**Open questions:** typeface choice; Roborazzi vs Compose Preview Screenshot Testing (the latter is
-Android-only but reads existing previews directly); whether adaptive large-screen layouts land here
-or in the polish track (Android 16 ignores the portrait lock on large screens, so tablets will see
-landscape regardless).
+**Exit:** every shared component exists once, with its Track S goldens; no screen renders an
+operation failure any other way; no raw exception text; a unit flipped any number of times saves
+what was typed, and an untouched one saves nothing; tab navigation behaves per the shell rules;
+Track B lines for theme mode and the dark splash on both platforms, the iOS edge swipe, and tab
+state across rotation and process death.
+
+**Commits.** Each compiles, passes tests and leaves the app working. 7 → 9–13; 6 → 13; 14 → 15 → 16.
+
+- [x] `docs: record the Bet 1 design`
+- [ ] `test: screenshot every preview`: the Roborazzi plugin, the common preview scanner, the
+  three-way tester, fixed-clock previews, CI verify, the re-record command in CLAUDE.md. Proves
+  compose resources render under Robolectric before anything depends on it.
+- [ ] `feat: Literata type scale and shapes`
+- [ ] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
+  `teaTypeColor` on both themes.
+- [ ] `feat: choose light, dark or system theme`. Test: the backup round trip.
+- [ ] `refactor: one icon family`
+- [ ] `feat: string resources and plurals`
+- [ ] `feat: locale-aware dates`
+- [ ] `feat: one message surface`: `UiMessages`, `UiMessageEffect`, the typed failures and the
+  guards that throw them, Home's Undo, and the tea library and Settings screens. Test: failure →
+  message mapping.
+- [ ] `refactor: messages on the brew loop and journal`: the remaining screens; every
+  `error: String?` goes.
+- [ ] `feat: shared confirm and discard dialogs`
+- [ ] `feat: section header and empty state`
+- [ ] `feat: rating display and selector`. Test: half-star rounding.
+- [ ] `feat: one unit input field with local toggles`: the component and its pure functions, then
+  Edit Tea, Edit Vessel, Edit Tea Type and Brewing Method. Tests: flips round-trip, 93 °C, decimal
+  input, an untouched field reports nothing.
+- [ ] `refactor: brew and journal forms on the unit field`: Log Tea, Edit Session, the parameter
+  sheets, the next-steep dialog, Quick Timer. `editedUnitValue` and the old variants go.
+- [ ] `feat: honour the weight unit everywhere`: `LocalUnits`, the Settings row, every hardcoded
+  `"g"`, the local display toggles, the CLAUDE.md rule rewritten.
+- [ ] `refactor: load route args in ViewModel init`. Test: History applies its route filter once.
+- [ ] `feat: per-tab back stacks`. Test: the navigator — back from a tab root, re-tap, the
+  double-pop guard, switch vs push.
+- [ ] `chore: release 0.4.0`: audit rows struck.
 
 ---
 
@@ -824,6 +785,8 @@ Gated. Nothing ships to strangers until these are done. Blocks nothing before th
 - [ ] **About screen:** version, licences, privacy policy, support contact.
 - [ ] **One TalkBack and VoiceOver pass** over the whole app.
 - [ ] Store listings and screenshots (Track S makes these cheap).
+- [ ] **Large-screen layouts.** Android 16 ignores the portrait lock on large screens, so tablets
+  see landscape regardless.
 
 ---
 
@@ -873,6 +836,14 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **No streaks**                                                                      | An engagement mechanic that says nothing about tea. The shipped streak insight is removed in F1.                                                                                                                                                                                          |
 | **The session reminder stays inexact**                                              | `setAndAllowWhileIdle`; Doze spaces these ~9 minutes apart. Not worth the exact-alarm allowance for a soft nudge. The fix if it annoys is `setExactAndAllowWhileIdle`, mirroring the completion alarm.                                                                                    |
 | **Notifications get two switches, not one**                                         | Turning off the soft nudge must not kill the alert the app exists to deliver.                                                                                                                                                                                                             |
+| **Screenshot tests are Roborazzi, with goldens in git**                             | It reads `commonMain` previews under the KMP library plugin; Compose Preview Screenshot Testing needs its own Android source set. Goldens in git at half scale are the simplest setup and verify locally. Considered: Git LFS, CI-only baselines.                                         |
+| **Unit toggles stay, local to the field**                                           | Converting a vendor's instructions in place is worth having. The bugs came from the toggle writing the global preference and living in every ViewModel, not from the toggle. Considered: Settings as the only way to change units.                                                        |
+| **The weight unit is honoured everywhere**                                          | A setting that one Analytics card obeys is worse than none. Considered: grams only, deleting the preference — leaf is weighed in grams nearly everywhere.                                                                                                                                 |
+| **Display units come from a CompositionLocal**                                      | Honouring weight everywhere would otherwise thread preferences through every State that shows a value. Considered: formatting in the screen and passing strings down, the earlier rule.                                                                                                   |
+| **Theme mode is a setting**                                                         | Considered: following the system only. It travels in backups like the other preferences.                                                                                                                                                                                                  |
+| **Headings are Literata; body stays system**                                        | A book face suits a journal; system body keeps dense screens scannable. Considered: Fraunces, Newsreader, Lora.                                                                                                                                                                           |
+| **The brew loop lives on Home's stack**                                             | Notification taps and Home's banner already open the Timer there. Pushing it onto the origin tab could leave two Timers in two stacks.                                                                                                                                                    |
+| **Tablet layouts wait for Store readiness**                                         | The author uses a phone, and nothing ships to strangers before then.                                                                                                                                                                                                                      |
 
 ---
 
@@ -915,6 +886,10 @@ Things that cost real debugging time and would cost it again. Not history — tr
 - **Room `@Upsert` onto an existing row fails in host tests** with a bare `SQLException`: the
   mockable android.jar drops the message Room reads to spot the key conflict. The
   `androidHostTest` copy of `android.database.SQLException` fixes it; don't delete it.
+- **Rebuilding a table in a migration: rename the old one away before creating and copying into the
+  new one**, so dropping the old one can't cascade into the new one (v6 → v7).
+- **okio's `FileSystem.SYSTEM` isn't visible from commonMain** (`openZip` is). The platform modules
+  provide it.
 - **Never call `MutableList.removeLast()` / `removeFirst()`.** With compileSdk ≥ 35 they may bind to
   JDK 21's `List.removeLast()`, absent below API 35. Use `removeAt(lastIndex)` / `removeAt(0)`.
 

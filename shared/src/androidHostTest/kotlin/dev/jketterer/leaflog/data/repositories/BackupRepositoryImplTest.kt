@@ -26,6 +26,7 @@ import dev.jketterer.leaflog.domain.repositories.Transactor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.TimeZone
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
 import okio.Path
@@ -43,6 +44,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 class BackupRepositoryImplTest {
 
@@ -75,6 +77,25 @@ class BackupRepositoryImplTest {
         // Stats are recomputed rather than carried
         assertEquals(1, fresh.database.teaDao().getById("tea")?.totalSessions)
         assertEquals(1, fresh.database.brewingConfigurationDao().getById("method")?.timesUsed)
+    }
+
+    @Test
+    fun `an export is named for when it was made`() {
+        val at = Instant.parse("2026-10-15T14:30:05Z")
+
+        assertEquals("leaf-log-export-20261015-143005.zip", exportFileName(at, TimeZone.UTC))
+    }
+
+    @Test
+    fun `an export left behind by an earlier one is deleted`() = runTest {
+        val phone = Device("phone")
+        val stale = phone.cache / "leaf-log-export-20260101-000000.zip"
+        fileSystem.write(stale) { writeUtf8("old") }
+
+        val zip = phone.repository.export().getOrThrow()
+
+        assertFalse(fileSystem.exists(stale))
+        assertTrue(fileSystem.exists(zip.toPath()))
     }
 
     @Test

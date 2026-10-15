@@ -12,9 +12,12 @@ sealed interface SettingsIntent {
     data class UpdateSessionReminderNotifications(val enabled: Boolean) : SettingsIntent
     data object ClearError : SettingsIntent
     data object ExportData : SettingsIntent
+    data object ExportPickerShown : SettingsIntent
     data object ExportCompleted : SettingsIntent
+    data object ExportCancelled : SettingsIntent
     data class ExportFailed(val message: String) : SettingsIntent
     data object ImportData : SettingsIntent
+    data object ImportPickerShown : SettingsIntent
     data class ImportFileSelected(val filePath: String) : SettingsIntent
     data object ImportCancelled : SettingsIntent
     data class ImportFailed(val message: String) : SettingsIntent

@@ -30,6 +30,10 @@ import dev.jketterer.leaflog.domain.repositories.Transactor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.format.char
+import kotlinx.datetime.toLocalDateTime
 import okio.FileSystem
 import okio.HashingSink
 import okio.IOException
@@ -40,11 +44,23 @@ import okio.openZip
 import okio.use
 import kotlin.random.Random
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 /** Where restored photos go, named by content so a re-import never duplicates one. */
 private const val PHOTO_DIR = "photos"
 
 private val DATA = "/data.json".toPath()
+
+private const val EXPORT_PREFIX = "leaf-log-export-"
+
+private val exportTimestamp = LocalDateTime.Format {
+    year(); monthNumber(); day(); char('-'); hour(); minute(); second()
+}
+
+/** The name an export is saved or shared under: `leaf-log-export-20261015-143005.zip`. */
+internal fun exportFileName(at: Instant, tz: TimeZone) =
+    "$EXPORT_PREFIX${exportTimestamp.format(at.toLocalDateTime(tz))}.zip"
+
 
 class BackupRepositoryImpl(
     private val teaTypeDao: TeaTypeDao,
@@ -60,11 +76,12 @@ class BackupRepositoryImpl(
 
     override suspend fun export(): Result<String> = withContext(Dispatchers.IO) {
         runCatching {
+            val now = Clock.System.now()
             // One transaction, so a steep saved mid-export can't land half in the snapshot
             val snapshot = transactor {
                 Backup(
                     version = BACKUP_VERSION,
-                    exportedAt = Clock.System.now(),
+                    exportedAt = now,
                     teaTypes = teaTypeDao.getAllIncludingDeleted().map { it.toBackup() },
                     vessels = vesselDao.getAllIncludingDeleted().map { it.toBackup() },
                     teas = teaDao.getAllIncludingDeleted().map { it.toBackup() },
@@ -85,12 +102,18 @@ class BackupRepositoryImpl(
                 }
             }
 
-            val zipPath = "${imageStorage.getTempDir()}/leaflog_export.zip"
-            ZipWriter(fileSystem, zipPath.toPath()).use { zip ->
+            // Each export is a copy of every photo; one the app was killed before delivering
+            // would otherwise stay in the cache
+            val dir = imageStorage.getTempDir().toPath()
+            fileSystem.list(dir).filter { it.name.startsWith(EXPORT_PREFIX) }
+                .forEach { fileSystem.delete(it) }
+
+            val zipPath = dir / exportFileName(now, TimeZone.currentSystemDefault())
+            ZipWriter(fileSystem, zipPath).use { zip ->
                 zip.add("data.json", encodeBackup(backup).encodeToByteArray())
                 entries.forEach { (name, file) -> zip.add(name, file) }
             }
-            zipPath
+            zipPath.toString()
         }
     }
 

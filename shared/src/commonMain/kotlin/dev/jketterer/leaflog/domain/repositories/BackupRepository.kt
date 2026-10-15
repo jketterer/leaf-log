@@ -3,7 +3,10 @@ package dev.jketterer.leaflog.domain.repositories
 import dev.jketterer.leaflog.domain.models.ImportSummary
 
 interface BackupRepository {
-    /** Writes everything to a backup file and returns its path. */
+    /**
+     * Writes everything to a backup file, named for the user to keep, and returns its path. Pass
+     * it to [discard] once delivered.
+     */
     suspend fun export(): Result<String>
 
     /**
@@ -18,6 +21,6 @@ interface BackupRepository {
      */
     suspend fun import(filePath: String): Result<ImportSummary>
 
-    /** Deletes a previewed backup that won't be imported. */
+    /** Deletes a backup file once it's done with: an export delivered, or a preview not imported. */
     suspend fun discard(filePath: String)
 }

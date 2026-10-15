@@ -70,14 +70,14 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 
 | Sev | Category | Location | Finding | Evidence/why |
 |---|---|---|---|---|
-| bug | error handling | SettingsScreen.kt:145-148 | A save-dialog write failure is thrown away. `onError` calls `ExportCompleted` then `ClearError`. The comment says "Clear any prior, then set new", but nothing new is ever set. | `error` is unused. |
-| bug | error handling | SettingsScreen.kt:155 | An import picker or copy failure is mapped to `ImportCancelled`, so it's silent. | |
-| bug | main thread | androidMain/.../FileOperations.android.kt:33,72 | Export and import copy the whole ZIP with `copyTo` inside the ActivityResult callback, on the main thread. With lots of photos that's an ANR risk. | |
-| bug | recreation | FileOperations.android.kt:24 | `pendingFilePath` is plain `remember`. If the Activity is recreated while the system Save dialog is open, the result arrives with it null and falls to `onExported()`: nothing is written, the destination file is created empty, and no error is shown. | *Runtime unverified.* |
-| friction | feedback | SettingsViewModel.kt (ExportCompleted) | A successful export gives no confirmation at all on Android: no snackbar, size or counts. | |
-| friction | trust | SettingsScreen.kt:328-338 | "Successfully imported: 45 tea sessions" is the number of rows in the file, not new or changed rows. Importing the same backup twice reports the same numbers. | `ImportResult` = `exportData.*.size` |
-| friction | safety | SettingsViewModel import | There's no confirmation or preview before import. As the Export/import section below shows, import **reverts edits and un-deletes** rows. | |
-| polish | bug | SettingsScreen.kt:132-143 | The export filename is `remember`ed from when the screen **opened**, so two exports in one visit get the same name. | |
+| ~~bug~~ | ~~error handling~~ | ~~SettingsScreen.kt:145-148~~ | ~~A save-dialog write failure is thrown away. `onError` calls `ExportCompleted` then `ClearError`. The comment says "Clear any prior, then set new", but nothing new is ever set.~~ | ~~`error` is unused.~~ |
+| ~~bug~~ | ~~error handling~~ | ~~SettingsScreen.kt:155~~ | ~~An import picker or copy failure is mapped to `ImportCancelled`, so it's silent.~~ |   |
+| ~~bug~~ | ~~main thread~~ | ~~androidMain/.../FileOperations.android.kt:33,72~~ | ~~Export and import copy the whole ZIP with `copyTo` inside the ActivityResult callback, on the main thread. With lots of photos that's an ANR risk.~~ |   |
+| ~~bug~~ | ~~recreation~~ | ~~FileOperations.android.kt:24~~ | ~~`pendingFilePath` is plain `remember`. If the Activity is recreated while the system Save dialog is open, the result arrives with it null and falls to `onExported()`: nothing is written, the destination file is created empty, and no error is shown.~~ | ~~*Runtime unverified.*~~ |
+| ~~friction~~ | ~~feedback~~ | ~~SettingsViewModel.kt (ExportCompleted)~~ | ~~A successful export gives no confirmation at all on Android: no snackbar, size or counts.~~ |   |
+| ~~friction~~ | ~~trust~~ | ~~SettingsScreen.kt:328-338~~ | ~~"Successfully imported: 45 tea sessions" is the number of rows in the file, not new or changed rows. Importing the same backup twice reports the same numbers.~~ | ~~`ImportResult` = `exportData.*.size`~~ |
+| ~~friction~~ | ~~safety~~ | ~~SettingsViewModel import~~ | ~~There's no confirmation or preview before import. As the Export/import section below shows, import **reverts edits and un-deletes** rows.~~ |   |
+| ~~polish~~ | ~~bug~~ | ~~SettingsScreen.kt:132-143~~ | ~~The export filename is `remember`ed from when the screen **opened**, so two exports in one visit get the same name.~~ |   |
 | a11y | semantics | SettingsScreen.kt:205-229 | Each switch sits beside its label rather than inside a `toggleable` row, so TalkBack announces "Switch, on" with no name. The tap target is also only the switch. | |
 | friction | missing | SettingsScreen.kt | There's no About section (version, licences, privacy policy, support), and the app version isn't shown anywhere. This is also needed for Phase 4. | grep for version/about/privacy finds nothing. |
 | friction | missing | SettingsScreen / TimerViewModel.kt:156 | The "Brew complete" switch shows ON even when OS notification permission is denied. Only the Timer screen checks `hasNotificationPermission()`. | |
@@ -226,7 +226,7 @@ Counts: 41 `.onFailure`, 14 `catchError`, 85 sites that put `e.message` or `erro
 | bug | photos | DataExportRepositoryImpl.kt:145-153 | Imported images are named `<index>.jpg` from a per-export counter and written with `writeBytes`, which overwrites. A second import of a *different* backup overwrites the first import's `session_images/0.jpg…`. Importing your own backup repoints rows to the copies and orphans the originals, doubling photo storage. | |
 | bug | legacy path | DataExportRepositoryImpl.kt:170-172,184-185 | A legacy JSON import sets `photos = emptyList()` / `imagePath = null` and upserts. For sessions that already exist locally, that **detaches their existing photos**. | |
 | **[ROADMAP+]** arch | versioning | data/models/LeafLogExportData.kt:12-18 | The wire format *is* the Room `@Serializable` entities. Each of the 5 migrations silently changed the backup format while `version` stayed at 1. The roadmap notes version is never read; the root issue is that the backup format is coupled to the schema. | |
-| polish | temp files | DataExportRepositoryImpl.kt:118-119; FileOperations.android.kt:88 | `leaflog_export.zip` (a full copy of every photo) and `leaflog_import_temp` are never deleted from cache. | |
+| ~~polish~~ | ~~temp files~~ | ~~DataExportRepositoryImpl.kt:118-119; FileOperations.android.kt:88~~ | ~~`leaflog_export.zip` (a full copy of every photo) and `leaflog_import_temp` are never deleted from cache.~~ |   |
 | polish | dirs | DataExportRepositoryImpl.kt:148 vs EditTeaViewModel.kt:206 | Imported tea photos go to `tea_photos/`; photos taken in the app go to `tea_images/`. | |
 | verified | safety | DataExportRepositoryImpl.kt:145 | Zip-slip is neutralised by `substringAfterLast('/')`. | |
 
@@ -275,7 +275,7 @@ Counts: 41 `.onFailure`, 14 `catchError`, 85 sites that put `e.message` or `erro
 | **bug** | iOS | iosMain/.../TimeFormatter.ios.kt:33-40 | `isToday` and `isYesterday` compare `NSCalendarUnitDay`, which is **day-of-month**, not day-of-year. In the same year, a session from Aug 23 shows as "today" (time only) on Sept 23. Android correctly uses `DAY_OF_YEAR`. This affects every `SessionCard` (History). |
 | **bug** | iOS | ZipArchiver.ios.kt:233 | iOS can't import Android backups (DEFLATE, see Export/import). |
 | bug | iOS | pbxproj:312 | The Live Activity extension requires iOS 26.2 (see Build). |
-| parity | export UX | FileOperations.android/ios | Android uses a "Save as" document; iOS uses a share sheet, with `onExported()` fired on *presentation*, and `copyItemAtPath(error = null)` ignores copy failure. iOS uses the deprecated `keyWindow` (2 sites). |
+| ~~parity~~ | ~~export UX~~ | ~~FileOperations.android/ios~~ | ~~Android uses a "Save as" document; iOS uses a share sheet, with `onExported()` fired on *presentation*, and `copyItemAtPath(error = null)` ignores copy failure. iOS uses the deprecated `keyWindow` (2 sites).~~ |
 | parity | recreation | Android only | The config-change bugs (edit forms re-seeding, deep-link replay, export `pendingFilePath`) are Android-only, since iOS doesn't recreate the view controller. |
 | by design | lifecycle | iosMain TimerLifecycleHandler.kt:5,9 | A no-op on iOS; scheduled notifications cover it. There are no other TODO stubs in platform code. The only TODOs are HomeScreen.kt:215 (`userName`) and LeafLogApplication.kt:35. |
 | naming | iOS | PreferencesDataStore.ios.kt | Named "DataStore" but it's `NSUserDefaults` plus an in-memory StateFlow. Fine, but that's what triggers the privacy-manifest requirement. |

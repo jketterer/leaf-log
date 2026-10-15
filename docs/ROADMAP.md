@@ -573,7 +573,14 @@ stand alone.
   in older files. "Empty" means no tea rows, deleted ones included. They're applied after the
   transaction through `PreferencesRepository`'s setters, and a setter's failure is logged rather
   than failing an import whose data already landed.
-- [ ] `fix: export and import file handling`: the Settings data-section audit rows.
+- [x] `fix: export and import file handling`: the Settings data-section audit rows.
+  As built: the repository names the export file (`exportFileName`) and deletes earlier ones, so
+  iOS shares it as it is and both platforms take the name from the path. The path waits in
+  `SettingsState` until delivered, then `discard` deletes it. Each picker's flag is cleared as it
+  opens, so recreation doesn't reopen it. Android copies on `Dispatchers.IO` and deletes a
+  partial destination file; iOS reports the share sheet's outcome and finds its presenter
+  through the foreground `UIWindowScene`. "Backup exported" shows in the error snackbar's slot
+  until Bet 1's message surface. Rows fixed earlier in F1 and F4 are struck with these.
 - [ ] `feat: show when the last backup was`
 - [ ] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size
   math. Track B line: a portrait photo stays upright on both platforms.

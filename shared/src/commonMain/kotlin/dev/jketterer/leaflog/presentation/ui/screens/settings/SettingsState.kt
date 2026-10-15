@@ -7,9 +7,14 @@ data class SettingsState(
     val preferences: UserPreferences = UserPreferences(),
     val isLoading: Boolean = true,
     val error: String? = null,
+    /** Confirms something finished, shown like an error but not one. */
+    val notice: String? = null,
     val isExporting: Boolean = false,
     val isImporting: Boolean = false,
+    /** An export waiting to be delivered, deleted once it is or isn't. */
     val exportFilePath: String? = null,
+    // Cleared as each picker opens, so a recreated screen doesn't open it again
+    val showExportPicker: Boolean = false,
     val showImportPicker: Boolean = false,
     /** A picked backup waiting for the user to confirm it. */
     val importPreview: ImportPreview? = null,

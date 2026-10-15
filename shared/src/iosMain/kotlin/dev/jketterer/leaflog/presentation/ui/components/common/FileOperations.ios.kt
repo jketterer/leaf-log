@@ -2,61 +2,60 @@ package dev.jketterer.leaflog.presentation.ui.components.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
-import platform.Foundation.NSData
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
-import platform.Foundation.create
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDocumentPickerDelegateProtocol
 import platform.UIKit.UIDocumentPickerViewController
+import platform.UIKit.UISceneActivationStateForegroundActive
+import platform.UIKit.UIViewController
+import platform.UIKit.UIWindowScene
 import platform.UniformTypeIdentifiers.UTTypeData
-import platform.UniformTypeIdentifiers.UTTypeJSON
 import platform.UniformTypeIdentifiers.UTTypeZIP
 import platform.darwin.NSObject
 
-@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 @Composable
 actual fun ExportFileEffect(
     exportFilePath: String?,
-    fileName: String,
+    shouldLaunch: Boolean,
+    onLaunched: () -> Unit,
     onExported: () -> Unit,
+    onCancelled: () -> Unit,
     onError: (String) -> Unit,
 ) {
-    LaunchedEffect(exportFilePath) {
-        if (exportFilePath == null) return@LaunchedEffect
+    val exported by rememberUpdatedState(onExported)
+    val cancelled by rememberUpdatedState(onCancelled)
+    val failed by rememberUpdatedState(onError)
 
-        try {
-            // Copy temp zip to a named file for sharing
-            val tempDir = NSTemporaryDirectory()
-            val namedPath = "$tempDir$fileName"
-            val fileManager = NSFileManager.defaultManager
-            // Remove old file if exists
-            if (fileManager.fileExistsAtPath(namedPath)) {
-                fileManager.removeItemAtPath(namedPath, error = null)
-            }
-            fileManager.copyItemAtPath(exportFilePath, toPath = namedPath, error = null)
+    LaunchedEffect(shouldLaunch) {
+        if (!shouldLaunch || exportFilePath == null) return@LaunchedEffect
+        onLaunched()
 
-            val fileUrl = NSURL.fileURLWithPath(namedPath)
-            val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
-                ?: run {
-                    onError("Could not find root view controller")
-                    return@LaunchedEffect
-                }
-
-            val activityViewController = UIActivityViewController(
-                activityItems = listOf(fileUrl),
-                applicationActivities = null,
-            )
-            rootViewController.presentViewController(activityViewController, animated = true, completion = null)
-            onExported()
-        } catch (e: Exception) {
-            onError(e.message ?: "Failed to export file")
+        val presenter = topViewController() ?: run {
+            onError("Couldn't open the share sheet")
+            return@LaunchedEffect
         }
+        // The file is already named for the user, so it's shared as it is
+        val sheet = UIActivityViewController(
+            activityItems = listOf(NSURL.fileURLWithPath(exportFilePath)),
+            applicationActivities = null,
+        )
+        // Called once the sheet closes: only then is the file somewhere
+        sheet.completionWithItemsHandler = { _, completed, _, error ->
+            when {
+                completed -> exported()
+                error != null -> failed(error.localizedDescription)
+                else -> cancelled()
+            }
+        }
+        presenter.presentViewController(sheet, animated = true, completion = null)
     }
 }
 
@@ -64,6 +63,7 @@ actual fun ExportFileEffect(
 @Composable
 actual fun ImportFileLauncher(
     shouldLaunch: Boolean,
+    onLaunched: () -> Unit,
     onFilePath: (String) -> Unit,
     onCancelled: () -> Unit,
     onError: (String) -> Unit,
@@ -78,20 +78,31 @@ actual fun ImportFileLauncher(
 
     LaunchedEffect(shouldLaunch) {
         if (!shouldLaunch) return@LaunchedEffect
+        onLaunched()
 
-        val rootViewController = UIApplication.sharedApplication.keyWindow?.rootViewController
-            ?: run {
-                onError("Could not find root view controller")
-                return@LaunchedEffect
-            }
-
+        val presenter = topViewController() ?: run {
+            onError("Couldn't open the file picker")
+            return@LaunchedEffect
+        }
         val picker = UIDocumentPickerViewController(
-            forOpeningContentTypes = listOf(UTTypeZIP, UTTypeJSON, UTTypeData),
+            forOpeningContentTypes = listOf(UTTypeZIP, UTTypeData),
         )
         picker.delegate = delegate
         picker.allowsMultipleSelection = false
-        rootViewController.presentViewController(picker, animated = true, completion = null)
+        presenter.presentViewController(picker, animated = true, completion = null)
     }
+}
+
+/** The view controller on top of the foreground window, which is the one that can present. */
+private fun topViewController(): UIViewController? {
+    val scene = UIApplication.sharedApplication.connectedScenes
+        .filterIsInstance<UIWindowScene>()
+        .firstOrNull { it.activationState == UISceneActivationStateForegroundActive }
+    var controller = scene?.keyWindow?.rootViewController
+    while (controller?.presentedViewController != null) {
+        controller = controller.presentedViewController
+    }
+    return controller
 }
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
@@ -106,37 +117,26 @@ private class DocumentPickerDelegate(
         didPickDocumentsAtURLs: List<*>,
     ) {
         val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL
-        if (url == null) {
+        val sourcePath = url?.path
+        if (url == null || sourcePath == null) {
             onCancelled()
             return
         }
 
-        try {
-            // Copy to temp to ensure we have file access
-            val tempDir = NSTemporaryDirectory()
-            val tempPath = "${tempDir}leaflog_import_temp"
-            val fileManager = NSFileManager.defaultManager
-            if (fileManager.fileExistsAtPath(tempPath)) {
-                fileManager.removeItemAtPath(tempPath, error = null)
-            }
-
-            val sourceAccessGranted = url.startAccessingSecurityScopedResource()
-            try {
-                val sourcePath = url.path ?: run {
-                    onError("Invalid file URL")
-                    return
-                }
-                fileManager.copyItemAtPath(sourcePath, toPath = tempPath, error = null)
-            } finally {
-                if (sourceAccessGranted) {
-                    url.stopAccessingSecurityScopedResource()
-                }
-            }
-
-            onFilePath(tempPath)
-        } catch (e: Exception) {
-            onError(e.message ?: "Failed to read file")
+        // Copied so the repository can read it by path once access to the original ends
+        val tempPath = "${NSTemporaryDirectory()}leaflog_import_temp"
+        val fileManager = NSFileManager.defaultManager
+        if (fileManager.fileExistsAtPath(tempPath)) {
+            fileManager.removeItemAtPath(tempPath, error = null)
         }
+        val accessGranted = url.startAccessingSecurityScopedResource()
+        val copied = try {
+            fileManager.copyItemAtPath(sourcePath, toPath = tempPath, error = null)
+        } finally {
+            if (accessGranted) url.stopAccessingSecurityScopedResource()
+        }
+
+        if (copied) onFilePath(tempPath) else onError("Couldn't read the file")
     }
 
     override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {

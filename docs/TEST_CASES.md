@@ -101,7 +101,15 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 
 ## 6. Files and backup
 
-- [ ] Export → system save dialog → file written. Reopen it from the Files app; size is non-zero.
+- [ ] Export → system save dialog → file written under a name with today's date and time; a
+      "Backup exported" snackbar shows. Reopen it from the Files app; size is non-zero. Export
+      again in the same visit: the second file gets a later name.
+- [ ] Export → cancel the save dialog **[A]** or close the share sheet **[iOS]**. No snackbar,
+      no error, and the Export button is usable again.
+- [ ] **[iOS]** Export → share sheet stays open with no "Backup exported" until a destination
+      (Save to Files, AirDrop) completes.
+- [ ] **[A]** Export → rotate or switch dark mode while the save dialog is open → save. The file
+      is written in full, the dialog opens only once, and the snackbar shows.
 - [ ] Export from [A], import on [iOS], and the reverse. All teas, sessions, vessels, methods,
       and photos arrive (F4 bug: DEFLATE vs STORE fails today).
 - [ ] Upgrade from `v0.1.1` (schema 6). Before installing over it, seed a single-steep session, a
@@ -117,7 +125,7 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Import picker → cancel. Nothing changes, no error shown.
 - [ ] Import a non-backup file. A readable error; nothing changes.
 - [ ] Open the import picker → rotate or switch dark mode while it's open → pick a file. The
-      import still runs (`pendingFilePath` null after recreation suspected; see audit §7).
+      picker opens only once, and the preview dialog shows.
 - [ ] Photo picker on Log Tea and Edit Session: pick, cancel, and pick a very large photo.
 - [ ] **[A]** Auto Backup: `adb shell bmgr backupnow dev.jketterer.leaflog` with photos present.
       It succeeds or fails cleanly under the 25 MB quota.

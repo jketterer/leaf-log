@@ -30,11 +30,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -127,8 +125,7 @@ private fun SettingsContent(
             )
         }
 
-        // Error snackbar
-        state.error?.let { error ->
+        (state.error ?: state.notice)?.let { message ->
             Snackbar(
                 modifier = Modifier.padding(16.dp),
                 action = {
@@ -137,32 +134,23 @@ private fun SettingsContent(
                     }
                 }
             ) {
-                Text(error)
+                Text(message)
             }
         }
     }
 
-    // File operation effects
     ExportFileEffect(
         exportFilePath = state.exportFilePath,
-        fileName = remember {
-            val now = Clock.System.now()
-                .toLocalDateTime(TimeZone.currentSystemDefault())
-            val date = now.date
-            val time = now.time
-            val month = (date.month.ordinal + 1).toString().padStart(2, '0')
-            val day = date.day.toString().padStart(2, '0')
-            val hour = time.hour.toString().padStart(2, '0')
-            val minute = time.minute.toString().padStart(2, '0')
-            val second = time.second.toString().padStart(2, '0')
-            "leaf-log-export-${date.year}${month}${day}-${hour}${minute}${second}.zip"
-        },
+        shouldLaunch = state.showExportPicker,
+        onLaunched = { onIntent(SettingsIntent.ExportPickerShown) },
         onExported = { onIntent(SettingsIntent.ExportCompleted) },
+        onCancelled = { onIntent(SettingsIntent.ExportCancelled) },
         onError = { message -> onIntent(SettingsIntent.ExportFailed(message)) },
     )
 
     ImportFileLauncher(
         shouldLaunch = state.showImportPicker,
+        onLaunched = { onIntent(SettingsIntent.ImportPickerShown) },
         onFilePath = { path -> onIntent(SettingsIntent.ImportFileSelected(path)) },
         onCancelled = { onIntent(SettingsIntent.ImportCancelled) },
         onError = { message -> onIntent(SettingsIntent.ImportFailed(message)) },

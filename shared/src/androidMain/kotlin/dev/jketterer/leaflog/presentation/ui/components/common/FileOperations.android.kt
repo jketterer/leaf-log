@@ -1,52 +1,68 @@
 package dev.jketterer.leaflog.presentation.ui.components.common
 
 import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileInputStream
 
 @Composable
 actual fun ExportFileEffect(
     exportFilePath: String?,
-    fileName: String,
+    shouldLaunch: Boolean,
+    onLaunched: () -> Unit,
     onExported: () -> Unit,
+    onCancelled: () -> Unit,
     onError: (String) -> Unit,
 ) {
     val context = LocalContext.current
-    var pendingFilePath by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    // Read when the result arrives: after a recreation, that's in a new composition
+    val source by rememberUpdatedState(exportFilePath)
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/zip"),
     ) { uri: Uri? ->
-        if (uri != null && pendingFilePath != null) {
+        val path = source
+        if (uri == null || path == null) {
+            onCancelled()
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
             try {
-                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                    FileInputStream(File(pendingFilePath!!)).use { inputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
+                withContext(Dispatchers.IO) {
+                    val output = context.contentResolver.openOutputStream(uri)
+                        ?: error("Couldn't open the file to save to")
+                    output.use { File(path).inputStream().use { input -> input.copyTo(output) } }
                 }
                 onExported()
             } catch (e: Exception) {
+                // The system created the file when it was picked; a partial one mustn't pass for
+                // a backup
+                runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+                if (e is CancellationException) {
+                    onError("The export was interrupted. Try again.")
+                    throw e
+                }
                 onError(e.message ?: "Failed to write file")
             }
-        } else {
-            onExported()
         }
-        pendingFilePath = null
     }
 
-    LaunchedEffect(exportFilePath) {
-        if (exportFilePath != null) {
-            pendingFilePath = exportFilePath
-            launcher.launch(fileName)
+    LaunchedEffect(shouldLaunch) {
+        if (shouldLaunch && exportFilePath != null) {
+            onLaunched()
+            launcher.launch(exportFilePath.substringAfterLast('/'))
         }
     }
 }
@@ -54,36 +70,47 @@ actual fun ExportFileEffect(
 @Composable
 actual fun ImportFileLauncher(
     shouldLaunch: Boolean,
+    onLaunched: () -> Unit,
     onFilePath: (String) -> Unit,
     onCancelled: () -> Unit,
     onError: (String) -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
     ) { uri: Uri? ->
-        if (uri != null) {
+        if (uri == null) {
+            onCancelled()
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
             try {
-                // Copy the selected file to a temp location so the use case can read it by path
-                val tempFile = File(context.cacheDir, "leaflog_import_temp")
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    tempFile.outputStream().use { outputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
+                // Copied so the repository can read it by path
+                val path = withContext(Dispatchers.IO) {
+                    val temp = File(context.cacheDir, "leaflog_import_temp")
+                    val input = context.contentResolver.openInputStream(uri)
+                        ?: error("Couldn't open the file")
+                    input.use { temp.outputStream().use { output -> input.copyTo(output) } }
+                    temp.absolutePath
                 }
-                onFilePath(tempFile.absolutePath)
+                onFilePath(path)
             } catch (e: Exception) {
+                if (e is CancellationException) {
+                    onError("Reading the backup was interrupted. Try again.")
+                    throw e
+                }
                 onError(e.message ?: "Failed to read file")
             }
-        } else {
-            onCancelled()
         }
     }
 
     LaunchedEffect(shouldLaunch) {
         if (shouldLaunch) {
-            launcher.launch(arrayOf("application/zip", "application/json", "*/*"))
+            onLaunched()
+            // Some providers label a ZIP as something else, so anything can be picked
+            launcher.launch(arrayOf("application/zip", "*/*"))
         }
     }
 }

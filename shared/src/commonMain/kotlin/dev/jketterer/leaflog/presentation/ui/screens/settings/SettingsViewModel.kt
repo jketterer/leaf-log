@@ -36,15 +36,16 @@ class SettingsViewModel(
             is SettingsIntent.UpdateSessionReminderNotifications ->
                 updateSessionReminderNotifications(intent.enabled)
 
-            is SettingsIntent.ClearError -> clearError()
+            is SettingsIntent.ClearError -> _state.update { it.copy(error = null, notice = null) }
             is SettingsIntent.ExportData -> exportData()
-            is SettingsIntent.ExportCompleted -> _state.update {
-                it.copy(exportFilePath = null, isExporting = false)
-            }
-            is SettingsIntent.ExportFailed -> _state.update {
-                it.copy(exportFilePath = null, isExporting = false, error = intent.message)
-            }
+            is SettingsIntent.ExportPickerShown ->
+                _state.update { it.copy(showExportPicker = false) }
+            is SettingsIntent.ExportCompleted -> finishExport(notice = "Backup exported")
+            is SettingsIntent.ExportCancelled -> finishExport()
+            is SettingsIntent.ExportFailed -> finishExport(error = intent.message)
             is SettingsIntent.ImportData -> _state.update { it.copy(showImportPicker = true) }
+            is SettingsIntent.ImportPickerShown ->
+                _state.update { it.copy(showImportPicker = false) }
             is SettingsIntent.ImportFileSelected -> previewImport(intent.filePath)
             is SettingsIntent.ImportCancelled -> _state.update { it.copy(showImportPicker = false) }
             is SettingsIntent.ImportFailed -> _state.update {
@@ -126,7 +127,8 @@ class SettingsViewModel(
             _state.update { it.copy(isExporting = true) }
             backupRepository.export()
                 .onSuccess { filePath ->
-                    _state.update { it.copy(exportFilePath = filePath, isExporting = false) }
+                    // Still exporting until the file is delivered
+                    _state.update { it.copy(exportFilePath = filePath, showExportPicker = true) }
                 }
                 .onFailure { error ->
                     _state.update {
@@ -137,6 +139,20 @@ class SettingsViewModel(
                     }
                 }
         }
+    }
+
+    private fun finishExport(error: String? = null, notice: String? = null) {
+        val path = _state.value.exportFilePath
+        _state.update {
+            it.copy(
+                exportFilePath = null,
+                showExportPicker = false,
+                isExporting = false,
+                error = error ?: it.error,
+                notice = notice,
+            )
+        }
+        if (path != null) viewModelScope.launch { backupRepository.discard(path) }
     }
 
     private fun previewImport(filePath: String) {
@@ -182,9 +198,5 @@ class SettingsViewModel(
         val preview = _state.value.importPreview ?: return
         _state.update { it.copy(importPreview = null) }
         viewModelScope.launch { backupRepository.discard(preview.filePath) }
-    }
-
-    private fun clearError() {
-        _state.update { it.copy(error = null) }
     }
 }

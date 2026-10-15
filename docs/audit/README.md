@@ -274,4 +274,4 @@ Shared `PendingIntent` requestCode routing · Quick Timer ongoing
 notification and double alert · Quick Timer and edit-form behaviour on dark-mode/font-scale
 recreation · deep-link replay after process death · Quick Brew card width with long names · Timer
 ring and Quick Timer step 2 at large font scale · iOS back-swipe on pushed tab screens ·
-`FileOperations` `pendingFilePath` null after recreation · Auto Backup quota with photos.
+~~`FileOperations` `pendingFilePath` null after recreation~~ · Auto Backup quota with photos.

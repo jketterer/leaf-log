@@ -568,43 +568,46 @@ stand alone.
   shows: a row restored from deleted is new, a row arriving deleted counts only when it removes a
   live one. Import is disabled when nothing would change. The import counts its own re-plan, so it
   matches the preview unless the device changed in between.
-- [x] `feat: back up preferences`: applied only to an empty database, shown in the preview.
-  As built: an optional `preferences` block in version 2, which no release has written yet; null
-  in older files. "Empty" means no tea rows, deleted ones included. They're applied after the
+- [x] `feat: back up preferences`: applied only to an empty database, shown in the preview. As
+  built: an optional `preferences` block in version 2, which no release has written yet; null in
+  older files. "Empty" means no tea rows, deleted ones included. They're applied after the
   transaction through `PreferencesRepository`'s setters, and a setter's failure is logged rather
   than failing an import whose data already landed.
-- [x] `fix: export and import file handling`: the Settings data-section audit rows.
-  As built: the repository names the export file (`exportFileName`) and deletes earlier ones, so
-  iOS shares it as it is and both platforms take the name from the path. The path waits in
+- [x] `fix: export and import file handling`: the Settings data-section audit rows. As built: the
+  repository names the export file (`exportFileName`) and deletes earlier ones, so iOS shares it as
+  it is and both platforms take the name from the path. The path waits in
   `SettingsState` until delivered, then `discard` deletes it. Each picker's flag is cleared as it
-  opens, so recreation doesn't reopen it. Android copies on `Dispatchers.IO` and deletes a
-  partial destination file; iOS reports the share sheet's outcome and finds its presenter
-  through the foreground `UIWindowScene`. "Backup exported" shows in the error snackbar's slot
-  until Bet 1's message surface. Rows fixed earlier in F1 and F4 are struck with these.
+  opens, so recreation doesn't reopen it. Android copies on `Dispatchers.IO` and deletes a partial
+  destination file; iOS reports the share sheet's outcome and finds its presenter through the
+  foreground `UIWindowScene`. "Backup exported" shows in the error snackbar's slot until Bet 1's
+  message surface. Rows fixed earlier in F1 and F4 are struck with these.
 - [x] `feat: show when the last backup was`
   As built: `UserPreferences.lastBackupAt`, stored per device and not backed up, set on
   `ExportCompleted`. Days are calendar days; "Never" counts as overdue, so it shows in the warning
   colour (`colorScheme.error`: the theme has no warning colour) and the Export button reads "Back up
   now". Test: the day count, in `SettingsViewModel`, which puts it in state.
 - [x] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size
-  math. Track B line: a portrait photo stays upright on both platforms.
-  As built: iOS uses FileKit's `compressImage`, already installed, which draws through `UIImage`
+  math. Track B line: a portrait photo stays upright on both platforms. As built: iOS uses FileKit's
+  `compressImage`, already installed, which draws through `UIImage`
   and so comes out upright. Android doesn't: FileKit decodes at full size and copies the bitmap to
-  rotate it, so it decodes at a power-of-two `inSampleSize`, then scales and applies EXIF orientation
-  in one matrix, read with androidx `ExifInterface` (already in the APK through Coil and FileKit; lint flags
-  the framework one below API 25). The size math is Android's; iOS still decodes at full size.
+  rotate it, so it decodes at a power-of-two `inSampleSize`, then scales and applies EXIF
+  orientation in one matrix, read with androidx `ExifInterface` (already in the APK through Coil and
+  FileKit; lint flags the framework one below API 25). The size math is Android's; iOS still decodes
+  at full size.
 - [x] `feat: show photo storage in Settings`
   As built: `BackupRepository.photoStorageBytes` sums the files in every photo directory, so
-  orphaned files count: it's the space they take, not what rows reference. The Data section shows
-  it in decimal units like the platforms' storage settings, measured when Settings opens and after
-  an import. Tests: the sum ignores the database and cache; the formatting's unit boundaries.
-- [ ] `chore: release 0.3.0`: Track B lines — an Android backup restored on iOS, an iOS backup
+  orphaned files count: it's the space they take, not what rows reference. The Data section shows it
+  in decimal units like the platforms' storage settings, measured when Settings opens and after an
+  import. Tests: the sum ignores the database and cache; the formatting's unit boundaries.
+- [x] `chore: release 0.3.0`: Track B lines — an Android backup restored on iOS, an iOS backup
   restored on Android, a 0.2.0 backup restored onto a fresh install.
 
 **Exit:** Track A round-trips for: full export → wipe → import; the old Android archive read by the
-common reader; tea finished-with-sessions restored to an empty DB; import twice = no change; older
-backup over newer data = newer data wins. The F2 plan promised an export → import round trip that
-was never written; these are the first.
+common reader; a finished tea with sessions restored to an empty DB, still finished with its
+sessions named; a version 1 backup onto a device that still has the tea deleted brings it back
+finished, and sessions whose tea is in neither are skipped and counted; import twice = no change;
+older backup over newer data = newer data wins. The F2 plan promised an export → import round trip
+that was never written; these are the first.
 
 ---
 

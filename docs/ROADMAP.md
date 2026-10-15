@@ -562,7 +562,12 @@ stand alone.
   keeps its steeps' `COMPLETE` timer records and loses any other. The result counts written rows.
   Host tests shadow `android.database.SQLException`: the mockable android.jar drops its message, and
   Room's `@Upsert` needs it to update an existing row.
-- [ ] `feat: preview an import before it runs`: the two-step flow, the dialog, honest result counts.
+- [x] `feat: preview an import before it runs`: the two-step flow, the dialog, honest result counts.
+  As built: `BackupRepository` gains `preview` (keeps the file, deletes it only if unreadable) and
+  `discard`; `ImportResult` became `ImportSummary`, which both return. Counts follow what the app
+  shows: a row restored from deleted is new, a row arriving deleted counts only when it removes a
+  live one. Import is disabled when nothing would change. The import counts its own re-plan, so it
+  matches the preview unless the device changed in between.
 - [ ] `feat: back up preferences`: applied only to an empty database, shown in the preview.
 - [ ] `fix: export and import file handling`: the Settings data-section audit rows.
 - [ ] `feat: show when the last backup was`
@@ -880,7 +885,7 @@ Things that cost real debugging time and would cost it again. Not history — tr
   Intent all route to whichever was built last (suspected; confirm on device).
 - **A `Snackbar` placed after a `fillMaxSize()` sibling in a `Column` gets zero height** and is
   never seen. Use `SnackbarHost` in a `Scaffold`.
-- **Room `@Upsert` onto an existing row fails in host tests** with a bare `SqlException`: the
+- **Room `@Upsert` onto an existing row fails in host tests** with a bare `SQLException`: the
   mockable android.jar drops the message Room reads to spot the key conflict. The
   `androidHostTest` copy of `android.database.SQLException` fixes it; don't delete it.
 - **Never call `MutableList.removeLast()` / `removeFirst()`.** With compileSdk ≥ 35 they may bind to

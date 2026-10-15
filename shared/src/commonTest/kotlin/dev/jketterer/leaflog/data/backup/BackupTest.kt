@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.backup
 
+import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -31,7 +32,7 @@ class BackupTest {
 
     @Test
     fun `a tea already in the app keeps its sessions`() {
-        val (kept, dropped) = backup(teas = emptyList()).withoutOrphans(LocalRows(teas = mapOf("tea" to at)))
+        val (kept, dropped) = backup(teas = emptyList()).withoutOrphans(LocalRows(teas = mapOf("tea" to LocalRow(at))))
 
         assertEquals(listOf("s1", "s2"), kept.steeps.map { it.id })
         assertEquals(0, dropped)
@@ -72,6 +73,44 @@ class BackupTest {
         assertEquals(listOf(SessionStatus.COMPLETED, SessionStatus.COMPLETED), steeps.map { it.status })
         assertEquals(brewed.copy(status = SessionStatus.COMPLETED), steeps[0])
         assertEquals(steep("s2", "s1"), steeps[1])
+    }
+
+    @Test
+    fun `a summary counts records as the app shows them`() {
+        val later = at + 1.seconds
+        fun tea(id: String, deleted: Boolean) = BackupTea(
+            id = id,
+            name = id,
+            teaTypeId = "type",
+            createdAt = at,
+            updatedAt = later,
+            deletedAt = later.takeIf { deleted },
+        )
+        val plan = backup(teaTypes = emptyList(), vessels = emptyList()).copy(
+            teas = listOf(
+                tea("new", deleted = false),
+                tea("edited", deleted = false),
+                tea("restored", deleted = false),
+                tea("removed", deleted = true),
+                tea("new-but-deleted", deleted = true),
+                tea("still-deleted", deleted = true),
+            ),
+            steeps = emptyList(),
+            methods = emptyList(),
+        )
+        val local = LocalRows(
+            teas = mapOf(
+                "edited" to LocalRow(at),
+                "restored" to LocalRow(at, deleted = true),
+                "removed" to LocalRow(at),
+                "still-deleted" to LocalRow(at, deleted = true),
+            ),
+        )
+
+        assertEquals(
+            ImportSummary(exportedAt = at, added = 2, updated = 1, removed = 1, skipped = 4),
+            plan.summarize(local, skipped = 4),
+        )
     }
 
     @Test

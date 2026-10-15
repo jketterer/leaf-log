@@ -13,7 +13,6 @@ import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEn
 import dev.jketterer.leaflog.data.local.database.inMemoryDatabase
 import dev.jketterer.leaflog.data.local.database.row
 import dev.jketterer.leaflog.data.local.database.seedForeignKeys
-import dev.jketterer.leaflog.domain.models.ImportResult
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.Transactor
@@ -70,6 +69,34 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `a preview changes nothing and counts what the import then does`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val zip = phone.repository.export().getOrThrow()
+        val fresh = Device("fresh")
+
+        val preview = fresh.repository.preview(zip).getOrThrow()
+
+        assertEquals(emptyList(), fresh.database.teaDao().getAllIncludingDeleted())
+        assertTrue(fileSystem.exists(zip.toPath()), "kept for the import")
+        // Type, tea, two vessels, two steeps and the method; the mug arrives deleted
+        assertEquals(7, preview.added)
+        assertEquals(preview, fresh.repository.import(zip).getOrThrow())
+    }
+
+    @Test
+    fun `a discarded preview deletes the picked file`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val zip = phone.repository.export().getOrThrow()
+
+        phone.repository.preview(zip).getOrThrow()
+        phone.repository.discard(zip)
+
+        assertFalse(fileSystem.exists(zip.toPath()))
+    }
+
+    @Test
     fun `importing the same backup twice changes nothing`() = runTest {
         val phone = Device("phone")
         phone.seedJournal()
@@ -80,7 +107,7 @@ class BackupRepositoryImplTest {
         val result = fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
 
         assertEquals(once, fresh.snapshot())
-        assertEquals(ImportResult(0, 0, 0, 0, 0), result)
+        assertTrue(result.changesNothing)
     }
 
     @Test

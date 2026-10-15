@@ -45,11 +45,13 @@ class SettingsViewModel(
                 it.copy(exportFilePath = null, isExporting = false, error = intent.message)
             }
             is SettingsIntent.ImportData -> _state.update { it.copy(showImportPicker = true) }
-            is SettingsIntent.ImportFileSelected -> importData(intent.filePath)
+            is SettingsIntent.ImportFileSelected -> previewImport(intent.filePath)
             is SettingsIntent.ImportCancelled -> _state.update { it.copy(showImportPicker = false) }
             is SettingsIntent.ImportFailed -> _state.update {
                 it.copy(showImportPicker = false, error = intent.message)
             }
+            is SettingsIntent.ConfirmImport -> importData()
+            is SettingsIntent.CancelImport -> cancelImport()
             is SettingsIntent.DismissImportResult -> _state.update { it.copy(importResult = null) }
         }
     }
@@ -137,10 +139,31 @@ class SettingsViewModel(
         }
     }
 
-    private fun importData(filePath: String) {
+    private fun previewImport(filePath: String) {
         viewModelScope.launch {
             _state.update { it.copy(showImportPicker = false, isImporting = true) }
-            backupRepository.import(filePath)
+            backupRepository.preview(filePath)
+                .onSuccess { summary ->
+                    _state.update {
+                        it.copy(isImporting = false, importPreview = ImportPreview(filePath, summary))
+                    }
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isImporting = false,
+                            error = error.message ?: "Failed to read the backup",
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun importData() {
+        val preview = _state.value.importPreview ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(importPreview = null, isImporting = true) }
+            backupRepository.import(preview.filePath)
                 .onSuccess { result ->
                     _state.update { it.copy(isImporting = false, importResult = result) }
                 }
@@ -153,6 +176,12 @@ class SettingsViewModel(
                     }
                 }
         }
+    }
+
+    private fun cancelImport() {
+        val preview = _state.value.importPreview ?: return
+        _state.update { it.copy(importPreview = null) }
+        viewModelScope.launch { backupRepository.discard(preview.filePath) }
     }
 
     private fun clearError() {

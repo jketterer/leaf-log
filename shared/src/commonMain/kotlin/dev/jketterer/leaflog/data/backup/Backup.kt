@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.backup
 
+import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -182,11 +183,38 @@ internal fun planMerge(incoming: Backup, local: LocalRows): Backup {
 }
 
 private inline fun <T> List<T>.newerThan(
-    local: Map<String, Instant>,
+    local: Map<String, LocalRow>,
     version: (T) -> Pair<String, Instant>,
 ) = filter { row ->
     val (id, updatedAt) = version(row)
-    local[id]?.let { updatedAt > it } ?: true
+    local[id]?.let { updatedAt > it.updatedAt } ?: true
+}
+
+/**
+ * Counts what writing [this] plan over [local] changes, as the app shows it: a row that appears is
+ * added, even one restored from deleted, and a row that arrives deleted counts only if it was live.
+ */
+internal fun Backup.summarize(local: LocalRows, skipped: Int): ImportSummary {
+    val changes = teaTypes.map { change(local.teaTypes[it.id], it.deletedAt) } +
+        vessels.map { change(local.vessels[it.id], it.deletedAt) } +
+        teas.map { change(local.teas[it.id], it.deletedAt) } +
+        steeps.map { change(local.steeps[it.id], it.deletedAt) } +
+        methods.map { change(local.methods[it.id], it.deletedAt) }
+    return ImportSummary(
+        exportedAt = exportedAt,
+        added = changes.count { it == Change.ADDED },
+        updated = changes.count { it == Change.UPDATED },
+        removed = changes.count { it == Change.REMOVED },
+        skipped = skipped,
+    )
+}
+
+private enum class Change { ADDED, UPDATED, REMOVED, UNSEEN }
+
+private fun change(local: LocalRow?, deletedAt: Instant?) = when {
+    deletedAt != null -> if (local != null && !local.deleted) Change.REMOVED else Change.UNSEEN
+    local == null || local.deleted -> Change.ADDED
+    else -> Change.UPDATED
 }
 
 /** A completed timer is a record of the steep; any other was running on the backed-up device. */
@@ -200,13 +228,15 @@ private fun BackupSteep.landedCompleted() = copy(status = SessionStatus.COMPLETE
     )
 }
 
-/** Each row already in the database, deleted ones included, by id: its `updatedAt`. */
+/** Each row already in the database, deleted ones included, by id. */
 internal data class LocalRows(
-    val teaTypes: Map<String, Instant> = emptyMap(),
-    val vessels: Map<String, Instant> = emptyMap(),
-    val teas: Map<String, Instant> = emptyMap(),
-    val steeps: Map<String, Instant> = emptyMap(),
-    val methods: Map<String, Instant> = emptyMap(),
+    val teaTypes: Map<String, LocalRow> = emptyMap(),
+    val vessels: Map<String, LocalRow> = emptyMap(),
+    val teas: Map<String, LocalRow> = emptyMap(),
+    val steeps: Map<String, LocalRow> = emptyMap(),
+    val methods: Map<String, LocalRow> = emptyMap(),
     /** The ids of live sessions being brewed. */
     val inProgressSessions: Set<String> = emptySet(),
 )
+
+internal data class LocalRow(val updatedAt: Instant, val deleted: Boolean = false)

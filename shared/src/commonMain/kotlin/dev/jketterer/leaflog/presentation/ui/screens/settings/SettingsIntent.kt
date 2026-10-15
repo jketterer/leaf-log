@@ -18,5 +18,7 @@ sealed interface SettingsIntent {
     data class ImportFileSelected(val filePath: String) : SettingsIntent
     data object ImportCancelled : SettingsIntent
     data class ImportFailed(val message: String) : SettingsIntent
+    data object ConfirmImport : SettingsIntent
+    data object CancelImport : SettingsIntent
     data object DismissImportResult : SettingsIntent
 }

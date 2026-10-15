@@ -1,89 +1,110 @@
 package dev.jketterer.leaflog.presentation.ui.theme
 
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-// Light Theme Colors
-val md_theme_light_primary = Color(0xFF4C662B)
-val md_theme_light_onPrimary = Color(0xFFFFFFFF)
-val md_theme_light_primaryContainer = Color(0xFFCCEDA3)
-val md_theme_light_onPrimaryContainer = Color(0xFF0F2000)
+// Material's tonal-spot scheme from seed #4C662B, with the tertiary palette from #7D5635 so the
+// accent stays brown. Every role is set, so nothing falls back to the baseline purple.
 
-val md_theme_light_secondary = Color(0xFF596248)
-val md_theme_light_onSecondary = Color(0xFFFFFFFF)
-val md_theme_light_secondaryContainer = Color(0xFFDDE7C7)
-val md_theme_light_onSecondaryContainer = Color(0xFF171E0A)
+internal val LightColors = lightColorScheme(
+    primary = Color(0xFF4C662B),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFCDEDA3),
+    onPrimaryContainer = Color(0xFF354E15),
+    inversePrimary = Color(0xFFB2D189),
+    secondary = Color(0xFF586249),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFDCE7C7),
+    onSecondaryContainer = Color(0xFF404A33),
+    tertiary = Color(0xFF7D5635),
+    onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFFFDCC2),
+    onTertiaryContainer = Color(0xFF623F20),
+    background = Color(0xFFF9FAEF),
+    onBackground = Color(0xFF1A1C16),
+    surface = Color(0xFFF9FAEF),
+    onSurface = Color(0xFF1A1C16),
+    surfaceVariant = Color(0xFFE1E4D5),
+    onSurfaceVariant = Color(0xFF44483D),
+    surfaceTint = Color(0xFF4C662B),
+    inverseSurface = Color(0xFF2F312A),
+    inverseOnSurface = Color(0xFFF1F2E6),
+    error = Color(0xFFBA1A1A),
+    onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF93000A),
+    outline = Color(0xFF75796C),
+    outlineVariant = Color(0xFFC5C8BA),
+    scrim = Color(0xFF000000),
+    surfaceBright = Color(0xFFF9FAEF),
+    surfaceContainer = Color(0xFFEEEFE3),
+    surfaceContainerHigh = Color(0xFFE8E9DE),
+    surfaceContainerHighest = Color(0xFFE2E3D8),
+    surfaceContainerLow = Color(0xFFF3F4E9),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceDim = Color(0xFFDADBD0),
+    primaryFixed = Color(0xFFCDEDA3),
+    primaryFixedDim = Color(0xFFB2D189),
+    onPrimaryFixed = Color(0xFF102000),
+    onPrimaryFixedVariant = Color(0xFF354E15),
+    secondaryFixed = Color(0xFFDCE7C7),
+    secondaryFixedDim = Color(0xFFC0CBAC),
+    onSecondaryFixed = Color(0xFF161E0B),
+    onSecondaryFixedVariant = Color(0xFF404A33),
+    tertiaryFixed = Color(0xFFFFDCC2),
+    tertiaryFixedDim = Color(0xFFF0BC94),
+    onTertiaryFixed = Color(0xFF2E1500),
+    onTertiaryFixedVariant = Color(0xFF623F20),
+)
 
-val md_theme_light_tertiary = Color(0xFF7D5635)
-val md_theme_light_onTertiary = Color(0xFFFFFFFF)
-val md_theme_light_tertiaryContainer = Color(0xFFFFDCC2)
-val md_theme_light_onTertiaryContainer = Color(0xFF2E1500)
-
-val md_theme_light_error = Color(0xFFBA1A1A)
-val md_theme_light_onError = Color(0xFFFFFFFF)
-val md_theme_light_errorContainer = Color(0xFFFFDAD6)
-val md_theme_light_onErrorContainer = Color(0xFF410002)
-
-val md_theme_light_background = Color(0xFFFEFCF5)
-val md_theme_light_onBackground = Color(0xFF1B1C18)
-val md_theme_light_surface = Color(0xFFFEFCF5)
-val md_theme_light_onSurface = Color(0xFF1B1C18)
-
-val md_theme_light_surfaceVariant = Color(0xFFE1E4D4)
-val md_theme_light_onSurfaceVariant = Color(0xFF44483D)
-val md_theme_light_outline = Color(0xFF75796C)
-val md_theme_light_outlineVariant = Color(0xFFC5C8B9)
-
-val md_theme_light_scrim = Color(0xFF000000)
-val md_theme_light_inverseSurface = Color(0xFF30312C)
-val md_theme_light_inverseOnSurface = Color(0xFFF2F1E9)
-val md_theme_light_inversePrimary = Color(0xFFB0D18A)
-
-val md_theme_light_surfaceTint = Color(0xFF4C662B)
-val md_theme_light_surfaceContainer = Color(0xFFEEEFE4)
-val md_theme_light_surfaceContainerHigh = Color(0xFFE8E9DE)
-val md_theme_light_surfaceContainerHighest = Color(0xFFE2E3D9)
-val md_theme_light_surfaceContainerLow = Color(0xFFF4F4EA)
-val md_theme_light_surfaceContainerLowest = Color(0xFFFFFFFF)
-
-// Dark Theme Colors
-val md_theme_dark_primary = Color(0xFFB0D18A)
-val md_theme_dark_onPrimary = Color(0xFF203600)
-val md_theme_dark_primaryContainer = Color(0xFF364E16)
-val md_theme_dark_onPrimaryContainer = Color(0xFFCCEDA3)
-
-val md_theme_dark_secondary = Color(0xFFC1CAAB)
-val md_theme_dark_onSecondary = Color(0xFF2B331D)
-val md_theme_dark_secondaryContainer = Color(0xFF414A32)
-val md_theme_dark_onSecondaryContainer = Color(0xFFDDE7C7)
-
-val md_theme_dark_tertiary = Color(0xFFEFBD94)
-val md_theme_dark_onTertiary = Color(0xFF48290D)
-val md_theme_dark_tertiaryContainer = Color(0xFF623F20)
-val md_theme_dark_onTertiaryContainer = Color(0xFFFFDCC2)
-
-val md_theme_dark_error = Color(0xFFFFB4AB)
-val md_theme_dark_onError = Color(0xFF690005)
-val md_theme_dark_errorContainer = Color(0xFF93000A)
-val md_theme_dark_onErrorContainer = Color(0xFFFFDAD6)
-
-val md_theme_dark_background = Color(0xFF1B1C18)
-val md_theme_dark_onBackground = Color(0xFFE4E3DB)
-val md_theme_dark_surface = Color(0xFF1B1C18)
-val md_theme_dark_onSurface = Color(0xFFE4E3DB)
-
-val md_theme_dark_surfaceVariant = Color(0xFF44483D)
-val md_theme_dark_onSurfaceVariant = Color(0xFFC5C8B9)
-val md_theme_dark_outline = Color(0xFF8E9285)
-val md_theme_dark_outlineVariant = Color(0xFF44483D)
-
-val md_theme_dark_scrim = Color(0xFF000000)
-val md_theme_dark_inverseSurface = Color(0xFFE4E3DB)
-val md_theme_dark_inverseOnSurface = Color(0xFF30312C)
-val md_theme_dark_inversePrimary = Color(0xFF4C662B)
-
-val md_theme_dark_surfaceTint = Color(0xFFB0D18A)
-val md_theme_dark_surfaceContainer = Color(0xFF2F302B)
-val md_theme_dark_surfaceContainerHigh = Color(0xFF3A3B35)
-val md_theme_dark_surfaceContainerHighest = Color(0xFF454640)
-val md_theme_dark_surfaceContainerLow = Color(0xFF242520)
-val md_theme_dark_surfaceContainerLowest = Color(0xFF0E0F0B)
+internal val DarkColors = darkColorScheme(
+    primary = Color(0xFFB2D189),
+    onPrimary = Color(0xFF203701),
+    primaryContainer = Color(0xFF354E15),
+    onPrimaryContainer = Color(0xFFCDEDA3),
+    inversePrimary = Color(0xFF4C662B),
+    secondary = Color(0xFFC0CBAC),
+    onSecondary = Color(0xFF2A331E),
+    secondaryContainer = Color(0xFF404A33),
+    onSecondaryContainer = Color(0xFFDCE7C7),
+    tertiary = Color(0xFFF0BC94),
+    onTertiary = Color(0xFF48290C),
+    tertiaryContainer = Color(0xFF623F20),
+    onTertiaryContainer = Color(0xFFFFDCC2),
+    background = Color(0xFF12140E),
+    onBackground = Color(0xFFE2E3D8),
+    surface = Color(0xFF12140E),
+    onSurface = Color(0xFFE2E3D8),
+    surfaceVariant = Color(0xFF44483D),
+    onSurfaceVariant = Color(0xFFC5C8BA),
+    surfaceTint = Color(0xFFB2D189),
+    inverseSurface = Color(0xFFE2E3D8),
+    inverseOnSurface = Color(0xFF2F312A),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+    outline = Color(0xFF8F9285),
+    outlineVariant = Color(0xFF44483D),
+    scrim = Color(0xFF000000),
+    surfaceBright = Color(0xFF383A32),
+    surfaceContainer = Color(0xFF1E201A),
+    surfaceContainerHigh = Color(0xFF282B24),
+    surfaceContainerHighest = Color(0xFF33362E),
+    surfaceContainerLow = Color(0xFF1A1C16),
+    surfaceContainerLowest = Color(0xFF0D0F09),
+    surfaceDim = Color(0xFF12140E),
+    primaryFixed = Color(0xFFCDEDA3),
+    primaryFixedDim = Color(0xFFB2D189),
+    onPrimaryFixed = Color(0xFF102000),
+    onPrimaryFixedVariant = Color(0xFF354E15),
+    secondaryFixed = Color(0xFFDCE7C7),
+    secondaryFixedDim = Color(0xFFC0CBAC),
+    onSecondaryFixed = Color(0xFF161E0B),
+    onSecondaryFixedVariant = Color(0xFF404A33),
+    tertiaryFixed = Color(0xFFFFDCC2),
+    tertiaryFixedDim = Color(0xFFF0BC94),
+    onTertiaryFixed = Color(0xFF2E1500),
+    onTertiaryFixedVariant = Color(0xFF623F20),
+)

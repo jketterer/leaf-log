@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.components.analytics
 
 import androidx.compose.ui.graphics.Color
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.roundToInt
@@ -33,8 +34,8 @@ val chartColors = listOf(
     Color(0xFFE91E63), // Pink
 )
 
-fun getChartColor(colorHex: String, index: Int): Color {
-    val parsed = colorHex.hexToColor()
+fun getChartColor(colorHex: String, index: Int, dark: Boolean): Color {
+    val parsed = teaTypeColor(colorHex, dark)
     return if (parsed == Color.Unspecified) {
         chartColors[index % chartColors.size]
     } else {

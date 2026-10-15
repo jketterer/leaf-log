@@ -33,12 +33,12 @@ import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.components.collection.FINISHED_ALPHA
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.screens.home.QuickBrewCardData
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -51,7 +51,7 @@ fun QuickBrewCard(
     modifier: Modifier = Modifier,
     cardWidth: Dp = 160.dp,
 ) {
-    val accentColor = data.teaTypeColorHex?.hexToColor()
+    val accentColor = data.teaTypeColorHex?.let { teaTypeColor(it) }
         ?: MaterialTheme.colorScheme.primaryContainer
 
     Card(

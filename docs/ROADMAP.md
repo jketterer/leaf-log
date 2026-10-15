@@ -483,6 +483,8 @@ Scope is **the system, not a restyle of every screen.**
     - **Tea-type colours stay user-picked and are toned per theme** by a pure
       `teaTypeColor(hex, dark)` that clamps lightness. Text on them uses `Color.luminance()`,
       replacing the three hand-rolled "is this light?" checks. Stored data doesn't change.
+      The picker's Material stock swatches become twelve muted tea colours (Matcha, Maroon,
+      Pu-erh, …), spaced so none look alike once toned; new installs seed from them.
     - Dark-mode splash: a `values-night` theme with `windowBackground` on Android (no
       `core-splashscreen`), a launch colour asset with a dark appearance on iOS.
     - **One icon family: Feather**, plus filled star, half star and filled heart drawn in its style.
@@ -580,7 +582,7 @@ state across rotation and process death.
 - [x] `test: render every preview`: the preview scanner, the three-way render test, fixed-clock
   previews. Proves compose resources render under Robolectric before anything depends on it.
 - [x] `feat: Figtree type scale and shapes`
-- [ ] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
+- [x] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
   `teaTypeColor` on both themes.
 - [ ] `feat: choose light, dark or system theme`. Test: the backup round trip.
 - [ ] `refactor: one icon family`

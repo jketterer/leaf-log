@@ -26,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -38,36 +37,37 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import compose.icons.feathericons.Trash2
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
+import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import org.koin.compose.viewmodel.koinViewModel
 
+// Muted tea colours, spaced so no two look alike once toned for either theme
 val colorPalette = listOf(
-    "#4CAF50", // Green
-    "#795548", // Brown
-    "#FFFDE7", // Cream
-    "#FF9800", // Orange
-    "#8D6E63", // Tan
-    "#9C27B0", // Purple
-    "#F44336", // Red
-    "#2196F3", // Blue
-    "#00BCD4", // Cyan
-    "#FFEB3B", // Yellow
-    "#E91E63", // Pink
-    "#607D8B", // Blue Grey
+    "#6F8D02", // Matcha
+    "#1B9C7F", // Jade
+    "#3081A4", // Teal
+    "#5F71C6", // Butterfly pea
+    "#A171C2", // Lavender
+    "#BB5696", // Hibiscus
+    "#8B1A2D", // Maroon
+    "#B85300", // Rooibos
+    "#A57707", // Amber
+    "#87926A", // Straw
+    "#7B4F3F", // Pu-erh
+    "#707084", // Earl Grey
 )
 
 @Composable
@@ -89,6 +89,7 @@ fun EditTeaTypeScreen(
                 onNavigateBack()
                 viewModel.onNavigationEventHandled()
             }
+
             null -> {}
         }
     }
@@ -171,78 +172,78 @@ private fun EditTeaTypeContent(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                    // Name
-                    OutlinedTextField(
-                        value = state.name,
-                        onValueChange = { onIntent(EditTeaTypeIntent.NameChanged(it)) },
-                        label = { Text("Name") },
-                        isError = state.nameError != null,
-                        supportingText = state.nameError?.let { { Text(it) } },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        enabled = !state.isSaving,
-                    )
+                        // Name
+                        OutlinedTextField(
+                            value = state.name,
+                            onValueChange = { onIntent(EditTeaTypeIntent.NameChanged(it)) },
+                            label = { Text("Name") },
+                            isError = state.nameError != null,
+                            supportingText = state.nameError?.let { { Text(it) } },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                            enabled = !state.isSaving,
+                        )
 
-                    // Color
-                    Text(
-                        text = "Color",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
+                        // Color
+                        Text(
+                            text = "Color",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
 
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(6),
-                        contentPadding = PaddingValues(0.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f, fill = false),
-                        userScrollEnabled = false,
-                    ) {
-                        items(
-                            items = colorPalette,
-                            key = { it },
-                        ) { hex ->
-                            ColorSwatch(
-                                hex = hex,
-                                isSelected = state.colorHex == hex,
-                                onClick = { onIntent(EditTeaTypeIntent.ColorSelected(hex)) },
-                                enabled = !state.isSaving,
-                            )
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(6),
+                            contentPadding = PaddingValues(0.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f, fill = false),
+                            userScrollEnabled = false,
+                        ) {
+                            items(
+                                items = colorPalette,
+                                key = { it },
+                            ) { hex ->
+                                ColorSwatch(
+                                    hex = hex,
+                                    isSelected = state.colorHex == hex,
+                                    onClick = { onIntent(EditTeaTypeIntent.ColorSelected(hex)) },
+                                    enabled = !state.isSaving,
+                                )
+                            }
                         }
+
+                        // Temperature
+                        TemperatureInputField(
+                            value = state.temperature,
+                            onValueChange = { onIntent(EditTeaTypeIntent.TemperatureChanged(it)) },
+                            currentUnit = state.userPreferences.temperatureUnit,
+                            onToggleUnit = { onIntent(EditTeaTypeIntent.ToggleTemperatureUnit) },
+                            label = { Text("Default Temperature") },
+                            isError = state.temperatureError != null,
+                            supportingText = state.temperatureError?.let { { Text(it) } }
+                                ?: { Text("Optional") },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.isSaving,
+                        )
+
                     }
+                }
 
-                    // Temperature
-                    TemperatureInputField(
-                        value = state.temperature,
-                        onValueChange = { onIntent(EditTeaTypeIntent.TemperatureChanged(it)) },
-                        currentUnit = state.userPreferences.temperatureUnit,
-                        onToggleUnit = { onIntent(EditTeaTypeIntent.ToggleTemperatureUnit) },
-                        label = { Text("Default Temperature") },
-                        isError = state.temperatureError != null,
-                        supportingText = state.temperatureError?.let { { Text(it) } }
-                            ?: { Text("Optional") },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !state.isSaving,
-                    )
-
+                if (state.isSaving) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(enabled = false) {},
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
-
-            if (state.isSaving) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable(enabled = false) {},
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-        }
         }
         SnackbarHost(
             hostState = snackbarHostState,
@@ -258,8 +259,7 @@ private fun ColorSwatch(
     onClick: () -> Unit,
     enabled: Boolean,
 ) {
-    val color = hex.hexToColor()
-    val isLight = hex == "#FFFDE7" || hex == "#FFEB3B"
+    val color = teaTypeColor(hex)
 
     Box(
         modifier = Modifier
@@ -269,8 +269,6 @@ private fun ColorSwatch(
             .then(
                 if (isSelected) {
                     Modifier.border(3.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                } else if (isLight) {
-                    Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 } else {
                     Modifier
                 }
@@ -283,10 +281,7 @@ private fun ColorSwatch(
                 modifier = Modifier
                     .size(16.dp)
                     .clip(CircleShape)
-                    .background(
-                        if (isLight) Color.Black.copy(alpha = 0.6f)
-                        else Color.White.copy(alpha = 0.8f)
-                    ),
+                    .background(contentColorOn(color).copy(alpha = 0.7f)),
             )
         }
     }
@@ -322,7 +317,7 @@ private fun EditTeaTypeAddPreview() {
             state = EditTeaTypeState(
                 isEditMode = false,
                 name = "Pu-erh",
-                colorHex = "#8D6E63",
+                colorHex = "#8B1A2D",
             ),
             onIntent = {},
         )

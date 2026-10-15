@@ -62,11 +62,11 @@ import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
 
@@ -397,7 +397,7 @@ private fun TeaPickerRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val accentColor = teaTypeColorHex?.hexToColor()
+    val accentColor = teaTypeColorHex?.let { teaTypeColor(it) }
 
     Row(
         modifier = modifier

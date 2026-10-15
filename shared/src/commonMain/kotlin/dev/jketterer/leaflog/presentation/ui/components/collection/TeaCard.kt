@@ -41,9 +41,9 @@ import compose.icons.feathericons.Star
 import compose.icons.fontawesomeicons.solid.Heart
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Instant
 import org.koin.compose.koinInject
 
@@ -65,7 +65,7 @@ fun TeaCard(
     // Null in a preview, where no Koin application is running and resolving would throw.
     imageStorage: ImageStorage? = if (LocalInspectionMode.current) null else koinInject(),
 ) {
-    val accentColor = teaTypeColorHex?.hexToColor()
+    val accentColor = teaTypeColorHex?.let { teaTypeColor(it) }
 
     Card(
         modifier = modifier

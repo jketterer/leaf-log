@@ -25,9 +25,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.components.common.DialogPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Instant
 
 /** Deletes a type no tea uses; a type in use is merged into another instead. */
@@ -116,7 +116,7 @@ private fun DeleteTeaTypeDialogContent(
                         modifier = Modifier
                             .size(12.dp)
                             .clip(CircleShape)
-                            .background(type.colorHex.hexToColor()),
+                            .background(teaTypeColor(type.colorHex)),
                     )
                     Text(type.name)
                 }

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.isDarkTheme
 import kotlin.math.roundToInt
 
 @Composable
@@ -76,9 +77,10 @@ fun TeaTypeDistributionChart(
                     distribution.sumOf { it.sessionCount }
                 }
 
-                val colors = remember(distribution) {
+                val dark = isDarkTheme()
+                val colors = remember(distribution, dark) {
                     distribution.mapIndexed { index, dist ->
-                        getChartColor(dist.teaType.colorHex, index)
+                        getChartColor(dist.teaType.colorHex, index, dark)
                     }
                 }
 

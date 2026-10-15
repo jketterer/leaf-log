@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.sp
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
+import dev.jketterer.leaflog.presentation.ui.theme.isDarkTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -48,16 +51,6 @@ private val MONTH_NAMES = listOf(
 /** Scale alpha based on session count: min 0.35 (1 session), max 1.0 (3+ sessions). */
 private fun intensityAlpha(sessionCount: Int): Float =
     if (sessionCount <= 0) 1f else min(1f, 0.35f + sessionCount * 0.22f)
-
-/** Returns white or black depending on which has better contrast against [color]. */
-private fun contrastingTextColor(color: Color): Color {
-    val r = color.red
-    val g = color.green
-    val b = color.blue
-    // Relative luminance (sRGB)
-    val luminance = 0.2126f * r + 0.7152f * g + 0.0722f * b
-    return if (luminance > 0.35f) Color.Black else Color.White
-}
 
 @Composable
 fun BrewingActivityHeatmap(
@@ -97,6 +90,7 @@ private fun WeekHeatmapCanvas(
     period: AnalyticsPeriod,
 ) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
+    val dark = isDarkTheme()
     val outlineColor = MaterialTheme.colorScheme.outline
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayRingColor = MaterialTheme.colorScheme.primary
@@ -159,7 +153,7 @@ private fun WeekHeatmapCanvas(
             cells.take(7).forEachIndexed { index, cell ->
                 val cellX = startX + index * (cellSizePx + gapPx)
                 val color = cell.dominantTeaTypeColorHex?.let { hex ->
-                    val parsed = hex.hexToColor()
+                    val parsed = teaTypeColor(hex, dark)
                     if (parsed == Color.Unspecified) activeDefaultColor else parsed
                 }
                 if (color != null) {
@@ -181,7 +175,7 @@ private fun WeekHeatmapCanvas(
 
                 // Day number
                 val dayText = cell.date.day.toString()
-                val dayTextColor = if (color != null) contrastingTextColor(color) else dayNumberEmptyColor
+                val dayTextColor = if (color != null) contentColorOn(color) else dayNumberEmptyColor
                 val dayResult = textMeasurer.measure(
                     text = dayText,
                     style = dayNumberStyle.copy(color = dayTextColor),
@@ -216,6 +210,7 @@ private fun MonthCalendarHeatmapCanvas(
     period: AnalyticsPeriod,
 ) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
+    val dark = isDarkTheme()
     val outlineColor = MaterialTheme.colorScheme.outline
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayRingColor = MaterialTheme.colorScheme.primary
@@ -308,7 +303,7 @@ private fun MonthCalendarHeatmapCanvas(
                 val cellX = startX + col * (cellSizePx + gapPx)
                 val cellY = cellsTop + row * (cellSizePx + gapPx)
                 val color = cell.dominantTeaTypeColorHex?.let { hex ->
-                    val parsed = hex.hexToColor()
+                    val parsed = teaTypeColor(hex, dark)
                     if (parsed == Color.Unspecified) activeDefaultColor else parsed
                 }
                 if (color != null) {
@@ -330,7 +325,7 @@ private fun MonthCalendarHeatmapCanvas(
 
                 // Day number
                 val dayText = cell.date.day.toString()
-                val dayTextColor = if (color != null) contrastingTextColor(color) else dayNumberEmptyColor
+                val dayTextColor = if (color != null) contentColorOn(color) else dayNumberEmptyColor
                 val dayResult = textMeasurer.measure(
                     text = dayText,
                     style = dayNumberStyle.copy(color = dayTextColor),
@@ -362,6 +357,7 @@ private fun MonthCalendarHeatmapCanvas(
 @Composable
 private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
+    val dark = isDarkTheme()
     val outlineColor = MaterialTheme.colorScheme.outline
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
@@ -425,7 +421,7 @@ private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
                 monthCells.forEachIndexed { cellIndex, cell ->
                     val cellX = blockX + cellIndex * (cellSizePx + cellGapPx)
                     val color = cell.dominantTeaTypeColorHex?.let { hex ->
-                        val parsed = hex.hexToColor()
+                        val parsed = teaTypeColor(hex, dark)
                         if (parsed == Color.Unspecified) activeDefaultColor else parsed
                     }
                     if (color != null) {

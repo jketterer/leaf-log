@@ -41,11 +41,10 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Plus
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -64,14 +63,17 @@ fun TeaTypeListScreen(
                 onNavigateToEditTeaType(event.teaTypeId)
                 viewModel.onNavigationEventHandled()
             }
+
             is TeaTypeListNavigationEvent.NavigateToAdd -> {
                 onNavigateToAddTeaType()
                 viewModel.onNavigationEventHandled()
             }
+
             is TeaTypeListNavigationEvent.NavigateBack -> {
                 onNavigateBack()
                 viewModel.onNavigationEventHandled()
             }
+
             null -> {}
         }
     }
@@ -114,15 +116,22 @@ private fun TeaTypeListContent(
                             modifier = Modifier.align(Alignment.Center),
                         )
                     }
+
                     state.teaTypes.isEmpty() -> {
                         Text(
                             text = "No tea types found",
                             modifier = Modifier.align(Alignment.Center),
                         )
                     }
+
                     else -> {
                         LazyColumn(
-                            contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 88.dp),
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                top = 16.dp,
+                                end = 16.dp,
+                                bottom = 88.dp
+                            ),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             items(
@@ -174,14 +183,14 @@ private fun TeaTypeCard(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // Color dot
-            val color = teaType.colorHex.hexToColor()
+            val color = teaTypeColor(teaType.colorHex)
             Box(
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
                     .background(color)
                     .then(
-                        if (color == Color.Unspecified || teaType.colorHex == "#FFFDE7") {
+                        if (color == Color.Unspecified) {
                             Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                         } else {
                             Modifier

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window shows on the splash screen, before Compose draws; it matches the theme's surface -->
+    <style name="Theme.LeafLog" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+
+    <color name="window_background">#F9FAEF</color>
+</resources>

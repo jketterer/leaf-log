@@ -23,8 +23,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.Text
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,12 +38,10 @@ import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.ChevronUp
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.presentation.ui.components.analytics.hexToColor
 import dev.jketterer.leaflog.presentation.ui.screens.home.QuickBrewCardData
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -200,7 +198,7 @@ private fun ManageConfigRow(
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
 ) {
-    val accentColor = data.teaTypeColorHex?.hexToColor()
+    val accentColor = data.teaTypeColorHex?.let { teaTypeColor(it) }
         ?: MaterialTheme.colorScheme.primaryContainer
 
     Card(

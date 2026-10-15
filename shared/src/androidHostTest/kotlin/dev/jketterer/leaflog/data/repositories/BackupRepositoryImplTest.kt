@@ -218,6 +218,23 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `restored settings leave this device's last backup alone`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        phone.preferences.current =
+            UserPreferences.METRIC.copy(lastBackupAt = Instant.parse("2026-09-01T09:00:00Z"))
+        val zip = phone.repository.export().getOrThrow()
+        val fresh = Device("fresh")
+        val freshBackup = Instant.parse("2026-10-01T09:00:00Z")
+        fresh.preferences.current = UserPreferences(lastBackupAt = freshBackup)
+
+        fresh.repository.import(zip).getOrThrow()
+
+        assertEquals(UserPreferences.METRIC.temperatureUnit, fresh.preferences.current.temperatureUnit)
+        assertEquals(freshBackup, fresh.preferences.current.lastBackupAt)
+    }
+
+    @Test
     fun `a device that has had a tea keeps its own settings`() = runTest {
         val phone = Device("phone")
         phone.seedJournal()

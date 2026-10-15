@@ -13,9 +13,18 @@ import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEn
 import dev.jketterer.leaflog.data.local.database.inMemoryDatabase
 import dev.jketterer.leaflog.data.local.database.row
 import dev.jketterer.leaflog.data.local.database.seedForeignKeys
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.TeaSortOption
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
@@ -157,6 +166,37 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `settings restore onto a fresh install`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        phone.preferences.current =
+            UserPreferences.METRIC.copy(sessionReminderNotificationsEnabled = false)
+        val zip = phone.repository.export().getOrThrow()
+        val fresh = Device("fresh")
+
+        assertTrue(fresh.repository.preview(zip).getOrThrow().restoresSettings)
+        fresh.repository.import(zip).getOrThrow()
+
+        assertEquals(phone.preferences.current, fresh.preferences.current)
+    }
+
+    @Test
+    fun `a device that has had a tea keeps its own settings`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        phone.preferences.current = UserPreferences.METRIC
+        val zip = phone.repository.export().getOrThrow()
+        val device = Device("device")
+        device.database.seedForeignKeys()
+        device.database.teaDao().softDelete("tea", timestamp = 5)
+
+        val result = device.repository.import(zip).getOrThrow()
+
+        assertFalse(result.restoresSettings)
+        assertEquals(UserPreferences(), device.preferences.current)
+    }
+
+    @Test
     fun `a finished tea comes back finished with its sessions named`() = runTest {
         val phone = Device("phone")
         phone.seedJournal()
@@ -256,6 +296,7 @@ class BackupRepositoryImplTest {
         name: String,
         transactor: (Transactor) -> Transactor = { it },
     ) {
+        val preferences = InMemoryPreferences()
         val database = inMemoryDatabase().also { databases += it }
         val files: Path = root / name / "files"
         val cache: Path = root / name / "cache"
@@ -275,6 +316,7 @@ class BackupRepositoryImplTest {
             transactor = transactor(RoomTransactor(database)),
             imageStorage = storage,
             fileSystem = fileSystem,
+            preferencesRepository = preferences,
         )
 
         fun read(stored: String) = fileSystem.read(files / stored) { readByteArray() }
@@ -348,6 +390,32 @@ class BackupRepositoryImplTest {
             return path.toString()
         }
     }
+}
+
+private class InMemoryPreferences : PreferencesRepository {
+    var current = UserPreferences()
+
+    private fun set(change: UserPreferences.() -> UserPreferences): Result<Unit> {
+        current = current.change()
+        return Result.success(Unit)
+    }
+
+    override fun getPreferencesFlow(): Flow<UserPreferences> = flowOf(current)
+    override suspend fun getPreferences() = current
+    override suspend fun updateTemperatureUnit(unit: TemperatureUnit) =
+        set { copy(temperatureUnit = unit) }
+    override suspend fun updateVolumeUnit(unit: VolumeUnit) = set { copy(volumeUnit = unit) }
+    override suspend fun updateWeightUnit(unit: WeightUnit) = set { copy(weightUnit = unit) }
+    override suspend fun updateTeaSortOption(option: TeaSortOption) =
+        set { copy(teaSortOption = option) }
+    override suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod) =
+        set { copy(analyticsPeriod = period) }
+    override suspend fun updateDefaultWaterType(waterType: WaterType) =
+        set { copy(defaultWaterType = waterType) }
+    override suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean) =
+        set { copy(timerCompletionNotificationsEnabled = enabled) }
+    override suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) =
+        set { copy(sessionReminderNotificationsEnabled = enabled) }
 }
 
 /** Sessions for the seeded tea, and one for a tea in neither this backup nor the app. */

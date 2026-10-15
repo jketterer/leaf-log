@@ -568,7 +568,11 @@ stand alone.
   shows: a row restored from deleted is new, a row arriving deleted counts only when it removes a
   live one. Import is disabled when nothing would change. The import counts its own re-plan, so it
   matches the preview unless the device changed in between.
-- [ ] `feat: back up preferences`: applied only to an empty database, shown in the preview.
+- [x] `feat: back up preferences`: applied only to an empty database, shown in the preview.
+  As built: an optional `preferences` block in version 2, which no release has written yet; null
+  in older files. "Empty" means no tea rows, deleted ones included. They're applied after the
+  transaction through `PreferencesRepository`'s setters, and a setter's failure is logged rather
+  than failing an import whose data already landed.
 - [ ] `fix: export and import file handling`: the Settings data-section audit rows.
 - [ ] `feat: show when the last backup was`
 - [ ] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size

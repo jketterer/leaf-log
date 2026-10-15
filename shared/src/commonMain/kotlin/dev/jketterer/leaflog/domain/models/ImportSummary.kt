@@ -13,6 +13,8 @@ data class ImportSummary(
     val removed: Int,
     /** Rows left out because their tea, type or vessel is in neither the backup nor the app. */
     val skipped: Int = 0,
+    /** The backup's settings replace this device's: only on a device that has never had a tea. */
+    val restoresSettings: Boolean = false,
 ) {
-    val changesNothing get() = added == 0 && updated == 0 && removed == 0
+    val changesNothing get() = added == 0 && updated == 0 && removed == 0 && !restoresSettings
 }

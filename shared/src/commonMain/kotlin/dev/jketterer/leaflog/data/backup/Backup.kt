@@ -1,9 +1,14 @@
 package dev.jketterer.leaflog.data.backup
 
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.TeaSortOption
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
@@ -27,6 +32,8 @@ data class Backup(
     /** Rows of `tea_session`: a session is its steep 1, the parent of steeps 2…n. */
     val steeps: List<BackupSteep>,
     val methods: List<BackupMethod>,
+    /** Null in backups made before settings traveled, version 1 among them. */
+    val preferences: BackupPreferences? = null,
 )
 
 const val BACKUP_VERSION = 2
@@ -131,6 +138,18 @@ data class BackupMethod(
     val deletedAt: Instant? = null,
 )
 
+@Serializable
+data class BackupPreferences(
+    val temperatureUnit: TemperatureUnit,
+    val volumeUnit: VolumeUnit,
+    val weightUnit: WeightUnit,
+    val teaSortOption: TeaSortOption,
+    val analyticsPeriod: AnalyticsPeriod,
+    val defaultWaterType: WaterType,
+    val timerCompletionNotificationsEnabled: Boolean,
+    val sessionReminderNotificationsEnabled: Boolean,
+)
+
 /** Rewrites every photo path; a null drops that photo. */
 internal fun Backup.mapPhotos(transform: (String) -> String?) = copy(
     vessels = vessels.map { it.copy(imagePath = it.imagePath?.let(transform)) },
@@ -157,7 +176,7 @@ internal fun Backup.withoutOrphans(local: LocalRows): Pair<Backup, Int> {
     val keptMethods = methods.filter { it.teaId in teaIds && it.vesselId in vesselIds }
     val kept = copy(teas = keptTeas, steeps = keptSteeps, methods = keptMethods)
     val dropped = (teas.size - keptTeas.size) + (steeps.size - keptSteeps.size) +
-        (methods.size - keptMethods.size)
+            (methods.size - keptMethods.size)
     return kept to dropped
 }
 
@@ -196,18 +215,25 @@ private inline fun <T> List<T>.newerThan(
  */
 internal fun Backup.summarize(local: LocalRows, skipped: Int): ImportSummary {
     val changes = teaTypes.map { change(local.teaTypes[it.id], it.deletedAt) } +
-        vessels.map { change(local.vessels[it.id], it.deletedAt) } +
-        teas.map { change(local.teas[it.id], it.deletedAt) } +
-        steeps.map { change(local.steeps[it.id], it.deletedAt) } +
-        methods.map { change(local.methods[it.id], it.deletedAt) }
+            vessels.map { change(local.vessels[it.id], it.deletedAt) } +
+            teas.map { change(local.teas[it.id], it.deletedAt) } +
+            steeps.map { change(local.steeps[it.id], it.deletedAt) } +
+            methods.map { change(local.methods[it.id], it.deletedAt) }
     return ImportSummary(
         exportedAt = exportedAt,
         added = changes.count { it == Change.ADDED },
         updated = changes.count { it == Change.UPDATED },
         removed = changes.count { it == Change.REMOVED },
         skipped = skipped,
+        restoresSettings = restoresSettings(local),
     )
 }
+
+/**
+ * Settings carry no timestamp, so they're only restored onto a device that has never had a tea:
+ * a fresh install. Anywhere else, the device's own settings are the ones in use.
+ */
+internal fun Backup.restoresSettings(local: LocalRows) = preferences != null && local.teas.isEmpty()
 
 private enum class Change { ADDED, UPDATED, REMOVED, UNSEEN }
 

@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.repositories
 
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.data.backup.BACKUP_VERSION
 import dev.jketterer.leaflog.data.backup.Backup
 import dev.jketterer.leaflog.data.backup.LocalRow
@@ -10,6 +11,7 @@ import dev.jketterer.leaflog.data.backup.mapPhotos
 import dev.jketterer.leaflog.data.backup.planMerge
 import dev.jketterer.leaflog.data.backup.summarize
 import dev.jketterer.leaflog.data.backup.toBackup
+import dev.jketterer.leaflog.data.backup.toDomain
 import dev.jketterer.leaflog.data.backup.toEntity
 import dev.jketterer.leaflog.data.backup.withoutOrphans
 import dev.jketterer.leaflog.data.local.ImageStorage
@@ -21,7 +23,9 @@ import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaTypeDao
 import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.BackupRepository
+import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -51,6 +55,7 @@ class BackupRepositoryImpl(
     private val transactor: Transactor,
     private val imageStorage: ImageStorage,
     private val fileSystem: FileSystem,
+    private val preferencesRepository: PreferencesRepository,
 ) : BackupRepository {
 
     override suspend fun export(): Result<String> = withContext(Dispatchers.IO) {
@@ -65,6 +70,7 @@ class BackupRepositoryImpl(
                     teas = teaDao.getAllIncludingDeleted().map { it.toBackup() },
                     steeps = sessionDao.getAllIncludingDeleted().map { it.toBackup() },
                     methods = methodDao.getAllIncludingDeleted().map { it.toBackup() },
+                    preferences = preferencesRepository.getPreferences().toBackup(),
                 )
             }
 
@@ -113,7 +119,7 @@ class BackupRepositoryImpl(
                 restored.getOrPut(name) { restorePhoto(zip, name, created) }
             }
 
-            transactor {
+            val summary = transactor {
                 // Planned again: a row this device changed while the photos copied keeps its change
                 val local = localRows()
                 val backup = planMerge(withPhotos, local)
@@ -133,10 +139,37 @@ class BackupRepositoryImpl(
 
                 backup.summarize(local, skipped)
             }
+
+            // After the commit: a rolled-back import must not have changed the settings
+            if (summary.restoresSettings) {
+                planned.preferences?.let { restorePreferences(it.toDomain()) }
+            }
+            summary
         }.onFailure {
             created.forEach { fileSystem.delete(it) }
         }.also {
             fileSystem.delete(path)
+        }
+    }
+
+    /** Settings aren't the data being restored: one that fails to save doesn't fail the import. */
+    private suspend fun restorePreferences(preferences: UserPreferences) {
+        val results = with(preferences) {
+            listOf(
+                preferencesRepository.updateTemperatureUnit(temperatureUnit),
+                preferencesRepository.updateVolumeUnit(volumeUnit),
+                preferencesRepository.updateWeightUnit(weightUnit),
+                preferencesRepository.updateTeaSortOption(teaSortOption),
+                preferencesRepository.updateAnalyticsPeriod(analyticsPeriod),
+                preferencesRepository.updateDefaultWaterType(defaultWaterType),
+                preferencesRepository
+                    .updateTimerCompletionNotificationsEnabled(timerCompletionNotificationsEnabled),
+                preferencesRepository
+                    .updateSessionReminderNotificationsEnabled(sessionReminderNotificationsEnabled),
+            )
+        }
+        results.firstNotNullOfOrNull { it.exceptionOrNull() }?.let { error ->
+            Logger.w(error, tag = "Backup") { "Couldn't restore every setting" }
         }
     }
 

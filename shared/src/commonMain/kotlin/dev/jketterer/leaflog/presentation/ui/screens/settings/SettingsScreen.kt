@@ -349,7 +349,7 @@ private fun ImportPreviewDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Import this backup?") },
-        text = { ImportSummaryContent(summary, showDate = true) },
+        text = { ImportSummaryContent(summary, isPreview = true) },
         confirmButton = {
             Button(onClick = onConfirm, enabled = !summary.changesNothing) {
                 Text("Import")
@@ -371,7 +371,7 @@ private fun ImportResultDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Import Complete") },
-        text = { ImportSummaryContent(result, showDate = false) },
+        text = { ImportSummaryContent(result, isPreview = false) },
         confirmButton = {
             Button(onClick = onDismiss) {
                 Text("OK")
@@ -381,9 +381,9 @@ private fun ImportResultDialog(
 }
 
 @Composable
-private fun ImportSummaryContent(summary: ImportSummary, showDate: Boolean) {
+private fun ImportSummaryContent(summary: ImportSummary, isPreview: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        if (showDate) {
+        if (isPreview) {
             val made = TimeFormatter.formatRelativeTimestamp(summary.exportedAt)
             val day = relativeDayOf(
                 summary.exportedAt,
@@ -431,6 +431,16 @@ private fun ImportSummaryContent(summary: ImportSummary, showDate: Boolean) {
                     countWidth,
                     countStyle,
                     color = MaterialTheme.colorScheme.error,
+                )
+            }
+            if (summary.restoresSettings) {
+                Text(
+                    text = if (isPreview) {
+                        "Your settings come with it."
+                    } else {
+                        "Your settings were restored."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
             Text(
@@ -655,6 +665,7 @@ private val previewSummary = ImportSummary(
     updated = 3,
     removed = 1,
     skipped = 3,
+    restoresSettings = true,
 )
 
 @Preview(showBackground = true)
@@ -668,7 +679,7 @@ private fun ImportPreviewDialogPreview() {
                 Button(onClick = {}) { Text("Import") }
             },
         ) {
-            ImportSummaryContent(previewSummary, showDate = true)
+            ImportSummaryContent(previewSummary, isPreview = true)
         }
     }
 }
@@ -685,8 +696,14 @@ private fun ImportPreviewDialogNothingNewPreview() {
             },
         ) {
             ImportSummaryContent(
-                previewSummary.copy(added = 0, updated = 0, removed = 0, skipped = 0),
-                showDate = true,
+                previewSummary.copy(
+                    added = 0,
+                    updated = 0,
+                    removed = 0,
+                    skipped = 0,
+                    restoresSettings = false,
+                ),
+                isPreview = true,
             )
         }
     }
@@ -700,7 +717,7 @@ private fun ImportResultDialogPreview() {
             title = "Import Complete",
             buttons = { Button(onClick = {}) { Text("OK") } },
         ) {
-            ImportSummaryContent(previewSummary, showDate = false)
+            ImportSummaryContent(previewSummary, isPreview = false)
         }
     }
 }

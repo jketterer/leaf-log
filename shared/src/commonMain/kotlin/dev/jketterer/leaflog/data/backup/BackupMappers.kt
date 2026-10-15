@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
 import dev.jketterer.leaflog.domain.models.SyncStatus
+import dev.jketterer.leaflog.domain.models.UserPreferences
 
 // Stats are left at their empty values: import recomputes them
 
@@ -193,4 +194,26 @@ internal fun BackupMethod.toEntity() = BrewingConfigurationEntity(
     createdAt = createdAt,
     updatedAt = updatedAt,
     deletedAt = deletedAt,
+)
+
+internal fun UserPreferences.toBackup() = BackupPreferences(
+    temperatureUnit = temperatureUnit,
+    volumeUnit = volumeUnit,
+    weightUnit = weightUnit,
+    teaSortOption = teaSortOption,
+    analyticsPeriod = analyticsPeriod,
+    defaultWaterType = defaultWaterType,
+    timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
+    sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
+)
+
+internal fun BackupPreferences.toDomain() = UserPreferences(
+    temperatureUnit = temperatureUnit,
+    volumeUnit = volumeUnit,
+    weightUnit = weightUnit,
+    teaSortOption = teaSortOption,
+    analyticsPeriod = analyticsPeriod,
+    defaultWaterType = defaultWaterType,
+    timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
+    sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
 )

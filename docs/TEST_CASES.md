@@ -109,6 +109,9 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       unrated session, a session left mid-steep and a saved method used across several steeps.
       After: the app opens, the mid-steep session is still in progress, and History, Tea Detail,
       Collection and the method agree on every count and rating.
+- [ ] Upgrade from `v0.1.2` (schema 7). Before installing over it, delete a tea that has sessions.
+      After: it is back in Collection, faded, last and marked Finished, and its sessions in History
+      show its name.
 - [ ] Import a backup exported by `v0.1.1`. It imports, and tea and method stats match the
       sessions that arrived.
 - [ ] Import picker → cancel. Nothing changes, no error shown.

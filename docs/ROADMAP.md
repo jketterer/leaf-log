@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-14 (F3 design)
+> **Last updated:** 2026-10-15 (F3 released)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -442,7 +442,7 @@ a live tea uses comes back, and methods whose tea or vessel is still deleted are
 - [x] `feat: mark a tea finished`: Tea Detail, and `StartSessionUseCase` clears it.
 - [x] `feat: show finished teas as finished`: Collection, Log Tea picker, Quick Brew.
 - [x] `feat: merge a tea type into another`
-- [ ] `chore: release 0.2.0`: Track B line — on 0.1.2 delete a tea that has sessions, upgrade, and
+- [x] `chore: release 0.2.0`: Track B line — on 0.1.2 delete a tea that has sessions, upgrade, and
   find it in Collection as finished with its sessions named.
 
 **Exit:** no screen can show "Unknown Tea"; Undo is purely UI work; Track A tests for each rule.

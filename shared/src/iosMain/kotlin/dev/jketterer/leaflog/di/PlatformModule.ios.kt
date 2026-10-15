@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.di
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.database.MIGRATION_1_2
 import dev.jketterer.leaflog.data.local.database.MIGRATION_2_3
@@ -19,6 +18,7 @@ import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import okio.FileSystem
 import org.koin.dsl.module
 import platform.Foundation.NSHomeDirectory
 
@@ -73,9 +73,7 @@ actual fun platformModule() = module {
 
     // Image storage
     single { ImageStorage() }
-
-    // Zip archiver
-    single { ZipArchiver() }
+    single { FileSystem.SYSTEM }
 
     // Preferences
     single {

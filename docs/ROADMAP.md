@@ -531,15 +531,18 @@ stand alone.
   fixed, seeds go to epoch 0. Test: each DAO soft delete stamps it. The skippers were the soft
   deletes and method pin and reorder; F2's `incrementTimesUsed` had survived with no callers and
   went here. Stats recompute stays unstamped: it is derived.
-- [ ] `refactor: one ZIP implementation on okio`: both actuals deleted, entries stream. Tests:
+- [x] `refactor: one ZIP implementation on okio`: both actuals deleted, entries stream. Tests:
   writer → reader round trip; a DEFLATE archive with data descriptors written by `java.util.zip`
-  read by the common reader (the old Android format through the one iOS also runs); zip-slip names
-  rejected. Strike #10.
+  read by the common reader (the old Android format through the one iOS also runs). Strike #10.
+  `java.util.zip` also reads the writer's output, CRCs checked. okio's reader canonicalises names,
+  so only import's own target naming can slip; that test moved to the next item, which rewrites
+  it. `FileSystem.SYSTEM` isn't visible from commonMain (`openZip` is), so the platform modules
+  provide it. The repository's file work runs on `Dispatchers.IO`, as the actuals' did.
 - [ ] `feat: back up to a versioned format`: V2 DTOs, V1 → V2, version dispatch, deleted rows and
   their photos exported, one import transaction, the shared repair SQL, `photos/` with hash names,
   injected `FileSystem`, dated filename, temp files cleaned up. Tests: full export → wipe → import;
   a V1 fixture with a deleted tea that has sessions → empty DB → the tea finished, its sessions
-  named; a newer version refused. Strike #11.
+  named; a newer version refused; an entry named `../../x` lands in `photos/`. Strike #11.
 - [ ] `feat: newer data wins on import`: `planMerge`, in-progress sessions landed completed, photos
   copied only for winning rows. Tests: import twice = no change; older backup over newer data =
   newer wins; a newer backup's delete lands; a local in-progress session is untouched. Strike #12.
@@ -855,8 +858,6 @@ Things that cost real debugging time and would cost it again. Not history — tr
 - **Tab switching with `backStack.clear()` destroys every other tab's ViewModel.**
 - **`NSCalendarUnitDay` is day-of-month.** Comparing year + day says Aug 23 is "today" on Sep 23.
   Compare full dates.
-- **`ZipOutputStream` defaults to DEFLATE with data descriptors** (sizes 0 in local headers). The
-  hand-written iOS ZIP reader handles STORE only.
 - **Kotlin `DayOfWeek.ordinal` is Monday = 0.** `today − (ordinal + 1)` on a Sunday lands on the
   previous Sunday and excludes today.
 - **`PendingIntent` identity ignores extras.** Notifications sharing requestCode 0 and the same

@@ -1,8 +1,7 @@
 package dev.jketterer.leaflog.data.repositories
 
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.data.local.ZipArchiver
-import dev.jketterer.leaflog.data.local.ZipEntry
+import dev.jketterer.leaflog.data.local.ZipWriter
 import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
 import dev.jketterer.leaflog.data.mappers.toBrewingConfiguration
 import dev.jketterer.leaflog.data.mappers.toBrewingVessel
@@ -16,7 +15,14 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.DataExportRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import okio.FileSystem
+import okio.Path.Companion.toPath
+import okio.openZip
+import okio.use
 import kotlin.time.Clock
 
 class DataExportRepositoryImpl(
@@ -26,7 +32,7 @@ class DataExportRepositoryImpl(
     private val teaSessionDao: TeaSessionDao,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val imageStorage: ImageStorage,
-    private val zipArchiver: ZipArchiver,
+    private val fileSystem: FileSystem,
 ) : DataExportRepository {
 
     private val exportJson = Json {
@@ -38,7 +44,7 @@ class DataExportRepositoryImpl(
         ignoreUnknownKeys = true
     }
 
-    override suspend fun exportAll(): Result<String> = runCatching {
+    override suspend fun exportAll(): Result<String> = withContext(Dispatchers.IO) { runCatching {
         val teaTypes = teaTypeRepository.getAll().map { it.toEntity() }
         val vessels = brewingVesselRepository.getAll().map { it.toEntity() }
         val teas = teaRepository.getAll().map { it.toEntity() }
@@ -100,63 +106,65 @@ class DataExportRepositoryImpl(
 
         val jsonString = exportJson.encodeToString(LeafLogExportData.serializer(), exportData)
 
-        // Build zip entries
-        val zipEntries = mutableListOf<ZipEntry>()
-        zipEntries.add(ZipEntry(name = "data.json", data = jsonString.encodeToByteArray()))
-
-        // Add image entries
-        for ((absolutePath, archivePath) in pathRemap) {
-            val imageBytes = imageStorage.readImage(absolutePath)
-            if (imageBytes != null) {
-                zipEntries.add(ZipEntry(name = archivePath, data = imageBytes))
+        val zipPath = "${imageStorage.getTempDir()}/leaflog_export.zip"
+        ZipWriter(fileSystem, zipPath.toPath()).use { zip ->
+            zip.add("data.json", jsonString.encodeToByteArray())
+            for ((storedPath, archivePath) in pathRemap) {
+                val file = imageStorage.resolveImagePath(storedPath).toPath()
+                if (fileSystem.exists(file)) zip.add(archivePath, file)
             }
         }
-
-        // Write zip to temp file
-        val tempDir = imageStorage.getTempDir()
-        val zipPath = "$tempDir/leaflog_export.zip"
-        zipArchiver.createZip(zipPath, zipEntries)
-
         zipPath
-    }
+    } }
 
-    override suspend fun importFrom(filePath: String): Result<ImportResult> = runCatching {
-        val header = zipArchiver.readFileHeader(filePath, 4)
-        val isZip = header != null && header.size >= 4 &&
-                header[0] == 0x50.toByte() && header[1] == 0x4B.toByte()
+    override suspend fun importFrom(filePath: String): Result<ImportResult> =
+        withContext(Dispatchers.IO) { runCatching {
+        val path = filePath.toPath()
+        // "PK", read little-endian
+        val isZip = fileSystem.read(path) { request(2) && readShortLe().toInt() == 0x4B50 }
 
         val exportData: LeafLogExportData
         val imageRemap: Map<String, String>
 
         if (isZip) {
-            val entries = zipArchiver.extractZip(filePath)
-            val dataEntry = entries.find { it.name == "data.json" }
-                ?: throw IllegalStateException("ZIP does not contain data.json")
+            val zip = fileSystem.openZip(path)
+            val dataJson = "/data.json".toPath()
+            if (!zip.exists(dataJson)) throw IllegalStateException("ZIP does not contain data.json")
+            exportData = importJson.decodeFromString(
+                LeafLogExportData.serializer(),
+                zip.read(dataJson) { readUtf8() },
+            )
 
-            val jsonString = dataEntry.data.decodeToString()
-            exportData = importJson.decodeFromString(LeafLogExportData.serializer(), jsonString)
-
-            // Restore images and build remap: archivePath → newAbsolutePath
+            // Restore images and build remap: archivePath → stored path
             val remap = mutableMapOf<String, String>()
-            val imageEntries = entries.filter { it.name.startsWith("images/") }
-            for ((name, data) in imageEntries) {
-                val fileName = name.substringAfterLast('/')
+            val images = zip.listRecursively("/".toPath())
+                .filter { zip.metadata(it).isRegularFile }
+                .toList()
+            for (entry in images) {
+                val name = entry.toString().removePrefix("/")
+                if (!name.startsWith("images/")) continue
                 val subdirectory = when {
                     name.startsWith("images/session_photos/") -> "session_images"
                     name.startsWith("images/tea_photos/") -> "tea_photos"
                     name.startsWith("images/vessel_images/") -> "vessel_images"
                     else -> "imported_images"
                 }
-                val newPath = imageStorage.saveImage(data, fileName, subdirectory)
-                remap[name] = newPath
+                // The entry's last segment only, so a crafted name can't escape the directory
+                val storedPath = "$subdirectory/${name.substringAfterLast('/')}"
+                val target = imageStorage.resolveImagePath(storedPath).toPath()
+                fileSystem.createDirectories(target.parent!!)
+                zip.source(entry).use { source ->
+                    fileSystem.write(target) { writeAll(source) }
+                }
+                remap[name] = storedPath
             }
             imageRemap = remap
         } else {
             // Legacy JSON format
-            val fileBytes = zipArchiver.readFile(filePath)
-                ?: throw IllegalStateException("Cannot read file: $filePath")
-            val jsonString = fileBytes.decodeToString()
-            exportData = importJson.decodeFromString(LeafLogExportData.serializer(), jsonString)
+            exportData = importJson.decodeFromString(
+                LeafLogExportData.serializer(),
+                fileSystem.read(path) { readUtf8() },
+            )
             // Clear photo paths since images won't exist on this device
             imageRemap = emptyMap()
         }
@@ -238,5 +246,5 @@ class DataExportRepositoryImpl(
             teaSessionsImported = exportData.teaSessions.size,
             configurationsImported = exportData.brewingConfigurations.size,
         )
-    }
+    } }
 }

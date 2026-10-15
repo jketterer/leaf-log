@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.data.local.ZipArchiver
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.database.MIGRATION_1_2
 import dev.jketterer.leaflog.data.local.database.MIGRATION_2_3
@@ -18,6 +17,7 @@ import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl
 import kotlinx.coroutines.Dispatchers
+import okio.FileSystem
 import org.koin.core.module.Module
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -62,9 +62,7 @@ actual fun platformModule(): Module = module {
 
     // Image storage
     single { ImageStorage(context = get()) }
-
-    // Zip archiver
-    single { ZipArchiver() }
+    single { FileSystem.SYSTEM }
 
     // Preferences
     single {

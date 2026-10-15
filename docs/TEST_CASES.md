@@ -129,6 +129,10 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Open the import picker → rotate or switch dark mode while it's open → pick a file. The
       picker opens only once, and the preview dialog shows.
 - [ ] Photo picker on Log Tea and Edit Session: pick, cancel, and pick a very large photo.
+- [ ] Take a portrait photo with the camera app, then add it to a tea, a session and a vessel. It
+      shows upright everywhere, and again after export → import on the other platform.
+- [ ] Add a HEIC **[iOS]** or PNG photo and a 48 MP+ photo. Each saves; the stored file is a JPEG no
+      longer than 2048 px on its long edge.
 - [ ] **[A]** Auto Backup: `adb shell bmgr backupnow dev.jketterer.leaflog` with photos present.
       It succeeds or fails cleanly under the 25 MB quota.
 

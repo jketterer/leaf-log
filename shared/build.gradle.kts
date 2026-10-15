@@ -55,6 +55,7 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.core)
             implementation(libs.androidx.datastore.preferences)
+            implementation(libs.androidx.exifinterface)
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.datetime)

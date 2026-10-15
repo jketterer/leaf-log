@@ -586,8 +586,13 @@ stand alone.
   `ExportCompleted`. Days are calendar days; "Never" counts as overdue, so it shows in the warning
   colour (`colorScheme.error`: the theme has no warning colour) and the Export button reads "Back up
   now". Test: the day count, in `SettingsViewModel`, which puts it in state.
-- [ ] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size
+- [x] `feat: downscale photos on save`, with the save-failure handling. Test: the pure target-size
   math. Track B line: a portrait photo stays upright on both platforms.
+  As built: iOS uses FileKit's `compressImage`, already installed, which draws through `UIImage`
+  and so comes out upright. Android doesn't: FileKit decodes at full size and copies the bitmap to
+  rotate it, so it decodes at a power-of-two `inSampleSize`, then scales and applies EXIF orientation
+  in one matrix, read with androidx `ExifInterface` (already in the APK through Coil and FileKit; lint flags
+  the framework one below API 25). The size math is Android's; iOS still decodes at full size.
 - [ ] `feat: show photo storage in Settings`
 - [ ] `chore: release 0.3.0`: Track B lines — an Android backup restored on iOS, an iOS backup
   restored on Android, a 0.2.0 backup restored onto a fresh install.

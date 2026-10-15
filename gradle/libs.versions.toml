@@ -26,6 +26,7 @@ sqlite = "2.7.0"
 ksp = "2.3.11"
 lifecycle = "2.11.0"
 datastore = "1.2.1"
+exifinterface = "1.4.2"
 okio = "3.17.0"
 
 [libraries]
@@ -54,6 +55,7 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-datastore-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
 androidx-datastore = { module = "androidx.datastore:datastore", version.ref = "datastore" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 
 composeIcons-feather = { module = "br.com.devsrsouza.compose.icons:feather", version.ref = "composeIcons" }
 composeIcons-fontAwesome = { module = "br.com.devsrsouza.compose.icons:font-awesome", version.ref = "composeIcons" }

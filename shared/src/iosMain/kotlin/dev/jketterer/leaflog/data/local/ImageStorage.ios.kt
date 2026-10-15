@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.data.local
 
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.ImageFormat
+import io.github.vinceglb.filekit.compressImage
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
@@ -16,6 +19,8 @@ import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.create
 import platform.Foundation.writeToFile
 import platform.posix.memcpy
+
+private const val MAX_PHOTO_EDGE = 2048
 
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
 actual class ImageStorage {
@@ -49,10 +54,20 @@ actual class ImageStorage {
     ): String =
         withContext(Dispatchers.IO) {
             val destPath = "${getImagesDir(subdirectory)}/$fileName"
+            // Upright, since UIImage applies the EXIF orientation when it draws.
+            // ponytail: decodes at full size; CGImageSourceCreateThumbnailAtIndex if large photos
+            // run out of memory
+            val jpeg = FileKit.compressImage(
+                bytes = imageBytes,
+                imageFormat = ImageFormat.JPEG,
+                quality = 85,
+                maxWidth = MAX_PHOTO_EDGE,
+                maxHeight = MAX_PHOTO_EDGE,
+            )
             val data = memScoped {
-                NSData.create(bytes = allocArrayOf(imageBytes), length = imageBytes.size.toULong())
+                NSData.create(bytes = allocArrayOf(jpeg), length = jpeg.size.toULong())
             }
-            data.writeToFile(destPath, atomically = true)
+            check(data.writeToFile(destPath, atomically = true)) { "The photo couldn't be saved" }
             "$subdirectory/$fileName"
         }
 

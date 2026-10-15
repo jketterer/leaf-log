@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class EditTeaViewModel(
@@ -199,13 +198,16 @@ class EditTeaViewModel(
         _state.update { it.copy(description = description) }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     private fun addPhoto(imageBytes: ByteArray) {
         viewModelScope.launch {
-            val fileName = "${Uuid.random()}.jpg"
-            val path = imageStorage.saveImage(imageBytes, fileName, "tea_images")
-            newlyAddedPhotos.add(path)
-            _state.update { it.copy(photos = it.photos + path) }
+            try {
+                val fileName = "${Uuid.random()}.jpg"
+                val path = imageStorage.saveImage(imageBytes, fileName, "tea_images")
+                newlyAddedPhotos.add(path)
+                _state.update { it.copy(photos = it.photos + path) }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = "Failed to save photo: ${e.message}") }
+            }
         }
     }
 

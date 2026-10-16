@@ -49,7 +49,6 @@ data class EditSessionState(
     // UI state
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val showDiscardDialog: Boolean = false,
     val showSaveConfigurationDialog: Boolean = false,
     val suggestedConfigurationLabel: String = "",
     val savedSession: SessionWithSteeps? = null, // Session that was just saved

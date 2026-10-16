@@ -19,9 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +27,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +45,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import compose.icons.feathericons.Trash2
+import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGuardDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -97,28 +95,24 @@ fun EditTeaTypeScreen(
         }
     }
 
-    EditTeaTypeContent(
-        state = state,
-        onIntent = viewModel::onIntent,
-        snackbarHostState = snackbarHostState,
-    )
+    DiscardChangesGuardDialog(hasChanges = state.hasChanges, onDiscard = onNavigateBack) { onBack ->
+        EditTeaTypeContent(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onBack = onBack,
+            snackbarHostState = snackbarHostState,
+        )
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditTeaTypeContent(
     state: EditTeaTypeState,
     onIntent: (EditTeaTypeIntent) -> Unit,
+    onBack: () -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val focusManager = LocalFocusManager.current
-
-    if (state.showDiscardDialog) {
-        DiscardChangesDialog(
-            onConfirm = { onIntent(EditTeaTypeIntent.ConfirmDiscard) },
-            onDismiss = { onIntent(EditTeaTypeIntent.CancelDiscard) },
-        )
-    }
 
     if (state.showDeleteConfirmation) {
         DeleteTeaTypeDialog(
@@ -139,7 +133,7 @@ private fun EditTeaTypeContent(
             TopAppBar(
                 title = { Text(if (state.isEditMode) "Edit Tea Type" else "Add Tea Type") },
                 navigationIcon = {
-                    IconButton(onClick = { onIntent(EditTeaTypeIntent.BackClicked) }) {
+                    IconButton(onClick = onBack) {
                         Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
                     }
                 },
@@ -283,28 +277,6 @@ private fun ColorSwatch(
             )
         }
     }
-}
-
-@Composable
-private fun DiscardChangesDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Discard Changes?") },
-        text = { Text("You have unsaved changes. Are you sure you want to discard them?") },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Discard")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-    )
 }
 
 @Preview(showBackground = true)

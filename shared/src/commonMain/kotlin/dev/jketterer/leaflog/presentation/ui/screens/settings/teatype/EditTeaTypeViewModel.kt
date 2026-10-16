@@ -57,9 +57,6 @@ class EditTeaTypeViewModel(
             is EditTeaTypeIntent.ColorSelected -> onColorSelected(intent.colorHex)
             is EditTeaTypeIntent.TemperatureChanged -> onTemperatureChanged(intent.temperature)
             is EditTeaTypeIntent.SaveClicked -> save()
-            is EditTeaTypeIntent.BackClicked -> onBackClicked()
-            is EditTeaTypeIntent.ConfirmDiscard -> confirmDiscard()
-            is EditTeaTypeIntent.CancelDiscard -> _state.update { it.copy(showDiscardDialog = false) }
             is EditTeaTypeIntent.DeleteClicked -> onDeleteClicked()
             is EditTeaTypeIntent.ConfirmDelete -> confirmDelete()
             is EditTeaTypeIntent.CancelDelete -> _state.update {
@@ -210,19 +207,6 @@ class EditTeaTypeViewModel(
                 messages.failure(e, Res.string.couldnt_save_tea_type)
             }
         }
-    }
-
-    private fun onBackClicked() {
-        if (_state.value.hasChanges) {
-            _state.update { it.copy(showDiscardDialog = true) }
-        } else {
-            _navigationEvent.value = EditTeaTypeNavigationEvent.NavigateBack
-        }
-    }
-
-    private fun confirmDiscard() {
-        _state.update { it.copy(showDiscardDialog = false) }
-        _navigationEvent.value = EditTeaTypeNavigationEvent.NavigateBack
     }
 
     private fun onDeleteClicked() {

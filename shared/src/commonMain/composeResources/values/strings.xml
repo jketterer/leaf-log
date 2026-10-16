@@ -75,6 +75,35 @@
     <string name="backup_exported">Backup exported</string>
     <string name="method_already_saved">This method is already saved</string>
 
+    <!-- Confirmations -->
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="discard">Discard</string>
+    <string name="discard_changes_title">Discard Changes?</string>
+    <string name="discard_changes_text">You have unsaved changes. Are you sure you want to discard them?</string>
+    <string name="delete_session_title">Delete Session?</string>
+    <string name="delete_session_text">This will delete the session and all steeps. This action cannot be undone.</string>
+    <string name="delete_steep_title">Delete Steep?</string>
+    <string name="delete_steep_text">This will delete this steep. Remaining steeps will be renumbered. This action cannot be undone.</string>
+    <string name="delete_method_title">Delete Brewing Method?</string>
+    <string name="delete_method_text">This will permanently delete the saved brewing method. This action cannot be undone.</string>
+    <string name="delete_tea_title">Delete Tea?</string>
+    <string name="delete_tea_text">This will delete the tea and all its information.</string>
+    <string name="delete_vessel_title">Delete Vessel?</string>
+    <string name="delete_vessel_text">Are you sure you want to delete &quot;%1$s&quot;? This action cannot be undone.</string>
+    <string name="discard_session_title">Discard Session?</string>
+    <string name="discard_session_text">This session will be permanently deleted. This action cannot be undone.</string>
+    <string name="discard_steep_title">Discard Steep %1$d?</string>
+    <string name="discard_steep_text">Steep %1$d will be deleted and the session finished with the steeps before it.</string>
+    <string name="stop_timer_title">Stop Timer?</string>
+    <string name="stop_timer_text">This session will be discarded. Are you sure?</string>
+    <string name="stop">Stop</string>
+    <string name="timer_complete_title">Timer Complete</string>
+    <string name="timer_complete_text">Your tea is done! Add session details to save this brew, or discard it.</string>
+    <string name="add_details">Add Details</string>
+    <string name="discard_unsaved_session_text">The timer is complete but your session hasn't been saved. Your brewing data will be lost.</string>
+    <string name="stay">Stay</string>
+
     <!-- Why an operation failed -->
     <string name="failure_not_found">That no longer exists</string>
     <plurals name="failure_in_use_sessions">

@@ -21,7 +21,6 @@ data class EditTeaTypeState(
     // UI state
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val showDiscardDialog: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
     val canDelete: Boolean = false,
     val teaCount: Int = 0,

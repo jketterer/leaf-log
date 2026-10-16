@@ -70,9 +70,7 @@ class EditVesselViewModel(
             is EditVesselIntent.PhotoSelected -> onPhotoSelected(intent.imageBytes)
             is EditVesselIntent.RemovePhoto -> onRemovePhoto()
             is EditVesselIntent.SaveClicked -> saveVessel()
-            is EditVesselIntent.BackClicked -> onBackClicked()
-            is EditVesselIntent.ConfirmDiscard -> confirmDiscard()
-            is EditVesselIntent.CancelDiscard -> cancelDiscard()
+            is EditVesselIntent.Discard -> discard()
         }
     }
 
@@ -208,20 +206,11 @@ class EditVesselViewModel(
         }
     }
 
-    private fun onBackClicked() {
-        if (_state.value.hasChanges) {
-            _state.update { it.copy(showDiscardDialog = true) }
-        } else {
-            viewModelScope.launch { _navEvents.send(EditVesselNavEvent.NavigateBack) }
-        }
-    }
-
-    private fun confirmDiscard() {
+    private fun discard() {
         // A photo is written to disk the moment it is picked, so abandoning the form has to take
         // the file with it or it is orphaned for good.
         val currentImagePath = _state.value.imagePath
         val existingImagePath = _state.value.existingVessel?.imagePath
-        _state.update { it.copy(showDiscardDialog = false) }
         viewModelScope.launch {
             if (currentImagePath != null && currentImagePath != existingImagePath) {
                 try {
@@ -231,10 +220,6 @@ class EditVesselViewModel(
             }
             _navEvents.send(EditVesselNavEvent.NavigateBack)
         }
-    }
-
-    private fun cancelDiscard() {
-        _state.update { it.copy(showDiscardDialog = false) }
     }
 }
 

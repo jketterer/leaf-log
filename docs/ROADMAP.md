@@ -594,7 +594,7 @@ state across rotation and process death.
   message mapping.
 - [x] `refactor: messages on the brew loop and journal`: the remaining screens; every
   `error: String?` goes.
-- [ ] `feat: shared confirm and discard dialogs`
+- [x] `feat: shared confirm and discard dialogs`
 - [ ] `feat: section header and empty state`
 - [ ] `feat: rating display and selector`. Test: half-star rounding.
 - [ ] `feat: one unit input field with local toggles`: the component and its pure functions, then

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDetailsSheet
@@ -33,8 +34,19 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
-import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.add_details
+import leaf_log.shared.generated.resources.discard
+import leaf_log.shared.generated.resources.discard_session_title
+import leaf_log.shared.generated.resources.discard_unsaved_session_text
+import leaf_log.shared.generated.resources.stay
+import leaf_log.shared.generated.resources.stop
+import leaf_log.shared.generated.resources.stop_timer_text
+import leaf_log.shared.generated.resources.stop_timer_title
+import leaf_log.shared.generated.resources.timer_complete_text
+import leaf_log.shared.generated.resources.timer_complete_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -121,8 +133,10 @@ private fun QuickTimerContent(
 
     // Stop confirmation dialog
     if (state.showStopConfirmation) {
-        TimerStopConfirmationDialog(
-            text = "This session will be discarded. Are you sure?",
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.stop_timer_title),
+            text = stringResource(Res.string.stop_timer_text),
+            confirmLabel = stringResource(Res.string.stop),
             onConfirm = { onIntent(QuickTimerIntent.ConfirmStop) },
             onDismiss = { onIntent(QuickTimerIntent.CancelStop) },
         )
@@ -139,27 +153,25 @@ private fun QuickTimerContent(
 
     // Completion prompt — timer done but session details not filled
     if (state.showCompletionPrompt) {
-        TimerStopConfirmationDialog(
-            title = "Timer Complete",
-            text = "Your tea is done! Add session details to save this brew, or discard it.",
-            confirmText = "Discard",
-            dismissText = "Add Details",
-            isDestructive = true,
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.timer_complete_title),
+            text = stringResource(Res.string.timer_complete_text),
+            confirmLabel = stringResource(Res.string.discard),
             onConfirm = { onIntent(QuickTimerIntent.DiscardCompletedSession) },
             onDismiss = { onIntent(QuickTimerIntent.AddSessionDetails) },
+            dismissLabel = stringResource(Res.string.add_details),
         )
     }
 
     // Discard guard — user pressed back while timer complete but nothing saved
     if (state.showDiscardCompleteConfirmation) {
-        TimerStopConfirmationDialog(
-            title = "Discard Session?",
-            text = "The timer is complete but your session hasn't been saved. Your brewing data will be lost.",
-            confirmText = "Discard",
-            dismissText = "Stay",
-            isDestructive = true,
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.discard_session_title),
+            text = stringResource(Res.string.discard_unsaved_session_text),
+            confirmLabel = stringResource(Res.string.discard),
             onConfirm = { onIntent(QuickTimerIntent.ConfirmDiscardComplete) },
             onDismiss = { onIntent(QuickTimerIntent.CancelDiscardComplete) },
+            dismissLabel = stringResource(Res.string.stay),
         )
     }
 

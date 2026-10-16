@@ -48,11 +48,16 @@ import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.delete_vessel_text
+import leaf_log.shared.generated.resources.delete_vessel_title
 import leaf_log.shared.generated.resources.vessel_in_use
 import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -119,13 +124,12 @@ fun VesselDetailScreen(
 
     // Delete confirmation dialog
     if (state.showDeleteConfirmation) {
-        DeleteConfirmationDialog(
-            vesselName = state.vessel?.name ?: "",
-            canDelete = state.canDelete,
-            sessionCount = state.sessionCount,
-            totalVesselCount = state.totalVesselCount,
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.delete_vessel_title),
+            text = stringResource(Res.string.delete_vessel_text, state.vessel?.name.orEmpty()),
+            confirmLabel = stringResource(Res.string.delete),
             onConfirm = { viewModel.onIntent(VesselDetailIntent.ConfirmDelete) },
-            onDismiss = { viewModel.onIntent(VesselDetailIntent.CancelDelete) }
+            onDismiss = { viewModel.onIntent(VesselDetailIntent.CancelDelete) },
         )
     }
 
@@ -390,53 +394,4 @@ fun VesselDetailScreen(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
-}
-
-@Composable
-private fun DeleteConfirmationDialog(
-    vesselName: String,
-    canDelete: Boolean,
-    sessionCount: Int,
-    totalVesselCount: Int,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Delete Vessel?") },
-        text = {
-            Column {
-                if (canDelete) {
-                    Text("Are you sure you want to delete \"$vesselName\"? This action cannot be undone.")
-                } else {
-                    val reason = when {
-                        totalVesselCount <= 1 ->
-                            "Cannot delete the last vessel. At least one vessel must remain."
-
-                        sessionCount > 0 ->
-                            pluralStringResource(
-                                Res.plurals.vessel_in_use,
-                                sessionCount,
-                                sessionCount
-                            )
-
-                        else -> "This vessel cannot be deleted."
-                    }
-                    Text(reason)
-                }
-            }
-        },
-        confirmButton = {
-            if (canDelete) {
-                TextButton(onClick = onConfirm) {
-                    Text("Delete")
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(if (canDelete) "Cancel" else "OK")
-            }
-        }
-    )
 }

@@ -9,44 +9,39 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Check
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
+import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGuardDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
@@ -89,18 +84,25 @@ fun EditSessionScreen(
         }
     }
 
-    EditSessionContent(
-        state = state,
-        onIntent = viewModel::onIntent,
-        snackbarHostState = snackbarHostState,
-    )
+    // Discarding also deletes any photos already written to disk, or they'd be orphaned.
+    DiscardChangesGuardDialog(
+        hasChanges = state.hasChanges,
+        onDiscard = { viewModel.onIntent(EditSessionIntent.Discard) },
+    ) { onBack ->
+        EditSessionContent(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onBack = onBack,
+            snackbarHostState = snackbarHostState,
+        )
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditSessionContent(
     state: EditSessionState,
     onIntent: (EditSessionIntent) -> Unit,
+    onBack: () -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val focusManager = LocalFocusManager.current
@@ -118,7 +120,7 @@ private fun EditSessionContent(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { onIntent(EditSessionIntent.BackClicked) }) {
+                    IconButton(onClick = onBack) {
                         Icon(
                             imageVector = FeatherIcons.ArrowLeft,
                             contentDescription = "Back",
@@ -180,7 +182,8 @@ private fun EditSessionContent(
                         // Use display value if set (preserves user input), otherwise convert from storage
                         val displayValue = state.temperatureDisplay.ifEmpty {
                             state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
-                                state.userPreferences.temperatureUnit.fromCelsius(celsius).toString()
+                                state.userPreferences.temperatureUnit.fromCelsius(celsius)
+                                    .toString()
                             } ?: state.temperatureCelsius
                         }
 
@@ -281,14 +284,23 @@ private fun EditSessionContent(
                             if (!state.isTeaBag) {
                                 OutlinedTextField(
                                     value = state.teaQuantityGrams,
-                                    onValueChange = { onIntent(EditSessionIntent.TeaQuantityChanged(it)) },
+                                    onValueChange = {
+                                        onIntent(
+                                            EditSessionIntent.TeaQuantityChanged(
+                                                it
+                                            )
+                                        )
+                                    },
                                     label = { Text("Tea Quantity") },
                                     isError = state.teaQuantityError != null,
                                     supportingText = state.teaQuantityError?.let { { Text(it) } },
                                     modifier = Modifier.fillMaxWidth(),
                                     singleLine = true,
                                     suffix = { Text("g") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Decimal,
+                                        imeAction = ImeAction.Done
+                                    ),
                                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                                 )
                             }
@@ -388,30 +400,6 @@ private fun EditSessionContent(
                 }
             }
         }
-    }
-
-    // Discard Dialog
-    if (state.showDiscardDialog) {
-        AlertDialog(
-            onDismissRequest = { onIntent(EditSessionIntent.CancelDiscard) },
-            title = { Text("Discard Changes?") },
-            text = { Text("You have unsaved changes. Are you sure you want to discard them?") },
-            confirmButton = {
-                TextButton(
-                    onClick = { onIntent(EditSessionIntent.ConfirmDiscard) },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Discard")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(EditSessionIntent.CancelDiscard) }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 
     // Save Configuration Dialog

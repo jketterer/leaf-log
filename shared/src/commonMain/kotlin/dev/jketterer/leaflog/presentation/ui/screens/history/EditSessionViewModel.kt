@@ -108,9 +108,7 @@ class EditSessionViewModel(
             is EditSessionIntent.PhotoSelected -> addPhoto(intent.imageBytes)
             is EditSessionIntent.PhotoRemoved -> removePhoto(intent.path)
             is EditSessionIntent.SaveClicked -> save()
-            is EditSessionIntent.BackClicked -> handleBack()
-            is EditSessionIntent.ConfirmDiscard -> confirmDiscard()
-            is EditSessionIntent.CancelDiscard -> cancelDiscard()
+            is EditSessionIntent.Discard -> discard()
             is EditSessionIntent.SaveConfigurationClicked ->
                 configSaveDelegate.saveConfiguration(intent.customLabel)
 
@@ -474,15 +472,7 @@ class EditSessionViewModel(
         }
     }
 
-    private fun handleBack() {
-        if (_state.value.hasChanges) {
-            _state.update { it.copy(showDiscardDialog = true) }
-        } else {
-            _navEvents.trySend(EditSessionNavEvent.NavigateBack)
-        }
-    }
-
-    private fun confirmDiscard() {
+    private fun discard() {
         // Clean up any newly added photos that won't be saved
         viewModelScope.launch {
             for (photo in newlyAddedPhotos) {
@@ -493,12 +483,7 @@ class EditSessionViewModel(
             }
             newlyAddedPhotos.clear()
         }
-        _state.update { it.copy(showDiscardDialog = false) }
         _navEvents.trySend(EditSessionNavEvent.NavigateBack)
-    }
-
-    private fun cancelDiscard() {
-        _state.update { it.copy(showDiscardDialog = false) }
     }
 }
 

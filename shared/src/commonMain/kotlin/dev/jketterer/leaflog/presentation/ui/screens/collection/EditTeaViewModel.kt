@@ -71,9 +71,7 @@ class EditTeaViewModel(
             is EditTeaIntent.PhotoRemoved -> removePhoto(intent.photoPath)
             is EditTeaIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is EditTeaIntent.SaveClicked -> save()
-            is EditTeaIntent.BackClicked -> handleBack()
-            is EditTeaIntent.ConfirmDiscard -> confirmDiscard()
-            is EditTeaIntent.CancelDiscard -> cancelDiscard()
+            is EditTeaIntent.Discard -> discard()
         }
     }
 
@@ -295,24 +293,12 @@ class EditTeaViewModel(
         }
     }
 
-    private fun handleBack() {
-        if (_state.value.hasChanges) {
-            _state.update { it.copy(showDiscardDialog = true) }
-        } else {
-            _navEvents.trySend(EditTeaNavEvent.NavigateBack)
-        }
-    }
-
-    private fun confirmDiscard() {
+    private fun discard() {
         viewModelScope.launch {
             newlyAddedPhotos.forEach { imageStorage.deleteImage(it) }
             newlyAddedPhotos.clear()
             _navEvents.trySend(EditTeaNavEvent.NavigateBack)
         }
-    }
-
-    private fun cancelDiscard() {
-        _state.update { it.copy(showDiscardDialog = false) }
     }
 }
 

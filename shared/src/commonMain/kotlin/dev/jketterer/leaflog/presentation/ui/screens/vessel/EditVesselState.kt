@@ -18,7 +18,6 @@ data class EditVesselState(
     val capacityError: String? = null,
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val showDiscardDialog: Boolean = false,
 ) {
     /** The capacity in storage units, or null when the field is empty or unusable. */
     val capacityMl: Int?

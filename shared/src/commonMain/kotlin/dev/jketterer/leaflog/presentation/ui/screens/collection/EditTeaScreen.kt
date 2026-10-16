@@ -14,18 +14,14 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,16 +32,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigationevent.NavigationEventInfo
-import androidx.navigationevent.compose.NavigationBackHandler
-import androidx.navigationevent.compose.rememberNavigationEventState
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGuardDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -79,39 +72,31 @@ fun EditTeaScreen(
         }
     }
 
-    // System back has to reach the same guard as the toolbar arrow, or a swipe back silently
-    // discards edits and orphans any photos already written to disk. Enabled only when there is
-    // something to lose, so predictive back keeps its peek animation on a pristine form.
-    //
-    // Lives out here with the rest of the navigation wiring rather than in the content: it needs a
-    // NavigationEventDispatcher from the nav host, and a @Preview has none, so calling it inside
-    // the previewable composable makes every preview of this screen throw.
-    val backState = rememberNavigationEventState(NavigationEventInfo.None)
-    NavigationBackHandler(
-        state = backState,
-        isBackEnabled = state.hasChanges,
-        onBackCompleted = { viewModel.onIntent(EditTeaIntent.BackClicked) },
-    )
-
-    EditTeaContent(
-        state = state,
-        onIntent = viewModel::onIntent,
-        snackbarHostState = snackbarHostState,
-        // From teaId, not state.isEditMode: the state defaults to add mode and only flips once
-        // LoadTea has run, which is a composition too late to decide about the keyboard.
-        autoFocusName = teaId == null,
-    )
+    // Discarding also deletes any photos already written to disk, or they'd be orphaned.
+    DiscardChangesGuardDialog(
+        hasChanges = state.hasChanges,
+        onDiscard = { viewModel.onIntent(EditTeaIntent.Discard) },
+    ) { onBack ->
+        EditTeaContent(
+            state = state,
+            onIntent = viewModel::onIntent,
+            onBack = onBack,
+            snackbarHostState = snackbarHostState,
+            // From teaId, not state.isEditMode: the state defaults to add mode and only flips once
+            // LoadTea has run, which is a composition too late to decide about the keyboard.
+            autoFocusName = teaId == null,
+        )
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditTeaContent(
     state: EditTeaState,
     onIntent: (EditTeaIntent) -> Unit,
+    onBack: () -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     autoFocusName: Boolean = false,
 ) {
-    val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
 
     val nameFocusRequester = remember { FocusRequester() }
@@ -134,7 +119,7 @@ private fun EditTeaContent(
                 TopAppBar(
                     title = { Text(if (state.isEditMode) "Edit Tea" else "Add Tea") },
                     navigationIcon = {
-                        IconButton(onClick = { onIntent(EditTeaIntent.BackClicked) }) {
+                        IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = FeatherIcons.ArrowLeft,
                                 contentDescription = "Back",
@@ -229,32 +214,6 @@ private fun EditTeaContent(
                 onRemovePhoto = { onIntent(EditTeaIntent.PhotoRemoved(it)) },
             )
         }
-    }
-
-    if (state.showDiscardDialog) {
-        AlertDialog(
-            onDismissRequest = { onIntent(EditTeaIntent.CancelDiscard) },
-            title = { Text("Discard Changes?") },
-            text = { Text("You have unsaved changes. Are you sure you want to go back?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        focusManager.clearFocus()
-                        onIntent(EditTeaIntent.ConfirmDiscard)
-                    },
-                ) {
-                    Text(
-                        text = "Discard",
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(EditTeaIntent.CancelDiscard) }) {
-                    Text("Cancel")
-                }
-            },
-        )
     }
 }
 

@@ -35,7 +35,6 @@ data class EditTeaState(
     // UI state
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val showDiscardDialog: Boolean = false,
 
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),

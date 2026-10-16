@@ -6,9 +6,6 @@ sealed interface EditTeaTypeIntent {
     data class ColorSelected(val colorHex: String) : EditTeaTypeIntent
     data class TemperatureChanged(val temperature: String) : EditTeaTypeIntent
     data object SaveClicked : EditTeaTypeIntent
-    data object BackClicked : EditTeaTypeIntent
-    data object ConfirmDiscard : EditTeaTypeIntent
-    data object CancelDiscard : EditTeaTypeIntent
     data object DeleteClicked : EditTeaTypeIntent
     data object ConfirmDelete : EditTeaTypeIntent
     data object CancelDelete : EditTeaTypeIntent

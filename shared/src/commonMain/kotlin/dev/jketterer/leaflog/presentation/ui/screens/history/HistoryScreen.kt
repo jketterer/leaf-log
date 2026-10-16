@@ -12,10 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -56,6 +53,7 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import kotlinx.datetime.LocalDate
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
@@ -63,6 +61,11 @@ import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.delete_session_text
+import leaf_log.shared.generated.resources.delete_session_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Instant
@@ -342,25 +345,12 @@ private fun HistoryContent(
 
         // Delete session confirmation dialog
         if (state.sessionPendingDelete != null) {
-            AlertDialog(
-                onDismissRequest = { onIntent(HistoryIntent.CancelDeleteSession) },
-                title = { Text("Delete Session?") },
-                text = { Text("This will delete the session and all steeps. This action cannot be undone.") },
-                confirmButton = {
-                    TextButton(
-                        onClick = { onIntent(HistoryIntent.ConfirmDeleteSession) },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Text("Delete")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { onIntent(HistoryIntent.CancelDeleteSession) }) {
-                        Text("Cancel")
-                    }
-                },
+            ConfirmDestructiveDialog(
+                title = stringResource(Res.string.delete_session_title),
+                text = stringResource(Res.string.delete_session_text),
+                confirmLabel = stringResource(Res.string.delete),
+                onConfirm = { onIntent(HistoryIntent.ConfirmDeleteSession) },
+                onDismiss = { onIntent(HistoryIntent.CancelDeleteSession) },
             )
         }
 

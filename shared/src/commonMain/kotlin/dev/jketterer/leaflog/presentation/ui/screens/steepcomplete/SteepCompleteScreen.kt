@@ -14,12 +14,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,7 +28,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,14 +49,14 @@ import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
@@ -72,12 +69,16 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameter
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.discard
+import leaf_log.shared.generated.resources.discard_session_text
+import leaf_log.shared.generated.resources.discard_session_title
+import leaf_log.shared.generated.resources.discard_steep_text
+import leaf_log.shared.generated.resources.discard_steep_title
 import leaf_log.shared.generated.resources.ic_tea_leaf
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -114,7 +115,6 @@ fun SteepCompleteScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SteepCompleteContent(
     state: SteepCompleteState,
@@ -207,33 +207,20 @@ private fun SteepCompleteContent(
     // Discard confirmation dialog
     if (state.showDiscardConfirmation) {
         val steepNumber = state.session?.currentSteep?.number ?: 1
-        AlertDialog(
-            onDismissRequest = { onIntent(SteepCompleteIntent.DismissDiscardConfirmation) },
-            title = { Text(if (steepNumber == 1) "Discard Session?" else "Discard Steep $steepNumber?") },
-            text = {
-                Text(
-                    if (steepNumber == 1) {
-                        "This session will be permanently deleted. This action cannot be undone."
-                    } else {
-                        "Steep $steepNumber will be deleted and the session finished with the steeps before it."
-                    },
-                )
+        ConfirmDestructiveDialog(
+            title = if (steepNumber == 1) {
+                stringResource(Res.string.discard_session_title)
+            } else {
+                stringResource(Res.string.discard_steep_title, steepNumber)
             },
-            confirmButton = {
-                TextButton(
-                    onClick = { onIntent(SteepCompleteIntent.ConfirmDiscard) },
-                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) {
-                    Text("Discard")
-                }
+            text = if (steepNumber == 1) {
+                stringResource(Res.string.discard_session_text)
+            } else {
+                stringResource(Res.string.discard_steep_text, steepNumber)
             },
-            dismissButton = {
-                TextButton(onClick = { onIntent(SteepCompleteIntent.DismissDiscardConfirmation) }) {
-                    Text("Cancel")
-                }
-            },
+            confirmLabel = stringResource(Res.string.discard),
+            onConfirm = { onIntent(SteepCompleteIntent.ConfirmDiscard) },
+            onDismiss = { onIntent(SteepCompleteIntent.DismissDiscardConfirmation) },
         )
     }
 

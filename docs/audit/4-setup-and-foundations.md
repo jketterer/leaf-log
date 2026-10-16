@@ -31,7 +31,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 | bug | correctness | VesselDetailViewModel.kt:67 | "Sessions" counts child steeps and in-progress rows, so a 6-steep gongfu session reads as 6. | `TeaSessionDao.getByVesselId` has no `parentSessionId IS NULL` filter. This is the same trap as the roadmap's leaf double-count. |
 | friction | polish | VesselDetailScreen.kt:343-379 | A red `errorContainer` "Cannot Delete" card is always shown for any vessel with sessions, i.e. nearly every vessel in daily use. It's alarm styling for a normal state. | `if (!state.canDelete)` |
 | polish | loading | VesselDetailViewModel.kt:57 / VesselDetailScreen.kt:72,195 | Coming back from Edit, or unarchiving, re-runs `loadVessel`, which sets `isLoading=true` and replaces the whole page with a spinner for a moment. | One-shot `getById` instead of the existing `getByIdFlow`. |
-| arch | dead code | VesselDetailScreen.kt:406-418 | The "can't delete" branch of `DeleteConfirmationDialog` can never run, because the Delete menu item is `enabled = state.canDelete` (:188). | |
+| ~~arch~~ | ~~dead code~~ | ~~VesselDetailScreen.kt:406-418~~ | ~~The "can't delete" branch of `DeleteConfirmationDialog` can never run, because the Delete menu item is `enabled = state.canDelete` (:188).~~ | |
 | consistency | error | VesselDetailScreen.kt:93-97 | The error snackbar never clears `state.error` (there's no ClearError intent), so the same failure twice shows only once. | EditVessel does this correctly with `ErrorShown`. |
 | consistency | nav | VesselDetailViewModel.kt:197 | Nav events use a `MutableStateFlow<Event?>` plus a manual "handled" call. The 13 other VMs use `Channel` + `receiveAsFlow`. | See Navigation. |
 | polish | code | VesselDetailScreen.kt:256-315 | `state.vessel!!` appears 7 times. | |
@@ -115,7 +115,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 
 | Sev | Category | Location | Finding | Evidence/why |
 |---|---|---|---|---|
-| bug | data loss | EditTeaTypeScreen.kt (no BackHandler) | System back or swipe-back throws away edits silently. The discard dialog only triggers from the toolbar arrow. EditVessel added `NavigationBackHandler` for exactly this. | **EditSessionScreen has the same gap.** |
+| ~~bug~~ | ~~data loss~~ | ~~EditTeaTypeScreen.kt (no BackHandler)~~ | ~~System back or swipe-back throws away edits silently. The discard dialog only triggers from the toolbar arrow. EditVessel added `NavigationBackHandler` for exactly this.~~ | ~~**EditSessionScreen has the same gap.**~~ |
 | friction | dead button | EditTeaTypeState.kt:13,42 / EditTeaTypeScreen.kt:151 | In add mode no colour is preselected (`colorHex=""`), and the Save icon stays disabled until you pick one, with nothing explaining why. EditVessel's rule is "a dead button explains nothing". | |
 | friction | data loss | EditTeaTypeViewModel.kt:117-121 | The unit toggle sets `temperature = ""`, wiping the input. EditVessel converts the value instead (`convertCapacity`). | |
 | bug | validation | EditTeaTypeViewModel.kt:130-138 | Temperature is checked against `>212` whatever the unit. In °C it accepts 150–212; in °F it accepts 1–31. LogTeaViewModel.kt:444-451 already validates per unit correctly. | |
@@ -125,7 +125,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 | polish | data | EditTeaTypeViewModel.kt:169 | The name isn't trimmed and there's no duplicate-name check. | |
 | consistency | error | EditTeaTypeScreen.kt:111-115 | The error is never cleared, so a repeated error won't show again. | |
 | a11y | semantics | EditTeaTypeScreen.kt:251-274 | Colour swatches are clickable boxes with no label, role or selected state, and 44dp is below the 48dp minimum. | |
-| consistency | copy | EditTeaTypeScreen.kt:298-305,323 | "Discard" isn't styled as an error here (it is in EditVessel), and "Delete Tea Type" has no "?" while every other delete dialog does. | |
+| consistency | copy | EditTeaTypeScreen.kt:298-305,323 | ~~"Discard" isn't styled as an error here (it is in EditVessel), and~~ "Delete Tea Type" has no "?" while every other delete dialog does. | |
 
 - **Opportunities:**
   - Port EditVessel's structure: a Sections file, pure form logic plus a test, the back handler, and an always-enabled save with explanation.
@@ -194,8 +194,8 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 |---|---|---|---|
 | consistency | duplication | EditTeaSections.kt:43 & EditVesselSections.kt:52 | Byte-identical `internal fun SectionHeader`. There are 3 more private header variants (SettingsScreen.kt:379, TeaPickerSheet.kt:367, HistoryFilterSheet.kt:338). |
 | consistency | duplication | TemperatureInputField.kt / VolumeInputField.kt | 123 lines each; they differ by only 44 lines after swapping names. `EditCapacityField.kt` is a label-only wrapper. One `UnitInputField` would cover all three. |
-| consistency | duplication | EditTea/EditSession/EditVessel/EditTeaType screens | 4 copies of the "Discard Changes?" dialog, with inconsistent Discard styling. |
-| consistency | duplication | HomeScreen.kt:374, TeaDetailScreen.kt:511, SessionDetailScreen.kt:409, HistoryScreen.kt:350 | 4 copies of the "Delete Session?" dialog. 11 inline delete dialogs total. |
+| ~~consistency~~ | ~~duplication~~ | ~~EditTea/EditSession/EditVessel/EditTeaType screens~~ | ~~4 copies of the "Discard Changes?" dialog, with inconsistent Discard styling.~~ |
+| ~~consistency~~ | ~~duplication~~ | ~~HomeScreen.kt:374, TeaDetailScreen.kt:511, SessionDetailScreen.kt:409, HistoryScreen.kt:350~~ | ~~4 copies of the "Delete Session?" dialog. 11 inline delete dialogs total.~~ |
 | consistency | duplication | EditTeaVM:95, TeaCollectionVM:117, TeaDetailVM:180 | A private `Flow.catchError` helper copy-pasted 3 times. |
 | consistency | empty states | EmptyState used in 5 places | `AnalyticsEmptyState` and `EmptyHomeState` are separate. TeaTypeList (bare Text), VesselDetail ("Vessel not found" bare Text) and QuickTimerDetailsSheet:221 don't use it. `EmptyState` has no icon slot and always shows a FontAwesome PlusSquare. |
 | consistency | icons | 49 files use Feather, 8 use FontAwesome, plus custom vectors | Two icon families are mixed, and FontAwesome ships whole because R8 is off. |

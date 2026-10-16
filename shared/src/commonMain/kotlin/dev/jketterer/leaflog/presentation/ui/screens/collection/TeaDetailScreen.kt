@@ -20,9 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -72,6 +70,7 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
@@ -82,6 +81,15 @@ import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgres
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.delete_method_text
+import leaf_log.shared.generated.resources.delete_method_title
+import leaf_log.shared.generated.resources.delete_session_text
+import leaf_log.shared.generated.resources.delete_session_title
+import leaf_log.shared.generated.resources.delete_tea_text
+import leaf_log.shared.generated.resources.delete_tea_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.pow
@@ -527,49 +535,23 @@ private fun TeaDetailContent(
 
         // Delete session confirmation dialog
         if (state.sessionPendingDelete != null) {
-            AlertDialog(
-                onDismissRequest = { onIntent(TeaDetailIntent.CancelDeleteSession) },
-                title = { Text("Delete Session?") },
-                text = { Text("This will delete the session and all steeps. This action cannot be undone.") },
-                confirmButton = {
-                    TextButton(
-                        onClick = { onIntent(TeaDetailIntent.ConfirmDeleteSession) },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Text("Delete")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { onIntent(TeaDetailIntent.CancelDeleteSession) }) {
-                        Text("Cancel")
-                    }
-                },
+            ConfirmDestructiveDialog(
+                title = stringResource(Res.string.delete_session_title),
+                text = stringResource(Res.string.delete_session_text),
+                confirmLabel = stringResource(Res.string.delete),
+                onConfirm = { onIntent(TeaDetailIntent.ConfirmDeleteSession) },
+                onDismiss = { onIntent(TeaDetailIntent.CancelDeleteSession) },
             )
         }
 
         // Delete configuration confirmation dialog
         if (state.configurationPendingDelete != null) {
-            AlertDialog(
-                onDismissRequest = { onIntent(TeaDetailIntent.CancelDeleteConfiguration) },
-                title = { Text("Delete Brewing Method?") },
-                text = { Text("This will permanently delete the saved brewing method. This action cannot be undone.") },
-                confirmButton = {
-                    TextButton(
-                        onClick = { onIntent(TeaDetailIntent.ConfirmDeleteConfiguration) },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Text("Delete")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { onIntent(TeaDetailIntent.CancelDeleteConfiguration) }) {
-                        Text("Cancel")
-                    }
-                },
+            ConfirmDestructiveDialog(
+                title = stringResource(Res.string.delete_method_title),
+                text = stringResource(Res.string.delete_method_text),
+                confirmLabel = stringResource(Res.string.delete),
+                onConfirm = { onIntent(TeaDetailIntent.ConfirmDeleteConfiguration) },
+                onDismiss = { onIntent(TeaDetailIntent.CancelDeleteConfiguration) },
             )
         }
 
@@ -590,27 +572,12 @@ private fun TeaDetailContent(
 
         // Delete tea confirmation dialog
         if (state.showDeleteConfirmation) {
-            AlertDialog(
-                onDismissRequest = { onIntent(TeaDetailIntent.CancelDelete) },
-                title = { Text("Delete Tea?") },
-                text = { Text("This will delete the tea and all its information.") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            onIntent(TeaDetailIntent.ConfirmDelete)
-                        },
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
-                    ) {
-                        Text("Delete")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { onIntent(TeaDetailIntent.CancelDelete) }) {
-                        Text("Cancel")
-                    }
-                },
+            ConfirmDestructiveDialog(
+                title = stringResource(Res.string.delete_tea_title),
+                text = stringResource(Res.string.delete_tea_text),
+                confirmLabel = stringResource(Res.string.delete),
+                onConfirm = { onIntent(TeaDetailIntent.ConfirmDelete) },
+                onDismiss = { onIntent(TeaDetailIntent.CancelDelete) },
             )
         }
 

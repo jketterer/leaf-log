@@ -9,7 +9,5 @@ sealed interface EditVesselIntent {
     data class PhotoSelected(val imageBytes: ByteArray) : EditVesselIntent
     data object RemovePhoto : EditVesselIntent
     data object SaveClicked : EditVesselIntent
-    data object BackClicked : EditVesselIntent
-    data object ConfirmDiscard : EditVesselIntent
-    data object CancelDiscard : EditVesselIntent
+    data object Discard : EditVesselIntent
 }

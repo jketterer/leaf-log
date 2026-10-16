@@ -15,7 +15,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +45,7 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
@@ -58,6 +57,13 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirma
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.discard
+import leaf_log.shared.generated.resources.discard_session_text
+import leaf_log.shared.generated.resources.discard_session_title
+import leaf_log.shared.generated.resources.discard_steep_text
+import leaf_log.shared.generated.resources.discard_steep_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -101,7 +107,6 @@ fun TimerScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TimerContent(
     state: TimerScreenState,
@@ -216,14 +221,18 @@ private fun TimerContent(
     // Discard session confirmation dialog
     if (state.showDiscardSessionConfirmation) {
         val steepNumber = state.session?.currentSteep?.number ?: 1
-        TimerStopConfirmationDialog(
-            title = if (steepNumber == 1) "Cancel Session?" else "Discard Steep $steepNumber?",
-            text = if (steepNumber == 1) {
-                "This will permanently delete the session. This action cannot be undone."
+        ConfirmDestructiveDialog(
+            title = if (steepNumber == 1) {
+                stringResource(Res.string.discard_session_title)
             } else {
-                "Steep $steepNumber will be deleted and the session finished with the steeps before it."
+                stringResource(Res.string.discard_steep_title, steepNumber)
             },
-            confirmText = "Delete",
+            text = if (steepNumber == 1) {
+                stringResource(Res.string.discard_session_text)
+            } else {
+                stringResource(Res.string.discard_steep_text, steepNumber)
+            },
+            confirmLabel = stringResource(Res.string.discard),
             onConfirm = { onIntent(TimerIntent.ConfirmStop) },
             onDismiss = { onIntent(TimerIntent.CancelStop) },
         )

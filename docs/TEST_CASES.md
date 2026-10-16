@@ -162,6 +162,9 @@ the Activity is portrait-locked.
 - [ ] **[iOS]** Back-swipe on a screen pushed inside a tab returns to the previous screen, not out
       of the tab.
 - [ ] **[A]** System back from a tab's root returns Home, then exits.
+- [ ] Edit Tea, Edit Vessel, Edit Tea Type and Edit Session, each with a change made: system back
+      (Android) or the edge swipe (iOS) asks before discarding, as the toolbar arrow does. With no
+      change it leaves at once, with the predictive-back peek. The question survives rotation.
 - [ ] Finish a session: Home offers Undo once. Undo opens Steep Complete on the last steep with the
       session back in progress. Finishing it again offers Undo again. Opening Settings and coming
       back, or recreating, doesn't offer it again.

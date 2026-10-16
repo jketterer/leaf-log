@@ -23,7 +23,5 @@ sealed interface EditTeaIntent {
 
     // Actions
     data object SaveClicked : EditTeaIntent
-    data object BackClicked : EditTeaIntent
-    data object ConfirmDiscard : EditTeaIntent
-    data object CancelDiscard : EditTeaIntent
+    data object Discard : EditTeaIntent
 }

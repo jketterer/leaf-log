@@ -1,43 +1,35 @@
 package dev.jketterer.leaflog.presentation.ui.components.timer
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.cancel
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TimerStopConfirmationDialog(
     text: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    title: String = "Stop Timer?",
-    confirmText: String = "Stop",
-    dismissText: String = "Cancel",
-    isDestructive: Boolean = false,
+    title: String,
+    confirmText: String,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(text) },
         confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-                colors = if (isDestructive) {
-                    ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                } else {
-                    ButtonDefaults.textButtonColors()
-                },
-            ) {
+            TextButton(onClick = onConfirm) {
                 Text(confirmText)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(dismissText)
+                Text(stringResource(Res.string.cancel))
             }
         },
     )
@@ -71,23 +63,9 @@ fun TimerResetConfirmationDialog(
 private fun TimerStopConfirmationDialogPreview() {
     LeafLogTheme {
         TimerStopConfirmationDialog(
-            text = "The session will be saved as in progress. You can complete it later from the History screen.",
-            onConfirm = {},
-            onDismiss = {},
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun TimerStopConfirmationDialogDestructivePreview() {
-    LeafLogTheme {
-        TimerStopConfirmationDialog(
-            title = "Discard Session?",
-            text = "The timer is complete but your session hasn't been saved. Your brewing data will be lost.",
-            confirmText = "Discard",
-            dismissText = "Stay",
-            isDestructive = true,
+            title = "Complete Now?",
+            text = "This will skip the remaining brew time and mark the steep as complete.",
+            confirmText = "Complete",
             onConfirm = {},
             onDismiss = {},
         )

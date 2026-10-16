@@ -16,9 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -30,7 +28,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -68,6 +65,7 @@ import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
@@ -83,6 +81,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.date_at_time
+import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.delete_session_text
+import leaf_log.shared.generated.resources.delete_session_title
+import leaf_log.shared.generated.resources.delete_steep_text
+import leaf_log.shared.generated.resources.delete_steep_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -390,25 +393,12 @@ private fun SessionDetailContent(
 
     // Delete session confirmation dialog
     if (state.showDeleteConfirmation) {
-        AlertDialog(
-            onDismissRequest = { onIntent(SessionDetailIntent.CancelDelete) },
-            title = { Text("Delete Session?") },
-            text = { Text("This will delete the session and all steeps. This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
-                    onClick = { onIntent(SessionDetailIntent.ConfirmDelete) },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(SessionDetailIntent.CancelDelete) }) {
-                    Text("Cancel")
-                }
-            }
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.delete_session_title),
+            text = stringResource(Res.string.delete_session_text),
+            confirmLabel = stringResource(Res.string.delete),
+            onConfirm = { onIntent(SessionDetailIntent.ConfirmDelete) },
+            onDismiss = { onIntent(SessionDetailIntent.CancelDelete) },
         )
     }
 
@@ -448,25 +438,12 @@ private fun SessionDetailContent(
 
     // Delete steep confirmation dialog
     if (state.showDeleteSteepConfirmation) {
-        AlertDialog(
-            onDismissRequest = { onIntent(SessionDetailIntent.CancelDeleteSteep) },
-            title = { Text("Delete Steep?") },
-            text = { Text("This will delete this steep. Remaining steeps will be renumbered. This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
-                    onClick = { onIntent(SessionDetailIntent.ConfirmDeleteSteep) },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(SessionDetailIntent.CancelDeleteSteep) }) {
-                    Text("Cancel")
-                }
-            }
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.delete_steep_title),
+            text = stringResource(Res.string.delete_steep_text),
+            confirmLabel = stringResource(Res.string.delete),
+            onConfirm = { onIntent(SessionDetailIntent.ConfirmDeleteSteep) },
+            onDismiss = { onIntent(SessionDetailIntent.CancelDeleteSteep) },
         )
     }
 }

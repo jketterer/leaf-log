@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,6 +47,7 @@ import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
@@ -64,7 +63,11 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.delete_session_text
+import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.ic_tea_leaf
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -378,25 +381,12 @@ private fun HomeContent(
 
     // Delete session confirmation dialog
     if (state.sessionPendingDelete != null) {
-        AlertDialog(
-            onDismissRequest = { onIntent(HomeIntent.CancelDeleteSession) },
-            title = { Text("Delete Session?") },
-            text = { Text("This will delete the session and all steeps. This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
-                    onClick = { onIntent(HomeIntent.ConfirmDeleteSession) },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onIntent(HomeIntent.CancelDeleteSession) }) {
-                    Text("Cancel")
-                }
-            },
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.delete_session_title),
+            text = stringResource(Res.string.delete_session_text),
+            confirmLabel = stringResource(Res.string.delete),
+            onConfirm = { onIntent(HomeIntent.ConfirmDeleteSession) },
+            onDismiss = { onIntent(HomeIntent.CancelDeleteSession) },
         )
     }
 

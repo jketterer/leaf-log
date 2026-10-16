@@ -77,8 +77,8 @@ di/ (Dependency Injection)
 **Use Cases**
 
 - Single responsibility: one business operation per use case
-- Return `Result<T>` when the operation can fail (writes, validation, state transitions). Reads
-  and pure calculations that cannot fail return the value directly
+- Return `Result<T>` when the operation can fail (writes, validation, state transitions). Reads and
+  pure calculations that cannot fail return the value directly
 - Complex business logic (calculations, validations, multi-step operations) belongs in use cases,
   NOT ViewModels
 - Should NEVER be simple wrappers for a lone single repository function
@@ -113,8 +113,8 @@ di/ (Dependency Injection)
     - `parentSessionId`: Links child steeps to parent session
     - `steepNumber`: Order of steeps (1 = parent/first steep)
     - `rating`: Individual steep rating
-    - Session fields (vessel, water type, leaf, location, `usedConfigurationId`): parent row
-      only, NULL on children
+    - Session fields (vessel, water type, leaf, location, `usedConfigurationId`): parent row only,
+      NULL on children
 - `TeaTypeEntity`: Tea categories
 - `BrewingVesselEntity`: Brewing vessels
 
@@ -160,6 +160,9 @@ Use `expect`/`actual` pattern for platform differences.
   pattern like `"MMM d"` or a month-name array
 - Corners come from `MaterialTheme.shapes` (4/8/12/16/28dp), never a `RoundedCornerShape` literal;
   circles use `CircleShape`
+- An action that loses data asks through `ConfirmDestructiveDialog`. A form with unsaved changes
+  wraps its content in `DiscardChangesGuardDialog`, which guards the toolbar arrow and system back
+  alike
 
 ### When Creating Use Cases
 
@@ -179,8 +182,8 @@ Example: Rating calculations, session completion flows, steep management.
 - ViewModels manage UI state, NOT business logic
 - Keep ViewModels thin - delegate to use cases
 - Use sealed interfaces for Intents and Navigation Events
-- Snackbars go through the ViewModel's `UiMessages`, shown by one `UiMessageEffect` per screen;
-  a failed operation calls `messages.failure(e, Res.string.couldnt_…)`, never puts `e.message`
+- Snackbars go through the ViewModel's `UiMessages`, shown by one `UiMessageEffect` per screen; a
+  failed operation calls `messages.failure(e, Res.string.couldnt_…)`, never puts `e.message`
   in State. A failure the user should hear the reason for is a `DomainFailure`
 - State should be immutable data classes
 
@@ -227,8 +230,8 @@ silently diverge, because the local copy cannot track the parameter after first 
 one of two ways:
 
 1. **Key the remember** so it re-seeds: `remember(source) { mutableStateOf(source) }`. Pick the key
-   by identity, not by the field being edited - `remember(session.id)`, NOT `remember(session.notes)`,
-   or a re-emit of the same session wipes what the user is typing
+   by identity, not by the field being edited - `remember(session.id)`, NOT
+   `remember(session.notes)`, or a re-emit of the same session wipes what the user is typing
 2. **Hoist** to the owner: take `value` + `onValueChange` and let the caller hold it
 
 Prefer keying. Hoist when the state is genuinely the caller's.

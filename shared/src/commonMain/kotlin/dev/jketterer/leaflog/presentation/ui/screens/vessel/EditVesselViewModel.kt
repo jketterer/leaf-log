@@ -21,7 +21,6 @@ import leaf_log.shared.generated.resources.couldnt_load_vessel
 import leaf_log.shared.generated.resources.couldnt_save_photo
 import leaf_log.shared.generated.resources.couldnt_save_vessel
 import leaf_log.shared.generated.resources.failure_not_found
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class EditVesselViewModel(
@@ -44,19 +43,7 @@ class EditVesselViewModel(
         loadPreferences(
             preferencesRepository = preferencesRepository,
             stateFlow = _state,
-            // The capacity field holds what the user typed in whatever unit was current, so a unit
-            // change has to rewrite it. Doing it here rather than in the toggle handler covers the
-            // first emission too, which can land after an edited vessel has already been seeded.
-            updateState = { state, prefs ->
-                state.copy(
-                    userPreferences = prefs,
-                    capacity = convertCapacity(
-                        input = state.capacity,
-                        from = state.userPreferences.volumeUnit,
-                        to = prefs.volumeUnit,
-                    ),
-                )
-            },
+            updateState = { state, prefs -> state.copy(userPreferences = prefs) },
         )
     }
 
@@ -65,8 +52,7 @@ class EditVesselViewModel(
             is EditVesselIntent.LoadVessel -> loadVessel(intent.vesselId)
             is EditVesselIntent.NameChanged -> onNameChanged(intent.name)
             is EditVesselIntent.IconSelected -> onIconSelected(intent.iconName)
-            is EditVesselIntent.CapacityChanged -> onCapacityChanged(intent.capacity)
-            is EditVesselIntent.ToggleVolumeUnit -> toggleVolumeUnit()
+            is EditVesselIntent.CapacityChanged -> onCapacityChanged(intent.capacityMl)
             is EditVesselIntent.PhotoSelected -> onPhotoSelected(intent.imageBytes)
             is EditVesselIntent.RemovePhoto -> onRemovePhoto()
             is EditVesselIntent.SaveClicked -> saveVessel()
@@ -96,10 +82,7 @@ class EditVesselViewModel(
                         name = vessel.name,
                         selectedIconName = vessel.iconName ?: DEFAULT_ICON_NAME,
                         imagePath = vessel.imagePath,
-                        capacity = capacityFromMl(
-                            capacityMl = vessel.capacityMl,
-                            unit = it.userPreferences.volumeUnit,
-                        ),
+                        capacityMl = vessel.capacityMl?.toDouble(),
                         isLoading = false,
                     )
                 }
@@ -118,19 +101,12 @@ class EditVesselViewModel(
         _state.update { it.copy(selectedIconName = iconName) }
     }
 
-    private fun onCapacityChanged(capacity: String) {
+    private fun onCapacityChanged(capacityMl: Double?) {
         _state.update {
-            it.copy(capacity = capacity, capacityError = validateCapacity(capacity))
+            it.copy(capacityMl = capacityMl, capacityError = validateCapacity(capacityMl))
         }
     }
 
-    private fun toggleVolumeUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
-        }
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
     private fun onPhotoSelected(imageBytes: ByteArray) {
         viewModelScope.launch {
             try {
@@ -160,7 +136,7 @@ class EditVesselViewModel(
         val currentState = _state.value
 
         val nameError = validateVesselName(currentState.name)
-        val capacityError = validateCapacity(currentState.capacity)
+        val capacityError = validateCapacity(currentState.capacityMl)
         if (nameError != null || capacityError != null) {
             _state.update { it.copy(nameError = nameError, capacityError = capacityError) }
             return
@@ -186,14 +162,14 @@ class EditVesselViewModel(
                     name = currentState.name,
                     iconName = currentState.selectedIconName,
                     imagePath = imagePath,
-                    capacityMl = currentState.capacityMl,
+                    capacityMl = currentState.storedCapacityMl,
                 )
             } else {
                 createBrewingVesselUseCase(
                     name = currentState.name,
                     iconName = currentState.selectedIconName,
                     imagePath = imagePath,
-                    capacityMl = currentState.capacityMl,
+                    capacityMl = currentState.storedCapacityMl,
                 )
             }
 

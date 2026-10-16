@@ -65,11 +65,10 @@ class EditTeaViewModel(
             is EditTeaIntent.OriginChanged -> updateOrigin(intent.origin)
             is EditTeaIntent.ProducerChanged -> updateProducer(intent.producer)
             is EditTeaIntent.PurchaseDateChanged -> updatePurchaseDate(intent.date)
-            is EditTeaIntent.TemperatureChanged -> updateTemperature(intent.temperature)
+            is EditTeaIntent.TemperatureChanged -> updateTemperature(intent.celsius)
             is EditTeaIntent.DescriptionChanged -> updateDescription(intent.description)
             is EditTeaIntent.PhotoSelected -> addPhoto(intent.imageBytes)
             is EditTeaIntent.PhotoRemoved -> removePhoto(intent.photoPath)
-            is EditTeaIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is EditTeaIntent.SaveClicked -> save()
             is EditTeaIntent.Discard -> discard()
         }
@@ -126,8 +125,7 @@ class EditTeaViewModel(
                                 origin = tea.origin ?: "",
                                 producer = tea.producer ?: "",
                                 purchaseDate = tea.purchaseDate,
-                                defaultTemperatureCelsius = tea.defaultTemperatureCelsius?.toString()
-                                    ?: "",
+                                defaultTemperatureCelsius = tea.defaultTemperatureCelsius,
                                 description = tea.description ?: "",
                                 photos = tea.photos,
                             )
@@ -161,8 +159,6 @@ class EditTeaViewModel(
                 teaTypeError = null,
                 defaultTemperatureCelsius = seed.celsius,
                 temperatureFromTeaTypeId = seed.fromTeaTypeId,
-                // Cleared so the screen reconverts the new value into the user's display unit.
-                defaultTemperatureDisplay = if (reseeded) "" else state.defaultTemperatureDisplay,
                 temperatureError = if (reseeded) null else state.temperatureError,
             )
         }
@@ -180,23 +176,13 @@ class EditTeaViewModel(
         _state.update { it.copy(purchaseDate = date) }
     }
 
-    private fun updateTemperature(temperature: String) {
-        val currentState = _state.value
-        val tempUnit = currentState.userPreferences.temperatureUnit
-
-        // Convert from display unit to storage unit (Celsius)
-        val storageValue = temperature.toIntOrNull()?.let { displayValue ->
-            tempUnit.toCelsius(displayValue).toString()
-        } ?: temperature
-
+    private fun updateTemperature(celsius: Double?) {
         _state.update {
             it.copy(
-                defaultTemperatureCelsius = storageValue,
-                defaultTemperatureDisplay = temperature,
+                defaultTemperatureCelsius = celsius,
                 // Typing makes the value theirs, so a later tea type change leaves it alone.
                 temperatureFromTeaTypeId = null,
-                // Validated in the display unit so the message quotes bounds the user recognises.
-                temperatureError = validateTemperature(temperature, tempUnit),
+                temperatureError = validateTemperature(celsius),
             )
         }
     }
@@ -228,13 +214,6 @@ class EditTeaViewModel(
         }
     }
 
-    private fun toggleTemperatureUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
-            _state.update { it.copy(defaultTemperatureDisplay = "") } // Clear so screen reconverts from storage
-        }
-    }
-
     private fun save() {
         val currentState = _state.value
 
@@ -260,7 +239,7 @@ class EditTeaViewModel(
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toDoubleOrNull(),
+                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius,
                     description = currentState.description.takeIf { it.isNotBlank() },
                     photos = currentState.photos,
                 )
@@ -275,7 +254,7 @@ class EditTeaViewModel(
                     origin = currentState.origin.takeIf { it.isNotBlank() },
                     producer = currentState.producer.takeIf { it.isNotBlank() },
                     purchaseDate = currentState.purchaseDate,
-                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius.toDoubleOrNull(),
+                    defaultTemperatureCelsius = currentState.defaultTemperatureCelsius,
                     description = currentState.description.takeIf { it.isNotBlank() },
                     photos = currentState.photos
                 )

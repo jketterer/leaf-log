@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import kotlinx.datetime.LocalDate
+import org.jetbrains.compose.resources.StringResource
 
 data class EditTeaState(
     val isEditMode: Boolean = false,
@@ -15,8 +16,7 @@ data class EditTeaState(
     val origin: String = "",
     val producer: String = "",
     val purchaseDate: LocalDate? = null,
-    val defaultTemperatureCelsius: String = "",
-    val defaultTemperatureDisplay: String = "", // User's input in display unit (preserves exact value)
+    val defaultTemperatureCelsius: Double? = null,
     // Which tea type seeded the temperature, or null if the user typed it. Lets a mis-tapped type
     // be corrected without stranding its default, while never overwriting a chosen value.
     val temperatureFromTeaTypeId: String? = null,
@@ -30,7 +30,7 @@ data class EditTeaState(
     // Validation errors
     val nameError: String? = null,
     val teaTypeError: String? = null,
-    val temperatureError: String? = null,
+    val temperatureError: StringResource? = null,
 
     // UI state
     val isLoading: Boolean = false,
@@ -46,8 +46,7 @@ data class EditTeaState(
                     origin != (existingTea.origin ?: "") ||
                     producer != (existingTea.producer ?: "") ||
                     purchaseDate != existingTea.purchaseDate ||
-                    defaultTemperatureCelsius != (existingTea.defaultTemperatureCelsius?.toString()
-                ?: "") ||
+                    defaultTemperatureCelsius != existingTea.defaultTemperatureCelsius ||
                     description != (existingTea.description ?: "") ||
                     photos != existingTea.photos
         } else {
@@ -56,22 +55,9 @@ data class EditTeaState(
                     origin.isNotBlank() ||
                     producer.isNotBlank() ||
                     purchaseDate != null ||
-                    defaultTemperatureCelsius.isNotBlank() ||
+                    defaultTemperatureCelsius != null ||
                     description.isNotBlank() ||
                     photos.isNotEmpty()
-        }
-
-    /**
-     * The temperature as the field should show it.
-     *
-     * Prefers exactly what the user typed; falls back to converting the stored Celsius into their
-     * preferred unit, which is how a loaded tea - or a value seeded from the tea type - gets shown.
-     */
-    val temperatureDisplayValue: String
-        get() = defaultTemperatureDisplay.ifEmpty {
-            defaultTemperatureCelsius.toDoubleOrNull()
-                ?.let { userPreferences.temperatureUnit.fromCelsius(it).toString() }
-                ?: defaultTemperatureCelsius
         }
 
     val isValid: Boolean

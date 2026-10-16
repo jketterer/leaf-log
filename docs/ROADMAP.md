@@ -597,7 +597,7 @@ state across rotation and process death.
 - [x] `feat: shared confirm and discard dialogs`
 - [x] `feat: section header and empty state`
 - [x] `feat: rating display and selector`. Test: half-star rounding.
-- [ ] `feat: one unit input field with local toggles`: the component and its pure functions, then
+- [x] `feat: one unit input field with local toggles`: the component and its pure functions, then
   Edit Tea, Edit Vessel, Edit Tea Type and Brewing Method. Tests: flips round-trip, 93 °C, decimal
   input, an untouched field reports nothing.
 - [ ] `refactor: brew and journal forms on the unit field`: Log Tea, Edit Session, the parameter

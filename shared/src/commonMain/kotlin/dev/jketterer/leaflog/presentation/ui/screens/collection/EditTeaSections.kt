@@ -34,12 +34,14 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DatePickerField
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
-import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_default_temperature
 import leaf_log.shared.generated.resources.header_details
 import leaf_log.shared.generated.resources.header_photos
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -94,7 +96,6 @@ internal fun TeaIdentitySection(
  * FlowRow rather than a horizontally scrolling row: tea types are user-extensible, and this is the
  * screen where they get extended.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun TeaTypeChips(
     teaTypes: List<TeaType>,
@@ -148,15 +149,14 @@ internal fun TeaDetailsSection(
     availableProducers: List<String>,
     purchaseDate: LocalDate?,
     description: String,
-    temperatureDisplay: String,
+    temperatureCelsius: Double?,
     temperatureUnit: TemperatureUnit,
-    temperatureError: String?,
+    temperatureError: StringResource?,
     onOriginChanged: (String) -> Unit,
     onProducerChanged: (String) -> Unit,
     onPurchaseDateChanged: (LocalDate?) -> Unit,
     onDescriptionChanged: (String) -> Unit,
-    onTemperatureChanged: (String) -> Unit,
-    onToggleTemperatureUnit: () -> Unit,
+    onTemperatureChanged: (Double?) -> Unit,
     originFocusRequester: FocusRequester,
     producerFocusRequester: FocusRequester,
     descriptionFocusRequester: FocusRequester,
@@ -209,14 +209,13 @@ internal fun TeaDetailsSection(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
         )
 
-        TemperatureInputField(
-            value = temperatureDisplay,
+        UnitInputField(
+            value = temperatureCelsius,
             onValueChange = onTemperatureChanged,
-            currentUnit = temperatureUnit,
-            onToggleUnit = onToggleTemperatureUnit,
-            label = { Text("Default Temperature") },
+            unit = temperatureUnit,
+            label = stringResource(Res.string.field_default_temperature),
             isError = temperatureError != null,
-            supportingText = temperatureError?.let { { Text(it) } },
+            supportingText = temperatureError?.let { stringResource(it) },
             modifier = Modifier.fillMaxWidth(),
         )
     }

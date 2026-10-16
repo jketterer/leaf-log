@@ -2,12 +2,23 @@ package dev.jketterer.leaflog.domain.models
 
 import kotlin.math.roundToInt
 
-enum class TemperatureUnit {
+enum class TemperatureUnit : MeasurementUnit {
     CELSIUS,
     FAHRENHEIT;
 
+    override val decimals: Int get() = 0
 
-    fun toggle(): TemperatureUnit = when (this) {
+    override fun toCanonical(value: Double): Double = when (this) {
+        CELSIUS -> value
+        FAHRENHEIT -> (value - 32) * 5.0 / 9.0
+    }
+
+    override fun fromCanonical(value: Double): Double = when (this) {
+        CELSIUS -> value
+        FAHRENHEIT -> value * 9.0 / 5.0 + 32
+    }
+
+    override fun toggle(): TemperatureUnit = when (this) {
         CELSIUS -> FAHRENHEIT
         FAHRENHEIT -> CELSIUS
     }
@@ -24,7 +35,7 @@ enum class TemperatureUnit {
         FAHRENHEIT -> (celsius * 9.0 / 5.0 + 32).roundToInt()
     }
 
-    val symbol: String
+    override val symbol: String
         get() = when (this) {
             CELSIUS -> "°C"
             FAHRENHEIT -> "°F"

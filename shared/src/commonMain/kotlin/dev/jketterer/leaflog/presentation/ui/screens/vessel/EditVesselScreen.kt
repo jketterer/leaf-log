@@ -41,6 +41,8 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGua
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.error_capacity_positive
 import org.koin.compose.viewmodel.koinViewModel
 
 /**
@@ -181,11 +183,10 @@ private fun EditVesselContent(
             )
 
             VesselDetailsSection(
-                capacity = state.capacity,
+                capacityMl = state.capacityMl,
                 capacityError = state.capacityError,
                 volumeUnit = state.userPreferences.volumeUnit,
                 onCapacityChanged = { onIntent(EditVesselIntent.CapacityChanged(it)) },
-                onToggleVolumeUnit = { onIntent(EditVesselIntent.ToggleVolumeUnit) },
                 capacityFocusRequester = capacityFocusRequester,
             )
 
@@ -224,7 +225,7 @@ private fun EditVesselScreenEditModePreview() {
                 isEditMode = true,
                 name = "Yixing Gaiwan",
                 selectedIconName = "gaiwan",
-                capacity = "120",
+                capacityMl = 120.0,
             ),
             onIntent = {},
         )
@@ -240,8 +241,8 @@ private fun EditVesselScreenErrorsPreview() {
                 isEditMode = false,
                 name = "",
                 nameError = "Name is required",
-                capacity = "abc",
-                capacityError = "Must be a valid number",
+                capacityMl = 0.0,
+                capacityError = Res.string.error_capacity_positive,
             ),
             onIntent = {},
         )

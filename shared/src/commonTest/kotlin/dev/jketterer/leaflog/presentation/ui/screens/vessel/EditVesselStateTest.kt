@@ -1,10 +1,12 @@
 package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
-import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.time.Instant
 
 class EditVesselStateTest {
 
@@ -26,90 +28,37 @@ class EditVesselStateTest {
 
     // Capacity is optional, so an empty field is valid rather than missing.
     @Test
-    fun aBlankCapacityIsValid() {
-        assertNull(validateCapacity(""))
+    fun `no capacity is valid`() {
+        assertNull(validateCapacity(null))
     }
 
     @Test
-    fun aNonNumericCapacityIsRejected() {
-        assertEquals("Must be a valid number", validateCapacity("abc"))
-        assertEquals("Must be a valid number", validateCapacity("12.5"))
+    fun `a zero capacity is rejected`() {
+        assertNotNull(validateCapacity(0.0))
+        assertNull(validateCapacity(0.5))
     }
 
+    // An untouched field keeps the stored value exactly, so a pristine vessel shows no changes.
     @Test
-    fun aZeroOrNegativeCapacityIsRejected() {
-        assertEquals("Capacity must be greater than 0", validateCapacity("0"))
-        assertEquals("Capacity must be greater than 0", validateCapacity("-5"))
-    }
-
-    // --- conversion to storage ------------------------------------------------------------------
-
-    @Test
-    fun millilitersAreStoredAsTyped() {
-        assertEquals(150, capacityToMl("150", VolumeUnit.MILLILITERS))
-    }
-
-    @Test
-    fun fluidOuncesAreConvertedToMilliliters() {
-        assertEquals(296, capacityToMl("10", VolumeUnit.FLUID_OUNCES))
-    }
-
-    @Test
-    fun anEmptyOrUnusableCapacityHasNoStoredValue() {
-        assertNull(capacityToMl("", VolumeUnit.MILLILITERS))
-        assertNull(capacityToMl("abc", VolumeUnit.FLUID_OUNCES))
-    }
-
-    // The bug this whole shape exists to prevent: a stored vessel, shown in ounces and saved back
-    // untouched, has to come out as the same number of milliliters it went in as. Converting on
-    // every keystroke instead rounded the value away and faked unsaved changes on a pristine form.
-    @Test
-    fun aStoredCapacitySurvivesADisplayRoundTripInOunces() {
-        val stored = 296
-        val shown = capacityFromMl(stored, VolumeUnit.FLUID_OUNCES)
-
-        assertEquals("10", shown)
-        assertEquals(stored, capacityToMl(shown, VolumeUnit.FLUID_OUNCES))
-    }
-
-    @Test
-    fun aVesselWithNoCapacityShowsAnEmptyField() {
-        assertEquals("", capacityFromMl(null, VolumeUnit.MILLILITERS))
-    }
-
-    // --- unit toggle ----------------------------------------------------------------------------
-
-    @Test
-    fun togglingTheUnitConvertsTheNumber() {
-        assertEquals(
-            "5",
-            convertCapacity("150", from = VolumeUnit.MILLILITERS, to = VolumeUnit.FLUID_OUNCES),
+    fun `an untouched stored capacity is not a change`() {
+        val vessel = BrewingVessel(
+            id = "v",
+            name = "Gaiwan",
+            iconName = DEFAULT_ICON_NAME,
+            capacityMl = 296,
+            isSystemDefault = false,
+            displayOrder = 0,
+            createdAt = Instant.fromEpochMilliseconds(0),
+            updatedAt = Instant.fromEpochMilliseconds(0),
         )
-        assertEquals(
-            "296",
-            convertCapacity("10", from = VolumeUnit.FLUID_OUNCES, to = VolumeUnit.MILLILITERS),
+        val state = EditVesselState(
+            existingVessel = vessel,
+            name = vessel.name,
+            selectedIconName = DEFAULT_ICON_NAME,
+            capacityMl = 296.0,
         )
-    }
-
-    // The preferences flow re-emits on every change, not only on a unit change, so the no-op case
-    // has to leave the field alone rather than round it.
-    @Test
-    fun theSameUnitLeavesTheFieldUntouched() {
-        assertEquals(
-            "150",
-            convertCapacity("150", from = VolumeUnit.MILLILITERS, to = VolumeUnit.MILLILITERS),
-        )
-    }
-
-    @Test
-    fun halfFinishedInputIsLeftExactlyAsTyped() {
-        assertEquals(
-            "",
-            convertCapacity("", from = VolumeUnit.MILLILITERS, to = VolumeUnit.FLUID_OUNCES),
-        )
-        assertEquals(
-            "abc",
-            convertCapacity("abc", from = VolumeUnit.MILLILITERS, to = VolumeUnit.FLUID_OUNCES),
-        )
+        assertFalse(state.hasChanges)
+        // 10 fl oz typed over it stores as the same whole milliliters.
+        assertFalse(state.copy(capacityMl = 295.735).hasChanges)
     }
 }

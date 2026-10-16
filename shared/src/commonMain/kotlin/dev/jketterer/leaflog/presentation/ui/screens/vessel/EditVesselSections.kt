@@ -36,16 +36,19 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.VolumeUnit
-import dev.jketterer.leaflog.presentation.ui.components.common.EditCapacityField
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoPickerButton
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_capacity
+import leaf_log.shared.generated.resources.field_capacity_hint
 import leaf_log.shared.generated.resources.header_details
 import leaf_log.shared.generated.resources.header_photo
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
@@ -145,11 +148,10 @@ internal fun VesselIconChips(
 /** Everything optional about the vessel itself. */
 @Composable
 internal fun VesselDetailsSection(
-    capacity: String,
-    capacityError: String?,
+    capacityMl: Double?,
+    capacityError: StringResource?,
     volumeUnit: VolumeUnit,
-    onCapacityChanged: (String) -> Unit,
-    onToggleVolumeUnit: () -> Unit,
+    onCapacityChanged: (Double?) -> Unit,
     capacityFocusRequester: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
@@ -159,16 +161,16 @@ internal fun VesselDetailsSection(
     ) {
         SectionHeader(stringResource(Res.string.header_details))
 
-        EditCapacityField(
-            value = capacity,
+        UnitInputField(
+            value = capacityMl,
             onValueChange = onCapacityChanged,
+            unit = volumeUnit,
+            label = stringResource(Res.string.field_capacity),
             isError = capacityError != null,
-            supportingText = capacityError
-                ?: "Optional - auto-fills water quantity when selected",
-            enabled = true,
-            volumeUnit = volumeUnit,
-            onToggleUnit = onToggleVolumeUnit,
-            modifier = Modifier.focusRequester(capacityFocusRequester),
+            supportingText = stringResource(capacityError ?: Res.string.field_capacity_hint),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(capacityFocusRequester),
         )
     }
 }
@@ -279,11 +281,10 @@ private fun VesselDetailsSectionPreview() {
     LeafLogTheme {
         Column(modifier = Modifier.padding(16.dp)) {
             VesselDetailsSection(
-                capacity = "150",
+                capacityMl = 150.0,
                 capacityError = null,
                 volumeUnit = VolumeUnit.MILLILITERS,
                 onCapacityChanged = {},
-                onToggleVolumeUnit = {},
                 capacityFocusRequester = remember { FocusRequester() },
             )
         }

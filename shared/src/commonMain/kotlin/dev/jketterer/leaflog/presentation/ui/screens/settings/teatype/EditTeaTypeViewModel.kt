@@ -3,13 +3,13 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings.teatype
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaTypeUseCase
 import dev.jketterer.leaflog.domain.usecases.MergeTeaTypeUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.screens.collection.validateTemperature
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,7 +55,7 @@ class EditTeaTypeViewModel(
             is EditTeaTypeIntent.LoadTeaType -> loadTeaType(intent.teaTypeId)
             is EditTeaTypeIntent.NameChanged -> onNameChanged(intent.name)
             is EditTeaTypeIntent.ColorSelected -> onColorSelected(intent.colorHex)
-            is EditTeaTypeIntent.TemperatureChanged -> onTemperatureChanged(intent.temperature)
+            is EditTeaTypeIntent.TemperatureChanged -> onTemperatureChanged(intent.celsius)
             is EditTeaTypeIntent.SaveClicked -> save()
             is EditTeaTypeIntent.DeleteClicked -> onDeleteClicked()
             is EditTeaTypeIntent.ConfirmDelete -> confirmDelete()
@@ -68,7 +68,6 @@ class EditTeaTypeViewModel(
             }
 
             is EditTeaTypeIntent.ConfirmMerge -> confirmMerge()
-            is EditTeaTypeIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
         }
     }
 
@@ -82,11 +81,7 @@ class EditTeaTypeViewModel(
             _state.update { it.copy(isLoading = true) }
             try {
                 val teaType = teaTypeRepository.getById(teaTypeId)
-                val prefs = preferencesRepository.getPreferences()
                 if (teaType != null) {
-                    val displayTemp = teaType.defaultTemperatureCelsius?.let {
-                        UnitConverter.celsiusToDisplayTemperature(it, prefs.temperatureUnit)
-                    }
                     val teaCount = teaRepository.getByTypeFlow(teaTypeId).first().size
                     _state.update {
                         it.copy(
@@ -94,7 +89,7 @@ class EditTeaTypeViewModel(
                             existingTeaType = teaType,
                             name = teaType.name,
                             colorHex = teaType.colorHex,
-                            temperature = displayTemp?.toString() ?: "",
+                            temperatureCelsius = teaType.defaultTemperatureCelsius,
                             canDelete = teaCount == 0,
                             teaCount = teaCount,
                             isLoading = false,
@@ -129,34 +124,16 @@ class EditTeaTypeViewModel(
         _state.update { it.copy(colorHex = colorHex) }
     }
 
-    private fun toggleTemperatureUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
-            _state.update { it.copy(temperature = "") }
-        }
-    }
-
-    private fun onTemperatureChanged(temperature: String) {
+    private fun onTemperatureChanged(celsius: Double?) {
         _state.update {
-            it.copy(temperature = temperature, temperatureError = validateTemperature(temperature))
-        }
-    }
-
-    private fun validateTemperature(temperature: String): String? {
-        if (temperature.isBlank()) return null // Optional
-        val value = temperature.toIntOrNull()
-        return when {
-            value == null -> "Must be a valid number"
-            value <= 0 -> "Temperature must be greater than 0"
-            value > 212 -> "Temperature seems too high"
-            else -> null
+            it.copy(temperatureCelsius = celsius, temperatureError = validateTemperature(celsius))
         }
     }
 
     private fun save() {
         val currentState = _state.value
         val nameError = validateName(currentState.name)
-        val temperatureError = validateTemperature(currentState.temperature)
+        val temperatureError = validateTemperature(currentState.temperatureCelsius)
 
         if (nameError != null || temperatureError != null || currentState.colorHex.isBlank()) {
             _state.update {
@@ -169,10 +146,7 @@ class EditTeaTypeViewModel(
             _state.update { it.copy(isSaving = true) }
 
             try {
-                val tempUnit = currentState.userPreferences.temperatureUnit
-                val temperatureCelsius = currentState.temperature.toIntOrNull()?.let {
-                    UnitConverter.inputTemperatureToCelsius(it, tempUnit)
-                }
+                val temperatureCelsius = currentState.temperatureCelsius
 
                 val now = Instant.fromEpochMilliseconds(
                     kotlin.time.Clock.System.now().toEpochMilliseconds()

@@ -46,11 +46,15 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGuardDialog
-import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_default_temperature
+import leaf_log.shared.generated.resources.field_optional
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 // Muted tea colours, spaced so no two look alike once toned for either theme
@@ -209,15 +213,13 @@ private fun EditTeaTypeContent(
                         }
 
                         // Temperature
-                        TemperatureInputField(
-                            value = state.temperature,
+                        UnitInputField(
+                            value = state.temperatureCelsius,
                             onValueChange = { onIntent(EditTeaTypeIntent.TemperatureChanged(it)) },
-                            currentUnit = state.userPreferences.temperatureUnit,
-                            onToggleUnit = { onIntent(EditTeaTypeIntent.ToggleTemperatureUnit) },
-                            label = { Text("Default Temperature") },
+                            unit = state.userPreferences.temperatureUnit,
+                            label = stringResource(Res.string.field_default_temperature),
                             isError = state.temperatureError != null,
-                            supportingText = state.temperatureError?.let { { Text(it) } }
-                                ?: { Text("Optional") },
+                            supportingText = stringResource(state.temperatureError ?: Res.string.field_optional),
                             modifier = Modifier.fillMaxWidth(),
                             enabled = !state.isSaving,
                         )
@@ -303,7 +305,7 @@ private fun EditTeaTypeEditPreview() {
                 isEditMode = true,
                 name = "Green",
                 colorHex = "#4CAF50",
-                temperature = "80",
+                temperatureCelsius = 80.0,
             ),
             onIntent = {},
         )

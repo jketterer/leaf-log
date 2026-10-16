@@ -6,6 +6,27 @@
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_dark">Dark</string>
 
+    <!-- Units, as a screen reader speaks them -->
+    <string name="unit_celsius">Celsius</string>
+    <string name="unit_fahrenheit">Fahrenheit</string>
+    <string name="unit_milliliters">milliliters</string>
+    <string name="unit_fluid_ounces">fluid ounces</string>
+    <string name="unit_grams">grams</string>
+    <string name="unit_ounces">ounces</string>
+    <string name="unit_switch_to">Switch to %1$s</string>
+
+    <!-- Form fields -->
+    <string name="field_temperature_required">Temperature *</string>
+    <string name="field_default_temperature">Default Temperature</string>
+    <string name="field_water_quantity_required">Water Quantity *</string>
+    <string name="field_tea_quantity">Tea Quantity</string>
+    <string name="field_tea_quantity_hint">Optional - leave empty for tea bags</string>
+    <string name="field_capacity">Capacity</string>
+    <string name="field_optional">Optional</string>
+    <string name="field_capacity_hint">Optional - auto-fills water quantity when selected</string>
+    <string name="error_temperature_range">Must be between freezing and boiling</string>
+    <string name="error_capacity_positive">Capacity must be greater than 0</string>
+
     <!-- Dates -->
     <!-- A date, then a clock time: "Jan 15, 2024 at 2:30 PM" -->
     <string name="date_at_time">%1$s at %2$s</string>

@@ -1,8 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.screens.settings.teatype
 
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import org.jetbrains.compose.resources.StringResource
 
 data class EditTeaTypeState(
     val isEditMode: Boolean = false,
@@ -11,12 +11,12 @@ data class EditTeaTypeState(
     // Form fields
     val name: String = "",
     val colorHex: String = "",
-    val temperature: String = "",
+    val temperatureCelsius: Double? = null,
     val userPreferences: UserPreferences = UserPreferences(),
 
     // Validation
     val nameError: String? = null,
-    val temperatureError: String? = null,
+    val temperatureError: StringResource? = null,
 
     // UI state
     val isLoading: Boolean = false,
@@ -30,14 +30,11 @@ data class EditTeaTypeState(
 ) {
     val hasChanges: Boolean
         get() = if (isEditMode && existingTeaType != null) {
-            val existingTemp = existingTeaType.defaultTemperatureCelsius?.let {
-                UnitConverter.celsiusToDisplayTemperature(it, userPreferences.temperatureUnit)
-            }?.toString() ?: ""
             name != existingTeaType.name ||
                     colorHex != existingTeaType.colorHex ||
-                    temperature != existingTemp
+                    temperatureCelsius != existingTeaType.defaultTemperatureCelsius
         } else {
-            name.isNotBlank() || colorHex.isNotBlank() || temperature.isNotBlank()
+            name.isNotBlank() || colorHex.isNotBlank() || temperatureCelsius != null
         }
 
     val isValid: Boolean

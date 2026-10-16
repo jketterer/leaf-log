@@ -9,11 +9,9 @@ data class CreateBrewingConfigurationState(
     val vessels: List<BrewingVessel> = emptyList(),
     val selectedVessel: BrewingVessel? = null,
     val label: String = "",
-    val teaQuantityGrams: String = "",
-    val waterQuantityMl: String = "",
-    val waterQuantityDisplay: String = "",
-    val temperatureCelsius: String = "",
-    val temperatureDisplay: String = "",
+    val teaQuantityGrams: Double? = null,
+    val waterQuantityMl: Double? = null,
+    val temperatureCelsius: Double? = null,
     val brewingTime: Duration? = null,
     val waterType: WaterType = WaterType.SPRING,
     val userPreferences: UserPreferences = UserPreferences(),
@@ -24,7 +22,7 @@ data class CreateBrewingConfigurationState(
 ) {
     val canSave: Boolean
         get() = selectedVessel != null &&
-                temperatureCelsius.toDoubleOrNull() != null &&
-                waterQuantityMl.toDoubleOrNull() != null &&
+                temperatureCelsius != null &&
+                waterQuantityMl != null &&
                 brewingTime != null
 }

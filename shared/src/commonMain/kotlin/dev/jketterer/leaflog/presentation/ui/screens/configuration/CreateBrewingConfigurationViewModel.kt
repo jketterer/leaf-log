@@ -70,11 +70,17 @@ class CreateBrewingConfigurationViewModel(
             }
 
             is CreateBrewingConfigurationIntent.UpdateTeaQuantity -> {
-                _state.update { it.copy(teaQuantityGrams = intent.quantity) }
+                _state.update { it.copy(teaQuantityGrams = intent.grams) }
             }
 
-            is CreateBrewingConfigurationIntent.UpdateWaterQuantity -> updateWaterQuantity(intent.quantity)
-            is CreateBrewingConfigurationIntent.UpdateTemperature -> updateTemperature(intent.temperature)
+            is CreateBrewingConfigurationIntent.UpdateWaterQuantity -> {
+                _state.update { it.copy(waterQuantityMl = intent.milliliters) }
+            }
+
+            is CreateBrewingConfigurationIntent.UpdateTemperature -> {
+                _state.update { it.copy(temperatureCelsius = intent.celsius) }
+            }
+
             is CreateBrewingConfigurationIntent.UpdateBrewingTime -> {
                 _state.update { it.copy(brewingTime = intent.duration) }
             }
@@ -83,8 +89,6 @@ class CreateBrewingConfigurationViewModel(
                 _state.update { it.copy(waterType = intent.waterType) }
             }
 
-            is CreateBrewingConfigurationIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
-            is CreateBrewingConfigurationIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is CreateBrewingConfigurationIntent.Save -> save()
             is CreateBrewingConfigurationIntent.NavigateBack -> {
                 _navEvents.trySend(CreateBrewingConfigurationNavigationEvent.NavigateBack)
@@ -111,11 +115,9 @@ class CreateBrewingConfigurationViewModel(
                             vessels = vessels,
                             selectedVessel = selectedVessel,
                             label = config.label ?: "",
-                            teaQuantityGrams = config.teaQuantityGrams?.toString() ?: "",
-                            waterQuantityMl = config.waterQuantityMl.toString(),
-                            waterQuantityDisplay = "",
-                            temperatureCelsius = config.temperatureCelsius.toString(),
-                            temperatureDisplay = "",
+                            teaQuantityGrams = config.teaQuantityGrams?.toDouble(),
+                            waterQuantityMl = config.waterQuantityMl,
+                            temperatureCelsius = config.temperatureCelsius,
                             brewingTime = config.brewingTime,
                             waterType = config.waterType,
                             isEditMode = true,
@@ -131,21 +133,21 @@ class CreateBrewingConfigurationViewModel(
                 val tea = teaRepository.getByIdFlow(teaId).first()
                 val firstVessel = vessels.firstOrNull()
 
-                var prefillTemp = ""
-                var prefillWater = ""
+                var prefillTemp: Double? = null
+                var prefillWater: Double? = null
                 var prefillTime: kotlin.time.Duration? = null
                 var prefillWaterType = null as WaterType?
-                var prefillTeaQty = ""
+                var prefillTeaQty: Double? = null
 
                 if (tea != null && firstVessel != null) {
                     val prefill = getBrewingParametersPrefillUseCase(tea, firstVessel)
-                    prefillTemp = prefill.temperatureCelsius?.toString() ?: ""
-                    prefillWater = prefill.waterQuantityMl?.toString() ?: ""
+                    prefillTemp = prefill.temperatureCelsius
+                    prefillWater = prefill.waterQuantityMl
                     prefillTime = prefill.brewingTime
                     prefillWaterType = prefill.waterType
-                    prefillTeaQty = prefill.teaQuantityGrams?.toString() ?: ""
+                    prefillTeaQty = prefill.teaQuantityGrams?.toDouble()
                 } else if (tea != null) {
-                    prefillTemp = tea.defaultTemperatureCelsius?.toString() ?: ""
+                    prefillTemp = tea.defaultTemperatureCelsius
                 }
 
                 _state.update {
@@ -153,9 +155,7 @@ class CreateBrewingConfigurationViewModel(
                         vessels = vessels,
                         selectedVessel = firstVessel,
                         temperatureCelsius = prefillTemp,
-                        temperatureDisplay = "",
                         waterQuantityMl = prefillWater,
-                        waterQuantityDisplay = "",
                         brewingTime = prefillTime,
                         waterType = prefillWaterType ?: WaterType.FILTERED,
                         teaQuantityGrams = prefillTeaQty,
@@ -168,54 +168,12 @@ class CreateBrewingConfigurationViewModel(
         }
     }
 
-    private fun updateWaterQuantity(quantity: String) {
-        val volumeUnit = _state.value.userPreferences.volumeUnit
-        val storageValue = quantity.toIntOrNull()?.let {
-            volumeUnit.toMilliliters(it).toString()
-        } ?: quantity
-
-        _state.update {
-            it.copy(
-                waterQuantityMl = storageValue,
-                waterQuantityDisplay = quantity,
-            )
-        }
-    }
-
-    private fun updateTemperature(temperature: String) {
-        val tempUnit = _state.value.userPreferences.temperatureUnit
-        val storageValue = temperature.toIntOrNull()?.let {
-            tempUnit.toCelsius(it).toString()
-        } ?: temperature
-
-        _state.update {
-            it.copy(
-                temperatureCelsius = storageValue,
-                temperatureDisplay = temperature,
-            )
-        }
-    }
-
-    private fun toggleTemperatureUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
-            _state.update { it.copy(temperatureDisplay = "") }
-        }
-    }
-
-    private fun toggleVolumeUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
-            _state.update { it.copy(waterQuantityDisplay = "") }
-        }
-    }
-
     private fun save() {
         val currentState = _state.value
         val vessel = currentState.selectedVessel ?: return
         val teaId = loadedTeaId ?: return
-        val temperatureCelsius = currentState.temperatureCelsius.toDoubleOrNull() ?: return
-        val waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull() ?: return
+        val temperatureCelsius = currentState.temperatureCelsius ?: return
+        val waterQuantityMl = currentState.waterQuantityMl ?: return
         val brewingTime = currentState.brewingTime ?: return
 
         viewModelScope.launch {
@@ -226,7 +184,7 @@ class CreateBrewingConfigurationViewModel(
                     configurationId = currentState.editingConfigId,
                     label = currentState.label.takeIf { it.isNotBlank() },
                     vesselId = vessel.id,
-                    teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
+                    teaQuantityGrams = currentState.teaQuantityGrams?.toFloat(),
                     waterQuantityMl = waterQuantityMl,
                     temperatureCelsius = temperatureCelsius,
                     brewingTime = brewingTime,
@@ -241,7 +199,7 @@ class CreateBrewingConfigurationViewModel(
                 createBrewingConfigurationUseCase(
                     teaId = teaId,
                     vesselId = vessel.id,
-                    teaQuantityGrams = currentState.teaQuantityGrams.toFloatOrNull(),
+                    teaQuantityGrams = currentState.teaQuantityGrams?.toFloat(),
                     waterQuantityMl = waterQuantityMl,
                     temperatureCelsius = temperatureCelsius,
                     brewingTime = brewingTime,

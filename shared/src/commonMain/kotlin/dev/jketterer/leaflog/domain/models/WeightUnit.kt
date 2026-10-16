@@ -1,10 +1,23 @@
 package dev.jketterer.leaflog.domain.models
 
-enum class WeightUnit {
+enum class WeightUnit : MeasurementUnit {
     GRAMS,
     OUNCES;
 
-    fun toggle(): WeightUnit = when (this) {
+    override val decimals: Int
+        get() = when (this) {
+            GRAMS -> 1
+            OUNCES -> 2
+        }
+
+    override fun toCanonical(value: Double): Double = when (this) {
+        GRAMS -> value
+        OUNCES -> value * GRAMS_PER_OUNCE
+    }
+
+    override fun fromCanonical(value: Double): Double = fromGrams(value)
+
+    override fun toggle(): WeightUnit = when (this) {
         GRAMS -> OUNCES
         OUNCES -> GRAMS
     }
@@ -15,7 +28,7 @@ enum class WeightUnit {
         OUNCES -> grams / GRAMS_PER_OUNCE
     }
 
-    val symbol: String
+    override val symbol: String
         get() = when (this) {
             GRAMS -> "g"
             OUNCES -> "oz"

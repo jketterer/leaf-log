@@ -2,12 +2,27 @@ package dev.jketterer.leaflog.domain.models
 
 import kotlin.math.roundToInt
 
-enum class VolumeUnit {
+enum class VolumeUnit : MeasurementUnit {
     MILLILITERS,
     FLUID_OUNCES;
 
+    override val decimals: Int
+        get() = when (this) {
+            MILLILITERS -> 0
+            FLUID_OUNCES -> 1
+        }
 
-    fun toggle(): VolumeUnit = when (this) {
+    override fun toCanonical(value: Double): Double = when (this) {
+        MILLILITERS -> value
+        FLUID_OUNCES -> value * 29.5735
+    }
+
+    override fun fromCanonical(value: Double): Double = when (this) {
+        MILLILITERS -> value
+        FLUID_OUNCES -> value / 29.5735
+    }
+
+    override fun toggle(): VolumeUnit = when (this) {
         MILLILITERS -> FLUID_OUNCES
         FLUID_OUNCES -> MILLILITERS
     }
@@ -24,7 +39,7 @@ enum class VolumeUnit {
         FLUID_OUNCES -> (ml / 29.5735).roundToInt()
     }
 
-    val symbol: String
+    override val symbol: String
         get() = when (this) {
             MILLILITERS -> "mL"
             FLUID_OUNCES -> "fl oz"

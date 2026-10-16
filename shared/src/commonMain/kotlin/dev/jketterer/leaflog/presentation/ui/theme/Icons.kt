@@ -19,23 +19,48 @@ import compose.icons.feathericons.Star
 /** Feather's star, filled. Feather is outline-only, so its own path is filled and stroked. */
 val FeatherIcons.StarFilled: ImageVector get() = starFilled
 
+/** Feather's star with its left half filled, for a rating that ends on a half. */
+val FeatherIcons.StarHalf: ImageVector get() = starHalf
+
 /** Feather's heart, filled. */
 val FeatherIcons.HeartFilled: ImageVector get() = heartFilled
 
-private val starFilled by lazy {
-    filledFeatherIcon("StarFilled") {
-        moveTo(12f, 2f)
-        lineToRelative(3.09f, 6.26f)
-        lineToRelative(6.91f, 1.01f)
-        lineToRelative(-5f, 4.87f)
-        lineToRelative(1.18f, 6.88f)
-        lineToRelative(-6.18f, -3.25f)
-        lineToRelative(-6.18f, 3.25f)
-        lineToRelative(1.18f, -6.88f)
-        lineToRelative(-5f, -4.87f)
-        lineToRelative(6.91f, -1.01f)
-        close()
-    }
+private val starPath: PathBuilder.() -> Unit = {
+    moveTo(12f, 2f)
+    lineToRelative(3.09f, 6.26f)
+    lineToRelative(6.91f, 1.01f)
+    lineToRelative(-5f, 4.87f)
+    lineToRelative(1.18f, 6.88f)
+    lineToRelative(-6.18f, -3.25f)
+    lineToRelative(-6.18f, 3.25f)
+    lineToRelative(1.18f, -6.88f)
+    lineToRelative(-5f, -4.87f)
+    lineToRelative(6.91f, -1.01f)
+    close()
+}
+
+private val starFilled by lazy { filledFeatherIcon("StarFilled", starPath) }
+
+/** The outline stroked, and the left half of the same star filled up to the centre line. */
+private val starHalf by lazy {
+    featherIconBuilder("StarHalf")
+        .path(
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round,
+            strokeLineJoin = StrokeJoin.Round,
+            pathBuilder = starPath,
+        )
+        .path(fill = SolidColor(Color.Black)) {
+            moveTo(12f, 2f)
+            lineTo(8.91f, 8.26f)
+            lineTo(2f, 9.27f)
+            lineTo(7f, 14.14f)
+            lineTo(5.82f, 21.02f)
+            lineTo(12f, 17.77f)
+            close()
+        }
+        .build()
 }
 
 private val heartFilled by lazy {
@@ -54,14 +79,16 @@ private val heartFilled by lazy {
     }
 }
 
+private fun featherIconBuilder(name: String) = ImageVector.Builder(
+    name = name,
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+)
+
 private fun filledFeatherIcon(name: String, pathBuilder: PathBuilder.() -> Unit) =
-    ImageVector.Builder(
-        name = name,
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f,
-    ).path(
+    featherIconBuilder(name).path(
         fill = SolidColor(Color.Black),
         stroke = SolidColor(Color.Black),
         strokeLineWidth = 2f,
@@ -76,6 +103,7 @@ private fun FilledFeatherIconsPreview() {
     LeafLogTheme {
         Row {
             Icon(FeatherIcons.Star, contentDescription = null)
+            Icon(FeatherIcons.StarHalf, contentDescription = null)
             Icon(FeatherIcons.StarFilled, contentDescription = null)
             Icon(FeatherIcons.Heart, contentDescription = null)
             Icon(FeatherIcons.HeartFilled, contentDescription = null)

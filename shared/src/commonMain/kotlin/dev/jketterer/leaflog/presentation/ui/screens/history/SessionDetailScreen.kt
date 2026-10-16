@@ -50,7 +50,6 @@ import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Plus
-import compose.icons.feathericons.Star
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
@@ -76,7 +75,6 @@ import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgres
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
@@ -234,7 +232,7 @@ private fun SessionDetailContent(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
 
-                                    state.session.effectiveRating?.let { RatingDisplay(it) }
+                                    RatingDisplay(state.session.effectiveRating)
                                 }
                             }
                         }
@@ -518,29 +516,7 @@ private fun SteepCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        repeat(5) { index ->
-                            Icon(
-                                imageVector = if (index < steep.rating.toInt()) {
-                                    FeatherIcons.StarFilled
-                                } else {
-                                    FeatherIcons.Star
-                                },
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "(${steep.rating})",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
-                        )
-                    }
+                    RatingDisplay(steep.rating)
                 }
             }
 

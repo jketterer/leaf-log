@@ -75,6 +75,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageVi
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
@@ -96,8 +97,6 @@ import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.math.pow
-import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -382,7 +381,7 @@ private fun TeaDetailContent(
                                     if (state.tea.averageRating != null) {
                                         DetailRow(
                                             label = "Average Rating",
-                                            value = state.tea.averageRating.format(1),
+                                            value = formatRating(state.tea.averageRating),
                                             trailingIcon = FeatherIcons.Star,
                                         )
                                     }
@@ -569,20 +568,6 @@ private fun TeaDetailContent(
     }
 }
 
-private fun Float.format(numOfDecimals: Int): String {
-    val integerPart = this.toInt()
-
-    if (numOfDecimals > 0) {
-        val decimalPart = this - integerPart
-        val decimalAsIntValue = (decimalPart * 10f.pow(numOfDecimals)).roundToInt()
-        val formattedDecimalPart = decimalAsIntValue.toDouble() / 10f.pow(numOfDecimals)
-        val formattedValue = integerPart + formattedDecimalPart
-
-        return "$formattedValue"
-    } else {
-        return integerPart.toString()
-    }
-}
 
 @Composable
 private fun DetailRow(

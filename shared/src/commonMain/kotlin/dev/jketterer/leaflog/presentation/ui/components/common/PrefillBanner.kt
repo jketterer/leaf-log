@@ -21,7 +21,6 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Info
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.math.roundToInt
 /**
  * Banner that shows the source of pre-filled brewing parameters
  */
@@ -101,12 +100,6 @@ fun PrefillBanner(
             }
         }
     }
-}
-
-/** Drops the decimal on whole ratings so the banner reads "rated 4" rather than "rated 4.0". */
-private fun formatRating(rating: Float): String {
-    val tenths = (rating * 10).roundToInt()
-    return if (tenths % 10 == 0) "${tenths / 10}" else "${tenths / 10}.${tenths % 10}"
 }
 
 @Preview(showBackground = true)

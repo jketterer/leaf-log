@@ -263,8 +263,8 @@ This is the raw material for choosing big bets in the vision interview — not a
 - Per-tab back stacks; tablet/iPad layouts (can't be avoided on Android 16 anyway).
 - "Last backup 42 days ago" nudge; import preview; preferences in export.
 - String resources + typed errors — the prerequisite for localization and for Phase 4.
-- Canvas chart semantics (one line per chart) and RatingSelector semantics — the rating control is
-  the loop's central input and is currently unusable with a screen reader.
+- Canvas chart semantics (one line per chart)~~ and RatingSelector semantics — the rating control is
+  the loop's central input and is currently unusable with a screen reader~~.
 
 ---
 

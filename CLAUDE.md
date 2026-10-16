@@ -165,6 +165,8 @@ Use `expect`/`actual` pattern for platform differences.
   alike
 - A group of content is titled by `SectionHeader`, written sentence case in `strings.xml` (it
   uppercases). Missing content, a failed lookup or a search with no hits shows `EmptyState`
+- A rating is shown by `RatingDisplay` (null reads "Unrated") and chosen with `RatingSelector`. A
+  bare rating number goes through `formatRating`
 
 ### When Creating Use Cases
 

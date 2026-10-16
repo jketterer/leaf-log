@@ -37,6 +37,7 @@ import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TopRatedTea
+import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.session_count
@@ -160,7 +161,7 @@ private fun TopRatedTeaRow(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
-                text = topRatedTea.averageRating.formatOneDecimal(),
+                text = formatRating(topRatedTea.averageRating),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
             )
@@ -171,11 +172,6 @@ private fun TopRatedTeaRow(
             )
         }
     }
-}
-
-private fun Float.formatOneDecimal(): String {
-    val tenths = (this * 10).toInt()
-    return "${tenths / 10}.${tenths % 10}"
 }
 
 @Preview(showBackground = true)

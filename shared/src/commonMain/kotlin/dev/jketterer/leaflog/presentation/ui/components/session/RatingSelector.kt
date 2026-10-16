@@ -11,16 +11,23 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Star
+import dev.jketterer.leaflog.presentation.ui.components.common.ratingDescription
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
+import kotlin.math.roundToInt
 
 /**
- * Star rating selector (0-5 stars).
- * Tapping a star sets that rating, tapping current rating clears it.
+ * Whole-star rating input, where 0 means unrated. Tapping a star sets that rating; tapping the
+ * current rating clears it. A screen reader hears one slider, adjusted a star at a time.
  */
 @Composable
 fun RatingSelector(
@@ -28,15 +35,22 @@ fun RatingSelector(
     onRatingChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val description = ratingDescription(rating.takeIf { it > 0f })
     Row(
-        modifier = modifier,
+        modifier = modifier.clearAndSetSemantics {
+            stateDescription = description
+            progressBarRangeInfo = ProgressBarRangeInfo(rating, 0f..5f, steps = 4)
+            setProgress { value ->
+                onRatingChange(value.roundToInt().coerceIn(0, 5).toFloat())
+                true
+            }
+        },
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         (1..5).forEach { star ->
             TextButton(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    // Toggle: if clicked star is current rating, set to 0, otherwise set to star
                     onRatingChange(if (rating == star.toFloat()) 0f else star.toFloat())
                 },
             ) {
@@ -46,8 +60,8 @@ fun RatingSelector(
                     } else {
                         FeatherIcons.Star
                     },
-                    contentDescription = "Star",
-                    modifier = Modifier.size(24.dp)
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }

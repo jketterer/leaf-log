@@ -26,7 +26,7 @@
 | friction | empty | `HistoryScreen.kt:247-251` | The zero-sessions empty state has no call to action. Analytics' empty state has "Log Tea". | |
 | consistency | semantics | `HistoryFilterSheet.kt:72-73` | The filter's "This Week" / "This Month" mean the rolling last 7 / 30 days. Analytics uses the same labels for the calendar week / month. History's "This Week" group means 2–7 days ago. | Three meanings for one label. |
 | consistency | nav | `AppNavigation.kt:178-180` vs `336-340` | Brew Again from History pushes Timer, so back returns to History. Brew Again from Session Detail clears the stack, so back lands on Home. | |
-| polish | layout | `SessionCard.kt:185-193` | The " • " separator appears only when `rating != null`, but stars are drawn when `averageRating != null`. The result is "Yesterday★★★★" when steep 1 is unrated. | |
+| ~~polish~~ | ~~layout~~ | ~~`SessionCard.kt:185-193`~~ | ~~The " • " separator appears only when `rating != null`, but stars are drawn when `averageRating != null`. The result is "Yesterday★★★★" when steep 1 is unrated.~~ | |
 | polish | interaction | `SessionCard.kt:131-137` | "IN PROGRESS" is an `AssistChip` with `onClick = {}`. It swallows taps on that part of the card, and it uses `errorContainer` for a normal state. | |
 | polish | journal | `SessionCard.kt:196-203` | Notes are cut to 1 line. The vision calls notes load-bearing. | |
 | polish | units | `SessionCard.kt:159` | Leaf is shown as a raw Float ("5.0g") and ignores `weightUnit`. `WeightFormatter` is only used in Analytics. | grep: `WeightFormatter` appears only in `AnalyticsViewModel`. |

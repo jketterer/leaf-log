@@ -39,6 +39,7 @@ import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
+import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Instant
@@ -165,7 +166,7 @@ fun TeaCard(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Text(
-                                    text = rating.formatOneDecimal(),
+                                    text = formatRating(rating),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -207,11 +208,6 @@ fun TeaCard(
 
 /** How far a finished tea fades, so the ones in stock stand out. */
 internal const val FINISHED_ALPHA = 0.6f
-
-internal fun Float.formatOneDecimal(): String {
-    val tenths = (this * 10).toInt()
-    return "${tenths / 10}.${tenths % 10}"
-}
 
 @Preview
 @Composable

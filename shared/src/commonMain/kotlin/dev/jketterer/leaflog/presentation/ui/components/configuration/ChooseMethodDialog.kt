@@ -44,6 +44,7 @@ import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
@@ -217,7 +218,7 @@ private fun ConfigurationOption(
                     configuration.timesUsed,
                 )
                 val statsText = buildString {
-                    configuration.rating?.let { append("$it ") }
+                    configuration.rating?.let { append("${formatRating(it)} ") }
                     if (isNotEmpty()) append("· ")
                     append(timesUsed)
                 }

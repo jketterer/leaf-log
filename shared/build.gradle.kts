@@ -76,7 +76,6 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.nav3)
 
             implementation(libs.composeIcons.feather)
-            implementation(libs.composeIcons.fontAwesome)
             implementation(libs.koin.compose)
             implementation(libs.koin.composeViewmodel)
             implementation(libs.coil.compose)

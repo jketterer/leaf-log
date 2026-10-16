@@ -585,7 +585,7 @@ state across rotation and process death.
 - [x] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
   `teaTypeColor` on both themes.
 - [x] `feat: choose light, dark or system theme`. Test: the backup round trip.
-- [ ] `refactor: one icon family`
+- [x] `refactor: one icon family`
 - [ ] `feat: string resources and plurals`
 - [ ] `feat: locale-aware dates`
 - [ ] `feat: one message surface`: `UiMessages`, `UiMessageEffect`, the typed failures and the

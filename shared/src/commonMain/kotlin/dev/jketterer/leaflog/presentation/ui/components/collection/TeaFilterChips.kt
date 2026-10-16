@@ -14,9 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.solid.Heart
+import compose.icons.FeatherIcons
+import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.screens.collection.FilterType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -51,7 +50,7 @@ fun TeaFilterChips(
             label = { Text("Favorites") },
             leadingIcon = {
                 Icon(
-                    imageVector = FontAwesomeIcons.Solid.Heart,
+                    imageVector = FeatherIcons.HeartFilled,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )

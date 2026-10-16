@@ -14,11 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Regular
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Star
-import compose.icons.fontawesomeicons.solid.Star
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Star
+import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 
 /**
  * Star rating selector (0-5 stars).
@@ -44,9 +42,9 @@ fun RatingSelector(
             ) {
                 Icon(
                     imageVector = if (star <= rating) {
-                        FontAwesomeIcons.Solid.Star
+                        FeatherIcons.StarFilled
                     } else {
-                        FontAwesomeIcons.Regular.Star
+                        FeatherIcons.Star
                     },
                     contentDescription = "Star",
                     modifier = Modifier.size(24.dp)

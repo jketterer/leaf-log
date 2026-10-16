@@ -19,9 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Regular
-import compose.icons.fontawesomeicons.regular.PlusSquare
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.PlusSquare
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 /**
@@ -55,7 +54,7 @@ fun EmptyState(
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
             ) {
                 Icon(
-                    imageVector = FontAwesomeIcons.Regular.PlusSquare,
+                    imageVector = FeatherIcons.PlusSquare,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )

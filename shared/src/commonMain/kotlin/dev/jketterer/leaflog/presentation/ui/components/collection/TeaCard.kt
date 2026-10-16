@@ -31,14 +31,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Regular
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Heart
+import compose.icons.feathericons.Heart
+import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Check
 import compose.icons.feathericons.Star
-import compose.icons.fontawesomeicons.solid.Heart
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
@@ -181,9 +178,9 @@ fun TeaCard(
                         IconButton(onClick = onFavoriteClick) {
                             Icon(
                                 imageVector = if (tea.isFavorite) {
-                                    FontAwesomeIcons.Solid.Heart
+                                    FeatherIcons.HeartFilled
                                 } else {
-                                    FontAwesomeIcons.Regular.Heart
+                                    FeatherIcons.Heart
                                 },
                                 contentDescription = if (tea.isFavorite) {
                                     "Remove from favorites"

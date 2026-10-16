@@ -13,11 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import compose.icons.FontAwesomeIcons
-import compose.icons.fontawesomeicons.Regular
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Star
-import compose.icons.fontawesomeicons.solid.Star
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Star
+import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 @Composable
@@ -32,9 +30,9 @@ fun RatingDisplay(
         repeat(5) { index ->
             Icon(
                 imageVector = if (index < rating.toInt()) {
-                    FontAwesomeIcons.Solid.Star
+                    FeatherIcons.StarFilled
                 } else {
-                    FontAwesomeIcons.Regular.Star
+                    FeatherIcons.Star
                 },
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),

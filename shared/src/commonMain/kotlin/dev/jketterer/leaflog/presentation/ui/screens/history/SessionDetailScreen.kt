@@ -48,17 +48,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
-import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.Star
+import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Trash2
-import compose.icons.fontawesomeicons.Regular
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Star
-import compose.icons.fontawesomeicons.solid.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
@@ -554,9 +551,9 @@ private fun SteepCard(
                         repeat(5) { index ->
                             Icon(
                                 imageVector = if (index < steep.rating.toInt()) {
-                                    FontAwesomeIcons.Solid.Star
+                                    FeatherIcons.StarFilled
                                 } else {
-                                    FontAwesomeIcons.Regular.Star
+                                    FeatherIcons.Star
                                 },
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),

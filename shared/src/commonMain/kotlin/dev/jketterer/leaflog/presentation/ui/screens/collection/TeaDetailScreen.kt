@@ -57,16 +57,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
-import compose.icons.FontAwesomeIcons
+import compose.icons.feathericons.Heart
+import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Star
-import compose.icons.fontawesomeicons.Regular
-import compose.icons.fontawesomeicons.Solid
-import compose.icons.fontawesomeicons.regular.Heart
-import compose.icons.fontawesomeicons.solid.Heart
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -202,9 +199,9 @@ private fun TeaDetailContent(
                     IconButton(onClick = { onIntent(TeaDetailIntent.ToggleFavorite) }) {
                         Icon(
                             imageVector = if (state.tea?.isFavorite == true) {
-                                FontAwesomeIcons.Solid.Heart
+                                FeatherIcons.HeartFilled
                             } else {
-                                FontAwesomeIcons.Regular.Heart
+                                FeatherIcons.Heart
                             },
                             contentDescription = if (state.tea?.isFavorite == true) {
                                 "Remove from favorites"

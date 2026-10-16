@@ -18,8 +18,6 @@ sealed interface TimerIntent {
     data object DiscardSession : TimerIntent
     data object ConfirmStop : TimerIntent
     data object CancelStop : TimerIntent
-    data object ToggleTemperatureUnit : TimerIntent
-    data object ToggleVolumeUnit : TimerIntent
     data object RestartTimer : TimerIntent
     data object CompleteNow : TimerIntent
     data object ConfirmCompleteNow : TimerIntent
@@ -29,9 +27,9 @@ sealed interface TimerIntent {
 
     // Edit session parameters
     data object EditSession : TimerIntent
-    data class EditTemperatureChanged(val value: String) : TimerIntent
-    data class EditWaterQuantityChanged(val value: String) : TimerIntent
-    data class EditTeaQuantityChanged(val value: String) : TimerIntent
+    data class EditTemperatureChanged(val celsius: Double?) : TimerIntent
+    data class EditWaterQuantityChanged(val milliliters: Double?) : TimerIntent
+    data class EditTeaQuantityChanged(val grams: Double?) : TimerIntent
     data class EditTeaBagModeChanged(val isTeaBag: Boolean) : TimerIntent
     data class EditWaterTypeChanged(val waterType: WaterType) : TimerIntent
     data object ConfirmEditSession : TimerIntent

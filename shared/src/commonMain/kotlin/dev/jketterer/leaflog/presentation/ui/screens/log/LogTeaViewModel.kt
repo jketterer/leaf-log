@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -23,6 +22,8 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.screens.collection.validateQuantity
+import dev.jketterer.leaflog.presentation.ui.screens.collection.validateTemperature
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,9 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load
 import leaf_log.shared.generated.resources.couldnt_save_session
 import leaf_log.shared.generated.resources.couldnt_save_tea
+import leaf_log.shared.generated.resources.error_tea_quantity_required
+import leaf_log.shared.generated.resources.error_temperature_required
+import leaf_log.shared.generated.resources.error_water_quantity_required
 import kotlin.time.Duration
 
 class LogTeaViewModel(
@@ -111,15 +115,13 @@ class LogTeaViewModel(
             is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
             is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.name, intent.teaTypeId)
             is LogTeaIntent.TeaBagModeChanged -> updateTeaBagMode(intent.isTeaBag)
-            is LogTeaIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
-            is LogTeaIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
-            is LogTeaIntent.TemperatureChanged -> updateTemperature(intent.temperature)
+            is LogTeaIntent.TeaQuantityChanged -> updateTeaQuantity(intent.grams)
+            is LogTeaIntent.WaterQuantityChanged -> updateWaterQuantity(intent.milliliters)
+            is LogTeaIntent.TemperatureChanged -> updateTemperature(intent.celsius)
             is LogTeaIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
             is LogTeaIntent.VesselSelected -> selectVessel(intent.vesselId)
             is LogTeaIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
             is LogTeaIntent.LocationChanged -> updateLocation(intent.location)
-            is LogTeaIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
-            is LogTeaIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is LogTeaIntent.AddPhotoClicked -> {
                 // Photo picker handled by UI
             }
@@ -272,12 +274,9 @@ class LogTeaViewModel(
                     // A method that named no tea quantity means a bag. A bare default temperature is not a
                     // method, so it must not be read as one.
                     isTeaBag = prefill.source.isCompleteMethod && prefill.teaQuantityGrams == null,
-                    teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: "",
-                    waterQuantityMl = prefill.waterQuantityMl?.toString()
-                        ?: vessel.capacityMl?.toString() ?: "",
-                    waterQuantityDisplay = "",
-                    temperatureCelsius = prefill.temperatureCelsius?.toString() ?: "",
-                    temperatureDisplay = "",
+                    teaQuantityGrams = prefill.teaQuantityGrams?.toDouble(),
+                    waterQuantityMl = prefill.waterQuantityMl ?: vessel.capacityMl?.toDouble(),
+                    temperatureCelsius = prefill.temperatureCelsius,
                     brewingTime = prefill.brewingTime,
                     selectedWaterType = prefill.waterType ?: state.selectedWaterType,
                     prefillSource = prefill.source,
@@ -304,11 +303,9 @@ class LogTeaViewModel(
             _state.update {
                 it.copy(
                     isTeaBag = false,
-                    teaQuantityGrams = "",
-                    waterQuantityMl = "",
-                    waterQuantityDisplay = "",
-                    temperatureCelsius = "",
-                    temperatureDisplay = "",
+                    teaQuantityGrams = null,
+                    waterQuantityMl = null,
+                    temperatureCelsius = null,
                     brewingTime = null,
                     usedConfigurationId = null,
                     prefillSource = PrefillSource.None,
@@ -324,11 +321,9 @@ class LogTeaViewModel(
                         // Configuration values are already in storage units (Celsius/mL), store directly
                         currentState.copy(
                             isTeaBag = config.teaQuantityGrams == null,
-                            teaQuantityGrams = config.teaQuantityGrams?.toString() ?: "",
-                            waterQuantityMl = config.waterQuantityMl.toString(),
-                            waterQuantityDisplay = "",
-                            temperatureCelsius = config.temperatureCelsius.toString(),
-                            temperatureDisplay = "",
+                            teaQuantityGrams = config.teaQuantityGrams?.toDouble(),
+                            waterQuantityMl = config.waterQuantityMl,
+                            temperatureCelsius = config.temperatureCelsius,
                             brewingTime = config.brewingTime,
                             selectedWaterType = config.waterType,
                             usedConfigurationId = configurationId,
@@ -368,7 +363,7 @@ class LogTeaViewModel(
         _state.update {
             it.copy(
                 isTeaBag = isTeaBag,
-                teaQuantityGrams = if (isTeaBag) "" else it.teaQuantityGrams,
+                teaQuantityGrams = if (isTeaBag) null else it.teaQuantityGrams,
                 teaQuantityError = null,
                 hasUnsavedChanges = true,
                 // Switching to a bag retires a saved method, but a default temperature still applies.
@@ -382,17 +377,11 @@ class LogTeaViewModel(
         }
     }
 
-    private fun updateTeaQuantity(quantity: String) {
-        val error = when {
-            quantity.isBlank() -> "Tea quantity is required"
-            quantity.toFloatOrNull() == null -> "Invalid quantity"
-            quantity.toFloat() <= 0 -> "Quantity must be greater than 0"
-            else -> null
-        }
+    private fun updateTeaQuantity(grams: Double?) {
         _state.update {
             it.copy(
-                teaQuantityGrams = quantity,
-                teaQuantityError = error,
+                teaQuantityGrams = grams,
+                teaQuantityError = validateQuantity(grams, Res.string.error_tea_quantity_required),
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
                 usedConfigurationId = null
@@ -400,27 +389,11 @@ class LogTeaViewModel(
         }
     }
 
-    private fun updateWaterQuantity(quantity: String) {
-        val currentState = _state.value
-        val volumeUnit = currentState.userPreferences.volumeUnit
-
-        // Convert from display unit to storage unit (mL)
-        val storageValue = quantity.toIntOrNull()?.let { displayValue ->
-            volumeUnit.toMilliliters(displayValue).toString()
-        } ?: quantity
-
-        val error = when {
-            quantity.isBlank() -> "Water quantity is required"
-            quantity.toIntOrNull() == null -> "Invalid quantity"
-            storageValue.toIntOrNull()?.let { it <= 0 } == true -> "Quantity must be greater than 0"
-            else -> null
-        }
-
+    private fun updateWaterQuantity(milliliters: Double?) {
         _state.update {
             it.copy(
-                waterQuantityMl = storageValue,
-                waterQuantityDisplay = quantity,
-                waterQuantityError = error,
+                waterQuantityMl = milliliters,
+                waterQuantityError = validateQuantity(milliliters, Res.string.error_water_quantity_required),
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
                 usedConfigurationId = null
@@ -428,38 +401,15 @@ class LogTeaViewModel(
         }
     }
 
-    private fun updateTemperature(temperature: String) {
-        val currentState = _state.value
-        val tempUnit = currentState.userPreferences.temperatureUnit
-
-        // Convert from display unit to storage unit (Celsius)
-        val storageValue = temperature.toIntOrNull()?.let { displayValue ->
-            tempUnit.toCelsius(displayValue).toString()
-        } ?: temperature
-
-        // Validate in display unit for user-friendly error messages
-        val error = when {
-            temperature.isBlank() -> "Temperature is required"
-            temperature.toIntOrNull() == null -> "Invalid temperature"
-            else -> {
-                val value = temperature.toInt()
-                when (tempUnit) {
-                    TemperatureUnit.CELSIUS -> {
-                        if (value !in 0..100) "Temperature must be 0-100°C" else null
-                    }
-
-                    TemperatureUnit.FAHRENHEIT -> {
-                        if (value !in 32..212) "Temperature must be 32-212°F" else null
-                    }
-                }
-            }
-        }
-
+    private fun updateTemperature(celsius: Double?) {
         _state.update {
             it.copy(
-                temperatureCelsius = storageValue,
-                temperatureDisplay = temperature,
-                temperatureError = error,
+                temperatureCelsius = celsius,
+                temperatureError = if (celsius == null) {
+                    Res.string.error_temperature_required
+                } else {
+                    validateTemperature(celsius)
+                },
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
                 usedConfigurationId = null
@@ -505,8 +455,7 @@ class LogTeaViewModel(
         } else if (vessel.capacityMl != null) {
             _state.update {
                 it.copy(
-                    waterQuantityMl = vessel.capacityMl.toString(),
-                    waterQuantityDisplay = "",
+                    waterQuantityMl = vessel.capacityMl.toDouble(),
                 )
             }
         }
@@ -525,20 +474,6 @@ class LogTeaViewModel(
 
     private fun updateLocation(location: String) {
         _state.update { it.copy(location = location, hasUnsavedChanges = true) }
-    }
-
-    private fun toggleTemperatureUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
-            _state.update { it.copy(temperatureDisplay = "") } // Clear so screen reconverts from storage
-        }
-    }
-
-    private fun toggleVolumeUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
-            _state.update { it.copy(waterQuantityDisplay = "") } // Clear so screen reconverts from storage
-        }
     }
 
     private fun addPhoto(photoUri: String) {
@@ -581,9 +516,21 @@ class LogTeaViewModel(
                 it.copy(
                     teaError = if (it.selectedTea == null) "Tea is required" else null,
                     vesselError = if (it.selectedVessel == null) "Brewing vessel is required" else null,
-                    teaQuantityError = if (!it.isTeaBag && it.teaQuantityGrams.isBlank()) "Tea quantity is required" else it.teaQuantityError,
-                    waterQuantityError = if (it.waterQuantityMl.toDoubleOrNull() == null) "Water quantity is required" else it.waterQuantityError,
-                    temperatureError = if (it.temperatureCelsius.toDoubleOrNull() == null) "Temperature is required" else it.temperatureError,
+                    teaQuantityError = if (!it.isTeaBag && it.teaQuantityGrams == null) {
+                        Res.string.error_tea_quantity_required
+                    } else {
+                        it.teaQuantityError
+                    },
+                    waterQuantityError = if (it.waterQuantityMl == null) {
+                        Res.string.error_water_quantity_required
+                    } else {
+                        it.waterQuantityError
+                    },
+                    temperatureError = if (it.temperatureCelsius == null) {
+                        Res.string.error_temperature_required
+                    } else {
+                        it.temperatureError
+                    },
                     brewingTimeError = if (it.brewingTime == null) "Brewing time is required" else it.brewingTimeError
                 )
             }
@@ -593,14 +540,13 @@ class LogTeaViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
 
-            // Values are already in storage units (Celsius/mL), use directly
-            val temperatureCelsius = currentState.temperatureCelsius.toDouble()
-            val waterQuantityMl = currentState.waterQuantityMl.toDouble()
+            val temperatureCelsius = currentState.temperatureCelsius!!
+            val waterQuantityMl = currentState.waterQuantityMl!!
 
             // Use the use case - it has business logic (validation, ID generation, timestamps)
             startSessionUseCase(
                 teaId = currentState.selectedTea!!.id,
-                teaQuantityGrams = if (currentState.isTeaBag) null else currentState.teaQuantityGrams.toFloatOrNull(),
+                teaQuantityGrams = if (currentState.isTeaBag) null else currentState.teaQuantityGrams?.toFloat(),
                 vesselId = currentState.selectedVessel!!.id,
                 waterType = currentState.selectedWaterType,
                 location = currentState.location.takeIf { it.isNotBlank() },

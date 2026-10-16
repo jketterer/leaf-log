@@ -11,47 +11,46 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_tea_quantity
+import leaf_log.shared.generated.resources.field_temperature
+import leaf_log.shared.generated.resources.field_water_quantity
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditSessionParametersSheet(
-    temperatureValue: String,
-    waterQuantityValue: String,
-    teaQuantityValue: String,
+    temperatureCelsius: Double?,
+    waterQuantityMl: Double?,
+    teaQuantityGrams: Double?,
     isTeaBag: Boolean,
     waterType: WaterType,
     temperatureUnit: TemperatureUnit,
     volumeUnit: VolumeUnit,
-    onTemperatureChanged: (String) -> Unit,
-    onWaterQuantityChanged: (String) -> Unit,
-    onTeaQuantityChanged: (String) -> Unit,
+    weightUnit: WeightUnit,
+    onTemperatureChanged: (Double?) -> Unit,
+    onWaterQuantityChanged: (Double?) -> Unit,
+    onTeaQuantityChanged: (Double?) -> Unit,
     onTeaBagModeChanged: (Boolean) -> Unit,
     onWaterTypeSelected: (WaterType) -> Unit,
-    onToggleTemperatureUnit: () -> Unit,
-    onToggleVolumeUnit: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
     brewingTime: Duration? = null,
@@ -65,20 +64,19 @@ fun EditSessionParametersSheet(
         ),
     ) {
         EditSessionParametersContent(
-            temperatureValue = temperatureValue,
-            waterQuantityValue = waterQuantityValue,
-            teaQuantityValue = teaQuantityValue,
+            temperatureCelsius = temperatureCelsius,
+            waterQuantityMl = waterQuantityMl,
+            teaQuantityGrams = teaQuantityGrams,
             isTeaBag = isTeaBag,
             waterType = waterType,
             temperatureUnit = temperatureUnit,
             volumeUnit = volumeUnit,
+            weightUnit = weightUnit,
             onTemperatureChanged = onTemperatureChanged,
             onWaterQuantityChanged = onWaterQuantityChanged,
             onTeaQuantityChanged = onTeaQuantityChanged,
             onTeaBagModeChanged = onTeaBagModeChanged,
             onWaterTypeSelected = onWaterTypeSelected,
-            onToggleTemperatureUnit = onToggleTemperatureUnit,
-            onToggleVolumeUnit = onToggleVolumeUnit,
             onSave = onSave,
             onDismiss = onDismiss,
             brewingTime = brewingTime,
@@ -87,33 +85,30 @@ fun EditSessionParametersSheet(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditSessionParametersContent(
-    temperatureValue: String,
-    waterQuantityValue: String,
-    teaQuantityValue: String,
+    temperatureCelsius: Double?,
+    waterQuantityMl: Double?,
+    teaQuantityGrams: Double?,
     isTeaBag: Boolean,
     waterType: WaterType,
     temperatureUnit: TemperatureUnit,
     volumeUnit: VolumeUnit,
-    onTemperatureChanged: (String) -> Unit,
-    onWaterQuantityChanged: (String) -> Unit,
-    onTeaQuantityChanged: (String) -> Unit,
+    weightUnit: WeightUnit,
+    onTemperatureChanged: (Double?) -> Unit,
+    onWaterQuantityChanged: (Double?) -> Unit,
+    onTeaQuantityChanged: (Double?) -> Unit,
     onTeaBagModeChanged: (Boolean) -> Unit,
     onWaterTypeSelected: (WaterType) -> Unit,
-    onToggleTemperatureUnit: () -> Unit,
-    onToggleVolumeUnit: () -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit,
     brewingTime: Duration? = null,
     onBrewingTimeChanged: ((Duration) -> Unit)? = null,
 ) {
-    val isValid = temperatureValue.isNotBlank() &&
-            waterQuantityValue.isNotBlank() &&
-            (isTeaBag || teaQuantityValue.isNotBlank()) &&
+    val isValid = temperatureCelsius != null &&
+            waterQuantityMl != null &&
+            (isTeaBag || teaQuantityGrams != null) &&
             (brewingTime == null || brewingTime > Duration.ZERO)
-    val focusManager = LocalFocusManager.current
 
     Column(
         modifier = Modifier
@@ -140,25 +135,21 @@ private fun EditSessionParametersContent(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Temperature
-        TemperatureInputField(
-            value = temperatureValue,
+        UnitInputField(
+            value = temperatureCelsius,
             onValueChange = onTemperatureChanged,
-            currentUnit = temperatureUnit,
-            onToggleUnit = onToggleTemperatureUnit,
-            label = { Text("Temperature") },
+            unit = temperatureUnit,
+            label = stringResource(Res.string.field_temperature),
             modifier = Modifier.fillMaxWidth(),
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Water Quantity
-        VolumeInputField(
-            value = waterQuantityValue,
+        UnitInputField(
+            value = waterQuantityMl,
             onValueChange = onWaterQuantityChanged,
-            currentUnit = volumeUnit,
-            onToggleUnit = onToggleVolumeUnit,
-            label = { Text("Water Quantity") },
+            unit = volumeUnit,
+            label = stringResource(Res.string.field_water_quantity),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -183,15 +174,12 @@ private fun EditSessionParametersContent(
         if (!isTeaBag) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = teaQuantityValue,
+            UnitInputField(
+                value = teaQuantityGrams,
                 onValueChange = onTeaQuantityChanged,
-                label = { Text("Tea Quantity") },
+                unit = weightUnit,
+                label = stringResource(Res.string.field_tea_quantity),
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                suffix = { Text("g") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             )
         }
 
@@ -234,20 +222,19 @@ private fun EditSessionParametersContent(
 private fun EditSessionParametersContentLooseLeafPreview() {
     LeafLogTheme {
         EditSessionParametersContent(
-            temperatureValue = "80",
-            waterQuantityValue = "200",
-            teaQuantityValue = "5",
+            temperatureCelsius = 80.0,
+            waterQuantityMl = 200.0,
+            teaQuantityGrams = 5.0,
             isTeaBag = false,
             waterType = WaterType.FILTERED,
             temperatureUnit = TemperatureUnit.CELSIUS,
             volumeUnit = VolumeUnit.MILLILITERS,
+            weightUnit = WeightUnit.GRAMS,
             onTemperatureChanged = {},
             onWaterQuantityChanged = {},
             onTeaQuantityChanged = {},
             onTeaBagModeChanged = {},
             onWaterTypeSelected = {},
-            onToggleTemperatureUnit = {},
-            onToggleVolumeUnit = {},
             onSave = {},
             onDismiss = {},
         )
@@ -259,20 +246,19 @@ private fun EditSessionParametersContentLooseLeafPreview() {
 private fun EditSessionParametersContentTeaBagPreview() {
     LeafLogTheme {
         EditSessionParametersContent(
-            temperatureValue = "80",
-            waterQuantityValue = "200",
-            teaQuantityValue = "",
+            temperatureCelsius = 80.0,
+            waterQuantityMl = 200.0,
+            teaQuantityGrams = null,
             isTeaBag = true,
             waterType = WaterType.FILTERED,
             temperatureUnit = TemperatureUnit.CELSIUS,
             volumeUnit = VolumeUnit.MILLILITERS,
+            weightUnit = WeightUnit.GRAMS,
             onTemperatureChanged = {},
             onWaterQuantityChanged = {},
             onTeaQuantityChanged = {},
             onTeaBagModeChanged = {},
             onWaterTypeSelected = {},
-            onToggleTemperatureUnit = {},
-            onToggleVolumeUnit = {},
             onSave = {},
             onDismiss = {},
         )

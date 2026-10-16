@@ -117,17 +117,15 @@ class QuickTimerViewModel(
             is QuickTimerIntent.VesselSelected -> selectVessel(intent.vesselId)
 
             // Brewing parameters
-            is QuickTimerIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
+            is QuickTimerIntent.TeaQuantityChanged -> _state.update { it.copy(teaQuantityGrams = intent.grams) }
             is QuickTimerIntent.TeaBagModeChanged -> _state.update {
                 it.copy(
                     isTeaBag = intent.isTeaBag,
-                    teaQuantityGrams = if (intent.isTeaBag) "" else it.teaQuantityGrams,
+                    teaQuantityGrams = if (intent.isTeaBag) null else it.teaQuantityGrams,
                 )
             }
-            is QuickTimerIntent.TemperatureChanged -> updateTemperature(intent.temperature)
-            is QuickTimerIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
-            is QuickTimerIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
-            is QuickTimerIntent.ToggleVolumeUnit -> toggleVolumeUnit()
+            is QuickTimerIntent.TemperatureChanged -> _state.update { it.copy(temperatureCelsius = intent.celsius) }
+            is QuickTimerIntent.WaterQuantityChanged -> _state.update { it.copy(waterQuantityMl = intent.milliliters) }
             is QuickTimerIntent.WaterTypeSelected -> updateWaterType(intent.waterType)
 
             // Rating and notes
@@ -425,80 +423,17 @@ class QuickTimerViewModel(
         viewModelScope.launch {
             val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
 
-            // Convert temperature from Celsius to user's preferred unit
-            val temperatureUnit = current.userPreferences.temperatureUnit
-            val temperatureInPreferredUnit = prefill.temperatureCelsius?.let {
-                temperatureUnit.fromCelsius(it).toString()
-            } ?: ""
-
-            // Convert water quantity from ml to user's preferred unit
-            val volumeUnit = current.userPreferences.volumeUnit
-            val waterQuantityInPreferredUnit = prefill.waterQuantityMl?.let {
-                volumeUnit.fromMilliliters(it).toString()
-            } ?: ""
-
-            // Tea quantity is stored in grams (no conversion needed)
-            val teaQuantityGrams = prefill.teaQuantityGrams?.toString() ?: ""
-
-            // Fall back to vessel capacity when no saved config provides water quantity
-            val waterQuantityDisplay = waterQuantityInPreferredUnit.ifEmpty {
-                vessel.capacityMl?.let { volumeUnit.fromMilliliters(it.toDouble()).toString() } ?: ""
-            }
-
             _state.update {
                 it.copy(
-                    teaQuantityGrams = teaQuantityGrams,
+                    teaQuantityGrams = prefill.teaQuantityGrams?.toDouble(),
                     isTeaBag = prefill.source.isCompleteMethod && prefill.teaQuantityGrams == null,
-                    temperatureDisplay = temperatureInPreferredUnit,
-                    waterQuantityDisplay = waterQuantityDisplay,
+                    temperatureCelsius = prefill.temperatureCelsius,
+                    // Fall back to vessel capacity when no saved config provides water quantity
+                    waterQuantityMl = prefill.waterQuantityMl ?: vessel.capacityMl?.toDouble(),
                     waterType = prefill.waterType ?: current.userPreferences.defaultWaterType,
                     prefillSource = prefill.source,
                 )
             }
-        }
-    }
-
-    private fun updateTeaQuantity(quantity: String) {
-        _state.update { it.copy(teaQuantityGrams = quantity) }
-    }
-
-    private fun updateTemperature(temperature: String) {
-        _state.update { it.copy(temperatureDisplay = temperature) }
-    }
-
-    private fun toggleTemperatureUnit() {
-        val current = _state.value
-        val currentUnit = current.userPreferences.temperatureUnit
-        val newUnit = currentUnit.toggle()
-        val currentValue = current.temperatureDisplay.toIntOrNull()
-        val newDisplay = if (currentValue != null) {
-            newUnit.fromCelsius(currentUnit.toCelsius(currentValue)).toString()
-        } else {
-            current.temperatureDisplay
-        }
-        viewModelScope.launch {
-            preferencesRepository.updateTemperatureUnit(newUnit)
-            _state.update { it.copy(temperatureDisplay = newDisplay) }
-        }
-    }
-
-    private fun updateWaterQuantity(quantity: String) {
-        _state.update { it.copy(waterQuantityDisplay = quantity) }
-    }
-
-    private fun toggleVolumeUnit() {
-        val current = _state.value
-        val currentUnit = current.userPreferences.volumeUnit
-        val newUnit = currentUnit.toggle()
-        val currentValue = current.waterQuantityDisplay.toIntOrNull()
-        val newDisplay = if (currentValue != null) {
-            newUnit.fromMilliliters(currentUnit.toMilliliters(currentValue)).toString()
-        } else {
-            current.waterQuantityDisplay
-        }
-        viewModelScope.launch {
-            preferencesRepository.updateVolumeUnit(newUnit)
-            _state.update { it.copy(waterQuantityDisplay = newDisplay) }
         }
     }
 
@@ -545,21 +480,12 @@ class QuickTimerViewModel(
 
         val tea = current.selectedTea ?: return
         val vessel = current.selectedVessel ?: return
-        val temperatureStr = current.temperatureDisplay.takeIf { it.isNotBlank() } ?: return
-        val waterQuantityStr = current.waterQuantityDisplay.takeIf { it.isNotBlank() } ?: return
+        val temperatureCelsius = current.temperatureCelsius ?: return
+        val waterQuantityMl = current.waterQuantityMl ?: return
 
         viewModelScope.launch {
             try {
-                val temperatureInUserUnit = temperatureStr.toIntOrNull() ?: return@launch
-                val temperatureCelsius = current.userPreferences.temperatureUnit
-                    .toCelsius(temperatureInUserUnit)
-
-                val waterQuantityInUserUnit = waterQuantityStr.toIntOrNull() ?: return@launch
-                val waterQuantityMl = current.userPreferences.volumeUnit
-                    .toMilliliters(waterQuantityInUserUnit)
-
-                val teaQuantityGrams = if (current.isTeaBag) null
-                    else current.teaQuantityGrams.toFloatOrNull()
+                val teaQuantityGrams = if (current.isTeaBag) null else current.teaQuantityGrams?.toFloat()
 
                 val brewingTime = current.originalDuration ?: current.totalDuration
                 startSessionUseCase(

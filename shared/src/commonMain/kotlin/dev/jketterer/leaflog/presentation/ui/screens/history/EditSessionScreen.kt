@@ -31,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -44,15 +43,17 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
-import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
-import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_tea_quantity
+import leaf_log.shared.generated.resources.field_temperature_required
+import leaf_log.shared.generated.resources.field_water_quantity_required
 import leaf_log.shared.generated.resources.header_notes
 import leaf_log.shared.generated.resources.header_photos
 import leaf_log.shared.generated.resources.header_rating
@@ -181,24 +182,13 @@ private fun EditSessionContent(
 
                     // Temperature
                     item(key = "temperature") {
-                        // Use display value if set (preserves user input), otherwise convert from storage
-                        val displayValue = state.temperatureDisplay.ifEmpty {
-                            state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
-                                state.userPreferences.temperatureUnit.fromCelsius(celsius)
-                                    .toString()
-                            } ?: state.temperatureCelsius
-                        }
-
-                        TemperatureInputField(
-                            value = displayValue,
+                        UnitInputField(
+                            value = state.temperatureCelsius,
                             onValueChange = { onIntent(EditSessionIntent.TemperatureChanged(it)) },
-                            currentUnit = state.userPreferences.temperatureUnit,
-                            onToggleUnit = {
-                                onIntent(EditSessionIntent.ToggleTemperatureUnit)
-                            },
-                            label = { Text("Temperature *") },
+                            unit = state.userPreferences.temperatureUnit,
+                            label = stringResource(Res.string.field_temperature_required),
                             isError = state.temperatureError != null,
-                            supportingText = state.temperatureError?.let { { Text(it) } },
+                            supportingText = state.temperatureError?.let { stringResource(it) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -241,23 +231,13 @@ private fun EditSessionContent(
 
                     // Water Quantity
                     item(key = "water_quantity") {
-                        // Use display value if set (preserves user input), otherwise convert from storage
-                        val displayValue = state.waterQuantityDisplay.ifEmpty {
-                            state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
-                                state.userPreferences.volumeUnit.fromMilliliters(ml).toString()
-                            } ?: state.waterQuantityMl
-                        }
-
-                        VolumeInputField(
-                            value = displayValue,
+                        UnitInputField(
+                            value = state.waterQuantityMl,
                             onValueChange = { onIntent(EditSessionIntent.WaterQuantityChanged(it)) },
-                            currentUnit = state.userPreferences.volumeUnit,
-                            onToggleUnit = {
-                                onIntent(EditSessionIntent.ToggleVolumeUnit)
-                            },
-                            label = { Text("Water Quantity *") },
+                            unit = state.userPreferences.volumeUnit,
+                            label = stringResource(Res.string.field_water_quantity_required),
                             isError = state.waterQuantityError != null,
-                            supportingText = state.waterQuantityError?.let { { Text(it) } },
+                            supportingText = state.waterQuantityError?.let { stringResource(it) },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -280,26 +260,14 @@ private fun EditSessionContent(
                                 )
                             }
                             if (!state.isTeaBag) {
-                                OutlinedTextField(
+                                UnitInputField(
                                     value = state.teaQuantityGrams,
-                                    onValueChange = {
-                                        onIntent(
-                                            EditSessionIntent.TeaQuantityChanged(
-                                                it
-                                            )
-                                        )
-                                    },
-                                    label = { Text("Tea Quantity") },
+                                    onValueChange = { onIntent(EditSessionIntent.TeaQuantityChanged(it)) },
+                                    unit = state.userPreferences.weightUnit,
+                                    label = stringResource(Res.string.field_tea_quantity),
                                     isError = state.teaQuantityError != null,
-                                    supportingText = state.teaQuantityError?.let { { Text(it) } },
+                                    supportingText = state.teaQuantityError?.let { stringResource(it) },
                                     modifier = Modifier.fillMaxWidth(),
-                                    singleLine = true,
-                                    suffix = { Text("g") },
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Decimal,
-                                        imeAction = ImeAction.Done
-                                    ),
-                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                                 )
                             }
                         }
@@ -421,7 +389,7 @@ private fun EditSessionScreenPreview() {
             state = EditSessionState(
                 isParentSession = true,
                 brewingTime = 3.minutes,
-                temperatureCelsius = "85",
+                temperatureCelsius = 85.0,
                 selectedVessel = BrewingVessel(
                     id = "gaiwan",
                     name = "Gaiwan",
@@ -432,8 +400,8 @@ private fun EditSessionScreenPreview() {
                     updatedAt = PreviewInstant,
                 ),
                 selectedWaterType = WaterType.FILTERED,
-                waterQuantityMl = "200",
-                teaQuantityGrams = "5",
+                waterQuantityMl = 200.0,
+                teaQuantityGrams = 5.0,
                 isTeaBag = false,
                 location = "Home",
                 rating = 4f,
@@ -464,7 +432,7 @@ private fun EditSteepScreenPreview() {
                 isParentSession = false,
                 steepNumber = 2,
                 brewingTime = 1.minutes,
-                temperatureCelsius = "90",
+                temperatureCelsius = 90.0,
                 notes = "Second steep, stronger flavor",
             ),
             onIntent = {},

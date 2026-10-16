@@ -12,7 +12,7 @@ sealed interface SteepCompleteIntent {
     data object ShowNextSteepDialog : SteepCompleteIntent
     data object DismissNextSteepDialog : SteepCompleteIntent
     data class NextSteepDurationChanged(val duration: Duration?) : SteepCompleteIntent
-    data class NextSteepTemperatureChanged(val temperature: Double) : SteepCompleteIntent
+    data class NextSteepTemperatureChanged(val temperature: Double?) : SteepCompleteIntent
     data class NextSteepWaterQuantityChanged(val waterQuantityMl: Double) : SteepCompleteIntent
     data object ConfirmNextSteep : SteepCompleteIntent
     data object FinishSession : SteepCompleteIntent
@@ -23,17 +23,15 @@ sealed interface SteepCompleteIntent {
     data object ConfirmDiscard : SteepCompleteIntent
     data class PreviousSteepRatingChanged(val steepId: String, val rating: Float) : SteepCompleteIntent
     data class PreviousSteepNotesChanged(val steepId: String, val notes: String) : SteepCompleteIntent
-    data object ToggleTemperatureUnit : SteepCompleteIntent
     data object BackClicked : SteepCompleteIntent
     data object ShowEditParametersSheet : SteepCompleteIntent
     data object DismissEditParametersSheet : SteepCompleteIntent
     data class EditBrewingTimeChanged(val duration: Duration) : SteepCompleteIntent
-    data class EditTemperatureChanged(val value: String) : SteepCompleteIntent
-    data class EditWaterQuantityChanged(val value: String) : SteepCompleteIntent
-    data class EditTeaQuantityChanged(val value: String) : SteepCompleteIntent
+    data class EditTemperatureChanged(val celsius: Double?) : SteepCompleteIntent
+    data class EditWaterQuantityChanged(val milliliters: Double?) : SteepCompleteIntent
+    data class EditTeaQuantityChanged(val grams: Double?) : SteepCompleteIntent
     data class EditTeaBagModeChanged(val isTeaBag: Boolean) : SteepCompleteIntent
     data class EditWaterTypeChanged(val waterType: WaterType) : SteepCompleteIntent
     data object ConfirmEditParameters : SteepCompleteIntent
     data object CancelEditParameters : SteepCompleteIntent
-    data object ToggleVolumeUnit : SteepCompleteIntent
 }

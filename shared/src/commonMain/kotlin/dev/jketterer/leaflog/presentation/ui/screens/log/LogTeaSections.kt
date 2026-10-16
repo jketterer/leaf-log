@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -46,25 +45,25 @@ import compose.icons.feathericons.Play
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
-import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
-import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_tea_quantity_required
 import leaf_log.shared.generated.resources.header_brewing_parameters
 import leaf_log.shared.generated.resources.header_optional_details
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -179,16 +178,13 @@ internal fun BrewingParametersHeader(
 @Composable
 internal fun TeaQuantitySection(
     isTeaBag: Boolean,
-    teaQuantityGrams: String,
-    errorMessage: String?,
+    teaQuantityGrams: Double?,
+    weightUnit: WeightUnit,
+    errorMessage: StringResource?,
     onTeaBagModeChanged: (Boolean) -> Unit,
-    onTeaQuantityChanged: (String) -> Unit,
+    onTeaQuantityChanged: (Double?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val focusManager = LocalFocusManager.current
-    val teaQtyPresets = remember {
-        listOf("1", "2", "3", "4", "5", "7", "10").map { Preset("${it}g", it) }
-    }
 
     Column(
         modifier = modifier,
@@ -209,28 +205,14 @@ internal fun TeaQuantitySection(
             )
         }
         if (!isTeaBag) {
-            OutlinedTextField(
+            UnitInputField(
                 value = teaQuantityGrams,
                 onValueChange = onTeaQuantityChanged,
-                label = { Text("Tea Quantity *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                suffix = { Text("g") },
+                unit = weightUnit,
+                label = stringResource(Res.string.field_tea_quantity_required),
                 isError = errorMessage != null,
-                supportingText = errorMessage?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            )
-            PresetChips(
-                presets = teaQtyPresets,
-                currentValue = teaQuantityGrams,
-                isSelected = { preset, current ->
-                    preset.toFloatOrNull() == current?.toFloatOrNull()
-                },
-                onSelect = onTeaQuantityChanged,
+                supportingText = errorMessage?.let { stringResource(it) },
+                presets = true,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -272,84 +254,6 @@ internal fun BrewingTimeSection(
             presets = brewingTimePresets,
             currentValue = brewingTime,
             onSelect = onBrewingTimeChanged,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-internal fun TemperatureSection(
-    displayValue: String,
-    unit: TemperatureUnit,
-    errorMessage: String?,
-    onTemperatureChanged: (String) -> Unit,
-    onToggleUnit: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val tempPresets = remember(unit) {
-        when (unit) {
-            TemperatureUnit.CELSIUS -> listOf(60, 70, 75, 80, 85, 90, 95, 100)
-            TemperatureUnit.FAHRENHEIT -> listOf(140, 160, 170, 175, 185, 195, 200, 208, 212)
-        }.map { Preset("$it${unit.symbol}", it.toString()) }
-    }
-
-    Column(modifier = modifier) {
-        TemperatureInputField(
-            value = displayValue,
-            onValueChange = onTemperatureChanged,
-            currentUnit = unit,
-            onToggleUnit = onToggleUnit,
-            label = { Text("Temperature *") },
-            isError = errorMessage != null,
-            supportingText = errorMessage?.let { { Text(it) } },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        PresetChips(
-            presets = tempPresets,
-            currentValue = displayValue,
-            isSelected = { preset, current ->
-                preset.toFloatOrNull() == current?.toFloatOrNull()
-            },
-            onSelect = onTemperatureChanged,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-internal fun WaterQuantitySection(
-    displayValue: String,
-    unit: VolumeUnit,
-    errorMessage: String?,
-    onWaterQuantityChanged: (String) -> Unit,
-    onToggleUnit: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val waterPresets = remember(unit) {
-        when (unit) {
-            VolumeUnit.MILLILITERS -> listOf(100, 150, 200, 250, 300, 400, 500)
-            VolumeUnit.FLUID_OUNCES -> listOf(4, 6, 8, 10, 12, 16)
-        }.map { Preset("$it ${unit.symbol}", it.toString()) }
-    }
-
-    Column(modifier = modifier) {
-        VolumeInputField(
-            value = displayValue,
-            onValueChange = onWaterQuantityChanged,
-            currentUnit = unit,
-            onToggleUnit = onToggleUnit,
-            label = { Text("Water Quantity *") },
-            isError = errorMessage != null,
-            supportingText = errorMessage?.let { { Text(it) } },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        PresetChips(
-            presets = waterPresets,
-            currentValue = displayValue,
-            isSelected = { preset, current ->
-                preset.toFloatOrNull() == current?.toFloatOrNull()
-            },
-            onSelect = onWaterQuantityChanged,
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -506,7 +410,8 @@ private fun BrewingParameterSectionsPreview() {
             BrewingParametersHeader()
             TeaQuantitySection(
                 isTeaBag = false,
-                teaQuantityGrams = "5",
+                teaQuantityGrams = 5.0,
+                weightUnit = WeightUnit.GRAMS,
                 errorMessage = null,
                 onTeaBagModeChanged = {},
                 onTeaQuantityChanged = {},
@@ -515,20 +420,6 @@ private fun BrewingParameterSectionsPreview() {
                 brewingTime = 2.minutes + 30.seconds,
                 errorMessage = null,
                 onBrewingTimeChanged = {},
-            )
-            TemperatureSection(
-                displayValue = "80",
-                unit = TemperatureUnit.CELSIUS,
-                errorMessage = null,
-                onTemperatureChanged = {},
-                onToggleUnit = {},
-            )
-            WaterQuantitySection(
-                displayValue = "200",
-                unit = VolumeUnit.MILLILITERS,
-                errorMessage = null,
-                onWaterQuantityChanged = {},
-                onToggleUnit = {},
             )
         }
     }

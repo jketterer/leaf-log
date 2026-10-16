@@ -18,7 +18,6 @@ import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
-import dev.jketterer.leaflog.presentation.ui.components.common.editedUnitValue
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
@@ -130,7 +129,6 @@ class SteepCompleteViewModel(
             is SteepCompleteIntent.PreviousSteepNotesChanged ->
                 updatePreviousSteepNotes(intent.steepId, intent.notes)
 
-            is SteepCompleteIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is SteepCompleteIntent.BackClicked -> _navigationEvents.trySend(SteepCompleteNavEvent.NavigateBack)
             is SteepCompleteIntent.ShowEditParametersSheet -> openEditParametersSheet()
             is SteepCompleteIntent.DismissEditParametersSheet -> _state.update {
@@ -142,19 +140,19 @@ class SteepCompleteViewModel(
             is SteepCompleteIntent.EditBrewingTimeChanged -> _state.update { it.copy(editBrewingTime = intent.duration) }
             is SteepCompleteIntent.EditTemperatureChanged -> _state.update {
                 it.copy(
-                    editTemperatureCelsius = intent.value
+                    editTemperatureCelsius = intent.celsius
                 )
             }
 
             is SteepCompleteIntent.EditWaterQuantityChanged -> _state.update {
                 it.copy(
-                    editWaterQuantityMl = intent.value
+                    editWaterQuantityMl = intent.milliliters
                 )
             }
 
             is SteepCompleteIntent.EditTeaQuantityChanged -> _state.update {
                 it.copy(
-                    editTeaQuantityGrams = intent.value
+                    editTeaQuantityGrams = intent.grams
                 )
             }
 
@@ -167,7 +165,6 @@ class SteepCompleteViewModel(
                 )
             }
 
-            is SteepCompleteIntent.ToggleVolumeUnit -> toggleVolumeUnit()
         }
     }
 
@@ -400,26 +397,16 @@ class SteepCompleteViewModel(
         }
     }
 
-    private fun toggleTemperatureUnit() {
-        viewModelScope.launch {
-            val currentUnit = _state.value.userPreferences.temperatureUnit
-            val newUnit = currentUnit.toggle()
-            preferencesRepository.updateTemperatureUnit(newUnit)
-        }
-    }
-
     private fun openEditParametersSheet() {
         val session = _state.value.session ?: return
         val steep = session.currentSteep
-        val tempUnit = _state.value.userPreferences.temperatureUnit
-        val volUnit = _state.value.userPreferences.volumeUnit
         _state.update {
             it.copy(
                 showEditParametersSheet = true,
                 editBrewingTime = steep.brewingTime,
-                editTemperatureCelsius = tempUnit.fromCelsius(steep.temperatureCelsius).toString(),
-                editWaterQuantityMl = volUnit.fromMilliliters(steep.waterQuantityMl).toString(),
-                editTeaQuantityGrams = session.session.teaQuantityGrams?.toString() ?: "",
+                editTemperatureCelsius = steep.temperatureCelsius,
+                editWaterQuantityMl = steep.waterQuantityMl,
+                editTeaQuantityGrams = session.session.teaQuantityGrams?.toDouble(),
                 editIsTeaBag = session.session.teaQuantityGrams == null,
                 editWaterType = session.session.waterType,
             )
@@ -430,24 +417,11 @@ class SteepCompleteViewModel(
         val session = _state.value.session ?: return
         val steep = session.currentSteep
         val currentState = _state.value
-        val tempUnit = currentState.userPreferences.temperatureUnit
-        val volUnit = currentState.userPreferences.volumeUnit
-
-        val temperatureCelsius = editedUnitValue(
-            currentState.editTemperatureCelsius,
-            steep.temperatureCelsius,
-            tempUnit::fromCelsius,
-            tempUnit::toCelsius,
-        )
-        val waterQuantityMl = editedUnitValue(
-            currentState.editWaterQuantityMl,
-            steep.waterQuantityMl,
-            volUnit::fromMilliliters,
-            volUnit::toMilliliters,
-        )
+        val temperatureCelsius = currentState.editTemperatureCelsius
+        val waterQuantityMl = currentState.editWaterQuantityMl
         val brewingTime = currentState.editBrewingTime.takeIf { it > Duration.ZERO }
         val isTeaBag = currentState.editIsTeaBag
-        val teaQuantityGrams = currentState.editTeaQuantityGrams.toFloatOrNull()
+        val teaQuantityGrams = currentState.editTeaQuantityGrams?.toFloat()
         val waterType = currentState.editWaterType
 
         _state.update { it.copy(showEditParametersSheet = false) }
@@ -470,20 +444,6 @@ class SteepCompleteViewModel(
             }
                 .onSuccess { updated -> _state.update { it.copy(session = updated) } }
                 .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
-        }
-    }
-
-    private fun toggleVolumeUnit() {
-        viewModelScope.launch {
-            val currentUnit = _state.value.userPreferences.volumeUnit
-            val newUnit = currentUnit.toggle()
-            val currentDisplayValue = _state.value.editWaterQuantityMl.toIntOrNull()
-            if (currentDisplayValue != null) {
-                val ml = currentUnit.toMilliliters(currentDisplayValue)
-                val newDisplayValue = newUnit.fromMilliliters(ml)
-                _state.update { it.copy(editWaterQuantityMl = newDisplayValue.toString()) }
-            }
-            preferencesRepository.updateVolumeUnit(newUnit)
         }
     }
 }

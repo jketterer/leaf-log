@@ -12,18 +12,16 @@ sealed interface EditSessionIntent {
 
     // Field changes - Brewing Parameters
     data class BrewingTimeChanged(val duration: Duration) : EditSessionIntent
-    data class TemperatureChanged(val temperature: String) : EditSessionIntent
-    data object ToggleTemperatureUnit : EditSessionIntent
+    data class TemperatureChanged(val celsius: Double?) : EditSessionIntent
 
     // Field changes - Session Details (parent only)
     data class VesselSelected(val vessel: BrewingVessel) : EditSessionIntent
     data class WaterTypeSelected(val waterType: WaterType) : EditSessionIntent
-    data class WaterQuantityChanged(val quantity: String) : EditSessionIntent
-    data class TeaQuantityChanged(val quantity: String) : EditSessionIntent
+    data class WaterQuantityChanged(val milliliters: Double?) : EditSessionIntent
+    data class TeaQuantityChanged(val grams: Double?) : EditSessionIntent
     data class TeaBagModeChanged(val isTeaBag: Boolean) : EditSessionIntent
     data class LocationChanged(val location: String) : EditSessionIntent
     data class RatingChanged(val rating: Float) : EditSessionIntent
-    data object ToggleVolumeUnit : EditSessionIntent
 
     // Field changes - Notes & Photos
     data class NotesChanged(val notes: String) : EditSessionIntent

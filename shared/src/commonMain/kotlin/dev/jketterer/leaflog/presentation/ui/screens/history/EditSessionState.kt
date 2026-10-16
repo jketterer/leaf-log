@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
+import org.jetbrains.compose.resources.StringResource
 import kotlin.time.Duration
 
 data class EditSessionState(
@@ -18,15 +19,13 @@ data class EditSessionState(
 
     // Form fields - Brewing Parameters (all sessions)
     val brewingTime: Duration? = null,
-    val temperatureCelsius: String = "",
-    val temperatureDisplay: String = "", // User's input in display unit (preserves exact value)
+    val temperatureCelsius: Double? = null,
 
     // Form fields - Session Details (parent only)
     val selectedVessel: BrewingVessel? = null,
     val selectedWaterType: WaterType = WaterType.FILTERED,
-    val waterQuantityMl: String = "",
-    val waterQuantityDisplay: String = "", // User's input in display unit (preserves exact value)
-    val teaQuantityGrams: String = "",
+    val waterQuantityMl: Double? = null,
+    val teaQuantityGrams: Double? = null,
     val isTeaBag: Boolean = false,
     val location: String = "",
     val rating: Float = 0f,
@@ -40,10 +39,10 @@ data class EditSessionState(
 
     // Validation errors
     val brewingTimeError: String? = null,
-    val temperatureError: String? = null,
+    val temperatureError: StringResource? = null,
     val vesselError: String? = null,
-    val waterQuantityError: String? = null,
-    val teaQuantityError: String? = null,
+    val waterQuantityError: StringResource? = null,
+    val teaQuantityError: StringResource? = null,
     val ratingError: String? = null,
 
     // UI state
@@ -63,14 +62,14 @@ data class EditSessionState(
                 // When editing full parent session, only check parent-specific fields
                 selectedVessel?.id != session.vesselId ||
                 selectedWaterType != session.waterType ||
-                waterQuantityMl.toDoubleOrNull() != steep.waterQuantityMl ||
+                waterQuantityMl != steep.waterQuantityMl ||
                 isTeaBag != (session.teaQuantityGrams == null) ||
-                teaQuantityGrams.toFloatOrNull() != session.teaQuantityGrams ||
+                teaQuantityGrams?.toFloat() != session.teaQuantityGrams ||
                 location != (session.location ?: "")
             } else {
                 // When editing steep, check steep-specific fields
                 brewingTime != steep.brewingTime ||
-                temperatureCelsius.toDoubleOrNull() != steep.temperatureCelsius ||
+                temperatureCelsius != steep.temperatureCelsius ||
                 rating != (steep.rating ?: 0f) ||
                 notes != (steep.notes ?: "") ||
                 photos != steep.photos
@@ -82,13 +81,10 @@ data class EditSessionState(
             return if (isParentSession) {
                 // When editing full parent session, only validate parent fields
                 val parentFieldsValid = selectedVessel != null &&
-                    waterQuantityMl.toDoubleOrNull() != null &&
-                    waterQuantityMl.toDouble() > 0
+                    waterQuantityMl != null &&
+                    waterQuantityMl > 0
 
-                val teaQuantityValid = isTeaBag || run {
-                    val qty = teaQuantityGrams.toFloatOrNull()
-                    qty != null && qty > 0
-                }
+                val teaQuantityValid = isTeaBag || (teaQuantityGrams != null && teaQuantityGrams > 0)
 
                 val noErrors = vesselError == null &&
                     waterQuantityError == null &&
@@ -99,7 +95,7 @@ data class EditSessionState(
                 // When editing steep, validate steep-specific fields
                 val hasRequiredFields = brewingTime != null &&
                     brewingTime > Duration.ZERO &&
-                    temperatureCelsius.toDoubleOrNull() != null
+                    temperatureCelsius != null
 
                 val noErrors = brewingTimeError == null &&
                     temperatureError == null &&

@@ -250,20 +250,19 @@ private fun TimerContent(
     // Edit session parameters sheet
     if (state.showEditSheet && state.editWaterType != null) {
         EditSessionParametersSheet(
-            temperatureValue = state.editTemperatureCelsius,
-            waterQuantityValue = state.editWaterQuantityMl,
-            teaQuantityValue = state.editTeaQuantityGrams,
+            temperatureCelsius = state.editTemperatureCelsius,
+            waterQuantityMl = state.editWaterQuantityMl,
+            teaQuantityGrams = state.editTeaQuantityGrams,
             isTeaBag = state.editIsTeaBag,
             waterType = state.editWaterType,
             temperatureUnit = state.userPreferences.temperatureUnit,
             volumeUnit = state.userPreferences.volumeUnit,
+            weightUnit = state.userPreferences.weightUnit,
             onTemperatureChanged = { onIntent(TimerIntent.EditTemperatureChanged(it)) },
             onWaterQuantityChanged = { onIntent(TimerIntent.EditWaterQuantityChanged(it)) },
             onTeaQuantityChanged = { onIntent(TimerIntent.EditTeaQuantityChanged(it)) },
             onTeaBagModeChanged = { onIntent(TimerIntent.EditTeaBagModeChanged(it)) },
             onWaterTypeSelected = { onIntent(TimerIntent.EditWaterTypeChanged(it)) },
-            onToggleTemperatureUnit = { onIntent(TimerIntent.ToggleTemperatureUnit) },
-            onToggleVolumeUnit = { onIntent(TimerIntent.ToggleVolumeUnit) },
             onSave = { onIntent(TimerIntent.ConfirmEditSession) },
             onDismiss = { onIntent(TimerIntent.CancelEditSession) },
         )

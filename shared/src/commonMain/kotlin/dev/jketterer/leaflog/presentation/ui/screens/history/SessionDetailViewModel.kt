@@ -144,7 +144,6 @@ class SessionDetailViewModel(
                 )
             }
 
-            is SessionDetailIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
             is SessionDetailIntent.ConfirmAddSteep -> confirmAddSteep()
 
             // navigation intents
@@ -345,13 +344,6 @@ class SessionDetailViewModel(
                 temperatureCelsius = temperature,
                 waterQuantityMl = session.currentSteep.waterQuantityMl,
             ).onFailure { messages.failure(it, Res.string.couldnt_add_steep) }
-        }
-    }
-
-    private fun toggleTemperatureUnit() {
-        viewModelScope.launch {
-            val newUnit = _state.value.userPreferences.temperatureUnit.toggle()
-            preferencesRepository.updateTemperatureUnit(newUnit)
         }
     }
 

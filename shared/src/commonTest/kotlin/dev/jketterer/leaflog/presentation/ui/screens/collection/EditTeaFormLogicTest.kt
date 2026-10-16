@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.error_quantity_positive
+import leaf_log.shared.generated.resources.error_water_quantity_required
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -36,6 +39,13 @@ class EditTeaFormLogicTest {
     fun `below freezing or above boiling is rejected`() {
         assertNotNull(validateTemperature(-0.5))
         assertNotNull(validateTemperature(100.5))
+    }
+
+    @Test
+    fun `a missing quantity reads as missing and a non-positive one as invalid`() {
+        assertEquals(Res.string.error_water_quantity_required, validateQuantity(null, Res.string.error_water_quantity_required))
+        assertEquals(Res.string.error_quantity_positive, validateQuantity(0.0, Res.string.error_water_quantity_required))
+        assertNull(validateQuantity(0.1, Res.string.error_water_quantity_required))
     }
 
     // --- temperature seeding -------------------------------------------------------------------

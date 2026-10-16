@@ -25,7 +25,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -35,25 +34,22 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
-import dev.jketterer.leaflog.presentation.ui.components.common.Preset
-import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
-import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
-import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_tea_quantity
+import leaf_log.shared.generated.resources.field_temperature
+import leaf_log.shared.generated.resources.field_water_quantity
 import leaf_log.shared.generated.resources.no_teas_found
 import org.jetbrains.compose.resources.stringResource
 
@@ -68,10 +64,10 @@ fun QuickTimerDetailsSheet(
     step: Int,
     selectedTea: Tea?,
     selectedVessel: BrewingVessel?,
-    teaQuantityGrams: String,
+    teaQuantityGrams: Double?,
     isTeaBag: Boolean,
-    temperatureDisplay: String,
-    waterQuantityDisplay: String,
+    temperatureCelsius: Double?,
+    waterQuantityMl: Double?,
     waterType: WaterType,
     prefillSource: PrefillSource,
     availableTeas: List<Tea>,
@@ -81,12 +77,10 @@ fun QuickTimerDetailsSheet(
     onTeaSearchQueryChanged: (String) -> Unit,
     onTeaSelected: (String) -> Unit,
     onVesselSelected: (String) -> Unit,
-    onTeaQuantityChanged: (String) -> Unit,
+    onTeaQuantityChanged: (Double?) -> Unit,
     onTeaBagModeChanged: (Boolean) -> Unit,
-    onTemperatureChanged: (String) -> Unit,
-    onToggleTemperatureUnit: () -> Unit,
-    onWaterQuantityChanged: (String) -> Unit,
-    onToggleVolumeUnit: () -> Unit,
+    onTemperatureChanged: (Double?) -> Unit,
+    onWaterQuantityChanged: (Double?) -> Unit,
     onWaterTypeSelected: (WaterType) -> Unit,
     onNextStep: () -> Unit,
     onPreviousStep: () -> Unit,
@@ -121,8 +115,8 @@ fun QuickTimerDetailsSheet(
                 selectedTea = selectedTea,
                 teaQuantityGrams = teaQuantityGrams,
                 isTeaBag = isTeaBag,
-                temperatureDisplay = temperatureDisplay,
-                waterQuantityDisplay = waterQuantityDisplay,
+                temperatureCelsius = temperatureCelsius,
+                waterQuantityMl = waterQuantityMl,
                 isWaterQuantityEditable = isWaterQuantityEditable,
                 waterType = waterType,
                 prefillSource = prefillSource,
@@ -130,9 +124,7 @@ fun QuickTimerDetailsSheet(
                 onTeaQuantityChanged = onTeaQuantityChanged,
                 onTeaBagModeChanged = onTeaBagModeChanged,
                 onTemperatureChanged = onTemperatureChanged,
-                onToggleTemperatureUnit = onToggleTemperatureUnit,
                 onWaterQuantityChanged = onWaterQuantityChanged,
-                onToggleVolumeUnit = onToggleVolumeUnit,
                 onWaterTypeSelected = onWaterTypeSelected,
                 onBack = onPreviousStep,
                 onDone = onDismiss,
@@ -286,49 +278,25 @@ private fun Step1Content(
 @Composable
 private fun Step2Content(
     selectedTea: Tea?,
-    teaQuantityGrams: String,
+    teaQuantityGrams: Double?,
     isTeaBag: Boolean,
-    temperatureDisplay: String,
-    waterQuantityDisplay: String,
+    temperatureCelsius: Double?,
+    waterQuantityMl: Double?,
     isWaterQuantityEditable: Boolean,
     waterType: WaterType,
     prefillSource: PrefillSource,
     userPreferences: UserPreferences,
-    onTeaQuantityChanged: (String) -> Unit,
+    onTeaQuantityChanged: (Double?) -> Unit,
     onTeaBagModeChanged: (Boolean) -> Unit,
-    onTemperatureChanged: (String) -> Unit,
-    onToggleTemperatureUnit: () -> Unit,
-    onWaterQuantityChanged: (String) -> Unit,
-    onToggleVolumeUnit: () -> Unit,
+    onTemperatureChanged: (Double?) -> Unit,
+    onWaterQuantityChanged: (Double?) -> Unit,
     onWaterTypeSelected: (WaterType) -> Unit,
     onBack: () -> Unit,
     onDone: () -> Unit,
 ) {
-    val isValid = temperatureDisplay.isNotBlank() &&
-            (!isWaterQuantityEditable || waterQuantityDisplay.isNotBlank()) &&
-            (isTeaBag || teaQuantityGrams.isNotBlank())
-
-    val tempUnit = userPreferences.temperatureUnit
-    val volUnit = userPreferences.volumeUnit
-
-    val tempPresets = remember(tempUnit) {
-        when (tempUnit) {
-            TemperatureUnit.CELSIUS -> listOf(60, 70, 75, 80, 85, 90, 95, 100)
-            TemperatureUnit.FAHRENHEIT -> listOf(140, 160, 170, 175, 185, 195, 200, 208, 212)
-        }.map { Preset("$it${tempUnit.symbol}", it.toString()) }
-    }
-
-    val waterPresets = remember(volUnit) {
-        when (volUnit) {
-            VolumeUnit.MILLILITERS -> listOf(100, 150, 200, 250, 300, 400, 500)
-            VolumeUnit.FLUID_OUNCES -> listOf(4, 6, 8, 10, 12, 16)
-        }.map { Preset("$it ${volUnit.symbol}", it.toString()) }
-    }
-
-    val teaQtyPresets = remember {
-        listOf("1", "2", "3", "4", "5", "7", "10").map { Preset("${it}g", it) }
-    }
-    val focusManager = LocalFocusManager.current
+    val isValid = temperatureCelsius != null &&
+            (!isWaterQuantityEditable || waterQuantityMl != null) &&
+            (isTeaBag || teaQuantityGrams != null)
 
     Column(
         modifier = Modifier
@@ -379,75 +347,39 @@ private fun Step2Content(
         if (!isTeaBag) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            Column {
-                OutlinedTextField(
-                    value = teaQuantityGrams,
-                    onValueChange = onTeaQuantityChanged,
-                    label = { Text("Tea Quantity") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    suffix = { Text("g") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                )
-                PresetChips(
-                    presets = teaQtyPresets,
-                    currentValue = teaQuantityGrams,
-                    isSelected = { preset, current ->
-                        preset.toFloatOrNull() == current?.toFloatOrNull()
-                    },
-                    onSelect = onTeaQuantityChanged,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            UnitInputField(
+                value = teaQuantityGrams,
+                onValueChange = onTeaQuantityChanged,
+                unit = userPreferences.weightUnit,
+                label = stringResource(Res.string.field_tea_quantity),
+                presets = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Temperature
-        Column {
-            TemperatureInputField(
-                value = temperatureDisplay,
-                onValueChange = onTemperatureChanged,
-                currentUnit = tempUnit,
-                onToggleUnit = onToggleTemperatureUnit,
-                label = { Text("Temperature") },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            PresetChips(
-                presets = tempPresets,
-                currentValue = temperatureDisplay,
-                isSelected = { preset, current ->
-                    preset.toFloatOrNull() == current?.toFloatOrNull()
-                },
-                onSelect = onTemperatureChanged,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+        UnitInputField(
+            value = temperatureCelsius,
+            onValueChange = onTemperatureChanged,
+            unit = userPreferences.temperatureUnit,
+            label = stringResource(Res.string.field_temperature),
+            presets = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         // Water Quantity — only shown when vessel has no capacity set
         if (isWaterQuantityEditable) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            Column {
-                VolumeInputField(
-                    value = waterQuantityDisplay,
-                    onValueChange = onWaterQuantityChanged,
-                    currentUnit = volUnit,
-                    onToggleUnit = onToggleVolumeUnit,
-                    label = { Text("Water Quantity") },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                PresetChips(
-                    presets = waterPresets,
-                    currentValue = waterQuantityDisplay,
-                    isSelected = { preset, current ->
-                        preset.toFloatOrNull() == current?.toFloatOrNull()
-                    },
-                    onSelect = onWaterQuantityChanged,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            UnitInputField(
+                value = waterQuantityMl,
+                onValueChange = onWaterQuantityChanged,
+                unit = userPreferences.volumeUnit,
+                label = stringResource(Res.string.field_water_quantity),
+                presets = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -553,10 +485,10 @@ private fun Step2ContentLooseLeafPreview() {
                 updatedAt = PreviewInstant,
                 syncStatus = dev.jketterer.leaflog.domain.models.SyncStatus.LOCAL_ONLY,
             ),
-            teaQuantityGrams = "5",
+            teaQuantityGrams = 5.0,
             isTeaBag = false,
-            temperatureDisplay = "80",
-            waterQuantityDisplay = "120",
+            temperatureCelsius = 80.0,
+            waterQuantityMl = 120.0,
             isWaterQuantityEditable = false,
             waterType = WaterType.FILTERED,
             prefillSource = PrefillSource.SavedConfig,
@@ -564,9 +496,7 @@ private fun Step2ContentLooseLeafPreview() {
             onTeaQuantityChanged = {},
             onTeaBagModeChanged = {},
             onTemperatureChanged = {},
-            onToggleTemperatureUnit = {},
             onWaterQuantityChanged = {},
-            onToggleVolumeUnit = {},
             onWaterTypeSelected = {},
             onBack = {},
             onDone = {},
@@ -587,10 +517,10 @@ private fun Step2ContentTeaBagPreview() {
                 updatedAt = PreviewInstant,
                 syncStatus = dev.jketterer.leaflog.domain.models.SyncStatus.LOCAL_ONLY,
             ),
-            teaQuantityGrams = "",
+            teaQuantityGrams = null,
             isTeaBag = true,
-            temperatureDisplay = "80",
-            waterQuantityDisplay = "",
+            temperatureCelsius = 80.0,
+            waterQuantityMl = null,
             isWaterQuantityEditable = true,
             waterType = WaterType.FILTERED,
             prefillSource = PrefillSource.None,
@@ -598,9 +528,7 @@ private fun Step2ContentTeaBagPreview() {
             onTeaQuantityChanged = {},
             onTeaBagModeChanged = {},
             onTemperatureChanged = {},
-            onToggleTemperatureUnit = {},
             onWaterQuantityChanged = {},
-            onToggleVolumeUnit = {},
             onWaterTypeSelected = {},
             onBack = {},
             onDone = {},

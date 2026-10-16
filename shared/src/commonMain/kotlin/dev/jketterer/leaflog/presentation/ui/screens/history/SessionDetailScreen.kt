@@ -406,11 +406,10 @@ private fun SessionDetailContent(
         NextSteepParameterDialog(
             nextSteepNumber = lastSteep.number + 1,
             duration = state.nextSteepDuration,
-            temperature = state.nextSteepTemperature ?: lastSteep.temperatureCelsius,
+            temperatureCelsius = state.nextSteepTemperature,
             temperatureUnit = state.userPreferences.temperatureUnit,
             onDurationChange = { onIntent(SessionDetailIntent.UpdateNextSteepDuration(it)) },
             onTemperatureChange = { onIntent(SessionDetailIntent.UpdateNextSteepTemperature(it)) },
-            onToggleUnit = { onIntent(SessionDetailIntent.ToggleTemperatureUnit) },
             onConfirm = { onIntent(SessionDetailIntent.ConfirmAddSteep) },
             onDismiss = { onIntent(SessionDetailIntent.CancelAddSteep) },
         )

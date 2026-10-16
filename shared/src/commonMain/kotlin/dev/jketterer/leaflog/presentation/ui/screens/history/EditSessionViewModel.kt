@@ -17,6 +17,8 @@ import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurat
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.screens.collection.validateQuantity
+import dev.jketterer.leaflog.presentation.ui.screens.collection.validateTemperature
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
@@ -31,9 +33,11 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_save_photo
 import leaf_log.shared.generated.resources.couldnt_save_session
+import leaf_log.shared.generated.resources.error_tea_quantity_required
+import leaf_log.shared.generated.resources.error_temperature_required
+import leaf_log.shared.generated.resources.error_water_quantity_required
 import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.time.Duration
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class EditSessionViewModel(
@@ -87,15 +91,15 @@ class EditSessionViewModel(
             )
 
             is EditSessionIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
-            is EditSessionIntent.TemperatureChanged -> updateTemperature(intent.temperature)
+            is EditSessionIntent.TemperatureChanged -> updateTemperature(intent.celsius)
             is EditSessionIntent.VesselSelected -> selectVessel(intent.vessel)
             is EditSessionIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
-            is EditSessionIntent.WaterQuantityChanged -> updateWaterQuantity(intent.quantity)
-            is EditSessionIntent.TeaQuantityChanged -> updateTeaQuantity(intent.quantity)
+            is EditSessionIntent.WaterQuantityChanged -> updateWaterQuantity(intent.milliliters)
+            is EditSessionIntent.TeaQuantityChanged -> updateTeaQuantity(intent.grams)
             is EditSessionIntent.TeaBagModeChanged -> _state.update {
                 it.copy(
                     isTeaBag = intent.isTeaBag,
-                    teaQuantityGrams = if (intent.isTeaBag) "" else it.teaQuantityGrams,
+                    teaQuantityGrams = if (intent.isTeaBag) null else it.teaQuantityGrams,
                     teaQuantityError = null,
                 )
             }
@@ -103,8 +107,6 @@ class EditSessionViewModel(
             is EditSessionIntent.LocationChanged -> updateLocation(intent.location)
             is EditSessionIntent.RatingChanged -> updateRating(intent.rating)
             is EditSessionIntent.NotesChanged -> updateNotes(intent.notes)
-            is EditSessionIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
-            is EditSessionIntent.ToggleVolumeUnit -> toggleVolumeUnit()
             is EditSessionIntent.PhotoSelected -> addPhoto(intent.imageBytes)
             is EditSessionIntent.PhotoRemoved -> removePhoto(intent.path)
             is EditSessionIntent.SaveClicked -> save()
@@ -183,11 +185,11 @@ class EditSessionViewModel(
                             steepNumber = steep.number,
                             teaName = tea?.name,
                             brewingTime = steep.brewingTime,
-                            temperatureCelsius = steep.temperatureCelsius.toString(),
+                            temperatureCelsius = steep.temperatureCelsius,
                             selectedVessel = vessel,
                             selectedWaterType = session.waterType,
-                            waterQuantityMl = steep.waterQuantityMl.toString(),
-                            teaQuantityGrams = session.teaQuantityGrams?.toString() ?: "",
+                            waterQuantityMl = steep.waterQuantityMl,
+                            teaQuantityGrams = session.teaQuantityGrams?.toDouble(),
                             isTeaBag = session.teaQuantityGrams == null,
                             location = session.location ?: "",
                             rating = steep.rating ?: 0f,
@@ -220,38 +222,15 @@ class EditSessionViewModel(
         }
     }
 
-    private fun updateTemperature(temperature: String) {
-        val currentState = _state.value
-        val tempUnit = currentState.userPreferences.temperatureUnit
-
-        // Convert from display unit to storage unit (Celsius)
-        val storageValue = temperature.toIntOrNull()?.let { displayValue ->
-            tempUnit.toCelsius(displayValue).toString()
-        } ?: temperature
-
-        // Validate in display unit for user-friendly error messages
-        val error = when {
-            temperature.isBlank() -> "Temperature is required"
-            temperature.toIntOrNull() == null -> "Invalid temperature"
-            else -> {
-                val value = temperature.toInt()
-                when (tempUnit) {
-                    dev.jketterer.leaflog.domain.models.TemperatureUnit.CELSIUS -> {
-                        if (value !in 0..100) "Temperature must be 0-100°C" else null
-                    }
-
-                    dev.jketterer.leaflog.domain.models.TemperatureUnit.FAHRENHEIT -> {
-                        if (value !in 32..212) "Temperature must be 32-212°F" else null
-                    }
-                }
-            }
-        }
-
+    private fun updateTemperature(celsius: Double?) {
         _state.update {
             it.copy(
-                temperatureCelsius = storageValue,
-                temperatureDisplay = temperature,
-                temperatureError = error
+                temperatureCelsius = celsius,
+                temperatureError = if (celsius == null) {
+                    Res.string.error_temperature_required
+                } else {
+                    validateTemperature(celsius)
+                },
             )
         }
     }
@@ -269,44 +248,23 @@ class EditSessionViewModel(
         _state.update { it.copy(selectedWaterType = waterType) }
     }
 
-    private fun updateWaterQuantity(quantity: String) {
-        val currentState = _state.value
-        val volumeUnit = currentState.userPreferences.volumeUnit
-
-        // Convert from display unit to storage unit (mL)
-        val storageValue = quantity.toIntOrNull()?.let { displayValue ->
-            volumeUnit.toMilliliters(displayValue).toString()
-        } ?: quantity
-
-        val error = when {
-            quantity.isBlank() -> "Water quantity is required"
-            quantity.toIntOrNull() == null -> "Invalid quantity"
-            storageValue.toIntOrNull()?.let { it <= 0 } == true -> "Quantity must be greater than 0"
-            else -> null
-        }
-
+    private fun updateWaterQuantity(milliliters: Double?) {
         _state.update {
             it.copy(
-                waterQuantityMl = storageValue,
-                waterQuantityDisplay = quantity,
-                waterQuantityError = error
+                waterQuantityMl = milliliters,
+                waterQuantityError = validateQuantity(
+                    milliliters,
+                    Res.string.error_water_quantity_required
+                ),
             )
         }
     }
 
-    private fun updateTeaQuantity(quantity: String) {
-        val error = if (quantity.isNotBlank()) {
-            when {
-                quantity.toFloatOrNull() == null -> "Invalid quantity"
-                quantity.toFloat() <= 0 -> "Quantity must be greater than 0"
-                else -> null
-            }
-        } else null
-
+    private fun updateTeaQuantity(grams: Double?) {
         _state.update {
             it.copy(
-                teaQuantityGrams = quantity,
-                teaQuantityError = error
+                teaQuantityGrams = grams,
+                teaQuantityError = validateQuantity(grams, Res.string.error_tea_quantity_required),
             )
         }
     }
@@ -332,21 +290,6 @@ class EditSessionViewModel(
         _state.update { it.copy(notes = notes) }
     }
 
-    private fun toggleTemperatureUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateTemperatureUnit(_state.value.userPreferences.temperatureUnit.toggle())
-            _state.update { it.copy(temperatureDisplay = "") } // Clear so screen reconverts from storage
-        }
-    }
-
-    private fun toggleVolumeUnit() {
-        viewModelScope.launch {
-            preferencesRepository.updateVolumeUnit(_state.value.userPreferences.volumeUnit.toggle())
-            _state.update { it.copy(waterQuantityDisplay = "") } // Clear so screen reconverts from storage
-        }
-    }
-
-    @OptIn(ExperimentalUuidApi::class)
     private fun addPhoto(imageBytes: ByteArray) {
         viewModelScope.launch {
             try {
@@ -391,10 +334,9 @@ class EditSessionViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
 
-            // Unit fields go in only when changed, so an untouched one isn't nudged by conversion
             val result = runCatching {
                 if (currentState.isParentSession) {
-                    val waterQuantityMl = currentState.waterQuantityMl.toDoubleOrNull()
+                    val waterQuantityMl = currentState.waterQuantityMl
                     if (waterQuantityMl != null && waterQuantityMl != steep.waterQuantityMl) {
                         editSteepUseCase(steep.id) { it.copy(waterQuantityMl = waterQuantityMl) }
                             .getOrThrow()
@@ -404,17 +346,16 @@ class EditSessionViewModel(
                             vesselId = currentState.selectedVessel?.id ?: it.vesselId,
                             waterType = currentState.selectedWaterType,
                             teaQuantityGrams = if (currentState.isTeaBag) null
-                            else currentState.teaQuantityGrams.toFloatOrNull(),
+                            else currentState.teaQuantityGrams?.toFloat(),
                             location = currentState.location,
                         )
                     }.getOrThrow()
                 } else {
-                    val temperatureCelsius = currentState.temperatureCelsius.toDoubleOrNull()
-                        ?.takeIf { it != steep.temperatureCelsius }
                     editSteepUseCase(steep.id) {
                         it.copy(
                             brewingTime = currentState.brewingTime ?: it.brewingTime,
-                            temperatureCelsius = temperatureCelsius ?: it.temperatureCelsius,
+                            temperatureCelsius = currentState.temperatureCelsius
+                                ?: it.temperatureCelsius,
                             rating = currentState.rating.takeIf { r -> r > 0f },
                             notes = currentState.notes,
                             photos = currentState.photos,

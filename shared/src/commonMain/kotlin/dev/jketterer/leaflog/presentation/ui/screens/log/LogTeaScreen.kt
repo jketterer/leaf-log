@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,12 +44,17 @@ import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.CompleteSessionDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_temperature_required
+import leaf_log.shared.generated.resources.field_water_quantity_required
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -101,7 +105,6 @@ fun LogTeaScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LogTeaContent(
     state: LogTeaState,
@@ -217,6 +220,7 @@ private fun LogTeaContent(
                         TeaQuantitySection(
                             isTeaBag = state.isTeaBag,
                             teaQuantityGrams = state.teaQuantityGrams,
+                            weightUnit = state.userPreferences.weightUnit,
                             errorMessage = state.teaQuantityError,
                             onTeaBagModeChanged = { onIntent(LogTeaIntent.TeaBagModeChanged(it)) },
                             onTeaQuantityChanged = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
@@ -232,38 +236,28 @@ private fun LogTeaContent(
                     }
 
                     item(key = "temperature") {
-                        val tempUnit = state.userPreferences.temperatureUnit
-                        val displayValue = state.temperatureDisplay.ifEmpty {
-                            state.temperatureCelsius.toDoubleOrNull()?.let { celsius ->
-                                tempUnit.fromCelsius(celsius).toString()
-                            } ?: state.temperatureCelsius
-                        }
-
-                        TemperatureSection(
-                            displayValue = displayValue,
-                            unit = tempUnit,
-                            errorMessage = state.temperatureError,
-                            onTemperatureChanged = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
-                            onToggleUnit = { onIntent(LogTeaIntent.ToggleTemperatureUnit) },
+                        UnitInputField(
+                            value = state.temperatureCelsius,
+                            onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
+                            unit = state.userPreferences.temperatureUnit,
+                            label = stringResource(Res.string.field_temperature_required),
+                            isError = state.temperatureError != null,
+                            supportingText = state.temperatureError?.let { stringResource(it) },
+                            presets = true,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
 
                     item(key = "water_quantity") {
-                        val volUnit = state.userPreferences.volumeUnit
-                        val displayValue = state.waterQuantityDisplay.ifEmpty {
-                            state.waterQuantityMl.toDoubleOrNull()?.let { ml ->
-                                volUnit.fromMilliliters(ml).toString()
-                            } ?: state.waterQuantityMl
-                        }
-
-                        WaterQuantitySection(
-                            displayValue = displayValue,
-                            unit = volUnit,
-                            errorMessage = state.waterQuantityError,
-                            onWaterQuantityChanged = {
-                                onIntent(LogTeaIntent.WaterQuantityChanged(it))
-                            },
-                            onToggleUnit = { onIntent(LogTeaIntent.ToggleVolumeUnit) },
+                        UnitInputField(
+                            value = state.waterQuantityMl,
+                            onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
+                            unit = state.userPreferences.volumeUnit,
+                            label = stringResource(Res.string.field_water_quantity_required),
+                            isError = state.waterQuantityError != null,
+                            supportingText = state.waterQuantityError?.let { stringResource(it) },
+                            presets = true,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
 
@@ -407,9 +401,9 @@ private fun LogTeaScreenPreview() {
                     name = "Green",
                     colorHex = "#4CAF50",
                 ),
-                teaQuantityGrams = "5",
-                waterQuantityMl = "200",
-                temperatureCelsius = "80",
+                teaQuantityGrams = 5.0,
+                waterQuantityMl = 200.0,
+                temperatureCelsius = 80.0,
                 brewingTime = 2.minutes + 30.seconds,
                 selectedVessel = BrewingVessel(
                     id = "gaiwan",
@@ -469,8 +463,8 @@ private fun LogTeaScreenTeaBagPreview() {
                     name = "Black",
                     colorHex = "#795548",
                 ),
-                waterQuantityMl = "250",
-                temperatureCelsius = "100",
+                waterQuantityMl = 250.0,
+                temperatureCelsius = 100.0,
                 brewingTime = 3.minutes,
                 isTeaBag = true,
                 selectedVessel = BrewingVessel(
@@ -519,10 +513,10 @@ private fun LogTeaScreenOptionalFilledPreview() {
                     name = "Green",
                     colorHex = "#4CAF50",
                 ),
-                waterQuantityMl = "200",
-                temperatureCelsius = "80",
+                waterQuantityMl = 200.0,
+                temperatureCelsius = 80.0,
                 brewingTime = 2.minutes + 30.seconds,
-                teaQuantityGrams = "5",
+                teaQuantityGrams = 5.0,
                 location = "Kitchen",
                 selectedWaterType = WaterType.SPRING,
                 selectedVessel = BrewingVessel(

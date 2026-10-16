@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.error_quantity_positive
 import leaf_log.shared.generated.resources.error_temperature_range
 import org.jetbrains.compose.resources.StringResource
 
@@ -14,6 +15,13 @@ internal fun validateTeaName(name: String): String? =
  */
 internal fun validateTemperature(celsius: Double?): StringResource? =
     if (celsius != null && celsius !in 0.0..100.0) Res.string.error_temperature_range else null
+
+/** Error for a required tea or water quantity: [missing] when empty, or one that isn't positive. */
+internal fun validateQuantity(value: Double?, missing: StringResource): StringResource? = when {
+    value == null -> missing
+    value <= 0 -> Res.string.error_quantity_positive
+    else -> null
+}
 
 /**
  * The temperature field after a tea type is picked, and which type it now came from.

@@ -16,16 +16,23 @@
     <string name="unit_switch_to">Switch to %1$s</string>
 
     <!-- Form fields -->
+    <string name="field_temperature">Temperature</string>
     <string name="field_temperature_required">Temperature *</string>
     <string name="field_default_temperature">Default Temperature</string>
+    <string name="field_water_quantity">Water Quantity</string>
     <string name="field_water_quantity_required">Water Quantity *</string>
     <string name="field_tea_quantity">Tea Quantity</string>
+    <string name="field_tea_quantity_required">Tea Quantity *</string>
     <string name="field_tea_quantity_hint">Optional - leave empty for tea bags</string>
     <string name="field_capacity">Capacity</string>
     <string name="field_optional">Optional</string>
     <string name="field_capacity_hint">Optional - auto-fills water quantity when selected</string>
     <string name="error_temperature_range">Must be between freezing and boiling</string>
     <string name="error_capacity_positive">Capacity must be greater than 0</string>
+    <string name="error_quantity_positive">Quantity must be greater than 0</string>
+    <string name="error_tea_quantity_required">Tea quantity is required</string>
+    <string name="error_water_quantity_required">Water quantity is required</string>
+    <string name="error_temperature_required">Temperature is required</string>
 
     <!-- Dates -->
     <!-- A date, then a clock time: "Jan 15, 2024 at 2:30 PM" -->

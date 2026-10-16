@@ -25,7 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
@@ -183,8 +185,8 @@ private fun QuickTimerContent(
             selectedVessel = state.selectedVessel,
             teaQuantityGrams = state.teaQuantityGrams,
             isTeaBag = state.isTeaBag,
-            temperatureDisplay = state.temperatureDisplay,
-            waterQuantityDisplay = state.waterQuantityDisplay,
+            temperatureCelsius = state.temperatureCelsius,
+            waterQuantityMl = state.waterQuantityMl,
             waterType = state.waterType,
             prefillSource = state.prefillSource,
             availableTeas = state.filteredTeas,
@@ -197,9 +199,7 @@ private fun QuickTimerContent(
             onTeaQuantityChanged = { onIntent(QuickTimerIntent.TeaQuantityChanged(it)) },
             onTeaBagModeChanged = { onIntent(QuickTimerIntent.TeaBagModeChanged(it)) },
             onTemperatureChanged = { onIntent(QuickTimerIntent.TemperatureChanged(it)) },
-            onToggleTemperatureUnit = { onIntent(QuickTimerIntent.ToggleTemperatureUnit) },
             onWaterQuantityChanged = { onIntent(QuickTimerIntent.WaterQuantityChanged(it)) },
-            onToggleVolumeUnit = { onIntent(QuickTimerIntent.ToggleVolumeUnit) },
             onWaterTypeSelected = { onIntent(QuickTimerIntent.WaterTypeSelected(it)) },
             onNextStep = { onIntent(QuickTimerIntent.NextDetailsStep) },
             onPreviousStep = { onIntent(QuickTimerIntent.PreviousDetailsStep) },
@@ -226,12 +226,13 @@ private fun QuickTimerRunningContent(
         ) {
             // Brewing parameters card
             SteepParameterCard(
-                teaQuantity = state.teaQuantityGrams.takeIf { it.isNotBlank() }
-                    ?.let { "${it}g" },
-                waterQuantity = state.waterQuantityDisplay.takeIf { it.isNotBlank() }
-                    ?.let { "$it ${state.userPreferences.volumeUnit.symbol}" },
-                temperature = state.temperatureDisplay.takeIf { it.isNotBlank() }
-                    ?.let { "$it${state.userPreferences.temperatureUnit.symbol}" },
+                teaQuantity = state.teaQuantityGrams?.let { "${it.toFloat()}g" },
+                waterQuantity = state.waterQuantityMl?.let {
+                    VolumeFormatter.format(it, state.userPreferences.volumeUnit)
+                },
+                temperature = state.temperatureCelsius?.let {
+                    TemperatureFormatter.format(it, state.userPreferences.temperatureUnit)
+                },
                 brewingTime = formatBrewingTime((state.originalDuration ?: state.totalDuration).inWholeSeconds.toInt()),
                 onEditClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },
             )

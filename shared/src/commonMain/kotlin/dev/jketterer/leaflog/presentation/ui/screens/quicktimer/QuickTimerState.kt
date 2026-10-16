@@ -21,10 +21,10 @@ data class QuickTimerState(
     // Progressive details
     val selectedTea: Tea? = null,
     val selectedVessel: BrewingVessel? = null,
-    val teaQuantityGrams: String = "",
+    val teaQuantityGrams: Double? = null,
     val isTeaBag: Boolean = false,
-    val temperatureDisplay: String = "", // value in user's preferred unit
-    val waterQuantityDisplay: String = "", // value in user's preferred unit
+    val temperatureCelsius: Double? = null,
+    val waterQuantityMl: Double? = null,
     val waterType: WaterType = WaterType.FILTERED,
     val prefillSource: PrefillSource = PrefillSource.None,
 
@@ -47,11 +47,6 @@ data class QuickTimerState(
     val showResetConfirmation: Boolean = false,
     val showCompletionPrompt: Boolean = false,
     val showDiscardCompleteConfirmation: Boolean = false,
-
-    // Next session details
-    val nextSteepDuration: Duration? = null,
-    val nextSteepTemperature: Int? = null,
-    val nextSteepWaterQuantity: Int? = null,
 
     // Auto-saved in-progress session (persisted when timer completes with required details)
     val inProgressSessionId: String? = null,
@@ -117,9 +112,9 @@ data class QuickTimerState(
     val hasRequiredDetails: Boolean
         get() = selectedTea != null &&
                 selectedVessel != null &&
-                temperatureDisplay.isNotBlank() &&
-                waterQuantityDisplay.isNotBlank() &&
-                (isTeaBag || teaQuantityGrams.isNotBlank())
+                temperatureCelsius != null &&
+                waterQuantityMl != null &&
+                (isTeaBag || teaQuantityGrams != null)
 
     /**
      * Filtered teas based on search query.

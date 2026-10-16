@@ -17,15 +17,13 @@ sealed interface LogTeaIntent {
 
     // Parameter changes
     data class TeaBagModeChanged(val isTeaBag: Boolean) : LogTeaIntent
-    data class TeaQuantityChanged(val quantity: String) : LogTeaIntent
-    data class WaterQuantityChanged(val quantity: String) : LogTeaIntent
-    data class TemperatureChanged(val temperature: String) : LogTeaIntent
+    data class TeaQuantityChanged(val grams: Double?) : LogTeaIntent
+    data class WaterQuantityChanged(val milliliters: Double?) : LogTeaIntent
+    data class TemperatureChanged(val celsius: Double?) : LogTeaIntent
     data class BrewingTimeChanged(val duration: Duration) : LogTeaIntent
     data class VesselSelected(val vesselId: String?) : LogTeaIntent
     data class WaterTypeSelected(val waterType: WaterType) : LogTeaIntent
     data class LocationChanged(val location: String) : LogTeaIntent
-    data object ToggleTemperatureUnit : LogTeaIntent
-    data object ToggleVolumeUnit : LogTeaIntent
 
     // Photo management
     data object AddPhotoClicked : LogTeaIntent

@@ -600,7 +600,7 @@ state across rotation and process death.
 - [x] `feat: one unit input field with local toggles`: the component and its pure functions, then
   Edit Tea, Edit Vessel, Edit Tea Type and Brewing Method. Tests: flips round-trip, 93 °C, decimal
   input, an untouched field reports nothing.
-- [ ] `refactor: brew and journal forms on the unit field`: Log Tea, Edit Session, the parameter
+- [x] `refactor: brew and journal forms on the unit field`: Log Tea, Edit Session, the parameter
   sheets, the next-steep dialog, Quick Timer. `editedUnitValue` and the old variants go.
 - [ ] `feat: honour the weight unit everywhere`: `LocalUnits`, the Settings row, every hardcoded
   `"g"`, the local display toggles, the CLAUDE.md rule rewritten.

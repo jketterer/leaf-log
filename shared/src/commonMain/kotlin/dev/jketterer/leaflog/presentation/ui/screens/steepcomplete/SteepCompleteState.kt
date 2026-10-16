@@ -28,9 +28,9 @@ data class SteepCompleteState(
     // Edit parameters sheet
     val showEditParametersSheet: Boolean = false,
     val editBrewingTime: Duration = Duration.ZERO,
-    val editTemperatureCelsius: String = "",
-    val editWaterQuantityMl: String = "",
-    val editTeaQuantityGrams: String = "",
+    val editTemperatureCelsius: Double? = null,
+    val editWaterQuantityMl: Double? = null,
+    val editTeaQuantityGrams: Double? = null,
     val editIsTeaBag: Boolean = false,
     val editWaterType: WaterType? = null,
     // Discard

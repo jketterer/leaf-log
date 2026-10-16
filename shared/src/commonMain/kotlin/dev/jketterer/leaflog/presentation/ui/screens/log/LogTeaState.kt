@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
+import org.jetbrains.compose.resources.StringResource
 import kotlin.time.Duration
 
 data class LogTeaState(
@@ -23,12 +24,10 @@ data class LogTeaState(
     val availableTeaTypes: List<TeaType> = emptyList(),
 
     // Brewing parameters
-    val teaQuantityGrams: String = "",
+    val teaQuantityGrams: Double? = null,
     val isTeaBag: Boolean = false,
-    val waterQuantityMl: String = "",
-    val waterQuantityDisplay: String = "", // User's input in display unit (preserves exact value)
-    val temperatureCelsius: String = "",
-    val temperatureDisplay: String = "", // User's input in display unit (preserves exact value)
+    val waterQuantityMl: Double? = null,
+    val temperatureCelsius: Double? = null,
     val brewingTime: Duration? = null,
     val selectedVessel: BrewingVessel? = null,
     val selectedWaterType: WaterType = WaterType.FILTERED,
@@ -49,9 +48,9 @@ data class LogTeaState(
     // Validation errors
     val teaError: String? = null,
     val vesselError: String? = null,
-    val teaQuantityError: String? = null,
-    val waterQuantityError: String? = null,
-    val temperatureError: String? = null,
+    val teaQuantityError: StringResource? = null,
+    val waterQuantityError: StringResource? = null,
+    val temperatureError: StringResource? = null,
     val brewingTimeError: String? = null,
 
     // UI state
@@ -75,9 +74,9 @@ data class LogTeaState(
                 selectedVessel != null &&
                 teaError == null &&
                 vesselError == null &&
-                (isTeaBag || (teaQuantityGrams.isNotBlank() && teaQuantityError == null)) &&
-                waterQuantityMl.toDoubleOrNull() != null && waterQuantityError == null &&
-                temperatureCelsius.toDoubleOrNull() != null && temperatureError == null &&
+                (isTeaBag || (teaQuantityGrams != null && teaQuantityError == null)) &&
+                waterQuantityMl != null && waterQuantityError == null &&
+                temperatureCelsius != null && temperatureError == null &&
                 brewingTime != null && brewingTimeError == null
 
     val canSave: Boolean

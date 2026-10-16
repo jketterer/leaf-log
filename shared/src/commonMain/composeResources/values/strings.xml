@@ -73,6 +73,7 @@
     <string name="session_finished">Session finished</string>
     <string name="undo">Undo</string>
     <string name="backup_exported">Backup exported</string>
+    <string name="method_already_saved">This method is already saved</string>
 
     <!-- Why an operation failed -->
     <string name="failure_not_found">That no longer exists</string>
@@ -96,6 +97,19 @@
     <string name="couldnt_finish_session">Couldn't finish the session</string>
     <string name="couldnt_discard_steep">Couldn't discard the steep</string>
     <string name="couldnt_delete_session">Couldn't delete the session</string>
+    <string name="couldnt_load_session">Couldn't load the session</string>
+    <string name="couldnt_load_sessions">Couldn't load your sessions</string>
+    <string name="couldnt_save_session">Couldn't save the session</string>
+    <string name="couldnt_save_changes">Couldn't save your changes</string>
+    <string name="couldnt_add_steep">Couldn't add the steep</string>
+    <string name="couldnt_start_steep">Couldn't start the next steep</string>
+    <string name="couldnt_delete_steep">Couldn't delete the steep</string>
+    <string name="couldnt_remove_photo">Couldn't remove the photo</string>
+    <string name="couldnt_start_timer">Couldn't start the timer</string>
+    <string name="couldnt_pause_timer">Couldn't pause the timer</string>
+    <string name="couldnt_resume_timer">Couldn't resume the timer</string>
+    <string name="couldnt_adjust_timer">Couldn't change the time</string>
+    <string name="couldnt_load_analytics">Couldn't load your stats</string>
     <string name="couldnt_update_quick_brew">Couldn't update Quick Brew</string>
     <string name="couldnt_load_teas">Couldn't load your teas</string>
     <string name="couldnt_search">Couldn't search</string>

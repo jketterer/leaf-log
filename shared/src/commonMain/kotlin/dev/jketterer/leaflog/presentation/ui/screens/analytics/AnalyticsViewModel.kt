@@ -21,6 +21,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetTimeInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load_analytics
 import kotlin.time.Clock
 import kotlin.time.Duration
 
@@ -58,6 +61,8 @@ class AnalyticsViewModel(
 
     private val _navEvents = Channel<AnalyticsNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private var loadJob: Job? = null
 
@@ -179,7 +184,7 @@ class AnalyticsViewModel(
     private fun loadAnalytics() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true) }
 
             try {
                 val prefs = preferencesRepository.getPreferences()
@@ -298,12 +303,8 @@ class AnalyticsViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load analytics: ${e.message}",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_analytics)
             }
         }
     }

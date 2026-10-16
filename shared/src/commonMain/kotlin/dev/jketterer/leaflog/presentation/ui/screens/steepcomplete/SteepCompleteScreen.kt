@@ -26,6 +26,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
@@ -66,6 +69,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
@@ -85,6 +89,8 @@ fun SteepCompleteScreen(
     viewModel: SteepCompleteViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(sessionId) {
         viewModel.onIntent(SteepCompleteIntent.Initialize(sessionId))
@@ -104,6 +110,7 @@ fun SteepCompleteScreen(
         state = state,
         onIntent = viewModel::onIntent,
         imageStorage = koinInject(),
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -113,6 +120,7 @@ private fun SteepCompleteContent(
     state: SteepCompleteState,
     onIntent: (SteepCompleteIntent) -> Unit,
     imageStorage: ImageStorage?,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
@@ -154,17 +162,8 @@ private fun SteepCompleteContent(
                     }
                 }
 
-                state.error != null -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = state.error,
-                            color = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                }
+                // Failed to load; the snackbar says why
+                state.session == null -> {}
 
                 else -> {
                     SteepCompleteBody(
@@ -175,6 +174,10 @@ private fun SteepCompleteContent(
                     )
                 }
             }
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
         if (!state.isLoading && state.session != null) {
             SteepCompleteBottomBar(

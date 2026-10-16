@@ -56,9 +56,7 @@ data class QuickTimerState(
     // Auto-saved in-progress session (persisted when timer completes with required details)
     val inProgressSessionId: String? = null,
 
-    // Loading/error
     val isLoading: Boolean = false,
-    val error: String? = null,
 
     // User preferences
     val userPreferences: UserPreferences = UserPreferences(),

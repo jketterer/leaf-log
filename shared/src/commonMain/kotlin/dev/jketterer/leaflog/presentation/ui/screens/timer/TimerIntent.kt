@@ -36,5 +36,4 @@ sealed interface TimerIntent {
     data class EditWaterTypeChanged(val waterType: WaterType) : TimerIntent
     data object ConfirmEditSession : TimerIntent
     data object CancelEditSession : TimerIntent
-    data object ErrorShown : TimerIntent
 }

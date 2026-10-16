@@ -22,7 +22,6 @@ sealed interface HistoryIntent {
     data object ConfirmDeleteSession : HistoryIntent
     data object CancelDeleteSession : HistoryIntent
     data class BrewAgain(val sessionId: String) : HistoryIntent
-    data object ClearError : HistoryIntent
 
     // In-progress completion - navigates to timer screen
     data class CompleteInProgress(val sessionId: String) : HistoryIntent

@@ -16,6 +16,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfiguration
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
@@ -26,6 +27,11 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load_session
+import leaf_log.shared.generated.resources.couldnt_save_photo
+import leaf_log.shared.generated.resources.couldnt_save_session
+import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.time.Duration
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -52,12 +58,14 @@ class EditSessionViewModel(
     private val _navEvents = Channel<EditSessionNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
+    val messages = UiMessages<Nothing>()
+
     private val configSaveDelegate = createConfigurationSaveDelegate(
         saveBrewingConfigurationUseCase = saveBrewingConfigurationUseCase,
         stateFlow = _state,
         getSavedSession = { it.savedSession },
         dismissDialog = { it.copy(showSaveConfigurationDialog = false) },
-        setError = { state, error -> state.copy(error = error) },
+        onFailure = messages::failure,
         createSuccessNavEvent = { EditSessionNavEvent.NavigateBack },
         sendNavEvent = { _navEvents.trySend(it) },
     )
@@ -73,7 +81,6 @@ class EditSessionViewModel(
 
     fun onIntent(intent: EditSessionIntent) {
         when (intent) {
-            is EditSessionIntent.ErrorShown -> _state.update { it.copy(error = null) }
             is EditSessionIntent.LoadSession -> loadSession(
                 intent.sessionId,
                 intent.editFullSession
@@ -192,20 +199,12 @@ class EditSessionViewModel(
                         )
                     }
                 } else {
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = "Session not found"
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.show(Res.string.failure_not_found)
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load session: ${e.message}"
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_session)
             }
         }
     }
@@ -360,7 +359,7 @@ class EditSessionViewModel(
                     it.copy(photos = it.photos + persistedPath)
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(error = "Failed to save photo: ${e.message}") }
+                messages.failure(e, Res.string.couldnt_save_photo)
             }
         }
     }
@@ -448,12 +447,8 @@ class EditSessionViewModel(
                     }
                 }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            error = "Failed to save session: ${e.message}"
-                        )
-                    }
+                    _state.update { it.copy(isSaving = false) }
+                    messages.failure(e, Res.string.couldnt_save_session)
                 }
         }
     }

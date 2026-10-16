@@ -26,7 +26,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -75,6 +76,7 @@ import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfig
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 import kotlinx.datetime.TimeZone
@@ -99,6 +101,8 @@ fun SessionDetailScreen(
     viewModel: SessionDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(sessionId) {
         viewModel.onIntent(SessionDetailIntent.LoadSession(sessionId))
@@ -129,6 +133,7 @@ fun SessionDetailScreen(
     SessionDetailContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -136,6 +141,7 @@ fun SessionDetailScreen(
 private fun SessionDetailContent(
     state: SessionDetailState,
     onIntent: (SessionDetailIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
@@ -329,20 +335,10 @@ private fun SessionDetailContent(
                 }
             }
 
-            state.error?.let { error ->
-                Snackbar(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
-                    action = {
-                        TextButton(onClick = { onIntent(SessionDetailIntent.ClearError) }) {
-                            Text("Dismiss")
-                        }
-                    },
-                ) {
-                    Text(error)
-                }
-            }
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
 
         Surface(shadowElevation = 8.dp) {

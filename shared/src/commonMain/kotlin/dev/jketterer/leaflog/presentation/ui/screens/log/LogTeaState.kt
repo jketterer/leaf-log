@@ -57,7 +57,6 @@ data class LogTeaState(
     // UI state
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val error: String? = null,
     val hasUnsavedChanges: Boolean = false,
 
     // Complete session dialog

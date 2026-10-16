@@ -61,6 +61,7 @@ import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterShe
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -80,6 +81,8 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(filterTeaTypeId) {
         if (filterTeaTypeId != null) {
@@ -118,6 +121,7 @@ fun HistoryScreen(
         state = state,
         onIntent = viewModel::onIntent,
         imageStorage = koinInject(),
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -127,6 +131,7 @@ private fun HistoryContent(
     state: HistoryState,
     onIntent: (HistoryIntent) -> Unit,
     imageStorage: ImageStorage? = null,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
     val filterSheetState = rememberBottomSheetState(
@@ -139,15 +144,6 @@ private fun HistoryContent(
     LaunchedEffect(showSearchBar) {
         if (showSearchBar) {
             searchFocusRequester.requestFocus()
-        }
-    }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            onIntent(HistoryIntent.ClearError)
         }
     }
 

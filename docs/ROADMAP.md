@@ -592,7 +592,7 @@ state across rotation and process death.
 - [x] `feat: one message surface`: `UiMessages`, `UiMessageEffect`, the typed failures and the
   guards that throw them, Home's Undo, and the tea library and Settings screens. Test: failure →
   message mapping.
-- [ ] `refactor: messages on the brew loop and journal`: the remaining screens; every
+- [x] `refactor: messages on the brew loop and journal`: the remaining screens; every
   `error: String?` goes.
 - [ ] `feat: shared confirm and discard dialogs`
 - [ ] `feat: section header and empty state`

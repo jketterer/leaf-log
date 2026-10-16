@@ -31,7 +31,6 @@ data class HistoryState(
 
     // UI state
     val isLoading: Boolean = false,
-    val error: String? = null,
     val isEmpty: Boolean = false,
     val showFilterSheet: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),

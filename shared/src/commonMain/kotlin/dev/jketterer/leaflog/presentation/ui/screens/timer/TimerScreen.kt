@@ -56,6 +56,7 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmationDialog
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
@@ -72,6 +73,8 @@ fun TimerScreen(
     viewModel: TimerViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(sessionId) {
         viewModel.onIntent(TimerIntent.Initialize(sessionId))
@@ -94,6 +97,7 @@ fun TimerScreen(
     TimerContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -102,17 +106,9 @@ fun TimerScreen(
 private fun TimerContent(
     state: TimerScreenState,
     onIntent: (TimerIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showOverflowMenu by remember { mutableStateOf(false) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            onIntent(TimerIntent.ErrorShown)
-        }
-    }
 
     Scaffold(
         topBar = {

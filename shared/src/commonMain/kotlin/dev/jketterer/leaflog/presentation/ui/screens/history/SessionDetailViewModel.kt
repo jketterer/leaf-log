@@ -20,6 +20,7 @@ import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,15 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_add_steep
+import leaf_log.shared.generated.resources.couldnt_delete_session
+import leaf_log.shared.generated.resources.couldnt_delete_steep
+import leaf_log.shared.generated.resources.couldnt_load_session
+import leaf_log.shared.generated.resources.couldnt_save_method
+import leaf_log.shared.generated.resources.couldnt_start_session
+import leaf_log.shared.generated.resources.failure_not_found
+import leaf_log.shared.generated.resources.method_already_saved
 
 class SessionDetailViewModel(
     private val teaSessionRepository: TeaSessionRepository,
@@ -57,6 +67,8 @@ class SessionDetailViewModel(
     private val _navEvents = Channel<SessionDetailNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
+    val messages = UiMessages<Nothing>()
+
     private sealed interface PendingAction {
         data object BrewAgain : PendingAction
     }
@@ -70,7 +82,7 @@ class SessionDetailViewModel(
             stateFlow = _state,
             getDialogState = { it.inProgressDialogState },
             setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
-            onFailure = { error, _ -> _state.update { it.copy(error = error.message) } },
+            onFailure = messages::failure,
             onResume = { session ->
                 _navEvents.trySend(SessionDetailNavEvent.NavigateToTimer(session.session.id))
             },
@@ -157,7 +169,6 @@ class SessionDetailViewModel(
                 _navEvents.trySend(SessionDetailNavEvent.NavigateBack)
             }
 
-            is SessionDetailIntent.ClearError -> _state.update { it.copy(error = null) }
             is SessionDetailIntent.SaveAsConfigurationClicked -> saveAsConfiguration()
             is SessionDetailIntent.ConfirmSaveConfiguration -> confirmSaveConfiguration(intent.label)
             is SessionDetailIntent.DismissSaveConfiguration -> _state.update {
@@ -181,12 +192,8 @@ class SessionDetailViewModel(
             try {
                 teaSessionRepository.getSessionFlow(sessionId)
                     .catch { e ->
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                error = "Failed to load session: ${e.message}",
-                            )
-                        }
+                        _state.update { it.copy(isLoading = false) }
+                        messages.failure(e, Res.string.couldnt_load_session)
                     }
                     .collect { session ->
                         if (session != null) {
@@ -198,21 +205,13 @@ class SessionDetailViewModel(
                             }
                         } else if (_state.value.session == null) {
                             // A session deleted from this screen is already being navigated away from
-                            _state.update {
-                                it.copy(
-                                    isLoading = false,
-                                    error = "Session not found"
-                                )
-                            }
+                            _state.update { it.copy(isLoading = false) }
+                            messages.show(Res.string.failure_not_found)
                         }
                     }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load session: ${e.message}"
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_session)
             }
         }
     }
@@ -272,12 +271,8 @@ class SessionDetailViewModel(
                     _navEvents.send(SessionDetailNavEvent.NavigateBack)
                 }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = "Failed to delete session: ${e.message}",
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.failure(e, Res.string.couldnt_delete_session)
                 }
         }
     }
@@ -311,9 +306,7 @@ class SessionDetailViewModel(
                 )
             }
             deleteSteepUseCase(steepId)
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to delete steep: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_delete_steep) }
         }
     }
 
@@ -351,9 +344,7 @@ class SessionDetailViewModel(
                 brewingTime = duration,
                 temperatureCelsius = temperature,
                 waterQuantityMl = session.currentSteep.waterQuantityMl,
-            ).onFailure { e ->
-                _state.update { it.copy(error = "Failed to add steep: ${e.message}") }
-            }
+            ).onFailure { messages.failure(it, Res.string.couldnt_add_steep) }
         }
     }
 
@@ -370,7 +361,7 @@ class SessionDetailViewModel(
         viewModelScope.launch {
             val isDuplicate = checkDuplicateConfigurationUseCase(session)
             if (isDuplicate) {
-                _state.update { it.copy(error = "A matching configuration already exists") }
+                messages.show(Res.string.method_already_saved)
                 return@launch
             }
 
@@ -398,9 +389,7 @@ class SessionDetailViewModel(
                 session = session,
                 customLabel = label,
                 skipRatingCheck = true,
-            ).onFailure { e ->
-                _state.update { it.copy(error = "Failed to save configuration: ${e.message}") }
-            }
+            ).onFailure { messages.failure(it, Res.string.couldnt_save_method) }
         }
     }
 
@@ -412,9 +401,7 @@ class SessionDetailViewModel(
                 .onSuccess {
                     _navEvents.send(SessionDetailNavEvent.NavigateToTimer(it.session.id))
                 }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_start_session) }
         }
     }
 }

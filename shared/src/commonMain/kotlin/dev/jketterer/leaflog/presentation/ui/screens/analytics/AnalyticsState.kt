@@ -26,7 +26,6 @@ data class AnalyticsState(
     val formattedAverageTeaQuantity: String = "",
     val periodLabel: String = "This Week",
     val isLoading: Boolean = true,
-    val error: String? = null,
     val hasMinimumData: Boolean = false,
     val totalCompletedSessions: Int = 0,
     val showPeriodSelector: Boolean = false,

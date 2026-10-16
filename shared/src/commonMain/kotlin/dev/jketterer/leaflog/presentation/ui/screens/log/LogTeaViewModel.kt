@@ -22,6 +22,7 @@ import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +34,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load
+import leaf_log.shared.generated.resources.couldnt_save_session
+import leaf_log.shared.generated.resources.couldnt_save_tea
 import kotlin.time.Duration
 
 class LogTeaViewModel(
@@ -56,6 +61,8 @@ class LogTeaViewModel(
     private val _navEvents = Channel<LogTeaNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
+    val messages = UiMessages<Nothing>()
+
     private sealed interface PendingAction {
         data object StartTimer : PendingAction
         data class SaveAsCompleted(val notes: String?, val rating: Float?) : PendingAction
@@ -69,7 +76,7 @@ class LogTeaViewModel(
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
-        onFailure = { error, _ -> _state.update { it.copy(error = error.message) } },
+        onFailure = messages::failure,
         onResume = { session ->
             _navEvents.trySend(LogTeaNavigationEvent.NavigateToTimer(session.session.id))
         },
@@ -145,7 +152,6 @@ class LogTeaViewModel(
             is LogTeaIntent.StartTimerClicked -> inProgressDelegate.checkAndProceed(PendingAction.StartTimer)
 
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
-            is LogTeaIntent.ClearError -> _state.update { it.copy(error = null) }
 
             is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
             is LogTeaIntent.MethodSelected -> selectMethod(intent.configurationId)
@@ -179,12 +185,8 @@ class LogTeaViewModel(
                 }
             }
                 .catch { e ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = "Failed to load data: ${e.message}",
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.failure(e, Res.string.couldnt_load)
                 }
                 .collect { data ->
                     _state.update {
@@ -358,9 +360,7 @@ class LogTeaViewModel(
                         loadConfigurationsAndPrefill(tea, vessel)
                     }
                 }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to add tea: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_tea) }
         }
     }
 
@@ -629,12 +629,8 @@ class LogTeaViewModel(
                     }
                 }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            error = "Failed to save session: ${e.message}",
-                        )
-                    }
+                    _state.update { it.copy(isSaving = false) }
+                    messages.failure(e, Res.string.couldnt_save_session)
                 }
         }
     }

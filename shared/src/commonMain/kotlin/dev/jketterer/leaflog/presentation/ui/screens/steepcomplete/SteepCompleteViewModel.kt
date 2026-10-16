@@ -19,6 +19,7 @@ import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.components.common.editedUnitValue
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.async
@@ -29,6 +30,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_discard_steep
+import leaf_log.shared.generated.resources.couldnt_finish_session
+import leaf_log.shared.generated.resources.couldnt_load_session
+import leaf_log.shared.generated.resources.couldnt_remove_photo
+import leaf_log.shared.generated.resources.couldnt_save_changes
+import leaf_log.shared.generated.resources.couldnt_save_photo
+import leaf_log.shared.generated.resources.couldnt_start_steep
+import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.time.Duration
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -56,12 +66,14 @@ class SteepCompleteViewModel(
     private val _navigationEvents = Channel<SteepCompleteNavEvent>()
     val navigationEvents = _navigationEvents.receiveAsFlow()
 
+    val messages = UiMessages<Nothing>()
+
     private val configSaveDelegate = createConfigurationSaveDelegate(
         saveBrewingConfigurationUseCase = saveBrewingConfigurationUseCase,
         stateFlow = _state,
         getSavedSession = { it.savedSession },
         dismissDialog = { it.copy(showSaveConfigurationDialog = false) },
-        setError = { state, error -> state.copy(error = error) },
+        onFailure = messages::failure,
         createSuccessNavEvent = { SteepCompleteNavEvent.NavigateToHome(it.session.id) },
         sendNavEvent = { _navigationEvents.trySend(it) },
     )
@@ -167,7 +179,8 @@ class SteepCompleteViewModel(
             try {
                 val session = teaSessionRepository.getSessionOfSteep(id)
                 if (session == null) {
-                    _state.update { it.copy(isLoading = false, error = "Session not found") }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.show(Res.string.failure_not_found)
                     return@launch
                 }
 
@@ -193,12 +206,8 @@ class SteepCompleteViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load session: ${e.message}",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_session)
             }
         }
     }
@@ -211,7 +220,7 @@ class SteepCompleteViewModel(
         viewModelScope.launch {
             editSteepUseCase(steepId, edit)
                 .onSuccess { updated -> _state.update { it.copy(session = updated) } }
-                .onFailure { e -> _state.update { it.copy(error = "Failed to save: ${e.message}") } }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
         }
     }
 
@@ -237,7 +246,7 @@ class SteepCompleteViewModel(
                 _state.update { it.copy(photos = it.photos + persistedPath) }
                 editSteep(steep.id) { it.copy(photos = _state.value.photos) }
             } catch (e: Exception) {
-                _state.update { it.copy(error = "Failed to save photo: ${e.message}") }
+                messages.failure(e, Res.string.couldnt_save_photo)
             }
         }
     }
@@ -254,7 +263,7 @@ class SteepCompleteViewModel(
                     } catch (_: Exception) {
                     }
                 }
-                .onFailure { e -> _state.update { it.copy(error = "Failed to remove photo: ${e.message}") } }
+                .onFailure { messages.failure(it, Res.string.couldnt_remove_photo) }
         }
     }
 
@@ -295,12 +304,8 @@ class SteepCompleteViewModel(
                 timerService.stop()
                 _navigationEvents.send(SteepCompleteNavEvent.NavigateToTimer(updated.session.id))
             }.onFailure { e ->
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Unable to start next steep: ${e.message}",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_start_steep)
             }
         }
     }
@@ -326,9 +331,8 @@ class SteepCompleteViewModel(
                     }
                 }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(isLoading = false, error = "Failed to finish session: ${e.message}")
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.failure(e, Res.string.couldnt_finish_session)
                 }
         }
     }
@@ -366,12 +370,8 @@ class SteepCompleteViewModel(
                     _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome())
                 }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = "Failed to discard session: ${e.message}",
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.failure(e, Res.string.couldnt_discard_steep)
                 }
         }
     }
@@ -459,7 +459,7 @@ class SteepCompleteViewModel(
                     waterQuantityMl = waterQuantityMl ?: it.waterQuantityMl,
                 )
             }.onFailure { e ->
-                _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
+                messages.failure(e, Res.string.couldnt_save_changes)
                 return@launch
             }
             editSessionUseCase(session.session.id) {
@@ -469,9 +469,7 @@ class SteepCompleteViewModel(
                 )
             }
                 .onSuccess { updated -> _state.update { it.copy(session = updated) } }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
         }
     }
 

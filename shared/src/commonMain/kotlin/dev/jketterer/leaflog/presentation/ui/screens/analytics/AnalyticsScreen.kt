@@ -17,15 +17,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -65,6 +67,7 @@ import dev.jketterer.leaflog.presentation.ui.components.analytics.TeaTypeDistrib
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopRatedTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.VesselDistributionChart
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
 import org.koin.compose.viewmodel.koinViewModel
@@ -81,6 +84,8 @@ fun AnalyticsScreen(
     viewModel: AnalyticsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->
@@ -100,61 +105,51 @@ fun AnalyticsScreen(
     AnalyticsContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AnalyticsContent(
     state: AnalyticsState,
     onIntent: (AnalyticsIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text("Analytics") },
         )
 
-        when {
-            state.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
+        Box(modifier = Modifier.weight(1f)) {
+            when {
+                state.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-            }
 
-            state.error != null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = state.error,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
+                !state.hasMinimumData -> {
+                    AnalyticsEmptyState(
+                        totalCompletedSessions = state.totalCompletedSessions,
+                        onLogTeaClick = { onIntent(AnalyticsIntent.NavigateToLogTea) },
+                    )
+                }
+
+                else -> {
+                    AnalyticsDataContent(
+                        state = state,
+                        onIntent = onIntent,
                     )
                 }
             }
-
-            !state.hasMinimumData -> {
-                AnalyticsEmptyState(
-                    totalCompletedSessions = state.totalCompletedSessions,
-                    onLogTeaClick = { onIntent(AnalyticsIntent.NavigateToLogTea) },
-                )
-            }
-
-            else -> {
-                AnalyticsDataContent(
-                    state = state,
-                    onIntent = onIntent,
-                )
-            }
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
         }
-
     }
 }
 
@@ -235,7 +230,7 @@ private fun AnalyticsDataContent(
                     ?.takeIf { state.selectedPeriod == AnalyticsPeriod.CUSTOM }
                     ?.let { (start, end) ->
                         "${TimeFormatter.formatDate(start, DateSkeleton.MONTH_DAY)} – " +
-                            TimeFormatter.formatDate(end, DateSkeleton.MONTH_DAY)
+                                TimeFormatter.formatDate(end, DateSkeleton.MONTH_DAY)
                     }
                     ?: state.periodLabel,
                 expanded = state.showPeriodSelector,
@@ -468,7 +463,7 @@ private fun AnalyticsDataContentPreview() {
                             syncStatus = SyncStatus.LOCAL_ONLY
                         ),
                         averageSteeps = 3.2f,
-                        ),
+                    ),
                     newTeaDiscoveries = 4,
                 ),
                 insights = listOf(

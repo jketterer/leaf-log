@@ -18,6 +18,7 @@ import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -30,6 +31,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_delete_session
+import leaf_log.shared.generated.resources.couldnt_load_sessions
+import leaf_log.shared.generated.resources.couldnt_start_session
+import leaf_log.shared.generated.resources.failure_not_found
 import kotlinx.datetime.toLocalDateTime
 
 class HistoryViewModel(
@@ -52,6 +58,8 @@ class HistoryViewModel(
     private val _navEvents = Channel<HistoryNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
+    val messages = UiMessages<Nothing>()
+
     private var loadDataJob: Job? = null
 
     private sealed interface PendingAction {
@@ -66,7 +74,7 @@ class HistoryViewModel(
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
-        onFailure = { error, _ -> _state.update { it.copy(error = error.message) } },
+        onFailure = messages::failure,
         onResume = { session ->
             _navEvents.trySend(HistoryNavEvent.NavigateToTimer(session.session.id))
         },
@@ -102,8 +110,6 @@ class HistoryViewModel(
                     intent.sessionId
                 )
             )
-
-            is HistoryIntent.ClearError -> clearError()
 
             // In-progress session conflict dialog
             is HistoryIntent.ResumeInProgress -> inProgressDelegate.resume()
@@ -141,12 +147,8 @@ class HistoryViewModel(
                     )
                 }
                     .catch { e ->
-                        _state.update {
-                            it.copy(
-                                isLoading = false,
-                                error = "Failed to load data: ${e.message}",
-                            )
-                        }
+                        _state.update { it.copy(isLoading = false) }
+                        messages.failure(e, Res.string.couldnt_load_sessions)
                     }
                     .collect { (sessions, teas, types, vessels, prefs) ->
                         val teasMap = teas.associateBy { tea -> tea.id }
@@ -166,12 +168,8 @@ class HistoryViewModel(
                         }
                     }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load data: ${e.message}"
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_sessions)
             }
         }
     }
@@ -314,9 +312,7 @@ class HistoryViewModel(
             _state.update { it.copy(sessionPendingDelete = null) }
             deleteSessionUseCase(sessionId)
                 .onSuccess { timerService.onSessionResolved(sessionId) }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_delete_session) }
         }
     }
 
@@ -324,9 +320,7 @@ class HistoryViewModel(
         viewModelScope.launch {
             val session = teaSessionRepository.getSession(sessionId)
             if (session == null) {
-                _state.update {
-                    it.copy(error = "Session not found")
-                }
+                messages.show(Res.string.failure_not_found)
                 return@launch
             }
 
@@ -334,14 +328,8 @@ class HistoryViewModel(
                 .onSuccess { newSession ->
                     _navEvents.trySend(HistoryNavEvent.NavigateToTimer(newSession.session.id))
                 }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_start_session) }
         }
-    }
-
-    private fun clearError() {
-        _state.update { it.copy(error = null) }
     }
 }
 

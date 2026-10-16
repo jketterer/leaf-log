@@ -6,6 +6,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_save_method
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Delegate class that handles saving brewing configurations and navigation.
@@ -26,7 +29,7 @@ import kotlinx.coroutines.launch
  * @param stateFlow The state flow to update
  * @param getSavedSession Lambda to extract the saved session from state
  * @param dismissDialog Lambda to dismiss the save configuration dialog
- * @param setError Lambda to set an error message in state
+ * @param onFailure Reports a failure, as [UiMessages.failure] does
  * @param createSuccessNavEvent Lambda to create a navigation event on success
  * @param sendNavEvent Lambda to send navigation events
  */
@@ -36,7 +39,7 @@ class ConfigurationSaveDelegate<T, NavEvent>(
     private val stateFlow: MutableStateFlow<T>,
     private val getSavedSession: (T) -> SessionWithSteeps?,
     private val dismissDialog: (T) -> T,
-    private val setError: (T, String) -> T,
+    private val onFailure: (error: Throwable, couldnt: StringResource) -> Unit,
     private val createSuccessNavEvent: (SessionWithSteeps) -> NavEvent,
     private val sendNavEvent: (NavEvent) -> Unit,
 ) {
@@ -48,7 +51,7 @@ class ConfigurationSaveDelegate<T, NavEvent>(
      * 2. Calls the save use case with the session and custom label
      * 3. Dismisses the save dialog
      * 4. Navigates to the success screen
-     * 5. Handles errors by setting error state but still navigating
+     * 5. Reports a failure but still navigates
      *
      * @param customLabel Optional custom label for the configuration
      */
@@ -59,9 +62,7 @@ class ConfigurationSaveDelegate<T, NavEvent>(
                 saveBrewingConfigurationUseCase(
                     session = session,
                     customLabel = customLabel,
-                ).onFailure { error ->
-                    stateFlow.update { setError(it, error.message ?: "Failed to save configuration") }
-                }
+                ).onFailure { onFailure(it, Res.string.couldnt_save_method) }
             }
 
             // Dismiss dialog and navigate regardless of save result

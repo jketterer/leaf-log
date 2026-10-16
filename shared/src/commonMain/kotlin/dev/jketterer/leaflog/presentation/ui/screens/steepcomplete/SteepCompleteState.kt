@@ -35,8 +35,6 @@ data class SteepCompleteState(
     val editWaterType: WaterType? = null,
     // Discard
     val showDiscardConfirmation: Boolean = false,
-    // Loading/error
     val isLoading: Boolean = true,
-    val error: String? = null,
     val userPreferences: UserPreferences = UserPreferences(),
 )

@@ -17,7 +17,6 @@ data class SessionDetailState(
 
     // UI state
     val isLoading: Boolean = false,
-    val error: String? = null,
     val showDeleteConfirmation: Boolean = false,
     val showDeleteSteepConfirmation: Boolean = false,
     val steepToDelete: String? = null,

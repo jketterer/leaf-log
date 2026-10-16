@@ -56,6 +56,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
@@ -71,6 +72,8 @@ fun EditSessionScreen(
     viewModel: EditSessionViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(sessionId, editFullSession) {
         viewModel.onIntent(EditSessionIntent.LoadSession(sessionId, editFullSession))
@@ -89,6 +92,7 @@ fun EditSessionScreen(
     EditSessionContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -97,16 +101,9 @@ fun EditSessionScreen(
 private fun EditSessionContent(
     state: EditSessionState,
     onIntent: (EditSessionIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val focusManager = LocalFocusManager.current
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            onIntent(EditSessionIntent.ErrorShown)
-        }
-    }
 
     Scaffold(
         topBar = {

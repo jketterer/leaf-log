@@ -73,7 +73,7 @@ fun <T> ViewModel.loadPreferences(
  * @param stateFlow The state flow to update
  * @param getSavedSession Lambda to extract the saved session from state
  * @param dismissDialog Lambda to dismiss the save configuration dialog
- * @param setError Lambda to set an error message in state
+ * @param onFailure Reports a failure, as [UiMessages.failure] does
  * @param createSuccessNavEvent Lambda to create a navigation event on success
  * @param sendNavEvent Lambda to send navigation events
  *
@@ -90,7 +90,7 @@ fun <T> ViewModel.loadPreferences(
  *         stateFlow = _state,
  *         getSavedSession = { it.savedSession },
  *         dismissDialog = { it.copy(showSaveConfigurationDialog = false) },
- *         setError = { state, error -> state.copy(error = error) },
+ *         onFailure = messages::failure,
  *         createSuccessNavEvent = { session -> MyNavEvent.NavigateToSession(session.id) },
  *         sendNavEvent = { _navigationEvents.trySend(it) }
  *     )
@@ -111,7 +111,7 @@ fun <T, NavEvent> ViewModel.createConfigurationSaveDelegate(
     stateFlow: MutableStateFlow<T>,
     getSavedSession: (T) -> SessionWithSteeps?,
     dismissDialog: (T) -> T,
-    setError: (T, String) -> T,
+    onFailure: (error: Throwable, couldnt: StringResource) -> Unit,
     createSuccessNavEvent: (SessionWithSteeps) -> NavEvent,
     sendNavEvent: (NavEvent) -> Unit,
 ): ConfigurationSaveDelegate<T, NavEvent> {
@@ -121,7 +121,7 @@ fun <T, NavEvent> ViewModel.createConfigurationSaveDelegate(
         stateFlow = stateFlow,
         getSavedSession = getSavedSession,
         dismissDialog = dismissDialog,
-        setError = setError,
+        onFailure = onFailure,
         createSuccessNavEvent = createSuccessNavEvent,
         sendNavEvent = sendNavEvent,
     )

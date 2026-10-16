@@ -29,7 +29,6 @@ data class TimerScreenState(
     val editWaterType: WaterType? = null,
     val showNotificationWarning: Boolean = false,
     val isLoading: Boolean = false,
-    val error: String? = null,
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
     /**

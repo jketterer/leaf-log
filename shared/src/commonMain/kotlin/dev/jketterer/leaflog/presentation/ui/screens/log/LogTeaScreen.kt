@@ -11,17 +11,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +49,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.CompleteSessionDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.minutes
@@ -68,6 +68,8 @@ fun LogTeaScreen(
     viewModel: LogTeaViewModel,
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(teaId, vesselId, configurationId) {
         viewModel.onIntent(LogTeaIntent.TeaSelected(teaId))
@@ -95,6 +97,7 @@ fun LogTeaScreen(
         state = state,
         onIntent = viewModel::onIntent,
         imageStorage = koinInject(),
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -104,6 +107,7 @@ private fun LogTeaContent(
     state: LogTeaState,
     onIntent: (LogTeaIntent) -> Unit,
     imageStorage: ImageStorage? = null,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showOptionalFields by remember { mutableStateOf(false) }
 
@@ -297,20 +301,10 @@ private fun LogTeaContent(
             }
         }
 
-        state.error?.let { error ->
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp),
-                action = {
-                    TextButton(onClick = { onIntent(LogTeaIntent.ClearError) }) {
-                        Text("Dismiss")
-                    }
-                },
-            ) {
-                Text(error)
-            }
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
     } // end Box
 
     LogTeaDialogs(

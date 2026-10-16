@@ -20,6 +20,7 @@ import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
 import dev.jketterer.leaflog.presentation.ui.components.common.editedUnitValue
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,15 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_adjust_timer
+import leaf_log.shared.generated.resources.couldnt_discard_steep
+import leaf_log.shared.generated.resources.couldnt_load_session
+import leaf_log.shared.generated.resources.couldnt_pause_timer
+import leaf_log.shared.generated.resources.couldnt_resume_timer
+import leaf_log.shared.generated.resources.couldnt_save_changes
+import leaf_log.shared.generated.resources.couldnt_start_timer
+import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.time.Clock
 import kotlin.time.Duration
 
@@ -56,6 +66,8 @@ class TimerViewModel(
     private val _navigationEvents = Channel<TimerNavEvent>()
     val navigationEvents = _navigationEvents.receiveAsFlow()
 
+    val messages = UiMessages<Nothing>()
+
     init {
         loadPreferences(
             preferencesRepository = preferencesRepository,
@@ -80,7 +92,6 @@ class TimerViewModel(
 
     fun onIntent(intent: TimerIntent) {
         when (intent) {
-            is TimerIntent.ErrorShown -> _state.update { it.copy(error = null) }
             is TimerIntent.Initialize -> initialize(intent.sessionId)
             is TimerIntent.StartTimer -> startTimer()
             is TimerIntent.PauseTimer -> pauseTimer()
@@ -148,12 +159,8 @@ class TimerViewModel(
             try {
                 val session = teaSessionRepository.getSessionOfSteep(id)
                 if (session == null) {
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = "Session not found",
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.show(Res.string.failure_not_found)
                     return@launch
                 }
 
@@ -217,12 +224,8 @@ class TimerViewModel(
                 }
 
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load session: ${e.message}",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_session)
             }
         }
     }
@@ -247,11 +250,7 @@ class TimerViewModel(
                     // Persist running state for restoration
                     saveTimerStateUseCase(updatedState)
                 }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(error = "Failed to start timer: ${e.message}")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_start_timer) }
         }
     }
 
@@ -269,11 +268,7 @@ class TimerViewModel(
                     // 4. Persist timer state for later restoration
                     saveTimerStateUseCase(newState)
                 }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(error = "Failed to pause timer: ${e.message}")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_pause_timer) }
         }
     }
 
@@ -288,11 +283,7 @@ class TimerViewModel(
                     // 3. Start countdown
                     timerService.startCountdown()
                 }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(error = "Failed to resume timer: ${e.message}")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_resume_timer) }
         }
     }
 
@@ -310,11 +301,7 @@ class TimerViewModel(
                     // 4. Persist adjusted state so it survives process death
                     saveTimerStateUseCase(newState)
                 }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(error = "Failed to adjust timer: ${e.message}")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_adjust_timer) }
         }
     }
 
@@ -363,11 +350,7 @@ class TimerViewModel(
                     timerService.onSessionResolved(session.session.id)
                     _navigationEvents.send(TimerNavEvent.NavigateBack)
                 }
-                .onFailure { e ->
-                    _state.update {
-                        it.copy(error = "Failed to discard session: ${e.message}")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_discard_steep) }
         }
     }
 
@@ -474,7 +457,7 @@ class TimerViewModel(
                         waterQuantityMl = waterQuantityMl ?: it.waterQuantityMl,
                     )
                 }.onFailure { e ->
-                    _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
+                    messages.failure(e, Res.string.couldnt_save_changes)
                     return@launch
                 }
             }
@@ -485,9 +468,7 @@ class TimerViewModel(
                 )
             }
                 .onSuccess { updated -> _state.update { it.copy(session = updated) } }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to save changes: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
         }
     }
 

@@ -45,6 +45,7 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip

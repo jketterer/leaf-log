@@ -32,6 +32,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.jketterer.leaflog.domain.models.DateSkeleton
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -95,9 +97,6 @@ private fun BrewingTrendsCanvas(
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
 
-    val monthNames = remember {
-        arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-    }
     val isMultiYear = remember(trendPoints) {
         if (trendPoints.size < 2) false
         else trendPoints.first().date.year != trendPoints.last().date.year
@@ -125,8 +124,8 @@ private fun BrewingTrendsCanvas(
 
     val summary = remember(trendPoints, granularity) {
         fun label(date: LocalDate) = when (granularity) {
-            TrendGranularity.MONTHLY -> "${monthNames[date.month.ordinal]} ${date.year}"
-            else -> "${monthNames[date.month.ordinal]} ${date.day}"
+            TrendGranularity.MONTHLY -> TimeFormatter.formatDate(date, DateSkeleton.MONTH_YEAR)
+            else -> TimeFormatter.formatDate(date, DateSkeleton.MONTH_DAY)
         }
         val unit = when (granularity) {
             TrendGranularity.DAILY -> "day"
@@ -241,11 +240,11 @@ private fun BrewingTrendsCanvas(
             if (index < trendPoints.size) {
                 val date = trendPoints[index].date
                 val label = when (granularity) {
-                    TrendGranularity.MONTHLY -> {
-                        val name = monthNames[date.month.ordinal]
-                        if (isMultiYear) "$name '${date.year % 100}" else name
-                    }
-                    else -> "${date.month.ordinal + 1}/${date.day}"
+                    TrendGranularity.MONTHLY -> TimeFormatter.formatDate(
+                        date,
+                        if (isMultiYear) DateSkeleton.MONTH_YEAR else DateSkeleton.MONTH,
+                    )
+                    else -> TimeFormatter.formatDate(date, DateSkeleton.NUMERIC_MONTH_DAY)
                 }
                 val textResult = textMeasurer.measure(
                     text = label,

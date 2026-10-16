@@ -587,7 +587,7 @@ state across rotation and process death.
 - [x] `feat: choose light, dark or system theme`. Test: the backup round trip.
 - [x] `refactor: one icon family`
 - [x] `feat: string resources and plurals`
-- [ ] `feat: locale-aware dates`
+- [x] `feat: locale-aware dates`
 - [ ] `feat: one message surface`: `UiMessages`, `UiMessageEffect`, the typed failures and the
   guards that throw them, Home's Undo, and the tea library and Settings screens. Test: failure →
   message mapping.

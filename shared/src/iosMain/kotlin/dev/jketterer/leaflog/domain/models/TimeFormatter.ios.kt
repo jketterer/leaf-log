@@ -5,8 +5,9 @@ import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSDateFormatterShortStyle
 import platform.Foundation.dateWithTimeIntervalSince1970
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlin.time.Instant
+import kotlinx.datetime.atStartOfDayIn
 
 actual object TimeFormatter {
     actual fun formatClockTime(hour: Int, minute: Int): String {
@@ -24,24 +25,10 @@ actual object TimeFormatter {
         return formatter.stringFromDate(date)
     }
 
-    actual fun formatRelativeTimestamp(instant: Instant, now: Instant): String {
-        val date = NSDate.dateWithTimeIntervalSince1970(instant.epochSeconds.toDouble())
+    actual fun formatDate(date: LocalDate, skeleton: DateSkeleton): String {
         val formatter = NSDateFormatter()
-        return when (relativeDayOf(instant, now, TimeZone.currentSystemDefault())) {
-            RelativeDay.TODAY -> {
-                formatter.timeStyle = NSDateFormatterShortStyle
-                formatter.dateStyle = 0u // NSDateFormatterNoStyle
-                formatter.stringFromDate(date)
-            }
-            RelativeDay.YESTERDAY -> "Yesterday"
-            RelativeDay.THIS_YEAR -> {
-                formatter.setDateFormat("MMM d")
-                formatter.stringFromDate(date)
-            }
-            RelativeDay.OLDER -> {
-                formatter.setDateFormat("MMM d, yyyy")
-                formatter.stringFromDate(date)
-            }
-        }
+        formatter.setLocalizedDateFormatFromTemplate(skeleton.pattern)
+        val start = date.atStartOfDayIn(TimeZone.currentSystemDefault())
+        return formatter.stringFromDate(NSDate.dateWithTimeIntervalSince1970(start.epochSeconds.toDouble()))
     }
 }

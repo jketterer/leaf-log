@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Calendar
 import compose.icons.feathericons.X
+import dev.jketterer.leaflog.domain.models.DateSkeleton
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -131,10 +133,8 @@ private fun LocalDate.toEpochMillis(): Long =
 private fun Long.toLocalDate(): LocalDate =
     Instant.fromEpochMilliseconds(this).toLocalDateTime(TimeZone.UTC).date
 
-private fun LocalDate.formatDisplay(): String {
-    val monthName = month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
-    return "$monthName $day, $year"
-}
+private fun LocalDate.formatDisplay(): String =
+    TimeFormatter.formatDate(this, DateSkeleton.MONTH_DAY_YEAR)
 
 @Preview(showBackground = true)
 @Composable

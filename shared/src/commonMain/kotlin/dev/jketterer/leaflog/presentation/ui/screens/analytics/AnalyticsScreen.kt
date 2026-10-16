@@ -41,9 +41,9 @@ import compose.icons.feathericons.Layers
 import compose.icons.feathericons.Package
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.Star
-import compose.icons.feathericons.Sunrise
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.Insight
 import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.domain.models.PeriodComparison
@@ -52,6 +52,7 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.TopReSteepedTea
 import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.domain.models.TrendPoint
@@ -230,7 +231,13 @@ private fun AnalyticsDataContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PeriodSelector(
-                currentLabel = state.periodLabel,
+                currentLabel = state.customDateRange
+                    ?.takeIf { state.selectedPeriod == AnalyticsPeriod.CUSTOM }
+                    ?.let { (start, end) ->
+                        "${TimeFormatter.formatDate(start, DateSkeleton.MONTH_DAY)} – " +
+                            TimeFormatter.formatDate(end, DateSkeleton.MONTH_DAY)
+                    }
+                    ?: state.periodLabel,
                 expanded = state.showPeriodSelector,
                 onExpandChange = { expanded ->
                     if (expanded) onIntent(AnalyticsIntent.ShowPeriodSelector)

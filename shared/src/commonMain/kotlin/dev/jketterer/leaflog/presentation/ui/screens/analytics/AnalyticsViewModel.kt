@@ -170,7 +170,7 @@ class AnalyticsViewModel(
                 selectedPeriod = AnalyticsPeriod.CUSTOM,
                 customDateRange = start to end,
                 showPeriodSelector = false,
-                periodLabel = "${start.month.name.take(3)} ${start.day} - ${end.month.name.take(3)} ${end.day}",
+                periodLabel = AnalyticsPeriod.CUSTOM.label,
             )
         }
         loadAnalytics()

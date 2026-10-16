@@ -6,6 +6,10 @@
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_dark">Dark</string>
 
+    <!-- Dates -->
+    <!-- A date, then a clock time: "Jan 15, 2024 at 2:30 PM" -->
+    <string name="date_at_time">%1$s at %2$s</string>
+
     <!-- Relative time -->
     <string name="today">today</string>
     <string name="yesterday">yesterday</string>

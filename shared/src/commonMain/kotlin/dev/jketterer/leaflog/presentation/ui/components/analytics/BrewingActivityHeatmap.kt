@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.DateSkeleton
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
 import dev.jketterer.leaflog.presentation.ui.theme.isDarkTheme
@@ -43,10 +45,6 @@ import kotlin.math.min
 
 // Indexed by DayOfWeek.ordinal (MONDAY = 0)
 private val DAY_LABELS = listOf("M", "T", "W", "T", "F", "S", "S")
-private val MONTH_NAMES = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-)
 
 /** Scale alpha based on session count: min 0.35 (1 session), max 1.0 (3+ sessions). */
 private fun intensityAlpha(sessionCount: Int): Float =
@@ -246,11 +244,11 @@ private fun MonthCalendarHeatmapCanvas(
     val headerGap = 4.dp
     val monthLabel = when (period) {
         AnalyticsPeriod.LAST_30_DAYS -> {
-            val startLabel = "${MONTH_NAMES[firstDate.month.ordinal]} ${firstDate.day}"
-            val endLabel = "${MONTH_NAMES[lastDate.month.ordinal]} ${lastDate.day}"
+            val startLabel = TimeFormatter.formatDate(firstDate, DateSkeleton.MONTH_DAY)
+            val endLabel = TimeFormatter.formatDate(lastDate, DateSkeleton.MONTH_DAY)
             "$startLabel – $endLabel"
         }
-        else -> "${MONTH_NAMES[firstDate.month.ordinal]} ${firstDate.year}"
+        else -> TimeFormatter.formatDate(firstDate, DateSkeleton.MONTH_YEAR)
     }
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -404,13 +402,14 @@ private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
             val cornerRadius = CornerRadius(4.dp.toPx())
             val strokeWidth = 1.5.dp.toPx()
 
-            monthGroups.forEachIndexed { monthIndex, (month, monthCells) ->
+            monthGroups.forEachIndexed { monthIndex, (_, monthCells) ->
                 val row = monthIndex / monthsPerRow
                 val col = monthIndex % monthsPerRow
                 val blockX = col * (columnWidthPx + columnGapPx)
                 val blockY = row * (blockHeightPx + rowGapPx)
 
-                val monthName = MONTH_NAMES[month.ordinal]
+                val monthName =
+                    TimeFormatter.formatDate(monthCells.first().date, DateSkeleton.MONTH)
                 val textResult = textMeasurer.measure(text = monthName, style = labelStyle)
                 drawText(
                     textLayoutResult = textResult,

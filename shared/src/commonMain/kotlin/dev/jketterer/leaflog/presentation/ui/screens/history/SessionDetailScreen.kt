@@ -21,7 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,22 +47,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Star
-import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Plus
+import compose.icons.feathericons.Star
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.domain.models.VolumeUnit
@@ -76,8 +76,12 @@ import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameter
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.date_at_time
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Instant
@@ -128,7 +132,6 @@ fun SessionDetailScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SessionDetailContent(
     state: SessionDetailState,
@@ -205,19 +208,17 @@ private fun SessionDetailContent(
                                     // Date/Time
                                     val localDateTime = state.session.startedAt
                                         .toLocalDateTime(TimeZone.currentSystemDefault())
-                                    val dateTimeString = buildString {
-                                        append(
-                                            localDateTime.month.name.lowercase()
-                                                .replaceFirstChar { it.uppercase() })
-                                        append(" ${localDateTime.day}, ${localDateTime.year}")
-                                        append(" at ")
-                                        val hour =
-                                            if (localDateTime.hour == 0) 12 else if (localDateTime.hour > 12) localDateTime.hour - 12 else localDateTime.hour
-                                        val amPm = if (localDateTime.hour < 12) "AM" else "PM"
-                                        val minute =
-                                            localDateTime.minute.toString().padStart(2, '0')
-                                        append("$hour:$minute $amPm")
-                                    }
+                                    val dateTimeString = stringResource(
+                                        Res.string.date_at_time,
+                                        TimeFormatter.formatDate(
+                                            localDateTime.date,
+                                            DateSkeleton.MONTH_DAY_YEAR,
+                                        ),
+                                        TimeFormatter.formatClockTime(
+                                            localDateTime.hour,
+                                            localDateTime.minute,
+                                        ),
+                                    )
                                     Text(
                                         text = dateTimeString,
                                         style = MaterialTheme.typography.bodyMedium,

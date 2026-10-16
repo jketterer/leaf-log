@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.jketterer.leaflog.domain.models.DateSkeleton
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
@@ -20,14 +22,12 @@ import kotlinx.datetime.toLocalDateTime
  */
 @Composable
 fun GreetingHeader(
+    modifier: Modifier = Modifier,
     greeting: String,
     userName: String? = null,
-    modifier: Modifier = Modifier,
 ) {
     val today = currentInstant().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val dayName = today.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-    val monthName = today.month.name.lowercase().replaceFirstChar { it.uppercase() }
-    val dateSubtitle = "$dayName, $monthName ${today.day}"
+    val dateSubtitle = TimeFormatter.formatDate(today, DateSkeleton.WEEKDAY_MONTH_DAY)
 
     Column(
         modifier = modifier

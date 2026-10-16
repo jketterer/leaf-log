@@ -57,11 +57,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Heart
-import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Edit2
+import compose.icons.feathericons.Heart
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
@@ -71,13 +70,15 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
-import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
+import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
+import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -315,7 +316,10 @@ private fun TeaDetailContent(
                                     if (state.tea.finishedAt != null) {
                                         DetailRow(
                                             label = "Finished",
-                                            value = TimeFormatter.formatRelativeTimestamp(state.tea.finishedAt, currentInstant()),
+                                            value = TimeFormatter.formatRelativeTimestamp(
+                                                state.tea.finishedAt,
+                                                currentInstant()
+                                            ),
                                         )
                                     }
 

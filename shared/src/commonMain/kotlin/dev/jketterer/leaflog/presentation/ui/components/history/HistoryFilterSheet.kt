@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.presentation.ui.components.history
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,19 +9,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
@@ -43,8 +41,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
+import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryIntent
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryState
@@ -76,17 +76,14 @@ private enum class DateRangePreset(val label: String) {
 }
 
 private fun isCustomDateRange(start: LocalDate?, end: LocalDate?): Boolean {
-    if (start == null && end == null) return false
-    return DateRangePreset.entries.none { preset ->
+    return !(start == null && end == null) && DateRangePreset.entries.none { preset ->
         val (presetStart, presetEnd) = preset.toDateRange()
         start == presetStart && end == presetEnd
     }
 }
 
-private fun LocalDate.formatDisplay(): String {
-    val monthName = month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }
-    return "$monthName $day, $year"
-}
+private fun LocalDate.formatDisplay(): String =
+    TimeFormatter.formatDate(this, DateSkeleton.MONTH_DAY_YEAR)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +103,6 @@ fun HistoryFilterSheet(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryFilterSheetContent(
     state: HistoryState,

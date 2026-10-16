@@ -156,6 +156,8 @@ Use `expect`/`actual` pattern for platform differences.
 - UI text you write or edit goes in `composeResources/values/strings.xml`, read with
   `stringResource`; anything with a count is a `<plurals>` read with `pluralStringResource`, never
   `"(s)"` or an `if (n == 1)`
+- Dates shown to the user go through `TimeFormatter.formatDate` with a `DateSkeleton`, never a
+  pattern like `"MMM d"` or a month-name array
 - Corners come from `MaterialTheme.shapes` (4/8/12/16/28dp), never a `RoundedCornerShape` literal;
   circles use `CircleShape`
 

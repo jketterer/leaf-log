@@ -9,21 +9,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
 import dev.jketterer.leaflog.domain.models.DailyStats
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_todays_stats
 import leaf_log.shared.generated.resources.ic_tea_leaf
 import leaf_log.shared.generated.resources.sessions_label
 import leaf_log.shared.generated.resources.teas_label
+import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
 /**
@@ -41,20 +43,12 @@ fun DailyStatsSection(
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        SectionHeader(
+            title = stringResource(Res.string.header_todays_stats),
+            modifier = Modifier.padding(horizontal = 16.dp),
         ) {
-            Text(
-                text = "TODAY'S STATS",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-            )
             TextButton(onClick = onViewAllClick) {
-                Text("View All")
+                Text(stringResource(Res.string.view_all))
             }
         }
 

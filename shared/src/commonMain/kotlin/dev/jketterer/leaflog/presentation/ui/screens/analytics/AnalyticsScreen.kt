@@ -4,20 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -30,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -67,9 +61,16 @@ import dev.jketterer.leaflog.presentation.ui.components.analytics.TeaTypeDistrib
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopRatedTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.VesselDistributionChart
+import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.analytics_empty_body
+import leaf_log.shared.generated.resources.analytics_empty_title
+import leaf_log.shared.generated.resources.log_tea
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
@@ -132,9 +133,17 @@ private fun AnalyticsContent(
                 }
 
                 !state.hasMinimumData -> {
-                    AnalyticsEmptyState(
-                        totalCompletedSessions = state.totalCompletedSessions,
-                        onLogTeaClick = { onIntent(AnalyticsIntent.NavigateToLogTea) },
+                    EmptyState(
+                        message = stringResource(Res.string.analytics_empty_title),
+                        icon = FeatherIcons.BarChart2,
+                        body = pluralStringResource(
+                            Res.plurals.analytics_empty_body,
+                            MINIMUM_SESSIONS,
+                            state.totalCompletedSessions,
+                            MINIMUM_SESSIONS,
+                        ),
+                        actionText = stringResource(Res.string.log_tea),
+                        onActionClick = { onIntent(AnalyticsIntent.NavigateToLogTea) },
                     )
                 }
 
@@ -149,61 +158,6 @@ private fun AnalyticsContent(
                 hostState = snackbarHostState,
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
-        }
-    }
-}
-
-@Composable
-private fun AnalyticsEmptyState(
-    totalCompletedSessions: Int,
-    onLogTeaClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            imageVector = FeatherIcons.BarChart2,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Not enough data yet",
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "$totalCompletedSessions / 10 sessions completed",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Log more tea sessions to unlock analytics and insights about your brewing habits.",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = onLogTeaClick,
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
-        ) {
-            Icon(
-                imageVector = FeatherIcons.Coffee,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Log Tea")
         }
     }
 }
@@ -410,17 +364,6 @@ private fun AnalyticsDataContent(
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-private fun AnalyticsEmptyStatePreview() {
-    LeafLogTheme {
-        AnalyticsEmptyState(
-            totalCompletedSessions = 3,
-            onLogTeaClick = {},
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

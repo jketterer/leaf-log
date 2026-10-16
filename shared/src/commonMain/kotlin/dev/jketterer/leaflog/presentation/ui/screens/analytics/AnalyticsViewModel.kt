@@ -193,7 +193,7 @@ class AnalyticsViewModel(
                 val totalCompleted = teaSessionRepository.getAllSessions()
                     .count { it.session.status == SessionStatus.COMPLETED }
 
-                val hasMinimumData = totalCompleted >= 10
+                val hasMinimumData = totalCompleted >= MINIMUM_SESSIONS
 
                 val currentState = _state.value
                 val (start, end, previousStart, previousEnd) = getAnalyticsDateRangeUseCase(

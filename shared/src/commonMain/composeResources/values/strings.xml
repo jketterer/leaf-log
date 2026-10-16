@@ -69,6 +69,50 @@
         <item quantity="other">%1$d records are left out: what they belonged to was deleted before this backup was made.</item>
     </plurals>
 
+    <!-- Section headers, written in sentence case; SectionHeader uppercases them -->
+    <string name="header_quick_brew">Quick Brew</string>
+    <string name="header_todays_stats">Today's stats</string>
+    <string name="header_recent_sessions">Recent sessions</string>
+    <string name="header_brewing_parameters">Brewing parameters</string>
+    <string name="header_optional_details">Optional details</string>
+    <string name="header_previous_steeps">Previous steeps</string>
+    <string name="header_steep_parameters">Steep parameters</string>
+    <string name="header_session_details">Session details</string>
+    <string name="header_rating">Rating</string>
+    <string name="header_notes">Notes</string>
+    <string name="header_photos">Photos</string>
+    <string name="header_photo">Photo</string>
+    <string name="header_details">Details</string>
+    <string name="header_saved_methods">Saved brewing methods</string>
+    <string name="header_pinned">Pinned</string>
+    <string name="header_by_usage">By usage</string>
+    <string name="header_brewing">Brewing</string>
+    <string name="header_notifications">Notifications</string>
+    <string name="header_management">Management</string>
+    <string name="header_data">Data</string>
+    <string name="header_tea_type">Tea type</string>
+    <string name="header_tea">Tea</string>
+    <string name="header_vessel">Vessel</string>
+    <string name="header_date_range">Date range</string>
+    <string name="header_minimum_rating">Minimum rating</string>
+    <string name="view_all">View All</string>
+    <string name="manage">Manage</string>
+
+    <!-- Empty states -->
+    <string name="home_empty_title">Welcome to Leaf Log</string>
+    <string name="home_empty_body">Log your brewing sessions to track your favorites and perfect your technique.</string>
+    <string name="home_empty_action">Log Your First Session</string>
+    <string name="analytics_empty_title">Not enough data yet</string>
+    <plurals name="analytics_empty_body">
+        <item quantity="one">%1$d of %2$d session completed. Log more to unlock analytics and insights about your brewing habits.</item>
+        <item quantity="other">%1$d of %2$d sessions completed. Log more to unlock analytics and insights about your brewing habits.</item>
+    </plurals>
+    <string name="log_tea">Log Tea</string>
+    <string name="tea_not_found">Tea not found</string>
+    <string name="vessel_not_found">Vessel not found</string>
+    <string name="no_tea_types">No tea types yet</string>
+    <string name="no_teas_found">No teas found</string>
+
     <!-- Messages -->
     <string name="session_finished">Session finished</string>
     <string name="undo">Undo</string>

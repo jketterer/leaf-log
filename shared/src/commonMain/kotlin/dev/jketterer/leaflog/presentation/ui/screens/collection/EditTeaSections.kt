@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,23 +33,14 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.DatePickerField
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
-
-/** Title above a group of fields. Matches the existing Photos heading. */
-@Composable
-internal fun SectionHeader(
-    title: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = modifier,
-    )
-}
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_details
+import leaf_log.shared.generated.resources.header_photos
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The two fields a tea cannot be saved without.
@@ -176,7 +166,7 @@ internal fun TeaDetailsSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SectionHeader("Details")
+        SectionHeader(stringResource(Res.string.header_details))
 
         OutlinedTextField(
             value = origin,
@@ -311,7 +301,7 @@ internal fun TeaPhotosSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        SectionHeader("Photos")
+        SectionHeader(stringResource(Res.string.header_photos))
         PhotoGrid(
             photos = photos,
             onAddPhoto = onAddPhoto,

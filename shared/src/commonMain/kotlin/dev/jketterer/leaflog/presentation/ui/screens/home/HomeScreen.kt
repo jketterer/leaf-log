@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,7 +18,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -36,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -48,9 +45,10 @@ import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
+import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
-import dev.jketterer.leaflog.presentation.ui.components.home.EmptyHomeState
 import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
 import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
@@ -59,6 +57,7 @@ import dev.jketterer.leaflog.presentation.ui.components.home.QuickBrewSection
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
+import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIcons
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
@@ -66,7 +65,12 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
+import leaf_log.shared.generated.resources.header_recent_sessions
+import leaf_log.shared.generated.resources.home_empty_action
+import leaf_log.shared.generated.resources.home_empty_body
+import leaf_log.shared.generated.resources.home_empty_title
 import leaf_log.shared.generated.resources.ic_tea_leaf
+import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
@@ -76,8 +80,6 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * Home Screen - main dashboard with stats and recent sessions.
- *
- * Note: Uses emoji/text icons instead of Material Icons (not available in Compose Multiplatform).
  */
 @Composable
 fun HomeScreen(
@@ -216,10 +218,12 @@ private fun HomeContent(
                 }
 
                 state.shouldShowEmptyState -> {
-                    EmptyHomeState(
-                        onGetStartedClick = { onIntent(HomeIntent.LogTeaClicked) },
-                        modifier = Modifier
-                            .fillMaxSize()
+                    EmptyState(
+                        message = stringResource(Res.string.home_empty_title),
+                        icon = VesselIcons.TeaCup,
+                        body = stringResource(Res.string.home_empty_body),
+                        actionText = stringResource(Res.string.home_empty_action),
+                        onActionClick = { onIntent(HomeIntent.LogTeaClicked) },
                     )
                 }
 
@@ -294,24 +298,16 @@ private fun HomeContent(
 
                         // Recent sessions header
                         item(key = "recent_header") {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
+                            SectionHeader(
+                                title = stringResource(Res.string.header_recent_sessions),
+                                modifier = Modifier.padding(horizontal = 16.dp),
                             ) {
-                                Text(
-                                    text = "RECENT SESSIONS",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.Bold,
-                                )
                                 TextButton(
                                     onClick = {
                                         onIntent(HomeIntent.ViewAllSessionsClicked)
                                     },
                                 ) {
-                                    Text("View All")
+                                    Text(stringResource(Res.string.view_all))
                                 }
                             }
                         }

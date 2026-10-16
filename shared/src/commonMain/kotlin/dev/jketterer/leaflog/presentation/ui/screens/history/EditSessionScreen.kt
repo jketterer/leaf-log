@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -31,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +43,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGua
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
@@ -53,6 +52,13 @@ import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfig
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_notes
+import leaf_log.shared.generated.resources.header_photos
+import leaf_log.shared.generated.resources.header_rating
+import leaf_log.shared.generated.resources.header_session_details
+import leaf_log.shared.generated.resources.header_steep_parameters
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 
@@ -156,11 +162,7 @@ private fun EditSessionContent(
                 // Steep Parameters Section (only when NOT editing full parent session)
                 if (!state.isParentSession) {
                     item(key = "parameters_header") {
-                        Text(
-                            text = "STEEP PARAMETERS",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        SectionHeader(stringResource(Res.string.header_steep_parameters))
                     }
 
                     // Brewing Time
@@ -209,11 +211,7 @@ private fun EditSessionContent(
                             Spacer(modifier = Modifier.height(8.dp))
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "SESSION DETAILS",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            SectionHeader(stringResource(Res.string.header_session_details))
                         }
                     }
 
@@ -328,11 +326,7 @@ private fun EditSessionContent(
                             Spacer(modifier = Modifier.height(8.dp))
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "RATING",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            SectionHeader(stringResource(Res.string.header_rating))
                         }
                     }
 
@@ -354,11 +348,7 @@ private fun EditSessionContent(
                             Spacer(modifier = Modifier.height(8.dp))
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "NOTES",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            SectionHeader(stringResource(Res.string.header_notes))
                         }
                     }
 
@@ -381,11 +371,7 @@ private fun EditSessionContent(
                             Spacer(modifier = Modifier.height(8.dp))
                             HorizontalDivider()
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "PHOTOS",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
+                            SectionHeader(stringResource(Res.string.header_photos))
                         }
                     }
 

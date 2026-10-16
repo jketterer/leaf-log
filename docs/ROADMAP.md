@@ -595,7 +595,7 @@ state across rotation and process death.
 - [x] `refactor: messages on the brew loop and journal`: the remaining screens; every
   `error: String?` goes.
 - [x] `feat: shared confirm and discard dialogs`
-- [ ] `feat: section header and empty state`
+- [x] `feat: section header and empty state`
 - [ ] `feat: rating display and selector`. Test: half-star rounding.
 - [ ] `feat: one unit input field with local toggles`: the component and its pure functions, then
   Edit Tea, Edit Vessel, Edit Tea Type and Brewing Method. Tests: flips round-trip, 93 °C, decimal

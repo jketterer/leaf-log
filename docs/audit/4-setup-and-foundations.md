@@ -99,7 +99,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 |---|---|---|---|---|
 | arch | ceremony | TeaTypeListViewModel.kt:22-23,67-82 | Clicks go screen → VM → StateFlow nav event → screen, only to call a lambda. The pattern is copied from VesselList. | |
 | consistency | colour | TeaTypeListScreen.kt:184 | "Is this colour light?" is hardcoded to `"#FFFDE7"`. EditTeaTypeScreen.kt:258 hardcodes `#FFFDE7`/`#FFEB3B`, and BrewingActivityHeatmap.kt:51-58 hand-rolls luminance. That's three approaches where Compose's built-in `Color.luminance()` would do. | |
-| polish | empty | TeaTypeListScreen.kt:117-121 | The empty state is bare `Text("No tea types found")`, not `EmptyState`, and has no action. | |
+| polish | empty | TeaTypeListScreen.kt:117-121 | ~~The empty state is bare `Text("No tea types found")`, not `EmptyState`, and~~ has no action. | |
 | polish | dark mode | TeaTypeListScreen.kt:176-189 | The brown and tan dots (#795548, #8D6E63) have low contrast on the dark surface #1B1C18. Only cream gets an outline. | |
 | a11y | semantics | TeaTypeListScreen.kt:161-165 | The card uses `.clickable` with no role and the colour isn't described. | |
 
@@ -192,12 +192,12 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 
 | Sev | Category | Location | Finding |
 |---|---|---|---|
-| consistency | duplication | EditTeaSections.kt:43 & EditVesselSections.kt:52 | Byte-identical `internal fun SectionHeader`. There are 3 more private header variants (SettingsScreen.kt:379, TeaPickerSheet.kt:367, HistoryFilterSheet.kt:338). |
+| ~~consistency~~ | ~~duplication~~ | ~~EditTeaSections.kt:43 & EditVesselSections.kt:52~~ | ~~Byte-identical `internal fun SectionHeader`. There are 3 more private header variants (SettingsScreen.kt:379, TeaPickerSheet.kt:367, HistoryFilterSheet.kt:338).~~ |
 | consistency | duplication | TemperatureInputField.kt / VolumeInputField.kt | 123 lines each; they differ by only 44 lines after swapping names. `EditCapacityField.kt` is a label-only wrapper. One `UnitInputField` would cover all three. |
 | ~~consistency~~ | ~~duplication~~ | ~~EditTea/EditSession/EditVessel/EditTeaType screens~~ | ~~4 copies of the "Discard Changes?" dialog, with inconsistent Discard styling.~~ |
 | ~~consistency~~ | ~~duplication~~ | ~~HomeScreen.kt:374, TeaDetailScreen.kt:511, SessionDetailScreen.kt:409, HistoryScreen.kt:350~~ | ~~4 copies of the "Delete Session?" dialog. 11 inline delete dialogs total.~~ |
 | consistency | duplication | EditTeaVM:95, TeaCollectionVM:117, TeaDetailVM:180 | A private `Flow.catchError` helper copy-pasted 3 times. |
-| consistency | empty states | EmptyState used in 5 places | `AnalyticsEmptyState` and `EmptyHomeState` are separate. TeaTypeList (bare Text), VesselDetail ("Vessel not found" bare Text) and QuickTimerDetailsSheet:221 don't use it. `EmptyState` has no icon slot and always shows a FontAwesome PlusSquare. |
+| ~~consistency~~ | ~~empty states~~ | ~~EmptyState used in 5 places~~ | ~~`AnalyticsEmptyState` and `EmptyHomeState` are separate. TeaTypeList (bare Text), VesselDetail ("Vessel not found" bare Text) and QuickTimerDetailsSheet:221 don't use it. `EmptyState` has no icon slot and always shows a FontAwesome PlusSquare.~~ |
 | consistency | icons | 49 files use Feather, 8 use FontAwesome, plus custom vectors | Two icon families are mixed, and FontAwesome ships whole because R8 is off. |
 | a11y | touch target | TemperatureInputField.kt:56-66 (and Volume) | The unit-toggle suffix is text plus 4dp padding, about 28dp tall, and it changes a **global** preference. |
 

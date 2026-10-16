@@ -163,6 +163,8 @@ Use `expect`/`actual` pattern for platform differences.
 - An action that loses data asks through `ConfirmDestructiveDialog`. A form with unsaved changes
   wraps its content in `DiscardChangesGuardDialog`, which guards the toolbar arrow and system back
   alike
+- A group of content is titled by `SectionHeader`, written sentence case in `strings.xml` (it
+  uppercases). Missing content, a failed lookup or a search with no hits shows `EmptyState`
 
 ### When Creating Use Cases
 

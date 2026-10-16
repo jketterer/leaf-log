@@ -54,6 +54,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
@@ -61,6 +62,10 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_brewing_parameters
+import leaf_log.shared.generated.resources.header_optional_details
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Tea picker row - shows the selected tea, or a button to open the search dialog.
@@ -159,11 +164,7 @@ internal fun BrewingParametersHeader(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(
-            text = "BREWING PARAMETERS",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-        )
+        SectionHeader(stringResource(Res.string.header_brewing_parameters))
         Text(
             text = "* Required",
             style = MaterialTheme.typography.bodySmall,
@@ -380,11 +381,7 @@ internal fun OptionalDetailsSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "OPTIONAL DETAILS",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                )
+                SectionHeader(stringResource(Res.string.header_optional_details))
                 if (!expanded && summary.isNotEmpty()) {
                     Text(
                         text = summary,

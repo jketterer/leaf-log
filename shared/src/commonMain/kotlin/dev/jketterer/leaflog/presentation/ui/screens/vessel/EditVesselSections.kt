@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,7 +28,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -40,25 +38,16 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.EditCapacityField
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoPickerButton
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import io.github.vinceglb.filekit.readBytes
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_details
+import leaf_log.shared.generated.resources.header_photo
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-
-/** Title above a group of fields. */
-@Composable
-internal fun SectionHeader(
-    title: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = modifier,
-    )
-}
 
 /**
  * What the vessel is called and what it looks like in a list.
@@ -109,7 +98,6 @@ internal fun VesselIdentitySection(
  * never has to make. The supporting line says what the icon is actually for - every list and detail
  * view shows the photo instead when there is one.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun VesselIconChips(
     selectedIconName: String,
@@ -169,7 +157,7 @@ internal fun VesselDetailsSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        SectionHeader("Details")
+        SectionHeader(stringResource(Res.string.header_details))
 
         EditCapacityField(
             value = capacity,
@@ -201,7 +189,7 @@ internal fun VesselPhotoSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        SectionHeader("Photo")
+        SectionHeader(stringResource(Res.string.header_photo))
 
         if (imagePath != null && imageStorage != null) {
             Row(

@@ -49,6 +49,7 @@ import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
+import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import leaf_log.shared.generated.resources.Res
@@ -56,6 +57,7 @@ import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_vessel_text
 import leaf_log.shared.generated.resources.delete_vessel_title
 import leaf_log.shared.generated.resources.vessel_in_use
+import leaf_log.shared.generated.resources.vessel_not_found
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -200,10 +202,7 @@ fun VesselDetailScreen(
                     }
 
                     state.vessel == null -> {
-                        Text(
-                            text = "Vessel not found",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        EmptyState(message = stringResource(Res.string.vessel_not_found))
                     }
 
                     else -> {

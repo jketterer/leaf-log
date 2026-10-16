@@ -32,9 +32,14 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_brewing
+import leaf_log.shared.generated.resources.header_data
+import leaf_log.shared.generated.resources.header_management
+import leaf_log.shared.generated.resources.header_notifications
 import leaf_log.shared.generated.resources.settings_appearance
 import leaf_log.shared.generated.resources.settings_theme
 import leaf_log.shared.generated.resources.theme_mode_dark
@@ -53,7 +58,10 @@ internal fun AppearanceSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        SectionHeader(title = stringResource(Res.string.settings_appearance))
+        SectionHeader(
+            title = stringResource(Res.string.settings_appearance),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
 
         ThemeModeSetting(
             currentMode = themeMode,
@@ -83,7 +91,10 @@ internal fun BrewingSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        SectionHeader(title = "Brewing")
+        SectionHeader(
+            title = stringResource(Res.string.header_brewing),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
 
         DefaultWaterTypeSetting(
             currentWaterType = defaultWaterType,
@@ -102,7 +113,10 @@ internal fun NotificationsSection(
 ) {
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.height(8.dp))
-        SectionHeader(title = "Notifications")
+        SectionHeader(
+            title = stringResource(Res.string.header_notifications),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
 
         SettingRow(
             title = "Brew complete",
@@ -135,7 +149,10 @@ internal fun ManagementSection(
 ) {
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.height(8.dp))
-        SectionHeader(title = "Management")
+        SectionHeader(
+            title = stringResource(Res.string.header_management),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
 
         Row(
             modifier = Modifier
@@ -181,7 +198,10 @@ internal fun DataSection(
 ) {
     Column(modifier = modifier) {
         Spacer(modifier = Modifier.height(8.dp))
-        SectionHeader(title = "Data")
+        SectionHeader(
+            title = stringResource(Res.string.header_data),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
 
         SettingRow(
             title = "Export Data",
@@ -318,16 +338,6 @@ private fun DefaultWaterTypeSetting(
             onWaterTypeSelected = onWaterTypeChange,
         )
     }
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-    )
 }
 
 @Composable
@@ -499,14 +509,6 @@ private fun NotificationsSectionPreview() {
             onTimerCompletionChange = {},
             onSessionReminderChange = {},
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun SectionHeaderPreview() {
-    LeafLogTheme {
-        SectionHeader(title = "Preferences")
     }
 }
 

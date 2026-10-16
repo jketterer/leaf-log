@@ -14,6 +14,9 @@ import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.domain.models.VesselDistribution
 import kotlinx.datetime.LocalDate
 
+/** Completed sessions needed before Analytics has enough to show. */
+internal const val MINIMUM_SESSIONS = 10
+
 data class AnalyticsState(
     val selectedPeriod: AnalyticsPeriod = AnalyticsPeriod.THIS_WEEK,
     val customDateRange: Pair<LocalDate, LocalDate>? = null,

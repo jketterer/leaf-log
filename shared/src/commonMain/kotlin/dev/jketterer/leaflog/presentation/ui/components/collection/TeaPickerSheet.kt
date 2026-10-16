@@ -44,12 +44,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -64,6 +62,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
@@ -271,11 +270,11 @@ fun TeaPickerContent(
                     onActionClick = onAddTeaClicked,
                 )
 
-                sections.isEmpty() && query.isNotBlank() -> TeaPickerMessage(
+                sections.isEmpty() && query.isNotBlank() -> EmptyState(
                     message = "No teas match “${query.trim()}”",
                 )
 
-                sections.isEmpty() -> TeaPickerMessage(
+                sections.isEmpty() -> EmptyState(
                     message = when (filter) {
                         is TeaPickerFilter.Favorites -> "No favorites yet"
                         is TeaPickerFilter.Type ->
@@ -379,12 +378,8 @@ private fun TeaPickerSectionHeader(
     ) {
         Column {
             HorizontalDivider()
-            Text(
-                text = title.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
-                color = MaterialTheme.colorScheme.primary,
+            SectionHeader(
+                title = title,
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 6.dp),
             )
         }
@@ -497,33 +492,6 @@ private fun TeaPickerRow(
                     .size(18.dp),
                 tint = MaterialTheme.colorScheme.primary,
             )
-        }
-    }
-}
-
-@Composable
-private fun TeaPickerMessage(
-    message: String,
-    modifier: Modifier = Modifier,
-    actionText: String? = null,
-    onActionClick: (() -> Unit)? = null,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (actionText != null && onActionClick != null) {
-            TextButton(onClick = onActionClick) {
-                Text(actionText)
-            }
         }
     }
 }

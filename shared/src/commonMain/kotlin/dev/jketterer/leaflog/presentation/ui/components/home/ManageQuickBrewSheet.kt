@@ -39,12 +39,17 @@ import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.ChevronUp
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.screens.home.QuickBrewCardData
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_by_usage
+import leaf_log.shared.generated.resources.header_pinned
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,11 +109,7 @@ private fun ManageQuickBrewSheetContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Pinned section
-        Text(
-            text = "PINNED",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-        )
+        SectionHeader(stringResource(Res.string.header_pinned))
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -152,11 +153,7 @@ private fun ManageQuickBrewSheetContent(
 
         // By usage section
         if (unpinned.isNotEmpty()) {
-            Text(
-                text = "BY USAGE",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-            )
+            SectionHeader(stringResource(Res.string.header_by_usage))
 
             Spacer(modifier = Modifier.height(8.dp))
 

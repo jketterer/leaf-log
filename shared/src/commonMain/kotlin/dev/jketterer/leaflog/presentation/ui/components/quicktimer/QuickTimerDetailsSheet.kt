@@ -43,6 +43,7 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
@@ -52,6 +53,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.no_teas_found
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Two-step bottom sheet for adding details to a quick timer.
@@ -217,10 +221,9 @@ private fun Step1Content(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (availableTeas.isEmpty() && teaSearchQuery.isNotBlank()) {
-                Text(
-                    text = "No teas found",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                EmptyState(
+                    message = stringResource(Res.string.no_teas_found),
+                    modifier = Modifier.height(150.dp),
                 )
             } else {
                 LazyColumn(

@@ -25,7 +25,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -71,8 +70,10 @@ import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
+import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
@@ -89,6 +90,9 @@ import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.delete_tea_text
 import leaf_log.shared.generated.resources.delete_tea_title
+import leaf_log.shared.generated.resources.header_recent_sessions
+import leaf_log.shared.generated.resources.tea_not_found
+import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -168,7 +172,6 @@ fun TeaDetailScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TeaDetailContent(
     state: TeaDetailState,
@@ -432,18 +435,9 @@ private fun TeaDetailContent(
                         // Recent sessions
                         if (state.recentSessions.isNotEmpty()) {
                             item(key = "sessions_header") {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = "RECENT SESSIONS",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.Bold,
-                                    )
+                                SectionHeader(stringResource(Res.string.header_recent_sessions)) {
                                     TextButton(onClick = { onIntent(TeaDetailIntent.ViewAllSessionsClicked) }) {
-                                        Text("View All")
+                                        Text(stringResource(Res.string.view_all))
                                     }
                                 }
                             }
@@ -481,16 +475,7 @@ private fun TeaDetailContent(
                 }
 
                 else -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = "Tea not found",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    EmptyState(message = stringResource(Res.string.tea_not_found))
                 }
             }
         }

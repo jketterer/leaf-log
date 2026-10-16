@@ -45,6 +45,7 @@ import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryIntent
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryState
@@ -57,6 +58,13 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Instant
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.header_date_range
+import leaf_log.shared.generated.resources.header_minimum_rating
+import leaf_log.shared.generated.resources.header_tea
+import leaf_log.shared.generated.resources.header_tea_type
+import leaf_log.shared.generated.resources.header_vessel
+import org.jetbrains.compose.resources.stringResource
 
 private enum class DateRangePreset(val label: String) {
     TODAY("Today"),
@@ -135,7 +143,7 @@ fun HistoryFilterSheetContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Tea Type section
-        FilterSectionHeader("Tea Type")
+        SectionHeader(stringResource(Res.string.header_tea_type))
         Spacer(modifier = Modifier.height(8.dp))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -167,7 +175,7 @@ fun HistoryFilterSheetContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Tea section
-        FilterSectionHeader("Tea")
+        SectionHeader(stringResource(Res.string.header_tea))
         Spacer(modifier = Modifier.height(8.dp))
         TeaDropdownFilter(
             teas = state.teas.values.toList(),
@@ -179,7 +187,7 @@ fun HistoryFilterSheetContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Vessel section
-        FilterSectionHeader("Vessel")
+        SectionHeader(stringResource(Res.string.header_vessel))
         Spacer(modifier = Modifier.height(8.dp))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -206,7 +214,7 @@ fun HistoryFilterSheetContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Date Range section
-        FilterSectionHeader("Date Range")
+        SectionHeader(stringResource(Res.string.header_date_range))
         Spacer(modifier = Modifier.height(8.dp))
 
         val isCustom = isCustomDateRange(state.dateRangeStart, state.dateRangeEnd)
@@ -316,7 +324,7 @@ fun HistoryFilterSheetContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Rating section
-        FilterSectionHeader("Minimum Rating")
+        SectionHeader(stringResource(Res.string.header_minimum_rating))
         Spacer(modifier = Modifier.height(8.dp))
         RatingSelector(
             rating = state.minRating ?: 0f,
@@ -328,15 +336,6 @@ fun HistoryFilterSheetContent(
 
         Spacer(modifier = Modifier.height(16.dp))
     }
-}
-
-@Composable
-private fun FilterSectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -43,9 +43,13 @@ import compose.icons.feathericons.Plus
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.no_tea_types
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -114,10 +118,7 @@ private fun TeaTypeListContent(
                     }
 
                     state.teaTypes.isEmpty() -> {
-                        Text(
-                            text = "No tea types found",
-                            modifier = Modifier.align(Alignment.Center),
-                        )
+                        EmptyState(message = stringResource(Res.string.no_tea_types))
                     }
 
                     else -> {

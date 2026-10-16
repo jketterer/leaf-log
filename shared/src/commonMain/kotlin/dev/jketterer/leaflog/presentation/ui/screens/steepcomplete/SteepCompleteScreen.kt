@@ -60,6 +60,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiv
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
@@ -74,6 +75,7 @@ import leaf_log.shared.generated.resources.discard_session_text
 import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
+import leaf_log.shared.generated.resources.header_previous_steeps
 import leaf_log.shared.generated.resources.ic_tea_leaf
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -345,11 +347,7 @@ private fun SteepCompleteBody(
         if (hasPreviousSteeps) {
             HorizontalDivider()
 
-            Text(
-                text = "Previous Steeps",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            SectionHeader(stringResource(Res.string.header_previous_steeps))
 
             state.previousSteeps.forEach { steep ->
                 PreviousSteepItem(

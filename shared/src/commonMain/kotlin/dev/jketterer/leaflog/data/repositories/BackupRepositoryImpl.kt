@@ -21,6 +21,7 @@ import dev.jketterer.leaflog.data.local.database.dao.BrewingVesselDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaTypeDao
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -117,7 +118,7 @@ class BackupRepositoryImpl(
                 entries.forEach { (name, file) -> zip.add(name, file) }
             }
             zipPath.toString()
-        }
+        }.ioAsDomainFailure()
     }
 
     override suspend fun preview(filePath: String): Result<ImportSummary> =
@@ -126,7 +127,7 @@ class BackupRepositoryImpl(
             runCatching {
                 val (planned, skipped, local) = plan(openBackup(path))
                 planned.summarize(local, skipped)
-            }.onFailure {
+            }.ioAsDomainFailure().onFailure {
                 fileSystem.delete(path)
             }
         }
@@ -171,7 +172,7 @@ class BackupRepositoryImpl(
                 planned.preferences?.let { restorePreferences(it.toDomain()) }
             }
             summary
-        }.onFailure {
+        }.ioAsDomainFailure().onFailure {
             created.forEach { fileSystem.delete(it) }
         }.also {
             fileSystem.delete(path)
@@ -219,9 +220,9 @@ class BackupRepositoryImpl(
         val zip = try {
             fileSystem.openZip(path)
         } catch (_: IOException) {
-            throw IllegalArgumentException("This file isn't a Leaf Log backup.")
+            throw DomainFailure.NotABackup()
         }
-        if (!zip.exists(DATA)) throw IllegalArgumentException("This file isn't a Leaf Log backup.")
+        if (!zip.exists(DATA)) throw DomainFailure.NotABackup()
         return zip
     }
 
@@ -286,3 +287,7 @@ class BackupRepositoryImpl(
         .takeIf { it.length in 1..5 && it.all(Char::isLetterOrDigit) }
         ?: "jpg"
 }
+
+/** A file that couldn't be read or written fails as [DomainFailure.Io]. */
+private fun <T> Result<T>.ioAsDomainFailure(): Result<T> =
+    exceptionOrNull().let { if (it is IOException) Result.failure(DomainFailure.Io(it)) else this }

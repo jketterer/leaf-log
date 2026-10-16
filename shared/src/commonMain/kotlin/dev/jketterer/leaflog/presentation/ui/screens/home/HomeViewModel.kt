@@ -26,6 +26,9 @@ import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ReopenSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessage
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.messages.UiText
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
@@ -41,6 +44,14 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_delete_session
+import leaf_log.shared.generated.resources.couldnt_load
+import leaf_log.shared.generated.resources.couldnt_start_session
+import leaf_log.shared.generated.resources.couldnt_undo
+import leaf_log.shared.generated.resources.couldnt_update_quick_brew
+import leaf_log.shared.generated.resources.session_finished
+import leaf_log.shared.generated.resources.undo
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 
@@ -82,6 +93,8 @@ class HomeViewModel(
     private val _navEvents = Channel<HomeNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
+    val messages = UiMessages<HomeIntent>()
+
     private var loadJob: Job? = null
 
     private val inProgressDelegate = createInProgressSessionDelegate<HomeState, HomePendingAction>(
@@ -92,7 +105,7 @@ class HomeViewModel(
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
-        setError = { state, error -> state.copy(error = error) },
+        onFailure = messages::failure,
         onResume = { session -> handleResumeSession(session) },
         executePendingAction = { action ->
             when (action) {
@@ -135,7 +148,6 @@ class HomeViewModel(
         when (intent) {
             is HomeIntent.LoadData -> loadData()
             is HomeIntent.Refresh -> refresh()
-            is HomeIntent.ClearError -> clearError()
 
             is HomeIntent.LogTeaClicked -> {
                 _state.update { it.copy(isFabExpanded = false) }
@@ -159,6 +171,16 @@ class HomeViewModel(
             is HomeIntent.FabExpandedChanged -> {
                 _state.update { it.copy(isFabExpanded = intent.expanded) }
             }
+
+            is HomeIntent.OfferUndoFinish -> messages.show(
+                UiMessage(
+                    text = UiText.Plain(Res.string.session_finished),
+                    action = UiMessage.Action(
+                        label = Res.string.undo,
+                        intent = HomeIntent.UndoFinishClicked(intent.sessionId),
+                    ),
+                ),
+            )
 
             is HomeIntent.UndoFinishClicked -> undoFinish(intent.sessionId)
             is HomeIntent.BrewAgainClicked ->
@@ -247,9 +269,7 @@ class HomeViewModel(
         viewModelScope.launch {
             reopenSessionUseCase(sessionId)
                 .onSuccess { _navEvents.send(HomeNavEvent.CompleteSession(sessionId)) }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to undo: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_undo) }
         }
     }
 
@@ -266,7 +286,7 @@ class HomeViewModel(
     private fun loadData() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true) }
 
             try {
                 val greeting = generateGreeting()
@@ -297,12 +317,8 @@ class HomeViewModel(
                     _state.update { it.copy(isLoading = false) }
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load data: ${e.message}",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load)
             }
         }
     }
@@ -310,11 +326,7 @@ class HomeViewModel(
     private suspend fun collectDailyStats(loaded: MutableStateFlow<Boolean>) {
         getDailyStatsUseCase()
             .catch { e ->
-                _state.update {
-                    it.copy(
-                        error = "Failed to load statistics: ${e.message}",
-                    )
-                }
+                messages.failure(e, Res.string.couldnt_load)
                 loaded.value = true
             }
             .collect { stats ->
@@ -333,11 +345,7 @@ class HomeViewModel(
             HomeSessionData(sessions, teas, types, vessels)
         }
             .catch { e ->
-                _state.update {
-                    it.copy(
-                        error = "Failed to load sessions: ${e.message}",
-                    )
-                }
+                messages.failure(e, Res.string.couldnt_load)
                 loaded.value = true
             }
             .collect { (sessions, teas, types, vessels) ->
@@ -455,16 +463,12 @@ class HomeViewModel(
 
     private fun pinConfiguration(configId: String, isPinned: Boolean) = viewModelScope.launch {
         pinBrewingConfigurationUseCase(configId, isPinned)
-            .onFailure { e ->
-                _state.update { it.copy(error = "Failed to update pin: ${e.message}") }
-            }
+            .onFailure { messages.failure(it, Res.string.couldnt_update_quick_brew) }
     }
 
     private fun reorderPinnedConfigurations(orderedIds: List<String>) = viewModelScope.launch {
         runCatching { brewingConfigurationRepository.reorderPinnedConfigurations(orderedIds) }
-            .onFailure { e ->
-                _state.update { it.copy(error = "Failed to reorder: ${e.message}") }
-            }
+            .onFailure { messages.failure(it, Res.string.couldnt_update_quick_brew) }
     }
 
     private fun refresh() {
@@ -491,9 +495,7 @@ class HomeViewModel(
                 _state.update { state -> state.copy(isFabExpanded = false) }
                 _navEvents.send(HomeNavEvent.NavigateToTimer(it.session.id))
             }
-            .onFailure { e ->
-                _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
-            }
+            .onFailure { messages.failure(it, Res.string.couldnt_start_session) }
     }
 
     private fun quickBrew(configurationId: String) = viewModelScope.launch {
@@ -505,9 +507,7 @@ class HomeViewModel(
                     sessionId = it.session.id
                 )
             )
-        }?.onFailure { e ->
-            _state.update { it.copy(error = "Failed to create a new session: ${e.message}") }
-        }
+        }?.onFailure { messages.failure(it, Res.string.couldnt_start_session) }
     }
 
     private fun confirmDeleteSession() = viewModelScope.launch {
@@ -515,18 +515,12 @@ class HomeViewModel(
         _state.update { it.copy(sessionPendingDelete = null) }
         deleteSessionUseCase(sessionId)
             .onSuccess { timerService.onSessionResolved(sessionId) }
-            .onFailure { e ->
-                _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
-            }
+            .onFailure { messages.failure(it, Res.string.couldnt_delete_session) }
     }
 
     private fun toggleVolumeUnit() = viewModelScope.launch {
         val toggled = _state.value.userPreferences.volumeUnit.toggle()
         preferencesRepository.updateVolumeUnit(toggled)
-    }
-
-    private fun clearError() {
-        _state.update { it.copy(error = null) }
     }
 }
 

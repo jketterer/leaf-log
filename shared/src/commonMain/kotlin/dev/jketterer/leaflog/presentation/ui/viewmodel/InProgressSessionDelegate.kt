@@ -9,6 +9,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_discard_steep
+import leaf_log.shared.generated.resources.couldnt_finish_session
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * State for the in-progress session conflict resolution dialog.
@@ -44,7 +48,7 @@ class InProgressSessionDelegate<T, PendingAction>(
     private val stateFlow: MutableStateFlow<T>,
     private val getDialogState: (T) -> InProgressDialogState?,
     private val setDialogState: (T, InProgressDialogState?) -> T,
-    private val setError: (T, String) -> T,
+    private val onFailure: (error: Throwable, couldnt: StringResource) -> Unit,
     private val onResume: (SessionWithSteeps) -> Unit,
     private val executePendingAction: suspend (PendingAction) -> Unit,
 ) {
@@ -97,12 +101,9 @@ class InProgressSessionDelegate<T, PendingAction>(
 
             val sessionId = dialogState.session.session.id
             val result = finishSessionUseCase(sessionId)
-            if (result.isFailure) {
-                stateFlow.update {
-                    var s = setError(it, "Failed to complete session: ${result.exceptionOrNull()?.message}")
-                    s = setDialogState(s, dialogState.copy(isProcessing = false))
-                    s
-                }
+            result.exceptionOrNull()?.let { error ->
+                onFailure(error, Res.string.couldnt_finish_session)
+                stateFlow.update { setDialogState(it, dialogState.copy(isProcessing = false)) }
                 return@launch
             }
             timerService.onSessionResolved(sessionId)
@@ -126,12 +127,9 @@ class InProgressSessionDelegate<T, PendingAction>(
 
             val sessionId = dialogState.session.session.id
             val result = discardSteepUseCase(sessionId)
-            if (result.isFailure) {
-                stateFlow.update {
-                    var s = setError(it, "Failed to discard session: ${result.exceptionOrNull()?.message}")
-                    s = setDialogState(s, dialogState.copy(isProcessing = false))
-                    s
-                }
+            result.exceptionOrNull()?.let { error ->
+                onFailure(error, Res.string.couldnt_discard_steep)
+                stateFlow.update { setDialogState(it, dialogState.copy(isProcessing = false)) }
                 return@launch
             }
             timerService.onSessionResolved(sessionId)

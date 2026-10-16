@@ -10,7 +10,6 @@ data class VesselDetailState(
     val totalVesselCount: Int = 0,
     val activeVesselCount: Int = 0,
     val isLoading: Boolean = false,
-    val error: String? = null,
     val showDeleteConfirmation: Boolean = false,
     val showArchiveConfirmation: Boolean = false,
 ) {

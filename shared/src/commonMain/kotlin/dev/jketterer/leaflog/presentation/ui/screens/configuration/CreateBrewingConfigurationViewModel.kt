@@ -10,6 +10,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +20,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_save_method
+import leaf_log.shared.generated.resources.failure_not_found
 
 class CreateBrewingConfigurationViewModel(
     private val teaRepository: TeaRepository,
@@ -32,6 +36,8 @@ class CreateBrewingConfigurationViewModel(
 
     private val _state = MutableStateFlow(CreateBrewingConfigurationState(isLoading = true))
     val state: StateFlow<CreateBrewingConfigurationState> = _state.asStateFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private val _navEvents = Channel<CreateBrewingConfigurationNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
@@ -49,7 +55,6 @@ class CreateBrewingConfigurationViewModel(
 
     fun onIntent(intent: CreateBrewingConfigurationIntent) {
         when (intent) {
-            is CreateBrewingConfigurationIntent.ErrorShown -> _state.update { it.copy(error = null) }
             is CreateBrewingConfigurationIntent.LoadData -> loadData(
                 intent.teaId,
                 intent.configurationId
@@ -119,7 +124,8 @@ class CreateBrewingConfigurationViewModel(
                         )
                     }
                 } else {
-                    _state.update { it.copy(isLoading = false, error = "Configuration not found") }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.show(Res.string.failure_not_found)
                 }
             } else {
                 val tea = teaRepository.getByIdFlow(teaId).first()
@@ -228,12 +234,8 @@ class CreateBrewingConfigurationViewModel(
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
                 }.onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            error = "Failed to save: ${e.message}"
-                        )
-                    }
+                    _state.update { it.copy(isSaving = false) }
+                    messages.failure(e, Res.string.couldnt_save_method)
                 }
             } else {
                 createBrewingConfigurationUseCase(
@@ -248,12 +250,8 @@ class CreateBrewingConfigurationViewModel(
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
                 }.onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            error = "Failed to save: ${e.message}"
-                        )
-                    }
+                    _state.update { it.copy(isSaving = false) }
+                    messages.failure(e, Res.string.couldnt_save_method)
                 }
             }
         }

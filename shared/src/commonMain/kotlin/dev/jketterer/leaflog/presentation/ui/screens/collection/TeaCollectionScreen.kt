@@ -55,6 +55,7 @@ import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaFilterChips
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselCard
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListViewModel
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -71,12 +72,16 @@ fun TeaCollectionScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val vesselState by vesselListViewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
+    UiMessageEffect(vesselListViewModel.messages, snackbarHostState)
 
     TeaCollectionContent(
         state = state,
         vesselState = vesselState,
         onIntent = viewModel::onIntent,
         onVesselIntent = vesselListViewModel::onIntent,
+        snackbarHostState = snackbarHostState,
         onNavigateToTeaDetail = onNavigateToTeaDetail,
         onNavigateToAddTea = onNavigateToAddTea,
         onNavigateToVesselDetail = onNavigateToVesselDetail,
@@ -95,25 +100,10 @@ private fun TeaCollectionContent(
     onNavigateToAddTea: () -> Unit,
     onNavigateToVesselDetail: (String) -> Unit,
     onNavigateToAddVessel: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            onIntent(TeaCollectionIntent.ClearError)
-        }
-    }
-
-    LaunchedEffect(vesselState.error) {
-        vesselState.error?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            onVesselIntent(VesselListIntent.ClearError)
-        }
-    }
 
     Scaffold(
         topBar = {

@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.vessel
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -15,13 +16,11 @@ class DeleteBrewingVesselUseCase(
     suspend operator fun invoke(vesselId: String): Result<Unit> = runCatching {
         require(vesselId.isNotBlank()) { "Vessel ID cannot be empty" }
         transactor {
-            check(brewingVesselRepository.countActive() > 1) {
-                "Cannot delete the last vessel. At least one vessel must remain."
+            if (brewingVesselRepository.countActive() <= 1) {
+                throw DomainFailure.LastRemaining("active vessel")
             }
-            val sessionsUsingVessel = teaSessionRepository.getSessionsByVessel(vesselId)
-            check(sessionsUsingVessel.isEmpty()) {
-                "Cannot delete vessel. ${sessionsUsingVessel.size} session(s) are using this vessel."
-            }
+            val sessions = teaSessionRepository.getSessionsByVessel(vesselId).size
+            if (sessions > 0) throw DomainFailure.InUse(sessions, DomainFailure.Dependents.SESSIONS)
             brewingVesselRepository.delete(vesselId)
             brewingConfigurationRepository.deleteWithVessel(vesselId)
         }

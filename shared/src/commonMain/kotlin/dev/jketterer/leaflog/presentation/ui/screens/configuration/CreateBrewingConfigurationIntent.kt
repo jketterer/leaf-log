@@ -16,5 +16,4 @@ sealed interface CreateBrewingConfigurationIntent {
     data object ToggleVolumeUnit : CreateBrewingConfigurationIntent
     data object Save : CreateBrewingConfigurationIntent
     data object NavigateBack : CreateBrewingConfigurationIntent
-    data object ErrorShown : CreateBrewingConfigurationIntent
 }

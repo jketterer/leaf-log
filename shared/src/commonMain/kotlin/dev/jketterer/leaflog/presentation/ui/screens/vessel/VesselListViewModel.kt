@@ -4,12 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load_vessels
 
 class VesselListViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
@@ -18,6 +21,8 @@ class VesselListViewModel(
 
     private val _state = MutableStateFlow(VesselListState())
     val state: StateFlow<VesselListState> = _state.asStateFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private val _navigationEvent = MutableStateFlow<VesselListNavigationEvent?>(null)
     val navigationEvent: StateFlow<VesselListNavigationEvent?> = _navigationEvent.asStateFlow()
@@ -35,7 +40,6 @@ class VesselListViewModel(
             is VesselListIntent.VesselClicked -> navigateToVesselDetail(intent.vesselId)
             is VesselListIntent.AddVesselClicked -> navigateToAddVessel()
             is VesselListIntent.ToggleShowArchived -> toggleShowArchived()
-            is VesselListIntent.ClearError -> clearError()
             is VesselListIntent.BackClicked -> navigateBack()
         }
     }
@@ -43,7 +47,7 @@ class VesselListViewModel(
     private fun loadVessels() {
         loadVesselsJob?.cancel()
         loadVesselsJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true) }
             try {
                 val flow = if (_state.value.showArchived) {
                     brewingVesselRepository.getAllFlow()
@@ -55,17 +59,12 @@ class VesselListViewModel(
                         it.copy(
                             vessels = vessels,
                             isLoading = false,
-                            error = null,
                         )
                     }
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to load vessels",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_vessels)
             }
         }
     }
@@ -91,10 +90,6 @@ class VesselListViewModel(
 
     private fun navigateBack() {
         _navigationEvent.value = VesselListNavigationEvent.NavigateBack
-    }
-
-    private fun clearError() {
-        _state.update { it.copy(error = null) }
     }
 
     fun onNavigationEventHandled() {

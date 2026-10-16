@@ -13,7 +13,6 @@ data class TeaCollectionState(
     val searchQuery: String = "",
     val selectedSortOption: TeaSortOption = TeaSortOption.NAME_ASC,
     val isLoading: Boolean = false,
-    val error: String? = null,
     val isEmpty: Boolean = false,
 )
 

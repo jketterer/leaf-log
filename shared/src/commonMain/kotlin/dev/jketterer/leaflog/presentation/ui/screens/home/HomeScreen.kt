@@ -22,11 +22,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -63,6 +60,7 @@ import dev.jketterer.leaflog.presentation.ui.components.home.QuickBrewSection
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import leaf_log.shared.generated.resources.Res
@@ -144,20 +142,15 @@ fun HomeScreen(
         }
     }
 
-    // Offered once: saved with the entry, so returning to Home doesn't offer it again
     val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState, viewModel::onIntent)
+
+    // Offered once: saved with the entry, so returning to Home doesn't offer it again
     var undoOffered by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(finishedSessionId) {
         if (finishedSessionId == null || undoOffered) return@LaunchedEffect
         undoOffered = true
-        val result = snackbarHostState.showSnackbar(
-            message = "Session finished",
-            actionLabel = "Undo",
-            duration = SnackbarDuration.Long,
-        )
-        if (result == SnackbarResult.ActionPerformed) {
-            viewModel.onIntent(HomeIntent.UndoFinishClicked(finishedSessionId))
-        }
+        viewModel.onIntent(HomeIntent.OfferUndoFinish(finishedSessionId))
     }
 
     HomeContent(
@@ -374,22 +367,6 @@ private fun HomeContent(
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
         )
-
-        state.error?.let { error ->
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .padding(bottom = 80.dp),
-                action = {
-                    TextButton(onClick = { onIntent(HomeIntent.ClearError) }) {
-                        Text("Dismiss")
-                    }
-                },
-            ) {
-                Text(error)
-            }
-        }
 
         SnackbarHost(
             hostState = snackbarHostState,

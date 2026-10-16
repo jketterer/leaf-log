@@ -19,7 +19,6 @@ data class CreateBrewingConfigurationState(
     val userPreferences: UserPreferences = UserPreferences(),
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
-    val error: String? = null,
     val isEditMode: Boolean = false,
     val editingConfigId: String? = null,
 ) {

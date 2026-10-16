@@ -9,6 +9,8 @@ sealed interface HomeIntent {
     data object DismissDurationSheet : HomeIntent
     data class FabExpandedChanged(val expanded: Boolean) : HomeIntent
     data class BrewAgainClicked(val sessionId: String) : HomeIntent
+    /** A session just finished: offer to undo it. */
+    data class OfferUndoFinish(val sessionId: String) : HomeIntent
     data class UndoFinishClicked(val sessionId: String) : HomeIntent
     data class QuickBrewClicked(
         val configurationId: String,
@@ -35,7 +37,6 @@ sealed interface HomeIntent {
     data object DailyStatsTeasCardClicked : HomeIntent
     data object ResumeInProgressClicked : HomeIntent
     data object SettingsClicked : HomeIntent
-    data object ClearError : HomeIntent
 
     // In-progress session conflict dialog
     data object ResumeInProgressFromDialog : HomeIntent

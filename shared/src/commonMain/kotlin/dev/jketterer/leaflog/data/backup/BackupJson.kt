@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.backup
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -20,13 +21,11 @@ internal fun decodeBackup(text: String): Backup =
     when (val version = json.decodeFromString<Header>(text).version) {
         1 -> json.decodeFromString<BackupV1>(text).toBackup()
         BACKUP_VERSION -> json.decodeFromString<Backup>(text)
-        else -> throw IllegalArgumentException(
-            if (version > BACKUP_VERSION) {
-                "This backup is from a newer version of Leaf Log. Update the app to restore it."
-            } else {
-                "This file isn't a Leaf Log backup."
-            },
-        )
+        else -> throw if (version > BACKUP_VERSION) {
+            DomainFailure.NewerBackup(version)
+        } else {
+            DomainFailure.NotABackup()
+        }
     }
 
 @Serializable

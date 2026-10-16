@@ -22,6 +22,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigat
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToSession
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_delete_method
+import leaf_log.shared.generated.resources.couldnt_delete_session
+import leaf_log.shared.generated.resources.couldnt_delete_tea
+import leaf_log.shared.generated.resources.couldnt_load
+import leaf_log.shared.generated.resources.couldnt_load_tea
+import leaf_log.shared.generated.resources.couldnt_start_session
+import leaf_log.shared.generated.resources.couldnt_update_favorite
+import leaf_log.shared.generated.resources.couldnt_update_tea
+import leaf_log.shared.generated.resources.failure_not_found
+import org.jetbrains.compose.resources.StringResource
 
 class TeaDetailViewModel(
     private val teaRepository: TeaRepository,
@@ -58,6 +70,8 @@ class TeaDetailViewModel(
     private val _navEvents = Channel<TeaDetailNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
+    val messages = UiMessages<Nothing>()
+
     private var teaId: String? = null
 
     private sealed interface PendingAction {
@@ -73,7 +87,7 @@ class TeaDetailViewModel(
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
-        setError = { state, error -> state.copy(error = error) },
+        onFailure = messages::failure,
         onResume = { session ->
             _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(session.session.id))
         },
@@ -95,7 +109,7 @@ class TeaDetailViewModel(
     private fun loadPreferences() {
         viewModelScope.launch {
             preferencesRepository.getPreferencesFlow()
-                .catchError("Failed to load preferences")
+                .catchError(Res.string.couldnt_load)
                 .collect { preferences ->
                     _state.update { it.copy(userPreferences = preferences) }
                 }
@@ -162,8 +176,6 @@ class TeaDetailViewModel(
             is TeaDetailIntent.ConfirmDeleteSession -> confirmDeleteSession()
             is TeaDetailIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
 
-            is TeaDetailIntent.ClearError -> _state.update { it.copy(error = null) }
-
             // In-progress session conflict dialog
             is TeaDetailIntent.ResumeInProgress -> inProgressDelegate.resume()
             is TeaDetailIntent.DismissInProgressDialog -> inProgressDelegate.dismissDialog()
@@ -175,11 +187,11 @@ class TeaDetailViewModel(
     private fun loadTea(teaId: String) {
         this.teaId = teaId
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true) }
 
             try {
                 teaRepository.getByIdFlow(teaId)
-                    .catchError("Failed to load tea")
+                    .catchError(Res.string.couldnt_load_tea)
                     .collect { tea ->
                         if (tea != null) {
                             _state.update { it.copy(tea = tea, isLoading = false) }
@@ -191,35 +203,28 @@ class TeaDetailViewModel(
                             // Deleted while open, from here or anywhere else
                             _navEvents.trySend(NavigateBack)
                         } else {
-                            _state.update {
-                                it.copy(
-                                    isLoading = false,
-                                    error = "Tea not found",
-                                )
-                            }
+                            _state.update { it.copy(isLoading = false) }
+                            messages.show(Res.string.failure_not_found)
                         }
                     }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Failed to load tea: ${e.message}"
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_tea)
             }
         }
     }
 
-    private fun <T> Flow<T>.catchError(message: String): Flow<T> {
+    private fun <T> Flow<T>.catchError(couldnt: StringResource): Flow<T> {
         return catch { e ->
-            _state.update { it.copy(isLoading = false, error = "$message: ${e.message}") }
+            _state.update { it.copy(isLoading = false) }
+            messages.failure(e, couldnt)
         }
     }
 
     private fun loadTeaType(teaTypeId: String) {
         viewModelScope.launch {
             teaTypeRepository.getByIdFlow(teaTypeId)
-                .catchError("Failed to load tea type")
+                .catchError(Res.string.couldnt_load_tea)
                 .collect { teaType ->
                     _state.update { it.copy(teaType = teaType) }
                 }
@@ -229,7 +234,7 @@ class TeaDetailViewModel(
     private fun loadRecentSessions(teaId: String) {
         viewModelScope.launch {
             teaSessionRepository.getSessionsByTeaFlow(teaId)
-                .catchError("Failed to load sessions")
+                .catchError(Res.string.couldnt_load_tea)
                 .map { it.take(5) }
                 .collect { sessions ->
                     _state.update { it.copy(recentSessions = sessions) }
@@ -240,7 +245,7 @@ class TeaDetailViewModel(
     private fun loadConfigurations(teaId: String) {
         viewModelScope.launch {
             brewingConfigurationRepository.getByTeaIdFlow(teaId)
-                .catchError("Failed to load configurations")
+                .catchError(Res.string.couldnt_load_tea)
                 .collect { configurations ->
                     _state.update { it.copy(configurations = configurations) }
                 }
@@ -250,7 +255,7 @@ class TeaDetailViewModel(
     private fun loadVessels() {
         viewModelScope.launch {
             brewingVesselRepository.getAllFlow()
-                .catchError("Failed to load vessels")
+                .catchError(Res.string.couldnt_load_tea)
                 .collect { vessels ->
                     _state.update { it.copy(vessels = vessels) }
                 }
@@ -274,12 +279,8 @@ class TeaDetailViewModel(
             // On success the tea flow emits null, which closes the page
             deleteTeaUseCase(tea.id)
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = "Failed to delete tea: ${e.message}"
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.failure(e, Res.string.couldnt_delete_tea)
                 }
         }
     }
@@ -289,9 +290,7 @@ class TeaDetailViewModel(
 
         viewModelScope.launch {
             toggleFavoriteUseCase(tea)
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to toggle favorite: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_update_favorite) }
         }
     }
 
@@ -300,9 +299,7 @@ class TeaDetailViewModel(
 
         viewModelScope.launch {
             runCatching { teaRepository.setFinished(tea.id, finished = tea.finishedAt == null) }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to update tea: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_update_tea) }
         }
     }
 
@@ -311,9 +308,7 @@ class TeaDetailViewModel(
             val configId = _state.value.configurationPendingDelete ?: return@launch
             _state.update { it.copy(configurationPendingDelete = null) }
             deleteBrewingConfigurationUseCase(configId)
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to delete configuration: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_delete_method) }
         }
     }
 
@@ -323,9 +318,7 @@ class TeaDetailViewModel(
             _state.update { it.copy(sessionPendingDelete = null) }
             deleteSessionUseCase(sessionId)
                 .onSuccess { timerService.onSessionResolved(sessionId) }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to delete session: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_delete_session) }
         }
     }
 
@@ -333,16 +326,14 @@ class TeaDetailViewModel(
         viewModelScope.launch {
             val session = teaSessionRepository.getSession(sessionId)
             if (session == null) {
-                _state.update { it.copy(error = "Session not found") }
+                messages.show(Res.string.failure_not_found)
                 return@launch
             }
             startSessionUseCase(session)
                 .onSuccess { newSession ->
                     _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(newSession.session.id))
                 }
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to create new session: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_start_session) }
         }
     }
 

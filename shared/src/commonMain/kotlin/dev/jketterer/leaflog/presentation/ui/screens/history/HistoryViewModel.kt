@@ -66,7 +66,7 @@ class HistoryViewModel(
         stateFlow = _state,
         getDialogState = { it.inProgressDialogState },
         setDialogState = { state, dialogState -> state.copy(inProgressDialogState = dialogState) },
-        setError = { state, error -> state.copy(error = error) },
+        onFailure = { error, _ -> _state.update { it.copy(error = error.message) } },
         onResume = { session ->
             _navEvents.trySend(HistoryNavEvent.NavigateToTimer(session.session.id))
         },

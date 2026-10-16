@@ -49,6 +49,7 @@ import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.vessel_in_use
 import org.jetbrains.compose.resources.pluralStringResource
@@ -66,6 +67,7 @@ fun VesselDetailScreen(
     val state by viewModel.state.collectAsState()
     val navigationEvent by viewModel.navigationEvent.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
     var showMenu by remember { mutableStateOf(false) }
 
     // Load vessel on initial composition
@@ -88,13 +90,6 @@ fun VesselDetailScreen(
             }
 
             null -> {}
-        }
-    }
-
-    // Show error snackbar
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
         }
     }
 

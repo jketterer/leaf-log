@@ -12,17 +12,16 @@ sealed interface SettingsIntent {
     data class UpdateDefaultWaterType(val waterType: WaterType) : SettingsIntent
     data class UpdateTimerCompletionNotifications(val enabled: Boolean) : SettingsIntent
     data class UpdateSessionReminderNotifications(val enabled: Boolean) : SettingsIntent
-    data object ClearError : SettingsIntent
     data object ExportData : SettingsIntent
     data object ExportPickerShown : SettingsIntent
     data object ExportCompleted : SettingsIntent
     data object ExportCancelled : SettingsIntent
-    data class ExportFailed(val message: String) : SettingsIntent
+    data object ExportFailed : SettingsIntent
     data object ImportData : SettingsIntent
     data object ImportPickerShown : SettingsIntent
     data class ImportFileSelected(val filePath: String) : SettingsIntent
     data object ImportCancelled : SettingsIntent
-    data class ImportFailed(val message: String) : SettingsIntent
+    data object ImportFailed : SettingsIntent
     data object ConfirmImport : SettingsIntent
     data object CancelImport : SettingsIntent
     data object DismissImportResult : SettingsIntent

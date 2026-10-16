@@ -8,5 +8,4 @@ data class VesselListState(
     val userPreferences: UserPreferences = UserPreferences(),
     val showArchived: Boolean = false,
     val isLoading: Boolean = false,
-    val error: String? = null,
 )

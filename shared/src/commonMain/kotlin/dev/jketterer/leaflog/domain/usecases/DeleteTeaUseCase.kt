@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -17,9 +18,8 @@ class DeleteTeaUseCase(
 ) {
     suspend operator fun invoke(teaId: String): Result<Unit> = runCatching {
         transactor {
-            check(teaSessionRepository.getSessionsByTea(teaId).isEmpty()) {
-                "A tea with sessions can't be deleted"
-            }
+            val sessions = teaSessionRepository.getSessionsByTea(teaId).size
+            if (sessions > 0) throw DomainFailure.InUse(sessions, DomainFailure.Dependents.SESSIONS)
             teaRepository.delete(teaId)
             brewingConfigurationRepository.deleteWithTea(teaId)
         }

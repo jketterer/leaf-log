@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.stats
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -16,7 +17,7 @@ class RecomputeStatsUseCase(
 ) {
     suspend operator fun invoke(teaId: String) {
         val sessions = teaSessionRepository.getSessionsByTea(teaId)
-        val tea = teaRepository.getById(teaId) ?: error("Tea not found: $teaId")
+        val tea = teaRepository.getById(teaId) ?: throw DomainFailure.NotFound("tea $teaId")
         val teaStats = sessions.stats()
         teaRepository.upsert(
             tea.copy(

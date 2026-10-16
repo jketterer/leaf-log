@@ -6,13 +6,19 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
-import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_archive_vessel
+import leaf_log.shared.generated.resources.couldnt_delete_vessel
+import leaf_log.shared.generated.resources.couldnt_load_vessel
+import leaf_log.shared.generated.resources.couldnt_unarchive_vessel
+import kotlin.time.Clock
 
 class VesselDetailViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
@@ -23,6 +29,8 @@ class VesselDetailViewModel(
 
     private val _state = MutableStateFlow(VesselDetailState())
     val state: StateFlow<VesselDetailState> = _state.asStateFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private val _navigationEvent = MutableStateFlow<VesselDetailNavigationEvent?>(null)
     val navigationEvent: StateFlow<VesselDetailNavigationEvent?> = _navigationEvent.asStateFlow()
@@ -54,7 +62,7 @@ class VesselDetailViewModel(
 
     private fun loadVessel(vesselId: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true) }
             try {
                 // Load vessel
                 val vessel = brewingVesselRepository.getById(vesselId)
@@ -73,16 +81,11 @@ class VesselDetailViewModel(
                         totalVesselCount = totalVesselCount,
                         activeVesselCount = activeVesselCount,
                         isLoading = false,
-                        error = null,
                     )
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to load vessel"
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_vessel)
             }
         }
     }
@@ -106,12 +109,8 @@ class VesselDetailViewModel(
                     _navigationEvent.value = VesselDetailNavigationEvent.NavigateBackAfterDelete
                 }
                 .onFailure { error ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = error.message ?: "Failed to delete vessel"
-                        )
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.failure(error, Res.string.couldnt_delete_vessel)
                 }
         }
     }
@@ -128,12 +127,8 @@ class VesselDetailViewModel(
                 brewingVesselRepository.upsert(updated)
                 _navigationEvent.value = VesselDetailNavigationEvent.NavigateBack
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to archive vessel",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_archive_vessel)
             }
         }
     }
@@ -150,12 +145,8 @@ class VesselDetailViewModel(
                 brewingVesselRepository.upsert(updated)
                 loadVessel(vessel.id)
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to unarchive vessel",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_unarchive_vessel)
             }
         }
     }

@@ -55,13 +55,13 @@ class FakeTeaRepository(teas: List<Tea> = emptyList()) : TeaRepository {
 class FakeTeaTypeRepository(teaTypes: List<TeaType> = emptyList()) : TeaTypeRepository {
     private val teaTypes = teaTypes.associateBy { it.id }.toMutableMap()
 
+    override suspend fun getAll(): List<TeaType> = teaTypes.values.filter { it.deletedAt == null }
     override suspend fun getById(id: String): TeaType? = teaTypes[id]?.takeIf { it.deletedAt == null }
     override suspend fun delete(id: String) {
         teaTypes[id] = teaTypes.getValue(id).copy(deletedAt = DELETED_AT)
     }
 
     override fun getAllFlow(): Flow<List<TeaType>> = TODO("unused by these tests")
-    override suspend fun getAll(): List<TeaType> = TODO("unused by these tests")
     override fun getByIdFlow(id: String): Flow<TeaType?> = TODO("unused by these tests")
     override suspend fun upsert(teaType: TeaType) = TODO("unused by these tests")
     override suspend fun initializeDefaults() = TODO("unused by these tests")

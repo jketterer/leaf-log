@@ -7,7 +7,9 @@ import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.domain.usecases.DeleteTeaTypeUseCase
 import dev.jketterer.leaflog.domain.usecases.MergeTeaTypeUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,8 +17,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_delete_tea_type
+import leaf_log.shared.generated.resources.couldnt_load_tea_type
+import leaf_log.shared.generated.resources.couldnt_merge_tea_type
+import leaf_log.shared.generated.resources.couldnt_save_tea_type
+import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.time.Instant
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class EditTeaTypeViewModel(
@@ -24,10 +31,13 @@ class EditTeaTypeViewModel(
     private val teaRepository: TeaRepository,
     private val preferencesRepository: PreferencesRepository,
     private val mergeTeaTypeUseCase: MergeTeaTypeUseCase,
+    private val deleteTeaTypeUseCase: DeleteTeaTypeUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditTeaTypeState())
     val state: StateFlow<EditTeaTypeState> = _state.asStateFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private val _navigationEvent = MutableStateFlow<EditTeaTypeNavigationEvent?>(null)
     val navigationEvent: StateFlow<EditTeaTypeNavigationEvent?> = _navigationEvent.asStateFlow()
@@ -55,9 +65,11 @@ class EditTeaTypeViewModel(
             is EditTeaTypeIntent.CancelDelete -> _state.update {
                 it.copy(showDeleteConfirmation = false, mergeTargetId = null)
             }
+
             is EditTeaTypeIntent.MergeTargetSelected -> _state.update {
                 it.copy(mergeTargetId = intent.teaTypeId)
             }
+
             is EditTeaTypeIntent.ConfirmMerge -> confirmMerge()
             is EditTeaTypeIntent.ToggleTemperatureUnit -> toggleTemperatureUnit()
         }
@@ -92,14 +104,12 @@ class EditTeaTypeViewModel(
                         )
                     }
                 } else {
-                    _state.update {
-                        it.copy(isLoading = false, error = "Tea type not found")
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.show(Res.string.failure_not_found)
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(isLoading = false, error = e.message ?: "Failed to load tea type")
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_tea_type)
             }
         }
     }
@@ -146,7 +156,6 @@ class EditTeaTypeViewModel(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     private fun save() {
         val currentState = _state.value
         val nameError = validateName(currentState.name)
@@ -160,7 +169,7 @@ class EditTeaTypeViewModel(
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true, error = null) }
+            _state.update { it.copy(isSaving = true) }
 
             try {
                 val tempUnit = currentState.userPreferences.temperatureUnit
@@ -197,9 +206,8 @@ class EditTeaTypeViewModel(
                 teaTypeRepository.upsert(teaType)
                 _navigationEvent.value = EditTeaTypeNavigationEvent.NavigateBack
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(isSaving = false, error = e.message ?: "Failed to save tea type")
-                }
+                _state.update { it.copy(isSaving = false) }
+                messages.failure(e, Res.string.couldnt_save_tea_type)
             }
         }
     }
@@ -240,17 +248,12 @@ class EditTeaTypeViewModel(
         val teaType = _state.value.existingTeaType ?: return
 
         viewModelScope.launch {
-            try {
-                teaTypeRepository.delete(teaType.id)
-                _navigationEvent.value = EditTeaTypeNavigationEvent.NavigateBack
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        showDeleteConfirmation = false,
-                        error = e.message ?: "Failed to delete tea type",
-                    )
+            deleteTeaTypeUseCase(teaType.id)
+                .onSuccess { _navigationEvent.value = EditTeaTypeNavigationEvent.NavigateBack }
+                .onFailure { e ->
+                    _state.update { it.copy(showDeleteConfirmation = false) }
+                    messages.failure(e, Res.string.couldnt_delete_tea_type)
                 }
-            }
         }
     }
 
@@ -262,12 +265,8 @@ class EditTeaTypeViewModel(
             mergeTeaTypeUseCase(sourceId = teaType.id, targetId = targetId)
                 .onSuccess { _navigationEvent.value = EditTeaTypeNavigationEvent.NavigateBack }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            showDeleteConfirmation = false,
-                            error = e.message ?: "Failed to merge tea type",
-                        )
-                    }
+                    _state.update { it.copy(showDeleteConfirmation = false) }
+                    messages.failure(e, Res.string.couldnt_merge_tea_type)
                 }
         }
     }

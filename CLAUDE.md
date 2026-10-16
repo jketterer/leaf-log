@@ -179,6 +179,9 @@ Example: Rating calculations, session completion flows, steep management.
 - ViewModels manage UI state, NOT business logic
 - Keep ViewModels thin - delegate to use cases
 - Use sealed interfaces for Intents and Navigation Events
+- Snackbars go through the ViewModel's `UiMessages`, shown by one `UiMessageEffect` per screen;
+  a failed operation calls `messages.failure(e, Res.string.couldnt_…)`, never puts `e.message`
+  in State. A failure the user should hear the reason for is a `DomainFailure`
 - State should be immutable data classes
 
 ### Composable Organization

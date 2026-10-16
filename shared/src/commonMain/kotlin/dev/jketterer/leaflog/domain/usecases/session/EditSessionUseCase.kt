@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -21,7 +22,7 @@ class EditSessionUseCase(
     ): Result<SessionWithSteeps> = runCatching {
         transactor {
             val current = teaSessionRepository.getSession(sessionId)
-                ?: error("Session not found: $sessionId")
+                ?: throw DomainFailure.NotFound("session $sessionId")
             val session = current.session
             val edited = edit(session).let { it.copy(location = it.location.blankToNull()) }
 

@@ -14,5 +14,4 @@ sealed interface TeaCollectionIntent {
     data class TabSelected(val tab: CollectionTab) : TeaCollectionIntent
     data object AddTeaClicked : TeaCollectionIntent
     data class SortSelected(val option: TeaSortOption) : TeaCollectionIntent
-    data object ClearError : TeaCollectionIntent
 }

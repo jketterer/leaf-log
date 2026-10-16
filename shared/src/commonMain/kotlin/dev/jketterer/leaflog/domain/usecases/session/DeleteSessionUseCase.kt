@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
 
@@ -15,7 +16,7 @@ class DeleteSessionUseCase(
     suspend operator fun invoke(sessionId: String): Result<Unit> = runCatching {
         transactor {
             val current = teaSessionRepository.getSession(sessionId)
-                ?: error("Session not found: $sessionId")
+                ?: throw DomainFailure.NotFound("session $sessionId")
             teaSessionRepository.deleteSession(sessionId)
             recomputeStats(current.session.teaId)
         }

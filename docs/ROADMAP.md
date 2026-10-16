@@ -522,20 +522,21 @@ Scope is **the system, not a restyle of every screen.**
     - Display toggles (Analytics totals, Home's stat tile) become the same local chip: they last
       while on the screen and never write the preference.
 - **One message surface.**
-    - A small `UiMessages` class per ViewModel wraps a `Channel` + `receiveAsFlow`, the nav-event
-      idiom. One `UiMessageEffect` per screen feeds the `Scaffold`'s `SnackbarHost`. No base
-      ViewModel.
+    - A small `UiMessages` class per ViewModel holds its pending messages as state, as Android's
+      UI-events guidance has it: a message stays until the screen reports it shown, so one cut short
+      by rotation or navigation is shown again. One `UiMessageEffect` per screen feeds the
+      `Scaffold`'s `SnackbarHost`. No base ViewModel.
     - A `UiMessage` carries a string or plural resource plus args, resolved by the screen, so
       ViewModels stay locale-free and tests assert on the resource. It may carry an action label and
       an intent to send back; Home's Undo moves onto it, and the polish track's Undo-for-deletes is
       then purely UI.
-    - Typed domain failures — `NotFound`, `InUse(n)`, `LastRemaining`, `Io` — mapped to copy in the
-      UI. They replace the copy `DeleteBrewingVesselUseCase` puts in the domain, and the tea, vessel
+    - Typed domain failures — `NotFound`, `InUse(n)`, `LastRemaining`, `Io`, and the backup's
+      `NotABackup` and `NewerBackup` — mapped to copy in the UI. They replace the copy `DeleteBrewingVesselUseCase` puts in the domain, and the tea, vessel
       and tea-type delete guards throw them. Tea types can no longer lose their last type.
     - Anything else reads "Couldn't <action>", and the exception goes to Kermit's log.
     - A failed load shows the snackbar over the screen's empty state; there's no retry, because a
       local database failing is a bug, not a flaky network. Success messages ("Backup exported")
-      use the same channel. Field validation stays inline as `supportingText`.
+      use the same queue. Field validation stays inline as `supportingText`.
 - **Strings and dates.** Compose resources' `strings.xml` and plurals. What moves in Bet 1 is what
   Bet 1 writes or edits, plus every plural bug ("1 brews", "Used 1 times", "(s)"); screens migrate
   as later bets rewrite them. One `expect`/`actual` formats a `LocalDate` by skeleton (`MONTH_DAY`,
@@ -588,7 +589,7 @@ state across rotation and process death.
 - [x] `refactor: one icon family`
 - [x] `feat: string resources and plurals`
 - [x] `feat: locale-aware dates`
-- [ ] `feat: one message surface`: `UiMessages`, `UiMessageEffect`, the typed failures and the
+- [x] `feat: one message surface`: `UiMessages`, `UiMessageEffect`, the typed failures and the
   guards that throw them, Home's Undo, and the tea library and Settings screens. Test: failure →
   message mapping.
 - [ ] `refactor: messages on the brew loop and journal`: the remaining screens; every

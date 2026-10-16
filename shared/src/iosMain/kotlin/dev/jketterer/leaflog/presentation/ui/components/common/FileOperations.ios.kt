@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import co.touchlab.kermit.Logger
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSFileManager
@@ -28,7 +29,7 @@ actual fun ExportFileEffect(
     onLaunched: () -> Unit,
     onExported: () -> Unit,
     onCancelled: () -> Unit,
-    onError: (String) -> Unit,
+    onError: () -> Unit,
 ) {
     val exported by rememberUpdatedState(onExported)
     val cancelled by rememberUpdatedState(onCancelled)
@@ -39,7 +40,8 @@ actual fun ExportFileEffect(
         onLaunched()
 
         val presenter = topViewController() ?: run {
-            onError("Couldn't open the share sheet")
+            Logger.w(tag = "Backup") { "No view controller to present the share sheet" }
+            onError()
             return@LaunchedEffect
         }
         // The file is already named for the user, so it's shared as it is
@@ -51,7 +53,10 @@ actual fun ExportFileEffect(
         sheet.completionWithItemsHandler = { _, completed, _, error ->
             when {
                 completed -> exported()
-                error != null -> failed(error.localizedDescription)
+                error != null -> {
+                    Logger.w(tag = "Backup") { "Sharing failed: ${error.localizedDescription}" }
+                    failed()
+                }
                 else -> cancelled()
             }
         }
@@ -66,7 +71,7 @@ actual fun ImportFileLauncher(
     onLaunched: () -> Unit,
     onFilePath: (String) -> Unit,
     onCancelled: () -> Unit,
-    onError: (String) -> Unit,
+    onError: () -> Unit,
 ) {
     val delegate = remember {
         DocumentPickerDelegate(
@@ -81,7 +86,8 @@ actual fun ImportFileLauncher(
         onLaunched()
 
         val presenter = topViewController() ?: run {
-            onError("Couldn't open the file picker")
+            Logger.w(tag = "Backup") { "No view controller to present the file picker" }
+            onError()
             return@LaunchedEffect
         }
         val picker = UIDocumentPickerViewController(
@@ -109,7 +115,7 @@ private fun topViewController(): UIViewController? {
 private class DocumentPickerDelegate(
     private val onFilePath: (String) -> Unit,
     private val onCancelled: () -> Unit,
-    private val onError: (String) -> Unit,
+    private val onError: () -> Unit,
 ) : NSObject(), UIDocumentPickerDelegateProtocol {
 
     override fun documentPicker(
@@ -136,7 +142,12 @@ private class DocumentPickerDelegate(
             if (accessGranted) url.stopAccessingSecurityScopedResource()
         }
 
-        if (copied) onFilePath(tempPath) else onError("Couldn't read the file")
+        if (copied) {
+            onFilePath(tempPath)
+        } else {
+            Logger.w(tag = "Backup") { "Couldn't copy the picked file" }
+            onError()
+        }
     }
 
     override fun documentPickerWasCancelled(controller: UIDocumentPickerViewController) {

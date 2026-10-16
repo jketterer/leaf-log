@@ -14,6 +14,7 @@ import dev.jketterer.leaflog.data.local.database.inMemoryDatabase
 import dev.jketterer.leaflog.data.local.database.row
 import dev.jketterer.leaflog.data.local.database.seedForeignKeys
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
@@ -41,6 +42,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -297,7 +299,7 @@ class BackupRepositoryImplTest {
 
         val result = device.repository.import(zip)
 
-        assertTrue("newer version" in result.exceptionOrNull()?.message.orEmpty())
+        assertIs<DomainFailure.NewerBackup>(result.exceptionOrNull())
         assertEquals(emptyList(), device.database.teaDao().getAllIncludingDeleted())
         assertFalse(fileSystem.exists(zip.toPath()), "the picker's copy is cleaned up")
     }
@@ -310,7 +312,7 @@ class BackupRepositoryImplTest {
 
         val result = device.repository.import(file.toString())
 
-        assertTrue("isn't a Leaf Log backup" in result.exceptionOrNull()?.message.orEmpty())
+        assertIs<DomainFailure.NotABackup>(result.exceptionOrNull())
     }
 
     @Test

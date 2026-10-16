@@ -47,6 +47,7 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -61,6 +62,8 @@ fun EditTeaScreen(
     viewModel: EditTeaViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(teaId) {
         viewModel.onIntent(EditTeaIntent.LoadTea(teaId))
@@ -93,6 +96,7 @@ fun EditTeaScreen(
     EditTeaContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
         // From teaId, not state.isEditMode: the state defaults to add mode and only flips once
         // LoadTea has run, which is a composition too late to decide about the keyboard.
         autoFocusName = teaId == null,
@@ -104,11 +108,11 @@ fun EditTeaScreen(
 private fun EditTeaContent(
     state: EditTeaState,
     onIntent: (EditTeaIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     autoFocusName: Boolean = false,
 ) {
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val nameFocusRequester = remember { FocusRequester() }
     val originFocusRequester = remember { FocusRequester() }
@@ -120,13 +124,6 @@ private fun EditTeaContent(
     LaunchedEffect(autoFocusName) {
         if (autoFocusName) {
             nameFocusRequester.requestFocus()
-        }
-    }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            onIntent(EditTeaIntent.ErrorShown)
         }
     }
 

@@ -20,7 +20,6 @@ data class HomeState(
     val liveTimerState: TimerState? = null, // Live timer progress from TimerService
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
-    val error: String? = null,
     val isEmpty: Boolean = true,
     val userPreferences: UserPreferences = UserPreferences(),
     // FAB menu state

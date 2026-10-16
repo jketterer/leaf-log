@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 
 /**
  * Loads user preferences and updates the ViewModel state automatically.
@@ -142,7 +143,7 @@ fun <T, NavEvent> ViewModel.createConfigurationSaveDelegate(
  * @param stateFlow The state flow to update
  * @param getDialogState Lambda to extract dialog state from ViewModel state
  * @param setDialogState Lambda to set dialog state in ViewModel state
- * @param setError Lambda to set an error message in state
+ * @param onFailure Reports a failure, as [UiMessages.failure] does
  * @param onResume Lambda called when user chooses to resume the in-progress session
  * @param executePendingAction Lambda to execute the deferred action after conflict resolution
  */
@@ -154,7 +155,7 @@ fun <T, PendingAction> ViewModel.createInProgressSessionDelegate(
     stateFlow: MutableStateFlow<T>,
     getDialogState: (T) -> InProgressDialogState?,
     setDialogState: (T, InProgressDialogState?) -> T,
-    setError: (T, String) -> T,
+    onFailure: (error: Throwable, couldnt: StringResource) -> Unit,
     onResume: (SessionWithSteeps) -> Unit,
     executePendingAction: suspend (PendingAction) -> Unit,
 ): InProgressSessionDelegate<T, PendingAction> {
@@ -167,7 +168,7 @@ fun <T, PendingAction> ViewModel.createInProgressSessionDelegate(
         stateFlow = stateFlow,
         getDialogState = getDialogState,
         setDialogState = setDialogState,
-        setError = setError,
+        onFailure = onFailure,
         onResume = onResume,
         executePendingAction = executePendingAction,
     )

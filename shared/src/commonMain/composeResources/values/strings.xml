@@ -68,4 +68,61 @@
         <item quantity="one">%1$d record is left out: what it belonged to was deleted before this backup was made.</item>
         <item quantity="other">%1$d records are left out: what they belonged to was deleted before this backup was made.</item>
     </plurals>
+
+    <!-- Messages -->
+    <string name="session_finished">Session finished</string>
+    <string name="undo">Undo</string>
+    <string name="backup_exported">Backup exported</string>
+
+    <!-- Why an operation failed -->
+    <string name="failure_not_found">That no longer exists</string>
+    <plurals name="failure_in_use_sessions">
+        <item quantity="one">Used in %1$d session, so it can't be deleted</item>
+        <item quantity="other">Used in %1$d sessions, so it can't be deleted</item>
+    </plurals>
+    <plurals name="failure_in_use_teas">
+        <item quantity="one">Used by %1$d tea, so it can't be deleted</item>
+        <item quantity="other">Used by %1$d teas, so it can't be deleted</item>
+    </plurals>
+    <string name="failure_last_remaining">The last one can't be deleted</string>
+    <string name="failure_io">Couldn't read or write the file. Check there's free space and try again.</string>
+    <string name="failure_not_a_backup">This file isn't a Leaf Log backup</string>
+    <string name="failure_newer_backup">This backup is from a newer version of Leaf Log. Update the app to restore it.</string>
+
+    <!-- An operation failed with no reason to give -->
+    <string name="couldnt_load">Couldn't load</string>
+    <string name="couldnt_undo">Couldn't undo</string>
+    <string name="couldnt_start_session">Couldn't start the session</string>
+    <string name="couldnt_finish_session">Couldn't finish the session</string>
+    <string name="couldnt_discard_steep">Couldn't discard the steep</string>
+    <string name="couldnt_delete_session">Couldn't delete the session</string>
+    <string name="couldnt_update_quick_brew">Couldn't update Quick Brew</string>
+    <string name="couldnt_load_teas">Couldn't load your teas</string>
+    <string name="couldnt_search">Couldn't search</string>
+    <string name="couldnt_update_favorite">Couldn't update favorites</string>
+    <string name="couldnt_load_tea">Couldn't load the tea</string>
+    <string name="couldnt_update_tea">Couldn't update the tea</string>
+    <string name="couldnt_save_tea">Couldn't save the tea</string>
+    <string name="couldnt_delete_tea">Couldn't delete the tea</string>
+    <string name="couldnt_save_photo">Couldn't save the photo</string>
+    <string name="couldnt_load_method">Couldn't load the method</string>
+    <string name="couldnt_save_method">Couldn't save the method</string>
+    <string name="couldnt_delete_method">Couldn't delete the method</string>
+    <string name="couldnt_load_vessels">Couldn't load your vessels</string>
+    <string name="couldnt_load_vessel">Couldn't load the vessel</string>
+    <string name="couldnt_save_vessel">Couldn't save the vessel</string>
+    <string name="couldnt_delete_vessel">Couldn't delete the vessel</string>
+    <string name="couldnt_archive_vessel">Couldn't archive the vessel</string>
+    <string name="couldnt_unarchive_vessel">Couldn't unarchive the vessel</string>
+    <string name="couldnt_load_tea_types">Couldn't load the tea types</string>
+    <string name="couldnt_load_tea_type">Couldn't load the tea type</string>
+    <string name="couldnt_save_tea_type">Couldn't save the tea type</string>
+    <string name="couldnt_delete_tea_type">Couldn't delete the tea type</string>
+    <string name="couldnt_merge_tea_type">Couldn't move the teas</string>
+    <string name="couldnt_save_setting">Couldn't save the setting</string>
+    <string name="couldnt_export">Couldn't export the backup</string>
+    <string name="couldnt_save_backup">Couldn't save the backup file</string>
+    <string name="couldnt_open_backup">Couldn't open the file</string>
+    <string name="couldnt_read_backup">Couldn't read the backup</string>
+    <string name="couldnt_import">Couldn't import the backup</string>
 </resources>

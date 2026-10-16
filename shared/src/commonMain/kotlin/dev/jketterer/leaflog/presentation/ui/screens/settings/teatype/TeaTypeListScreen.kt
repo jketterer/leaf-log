@@ -43,6 +43,7 @@ import compose.icons.feathericons.Plus
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UnitConverter
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import org.koin.compose.viewmodel.koinViewModel
@@ -55,6 +56,8 @@ fun TeaTypeListScreen(
     viewModel: TeaTypeListViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
     val navigationEvent by viewModel.navigationEvent.collectAsState()
 
     LaunchedEffect(navigationEvent) {
@@ -81,6 +84,7 @@ fun TeaTypeListScreen(
     TeaTypeListContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -89,16 +93,8 @@ fun TeaTypeListScreen(
 private fun TeaTypeListContent(
     state: TeaTypeListState,
     onIntent: (TeaTypeListIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
-            onIntent(TeaTypeListIntent.ClearError)
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(

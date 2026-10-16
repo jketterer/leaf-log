@@ -24,7 +24,6 @@ sealed interface TeaDetailIntent {
     data object CancelDeleteConfiguration : TeaDetailIntent
 
     data object AddConfigurationClicked : TeaDetailIntent
-    data object ClearError : TeaDetailIntent
 
     // In-progress session conflict dialog
     data object ResumeInProgress : TeaDetailIntent

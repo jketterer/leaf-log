@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
@@ -16,7 +17,7 @@ class MergeTeaTypeUseCase(
     suspend operator fun invoke(sourceId: String, targetId: String): Result<Unit> = runCatching {
         require(sourceId != targetId) { "A tea type can't be merged into itself" }
         transactor {
-            checkNotNull(teaTypeRepository.getById(targetId)) { "Tea type not found: $targetId" }
+            teaTypeRepository.getById(targetId) ?: throw DomainFailure.NotFound("tea type $targetId")
             teaRepository.reassignType(fromTypeId = sourceId, toTypeId = targetId)
             teaTypeRepository.delete(sourceId)
         }

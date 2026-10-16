@@ -1,12 +1,12 @@
 package dev.jketterer.leaflog.data.backup
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -53,11 +53,9 @@ class BackupJsonTest {
 
     @Test
     fun `a backup from a newer app is refused with a way forward`() {
-        val error = assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<DomainFailure.NewerBackup> {
             decodeBackup("""{"version": ${BACKUP_VERSION + 1}}""")
         }
-
-        assertTrue("Update the app" in error.message.orEmpty())
     }
 }
 

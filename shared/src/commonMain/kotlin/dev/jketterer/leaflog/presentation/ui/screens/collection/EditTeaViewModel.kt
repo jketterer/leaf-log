@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -20,6 +21,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load_tea
+import leaf_log.shared.generated.resources.couldnt_save_photo
+import leaf_log.shared.generated.resources.couldnt_save_tea
+import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.uuid.Uuid
 
 class EditTeaViewModel(
@@ -36,6 +42,8 @@ class EditTeaViewModel(
 
     private val _navEvents = Channel<EditTeaNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private val newlyAddedPhotos = mutableListOf<String>()
 
@@ -66,14 +74,13 @@ class EditTeaViewModel(
             is EditTeaIntent.BackClicked -> handleBack()
             is EditTeaIntent.ConfirmDiscard -> confirmDiscard()
             is EditTeaIntent.CancelDiscard -> cancelDiscard()
-            is EditTeaIntent.ErrorShown -> _state.update { it.copy(error = null) }
         }
     }
 
     private fun loadTeaTypes() {
         viewModelScope.launch {
             teaTypeRepository.getAllFlow()
-                .catchError("Failed to load tea types")
+                .catchError()
                 .collect { teaTypes ->
                     _state.update { it.copy(availableTeaTypes = teaTypes) }
                 }
@@ -84,16 +91,17 @@ class EditTeaViewModel(
     private fun loadProducers() {
         viewModelScope.launch {
             teaRepository.getDistinctProducersFlow()
-                .catchError("Failed to load producers")
+                .catchError()
                 .collect { producers ->
                     _state.update { it.copy(availableProducers = producers) }
                 }
         }
     }
 
-    private fun <T> Flow<T>.catchError(message: String): Flow<T> {
+    private fun <T> Flow<T>.catchError(): Flow<T> {
         return catch { e ->
-            _state.update { it.copy(isLoading = false, error = "$message: ${e.message}") }
+            _state.update { it.copy(isLoading = false) }
+            messages.failure(e, Res.string.couldnt_load_tea)
         }
     }
 
@@ -107,7 +115,7 @@ class EditTeaViewModel(
             _state.update { it.copy(isLoading = true, isEditMode = true) }
 
             teaRepository.getByIdFlow(teaId)
-                .catchError("Failed to load tea")
+                .catchError()
                 .first()
                 .let { tea ->
                     if (tea != null) {
@@ -127,7 +135,8 @@ class EditTeaViewModel(
                             )
                         }
                     } else {
-                        _state.update { it.copy(isLoading = false, error = "Tea not found") }
+                        _state.update { it.copy(isLoading = false) }
+                        messages.show(Res.string.failure_not_found)
                     }
                 }
         }
@@ -206,7 +215,7 @@ class EditTeaViewModel(
                 newlyAddedPhotos.add(path)
                 _state.update { it.copy(photos = it.photos + path) }
             } catch (e: Exception) {
-                _state.update { it.copy(error = "Failed to save photo: ${e.message}") }
+                messages.failure(e, Res.string.couldnt_save_photo)
             }
         }
     }
@@ -280,12 +289,8 @@ class EditTeaViewModel(
                 _navEvents.trySend(EditTeaNavEvent.NavigateBack)
             }
                 .onFailure { e ->
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            error = "Failed to save tea: ${e.message}"
-                        )
-                    }
+                    _state.update { it.copy(isSaving = false) }
+                    messages.failure(e, Res.string.couldnt_save_tea)
                 }
         }
     }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ actual fun ExportFileEffect(
     onLaunched: () -> Unit,
     onExported: () -> Unit,
     onCancelled: () -> Unit,
-    onError: (String) -> Unit,
+    onError: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -50,11 +51,9 @@ actual fun ExportFileEffect(
                 // The system created the file when it was picked; a partial one mustn't pass for
                 // a backup
                 runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
-                if (e is CancellationException) {
-                    onError("The export was interrupted. Try again.")
-                    throw e
-                }
-                onError(e.message ?: "Failed to write file")
+                Logger.w(e, tag = "Backup") { "Couldn't save the export" }
+                onError()
+                if (e is CancellationException) throw e
             }
         }
     }
@@ -73,7 +72,7 @@ actual fun ImportFileLauncher(
     onLaunched: () -> Unit,
     onFilePath: (String) -> Unit,
     onCancelled: () -> Unit,
-    onError: (String) -> Unit,
+    onError: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -97,11 +96,9 @@ actual fun ImportFileLauncher(
                 }
                 onFilePath(path)
             } catch (e: Exception) {
-                if (e is CancellationException) {
-                    onError("Reading the backup was interrupted. Try again.")
-                    throw e
-                }
-                onError(e.message ?: "Failed to read file")
+                Logger.w(e, tag = "Backup") { "Couldn't copy the picked file" }
+                onError()
+                if (e is CancellationException) throw e
             }
         }
     }

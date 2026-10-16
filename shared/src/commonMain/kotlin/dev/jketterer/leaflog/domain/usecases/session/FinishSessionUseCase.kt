@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -18,7 +19,7 @@ class FinishSessionUseCase(
     suspend operator fun invoke(sessionId: String): Result<SessionWithSteeps> = runCatching {
         transactor {
             val current = teaSessionRepository.getSession(sessionId)
-                ?: error("Session not found: $sessionId")
+                ?: throw DomainFailure.NotFound("session $sessionId")
             if (current.session.status == SessionStatus.COMPLETED) return@transactor current
 
             val updated = current.withSession(

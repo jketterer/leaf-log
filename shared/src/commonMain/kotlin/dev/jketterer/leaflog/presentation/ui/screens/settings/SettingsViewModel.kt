@@ -2,21 +2,30 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.repositories.BackupRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.backup_exported
+import leaf_log.shared.generated.resources.couldnt_export
+import leaf_log.shared.generated.resources.couldnt_import
+import leaf_log.shared.generated.resources.couldnt_open_backup
+import leaf_log.shared.generated.resources.couldnt_read_backup
+import leaf_log.shared.generated.resources.couldnt_save_backup
+import leaf_log.shared.generated.resources.couldnt_save_setting
 import kotlin.math.roundToLong
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 private const val BACKUP_OVERDUE_AFTER_DAYS = 14
@@ -28,6 +37,8 @@ class SettingsViewModel(
 
     private val _state = MutableStateFlow(SettingsState())
     val state: StateFlow<SettingsState> = _state.asStateFlow()
+
+    val messages = UiMessages<Nothing>()
 
     init {
         loadPreferences()
@@ -47,23 +58,27 @@ class SettingsViewModel(
             is SettingsIntent.UpdateSessionReminderNotifications ->
                 updateSessionReminderNotifications(intent.enabled)
 
-            is SettingsIntent.ClearError -> _state.update { it.copy(error = null, notice = null) }
             is SettingsIntent.ExportData -> exportData()
             is SettingsIntent.ExportPickerShown ->
                 _state.update { it.copy(showExportPicker = false) }
             is SettingsIntent.ExportCompleted -> {
                 recordBackup()
-                finishExport(notice = "Backup exported")
+                finishExport()
+                messages.show(Res.string.backup_exported)
             }
             is SettingsIntent.ExportCancelled -> finishExport()
-            is SettingsIntent.ExportFailed -> finishExport(error = intent.message)
+            is SettingsIntent.ExportFailed -> {
+                finishExport()
+                messages.show(Res.string.couldnt_save_backup)
+            }
             is SettingsIntent.ImportData -> _state.update { it.copy(showImportPicker = true) }
             is SettingsIntent.ImportPickerShown ->
                 _state.update { it.copy(showImportPicker = false) }
             is SettingsIntent.ImportFileSelected -> previewImport(intent.filePath)
             is SettingsIntent.ImportCancelled -> _state.update { it.copy(showImportPicker = false) }
-            is SettingsIntent.ImportFailed -> _state.update {
-                it.copy(showImportPicker = false, error = intent.message)
+            is SettingsIntent.ImportFailed -> {
+                _state.update { it.copy(showImportPicker = false) }
+                messages.show(Res.string.couldnt_open_backup)
             }
             is SettingsIntent.ConfirmImport -> importData()
             is SettingsIntent.CancelImport -> cancelImport()
@@ -106,64 +121,42 @@ class SettingsViewModel(
     private fun updateThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
             preferencesRepository.updateThemeMode(mode)
-                .onFailure { error ->
-                    _state.update { it.copy(error = error.message ?: "Failed to update theme") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }
 
     private fun updateTemperatureUnit(unit: dev.jketterer.leaflog.domain.models.TemperatureUnit) {
         viewModelScope.launch {
             preferencesRepository.updateTemperatureUnit(unit)
-                .onFailure { error ->
-                    _state.update {
-                        it.copy(error = error.message ?: "Failed to update temperature unit")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }
 
     private fun updateVolumeUnit(unit: dev.jketterer.leaflog.domain.models.VolumeUnit) {
         viewModelScope.launch {
             preferencesRepository.updateVolumeUnit(unit)
-                .onFailure { error ->
-                    _state.update {
-                        it.copy(error = error.message ?: "Failed to update volume unit")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }
 
     private fun updateDefaultWaterType(waterType: dev.jketterer.leaflog.domain.models.WaterType) {
         viewModelScope.launch {
             preferencesRepository.updateDefaultWaterType(waterType)
-                .onFailure { error ->
-                    _state.update {
-                        it.copy(error = error.message ?: "Failed to update default water type")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }
 
     private fun updateTimerCompletionNotifications(enabled: Boolean) {
         viewModelScope.launch {
             preferencesRepository.updateTimerCompletionNotificationsEnabled(enabled)
-                .onFailure { error ->
-                    _state.update {
-                        it.copy(error = error.message ?: "Failed to update notification setting")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }
 
     private fun updateSessionReminderNotifications(enabled: Boolean) {
         viewModelScope.launch {
             preferencesRepository.updateSessionReminderNotificationsEnabled(enabled)
-                .onFailure { error ->
-                    _state.update {
-                        it.copy(error = error.message ?: "Failed to update notification setting")
-                    }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }
 
@@ -176,12 +169,8 @@ class SettingsViewModel(
                     _state.update { it.copy(exportFilePath = filePath, showExportPicker = true) }
                 }
                 .onFailure { error ->
-                    _state.update {
-                        it.copy(
-                            isExporting = false,
-                            error = error.message ?: "Failed to export data",
-                        )
-                    }
+                    _state.update { it.copy(isExporting = false) }
+                    messages.failure(error, Res.string.couldnt_export)
                 }
         }
     }
@@ -195,16 +184,10 @@ class SettingsViewModel(
         }
     }
 
-    private fun finishExport(error: String? = null, notice: String? = null) {
+    private fun finishExport() {
         val path = _state.value.exportFilePath
         _state.update {
-            it.copy(
-                exportFilePath = null,
-                showExportPicker = false,
-                isExporting = false,
-                error = error ?: it.error,
-                notice = notice,
-            )
+            it.copy(exportFilePath = null, showExportPicker = false, isExporting = false)
         }
         if (path != null) viewModelScope.launch { backupRepository.discard(path) }
     }
@@ -219,12 +202,8 @@ class SettingsViewModel(
                     }
                 }
                 .onFailure { error ->
-                    _state.update {
-                        it.copy(
-                            isImporting = false,
-                            error = error.message ?: "Failed to read the backup",
-                        )
-                    }
+                    _state.update { it.copy(isImporting = false) }
+                    messages.failure(error, Res.string.couldnt_read_backup)
                 }
         }
     }
@@ -239,12 +218,8 @@ class SettingsViewModel(
                     measurePhotoStorage()
                 }
                 .onFailure { error ->
-                    _state.update {
-                        it.copy(
-                            isImporting = false,
-                            error = error.message ?: "Failed to import data",
-                        )
-                    }
+                    _state.update { it.copy(isImporting = false) }
+                    messages.failure(error, Res.string.couldnt_import)
                 }
         }
     }

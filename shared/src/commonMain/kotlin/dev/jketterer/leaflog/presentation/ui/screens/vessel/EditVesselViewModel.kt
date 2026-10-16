@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.UpdateBrewingVesselUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load_vessel
+import leaf_log.shared.generated.resources.couldnt_save_photo
+import leaf_log.shared.generated.resources.couldnt_save_vessel
+import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -31,6 +37,8 @@ class EditVesselViewModel(
 
     private val _navEvents = Channel<EditVesselNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
+
+    val messages = UiMessages<Nothing>()
 
     init {
         loadPreferences(
@@ -65,7 +73,6 @@ class EditVesselViewModel(
             is EditVesselIntent.BackClicked -> onBackClicked()
             is EditVesselIntent.ConfirmDiscard -> confirmDiscard()
             is EditVesselIntent.CancelDiscard -> cancelDiscard()
-            is EditVesselIntent.ErrorShown -> _state.update { it.copy(error = null) }
         }
     }
 
@@ -80,7 +87,8 @@ class EditVesselViewModel(
             try {
                 val vessel = brewingVesselRepository.getById(vesselId)
                 if (vessel == null) {
-                    _state.update { it.copy(isLoading = false, error = "Vessel not found") }
+                    _state.update { it.copy(isLoading = false) }
+                    messages.show(Res.string.failure_not_found)
                     return@launch
                 }
                 _state.update {
@@ -98,9 +106,8 @@ class EditVesselViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(isLoading = false, error = e.message ?: "Failed to load vessel")
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_vessel)
             }
         }
     }
@@ -142,7 +149,7 @@ class EditVesselViewModel(
                 }
                 _state.update { it.copy(imagePath = persistedPath) }
             } catch (e: Exception) {
-                _state.update { it.copy(error = "Failed to save image: ${e.message}") }
+                messages.failure(e, Res.string.couldnt_save_photo)
             }
         }
     }
@@ -162,7 +169,7 @@ class EditVesselViewModel(
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true, error = null) }
+            _state.update { it.copy(isSaving = true) }
 
             // The image is already on disk - onPhotoSelected persists it as soon as it is picked.
             val existingImagePath = currentState.existingVessel?.imagePath
@@ -195,12 +202,8 @@ class EditVesselViewModel(
             result
                 .onSuccess { _navEvents.send(EditVesselNavEvent.NavigateBack) }
                 .onFailure { error ->
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            error = error.message ?: "Failed to save vessel",
-                        )
-                    }
+                    _state.update { it.copy(isSaving = false) }
+                    messages.failure(error, Res.string.couldnt_save_vessel)
                 }
         }
     }

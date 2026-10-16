@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load_teas
+import leaf_log.shared.generated.resources.couldnt_search
+import leaf_log.shared.generated.resources.couldnt_update_favorite
 
 class TeaCollectionViewModel(
     private val teaRepository: TeaRepository,
@@ -28,6 +33,8 @@ class TeaCollectionViewModel(
 
     private val _state = MutableStateFlow(TeaCollectionState())
     val state: StateFlow<TeaCollectionState> = _state.asStateFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private var teaCollectionJob: Job? = null
 
@@ -61,28 +68,26 @@ class TeaCollectionViewModel(
             }
 
             is TeaCollectionIntent.SortSelected -> selectSort(intent.option)
-            is TeaCollectionIntent.ClearError -> clearError()
         }
     }
 
     private fun loadData() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true) }
 
             try {
                 collectTeaTypes()
                 collectTeas()
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(isLoading = false, error = "Failed to load data: ${e.message}")
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_teas)
             }
         }
     }
 
     private fun collectTeaTypes() = viewModelScope.launch {
         teaTypeRepository.getAllFlow()
-            .catchError("Failed to load tea types")
+            .catchError()
             .collect { teaTypes ->
                 _state.update { it.copy(teaTypes = teaTypes) }
             }
@@ -100,7 +105,7 @@ class TeaCollectionViewModel(
             }
 
             teasFlow
-                .catchError("Failed to load teas")
+                .catchError()
                 .collect { teas ->
                     val sorted = sortTeas(teas, _state.value.selectedSortOption)
                     _state.update {
@@ -114,9 +119,10 @@ class TeaCollectionViewModel(
         }
     }
 
-    private fun <T> Flow<T>.catchError(message: String): Flow<T> {
+    private fun <T> Flow<T>.catchError(): Flow<T> {
         return catch { e ->
-            _state.update { it.copy(isLoading = false, error = "$message: ${e.message}") }
+            _state.update { it.copy(isLoading = false) }
+            messages.failure(e, Res.string.couldnt_load_teas)
         }
     }
 
@@ -151,7 +157,7 @@ class TeaCollectionViewModel(
                     )
                 }
             } catch (e: Exception) {
-                _state.update { it.copy(error = "Search failed: ${e.message}") }
+                messages.failure(e, Res.string.couldnt_search)
             }
         }
     }
@@ -159,9 +165,7 @@ class TeaCollectionViewModel(
     private fun toggleFavorite(tea: Tea) {
         viewModelScope.launch {
             toggleFavoriteUseCase(tea)
-                .onFailure { e ->
-                    _state.update { it.copy(error = "Failed to toggle favorite: ${e.message}") }
-                }
+                .onFailure { messages.failure(it, Res.string.couldnt_update_favorite) }
         }
     }
 
@@ -179,10 +183,6 @@ class TeaCollectionViewModel(
         viewModelScope.launch {
             preferencesRepository.updateTeaSortOption(option)
         }
-    }
-
-    private fun clearError() {
-        _state.update { it.copy(error = null) }
     }
 }
 

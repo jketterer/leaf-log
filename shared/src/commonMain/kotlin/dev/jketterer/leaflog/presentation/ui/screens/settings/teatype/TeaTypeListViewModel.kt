@@ -4,12 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_load_tea_types
 
 class TeaTypeListViewModel(
     private val teaTypeRepository: TeaTypeRepository,
@@ -18,6 +21,8 @@ class TeaTypeListViewModel(
 
     private val _state = MutableStateFlow(TeaTypeListState())
     val state: StateFlow<TeaTypeListState> = _state.asStateFlow()
+
+    val messages = UiMessages<Nothing>()
 
     private val _navigationEvent = MutableStateFlow<TeaTypeListNavigationEvent?>(null)
     val navigationEvent: StateFlow<TeaTypeListNavigationEvent?> = _navigationEvent.asStateFlow()
@@ -36,30 +41,24 @@ class TeaTypeListViewModel(
             is TeaTypeListIntent.TeaTypeClicked -> navigateToEdit(intent.teaTypeId)
             is TeaTypeListIntent.AddClicked -> navigateToAdd()
             is TeaTypeListIntent.BackClicked -> navigateBack()
-            is TeaTypeListIntent.ClearError -> _state.update { it.copy(error = null) }
         }
     }
 
     private fun loadTeaTypes() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            _state.update { it.copy(isLoading = true) }
             try {
                 teaTypeRepository.getAllFlow().collect { teaTypes ->
                     _state.update {
                         it.copy(
                             teaTypes = teaTypes.sortedBy { type -> type.displayOrder },
                             isLoading = false,
-                            error = null,
                         )
                     }
                 }
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to load tea types",
-                    )
-                }
+                _state.update { it.copy(isLoading = false) }
+                messages.failure(e, Res.string.couldnt_load_tea_types)
             }
         }
     }

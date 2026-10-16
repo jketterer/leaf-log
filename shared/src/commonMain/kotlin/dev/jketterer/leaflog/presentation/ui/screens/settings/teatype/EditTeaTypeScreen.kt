@@ -49,6 +49,7 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputField
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
@@ -77,6 +78,8 @@ fun EditTeaTypeScreen(
     viewModel: EditTeaTypeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
     val navigationEvent by viewModel.navigationEvent.collectAsState()
 
     LaunchedEffect(teaTypeId) {
@@ -97,6 +100,7 @@ fun EditTeaTypeScreen(
     EditTeaTypeContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -105,15 +109,9 @@ fun EditTeaTypeScreen(
 private fun EditTeaTypeContent(
     state: EditTeaTypeState,
     onIntent: (EditTeaTypeIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
-
-    LaunchedEffect(state.error) {
-        state.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
-        }
-    }
 
     if (state.showDiscardDialog) {
         DiscardChangesDialog(

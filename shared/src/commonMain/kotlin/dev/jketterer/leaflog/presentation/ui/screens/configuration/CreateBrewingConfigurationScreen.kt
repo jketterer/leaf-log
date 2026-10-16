@@ -48,6 +48,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.TemperatureInputF
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.VolumeInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
@@ -61,6 +62,8 @@ fun CreateBrewingConfigurationScreen(
     viewModel: CreateBrewingConfigurationViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(teaId, configurationId) {
         viewModel.onIntent(CreateBrewingConfigurationIntent.LoadData(teaId, configurationId))
@@ -77,6 +80,7 @@ fun CreateBrewingConfigurationScreen(
     CreateBrewingConfigurationContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -85,16 +89,9 @@ fun CreateBrewingConfigurationScreen(
 private fun CreateBrewingConfigurationContent(
     state: CreateBrewingConfigurationState,
     onIntent: (CreateBrewingConfigurationIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val focusManager = LocalFocusManager.current
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.error) {
-        state.error?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            onIntent(CreateBrewingConfigurationIntent.ErrorShown)
-        }
-    }
 
     Scaffold(
         topBar = {

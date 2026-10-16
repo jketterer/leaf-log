@@ -1,23 +1,23 @@
 package dev.jketterer.leaflog.presentation.ui.screens.settings
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
@@ -27,6 +27,7 @@ import dev.jketterer.leaflog.presentation.ui.components.backup.ImportPreviewDial
 import dev.jketterer.leaflog.presentation.ui.components.backup.ImportResultDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.ExportFileEffect
 import dev.jketterer.leaflog.presentation.ui.components.common.ImportFileLauncher
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -37,10 +38,13 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     SettingsContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
         onNavigateBack = onNavigateBack,
         onNavigateToTeaTypes = onNavigateToTeaTypes,
     )
@@ -53,20 +57,24 @@ private fun SettingsContent(
     onIntent: (SettingsIntent) -> Unit,
     onNavigateBack: () -> Unit = {},
     onNavigateToTeaTypes: () -> Unit = {},
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text("Settings") },
-            navigationIcon = {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
-                }
-            },
-        )
-
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                    }
+                },
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
         Column(
             modifier = Modifier
-                .weight(1f)
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
             AppearanceSection(
@@ -108,19 +116,6 @@ private fun SettingsContent(
                 onImport = { onIntent(SettingsIntent.ImportData) },
             )
         }
-
-        (state.error ?: state.notice)?.let { message ->
-            Snackbar(
-                modifier = Modifier.padding(16.dp),
-                action = {
-                    TextButton(onClick = { onIntent(SettingsIntent.ClearError) }) {
-                        Text("Dismiss")
-                    }
-                }
-            ) {
-                Text(message)
-            }
-        }
     }
 
     SettingsDialogs(
@@ -141,7 +136,7 @@ private fun SettingsDialogs(
         onLaunched = { onIntent(SettingsIntent.ExportPickerShown) },
         onExported = { onIntent(SettingsIntent.ExportCompleted) },
         onCancelled = { onIntent(SettingsIntent.ExportCancelled) },
-        onError = { message -> onIntent(SettingsIntent.ExportFailed(message)) },
+        onError = { onIntent(SettingsIntent.ExportFailed) },
     )
 
     ImportFileLauncher(
@@ -149,7 +144,7 @@ private fun SettingsDialogs(
         onLaunched = { onIntent(SettingsIntent.ImportPickerShown) },
         onFilePath = { path -> onIntent(SettingsIntent.ImportFileSelected(path)) },
         onCancelled = { onIntent(SettingsIntent.ImportCancelled) },
-        onError = { message -> onIntent(SettingsIntent.ImportFailed(message)) },
+        onError = { onIntent(SettingsIntent.ImportFailed) },
     )
 
     state.importPreview?.let { preview ->

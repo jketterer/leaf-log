@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
@@ -17,7 +18,7 @@ class DeleteSteepUseCase(
     suspend operator fun invoke(steepId: String): Result<SessionWithSteeps> = runCatching {
         transactor {
             val current = teaSessionRepository.getSessionOfSteep(steepId)
-                ?: error("Steep not found: $steepId")
+                ?: throw DomainFailure.NotFound("steep $steepId")
             require(steepId != current.session.id) { "Steep 1 is the session: delete the session" }
 
             teaSessionRepository.deleteSteep(steepId)

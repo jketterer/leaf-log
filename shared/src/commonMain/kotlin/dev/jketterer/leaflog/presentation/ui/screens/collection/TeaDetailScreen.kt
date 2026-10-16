@@ -31,7 +31,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -78,6 +79,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
@@ -105,6 +107,8 @@ fun TeaDetailScreen(
     viewModel: TeaDetailViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    UiMessageEffect(viewModel.messages, snackbarHostState)
 
     LaunchedEffect(teaId) {
         viewModel.onIntent(TeaDetailIntent.LoadTea(teaId))
@@ -151,6 +155,7 @@ fun TeaDetailScreen(
     TeaDetailContent(
         state = state,
         onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
         imageStorage = koinInject(),
     )
 }
@@ -160,6 +165,7 @@ fun TeaDetailScreen(
 private fun TeaDetailContent(
     state: TeaDetailState,
     onIntent: (TeaDetailIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     imageStorage: ImageStorage? = null,
 ) {
     var expandedPhotoIndex by remember { mutableIntStateOf(-1) }
@@ -512,21 +518,12 @@ private fun TeaDetailContent(
             )
         }
 
-        state.error?.let { error ->
-            Snackbar(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .padding(bottom = 80.dp),
-                action = {
-                    TextButton(onClick = { onIntent(TeaDetailIntent.ClearError) }) {
-                        Text("Dismiss")
-                    }
-                },
-            ) {
-                Text(error)
-            }
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 80.dp),
+        )
 
         // Delete session confirmation dialog
         if (state.sessionPendingDelete != null) {

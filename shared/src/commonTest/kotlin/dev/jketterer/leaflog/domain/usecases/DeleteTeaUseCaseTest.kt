@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.FakeBrewingConfigurationRepository
@@ -11,9 +12,10 @@ import dev.jketterer.leaflog.domain.usecases.session.RecomputeStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -46,7 +48,8 @@ class DeleteTeaUseCaseTest {
 
         val result = deleteTea(TEA.id)
 
-        assertTrue(result.isFailure)
+        val failure = assertIs<DomainFailure.InUse>(result.exceptionOrNull())
+        assertEquals(1, failure.count)
         assertNotNull(teas.getById(TEA.id))
         assertNotNull(configurations.getById(METHOD.id))
     }

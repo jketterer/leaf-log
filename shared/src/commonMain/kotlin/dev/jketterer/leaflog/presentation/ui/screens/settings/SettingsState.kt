@@ -11,9 +11,6 @@ data class SettingsState(
     val isBackupOverdue: Boolean = false,
     /** What the photos take on this device, null until measured. */
     val photoStorage: String? = null,
-    val error: String? = null,
-    /** Confirms something finished, shown like an error but not one. */
-    val notice: String? = null,
     val isExporting: Boolean = false,
     val isImporting: Boolean = false,
     /** An export waiting to be delivered, deleted once it is or isn't. */

@@ -15,7 +15,6 @@ data class TeaDetailState(
     val configurations: List<BrewingConfiguration> = emptyList(),
     val vessels: List<BrewingVessel> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null,
     val showDeleteConfirmation: Boolean = false,
     val sessionPendingDelete: String? = null,
     val configurationPendingDelete: String? = null,

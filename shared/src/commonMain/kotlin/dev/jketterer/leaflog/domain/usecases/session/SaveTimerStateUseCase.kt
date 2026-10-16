@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -22,7 +23,7 @@ class SaveTimerStateUseCase(
         val now = Clock.System.now()
         transactor {
             val current = teaSessionRepository.getSession(sessionId)
-                ?: error("Session not found: $sessionId")
+                ?: throw DomainFailure.NotFound("session $sessionId")
             require(current.steeps.any { it.number == timerState.steepNumber }) {
                 "Session $sessionId has no steep ${timerState.steepNumber}"
             }

@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.domain.usecases.vessel
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.FakeBrewingConfigurationRepository
@@ -13,9 +14,10 @@ import dev.jketterer.leaflog.domain.usecases.session.RecomputeStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -54,9 +56,20 @@ class DeleteBrewingVesselUseCaseTest {
 
         val result = deleteVessel("gaiwan")
 
-        assertTrue(result.isFailure)
+        val failure = assertIs<DomainFailure.InUse>(result.exceptionOrNull())
+        assertEquals(1, failure.count)
         assertNotNull(vessels.getById("gaiwan"))
         assertNotNull(configurations.getById(METHOD.id))
+    }
+
+    @Test
+    fun `the last active vessel is refused`() = runTest {
+        deleteVessel("gaiwan").getOrThrow()
+
+        val result = deleteVessel("mug")
+
+        assertIs<DomainFailure.LastRemaining>(result.exceptionOrNull())
+        assertNotNull(vessels.getById("mug"))
     }
 
     private companion object {

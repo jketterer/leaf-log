@@ -7,5 +7,4 @@ data class TeaTypeListState(
     val teaTypes: List<TeaType> = emptyList(),
     val userPreferences: UserPreferences = UserPreferences(),
     val isLoading: Boolean = false,
-    val error: String? = null,
 )

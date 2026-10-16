@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.di
 
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
+import dev.jketterer.leaflog.domain.usecases.DeleteTeaTypeUseCase
 import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.MergeTeaTypeUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
@@ -58,6 +59,7 @@ val useCaseModule = module {
     // Tea use cases
     factoryOf(::CreateTeaUseCase)
     factoryOf(::DeleteTeaUseCase)
+    factoryOf(::DeleteTeaTypeUseCase)
     factoryOf(::EditTeaUseCase)
     factoryOf(::MergeTeaTypeUseCase)
     factoryOf(::SearchTeasUseCase)

@@ -38,6 +38,9 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TopRatedTea
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.session_count
+import org.jetbrains.compose.resources.pluralStringResource
 import kotlin.time.Instant
 
 @Composable
@@ -128,7 +131,11 @@ private fun TopRatedTeaRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = "${topRatedTea.ratedSessionCount} sessions",
+                text = pluralStringResource(
+                    Res.plurals.session_count,
+                    topRatedTea.ratedSessionCount,
+                    topRatedTea.ratedSessionCount,
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

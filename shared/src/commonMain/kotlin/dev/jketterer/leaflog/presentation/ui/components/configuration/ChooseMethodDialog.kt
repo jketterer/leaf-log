@@ -47,6 +47,8 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
+import leaf_log.shared.generated.resources.times_used
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -209,10 +211,15 @@ private fun ConfigurationOption(
                 }
 
                 // Rating and usage stats
+                val timesUsed = pluralStringResource(
+                    Res.plurals.times_used,
+                    configuration.timesUsed,
+                    configuration.timesUsed,
+                )
                 val statsText = buildString {
                     configuration.rating?.let { append("$it ") }
                     if (isNotEmpty()) append("· ")
-                    append("Used ${configuration.timesUsed} times")
+                    append(timesUsed)
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

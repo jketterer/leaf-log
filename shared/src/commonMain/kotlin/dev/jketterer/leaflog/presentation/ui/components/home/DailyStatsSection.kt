@@ -21,6 +21,9 @@ import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
+import leaf_log.shared.generated.resources.sessions_label
+import leaf_log.shared.generated.resources.teas_label
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.vectorResource
 
 /**
@@ -63,7 +66,7 @@ fun DailyStatsSection(
         ) {
             DailyStatsCard(
                 value = stats.sessionCount.toString(),
-                label = if (stats.sessionCount == 1) "Session" else "Sessions",
+                label = pluralStringResource(Res.plurals.sessions_label, stats.sessionCount),
                 icon = FeatherIcons.Coffee,
                 onClick = onSessionsCardClick,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -81,7 +84,7 @@ fun DailyStatsSection(
             )
             DailyStatsCard(
                 value = stats.differentTeasCount.toString(),
-                label = if (stats.differentTeasCount == 1) "Tea" else "Teas",
+                label = pluralStringResource(Res.plurals.teas_label, stats.differentTeasCount),
                 icon = vectorResource(Res.drawable.ic_tea_leaf),
                 onClick = onTeasCardClick,
                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,

@@ -153,6 +153,9 @@ Use `expect`/`actual` pattern for platform differences.
 
 - Always use trailing commas for lists
 - Always include at least one @Preview composable function when creating UI components/screens
+- UI text you write or edit goes in `composeResources/values/strings.xml`, read with
+  `stringResource`; anything with a count is a `<plurals>` read with `pluralStringResource`, never
+  `"(s)"` or an `if (n == 1)`
 - Corners come from `MaterialTheme.shapes` (4/8/12/16/28dp), never a `RoundedCornerShape` literal;
   circles use `CircleShape`
 

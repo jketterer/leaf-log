@@ -28,6 +28,9 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.components.common.DialogPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.tea_type_in_use
+import org.jetbrains.compose.resources.pluralStringResource
 import kotlin.time.Instant
 
 /** Deletes a type no tea uses; a type in use is merged into another instead. */
@@ -89,10 +92,7 @@ private fun DeleteTeaTypeDialogContent(
         return
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            "\"$teaTypeName\" is used by $teaCount ${if (teaCount == 1) "tea" else "teas"}. " +
-                "Choose a type to move them to, and \"$teaTypeName\" will be deleted.",
-        )
+        Text(pluralStringResource(Res.plurals.tea_type_in_use, teaCount, teaCount, teaTypeName))
         Column(
             modifier = Modifier
                 .heightIn(max = 280.dp)

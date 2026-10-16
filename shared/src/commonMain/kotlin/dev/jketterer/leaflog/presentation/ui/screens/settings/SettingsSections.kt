@@ -34,6 +34,13 @@ import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.settings_appearance
+import leaf_log.shared.generated.resources.settings_theme
+import leaf_log.shared.generated.resources.theme_mode_dark
+import leaf_log.shared.generated.resources.theme_mode_light
+import leaf_log.shared.generated.resources.theme_mode_system
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun AppearanceSection(
@@ -46,7 +53,7 @@ internal fun AppearanceSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
-        SectionHeader(title = "Appearance")
+        SectionHeader(title = stringResource(Res.string.settings_appearance))
 
         ThemeModeSetting(
             currentMode = themeMode,
@@ -256,7 +263,7 @@ private fun ThemeModeSetting(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = "Theme",
+            text = stringResource(Res.string.settings_theme),
             style = MaterialTheme.typography.bodyLarge,
         )
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
@@ -270,11 +277,13 @@ private fun ThemeModeSetting(
                     ),
                 ) {
                     Text(
-                        when (mode) {
-                            ThemeMode.SYSTEM -> "System"
-                            ThemeMode.LIGHT -> "Light"
-                            ThemeMode.DARK -> "Dark"
-                        },
+                        stringResource(
+                            when (mode) {
+                                ThemeMode.SYSTEM -> Res.string.theme_mode_system
+                                ThemeMode.LIGHT -> Res.string.theme_mode_light
+                                ThemeMode.DARK -> Res.string.theme_mode_dark
+                            },
+                        ),
                     )
                 }
             }

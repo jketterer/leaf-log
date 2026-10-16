@@ -68,6 +68,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewConta
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.brew_count
+import org.jetbrains.compose.resources.pluralStringResource
 import kotlin.time.Instant
 
 /** How many teas the shortcut sections show before falling through to "All teas". */
@@ -478,7 +481,7 @@ private fun TeaPickerRow(
             }
             if (tea.totalSessions > 0) {
                 Text(
-                    text = "${tea.totalSessions} brews",
+                    text = pluralStringResource(Res.plurals.brew_count, tea.totalSessions, tea.totalSessions),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

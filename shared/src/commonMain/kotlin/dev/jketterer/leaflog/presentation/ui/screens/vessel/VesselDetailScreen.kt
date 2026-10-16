@@ -18,7 +18,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,10 +49,12 @@ import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.vessel_in_use
+import org.jetbrains.compose.resources.pluralStringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VesselDetailScreen(
     vesselId: String,
@@ -79,11 +80,13 @@ fun VesselDetailScreen(
                 onNavigateToEditVessel(event.vesselId)
                 viewModel.onNavigationEventHandled()
             }
+
             is VesselDetailNavigationEvent.NavigateBack,
             is VesselDetailNavigationEvent.NavigateBackAfterDelete -> {
                 onNavigateBack()
                 viewModel.onNavigationEventHandled()
             }
+
             null -> {}
         }
     }
@@ -103,7 +106,7 @@ fun VesselDetailScreen(
             text = {
                 Text(
                     "\"${state.vessel?.name}\" will be hidden from vessel selection but will " +
-                        "still appear in your session history. You can unarchive it later."
+                            "still appear in your session history. You can unarchive it later."
                 )
             },
             confirmButton = {
@@ -196,12 +199,14 @@ fun VesselDetailScreen(
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
+
                     state.vessel == null -> {
                         Text(
                             text = "Vessel not found",
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
+
                     else -> {
                         Column(
                             modifier = Modifier
@@ -210,141 +215,80 @@ fun VesselDetailScreen(
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                        // Archived status banner
-                        if (state.isArchived) {
+                            // Archived status banner
+                            if (state.isArchived) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    ),
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        Text(
+                                            text = "This vessel is archived",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        )
+                                        Text(
+                                            text = "It won't appear in vessel selection when logging sessions.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Vessel info card
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                        .padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    Text(
-                                        text = "This vessel is archived",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    )
-                                    Text(
-                                        text = "It won't appear in vessel selection when logging sessions.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    )
-                                }
-                            }
-                        }
-
-                        // Vessel info card
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                // Large image or icon
-                                if (state.vessel!!.imagePath != null) {
-                                    AsyncImage(
-                                        model = imageStorage.resolveImagePath(state.vessel!!.imagePath!!),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(80.dp)
-                                            .clip(MaterialTheme.shapes.medium),
-                                        contentScale = ContentScale.Crop,
-                                    )
-                                } else {
-                                    Icon(
-                                        painter = VesselIconHelper.getIconForVessel(state.vessel!!.iconName),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(80.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                // Vessel name
-                                Text(
-                                    text = state.vessel!!.name,
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                            }
-                        }
-
-                        // Vessel details card
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Details",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // Capacity
-                                if (state.vessel!!.capacityMl != null) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = "Capacity",
-                                            style = MaterialTheme.typography.bodyMedium
+                                    // Large image or icon
+                                    if (state.vessel!!.imagePath != null) {
+                                        AsyncImage(
+                                            model = imageStorage.resolveImagePath(state.vessel!!.imagePath!!),
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .size(80.dp)
+                                                .clip(MaterialTheme.shapes.medium),
+                                            contentScale = ContentScale.Crop,
                                         )
-                                        Text(
-                                            text = VolumeFormatter.format(
-                                                milliliters = state.vessel!!.capacityMl!!.toDouble(),
-                                                unit = state.volumeUnit,
-                                            ),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium
+                                    } else {
+                                        Icon(
+                                            painter = VesselIconHelper.getIconForVessel(state.vessel!!.iconName),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(80.dp),
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
-                                }
 
-                                // Sessions count
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
+                                    // Vessel name
                                     Text(
-                                        text = "Sessions",
-                                        style = MaterialTheme.typography.bodyMedium
+                                        text = state.vessel!!.name,
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.Bold
                                     )
-                                    Text(
-                                        text = state.sessionCount.toString(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Medium
-                                    )
+
                                 }
                             }
-                        }
 
-                        // Delete constraints info (if applicable)
-                        if (!state.canDelete) {
+                            // Vessel details card
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer
-                                )
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                             ) {
                                 Column(
                                     modifier = Modifier
@@ -353,33 +297,98 @@ fun VesselDetailScreen(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     Text(
-                                        text = "Cannot Delete",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                        text = "Details",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
                                     )
 
-                                    val reason = when {
-                                        state.totalVesselCount <= 1 ->
-                                            "This is the last vessel. At least one vessel must remain."
-                                        state.sessionCount > 0 ->
-                                            "${state.sessionCount} session(s) are using this vessel. " +
-                                                "Use Archive to hide it from selection instead."
-                                        else -> "Unknown reason"
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Capacity
+                                    if (state.vessel!!.capacityMl != null) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = "Capacity",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Text(
+                                                text = VolumeFormatter.format(
+                                                    milliliters = state.vessel!!.capacityMl!!.toDouble(),
+                                                    unit = state.volumeUnit,
+                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
                                     }
 
-                                    Text(
-                                        text = reason,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onErrorContainer
+                                    // Sessions count
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "Sessions",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                        Text(
+                                            text = state.sessionCount.toString(),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Delete constraints info (if applicable)
+                            if (!state.canDelete) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer
                                     )
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "Cannot Delete",
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+
+                                        val reason = when {
+                                            state.totalVesselCount <= 1 ->
+                                                "This is the last vessel. At least one vessel must remain."
+
+                                            state.sessionCount > 0 -> pluralStringResource(
+                                                Res.plurals.vessel_in_use,
+                                                state.sessionCount,
+                                                state.sessionCount,
+                                            )
+
+                                            else -> "Unknown reason"
+                                        }
+
+                                        Text(
+                                            text = reason,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
         }
         SnackbarHost(
             hostState = snackbarHostState,
@@ -408,9 +417,14 @@ private fun DeleteConfirmationDialog(
                     val reason = when {
                         totalVesselCount <= 1 ->
                             "Cannot delete the last vessel. At least one vessel must remain."
+
                         sessionCount > 0 ->
-                            "Cannot delete vessel. $sessionCount session(s) are using this vessel. " +
-                                "Use Archive to hide it from selection instead."
+                            pluralStringResource(
+                                Res.plurals.vessel_in_use,
+                                sessionCount,
+                                sessionCount
+                            )
+
                         else -> "This vessel cannot be deleted."
                     }
                     Text(reason)

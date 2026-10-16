@@ -30,6 +30,9 @@ import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.incomplete_sessions
+import org.jetbrains.compose.resources.pluralStringResource
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -134,7 +137,11 @@ fun InProgressSessionsBanner(
             } else {
                 // Fallback when we have count but no details
                 Text(
-                    text = "You have $totalInProgressCount incomplete ${if (totalInProgressCount == 1) "session" else "sessions"}",
+                    text = pluralStringResource(
+                        Res.plurals.incomplete_sessions,
+                        totalInProgressCount,
+                        totalInProgressCount,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )

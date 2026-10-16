@@ -42,6 +42,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Instant
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.brew_count
+import org.jetbrains.compose.resources.pluralStringResource
 import org.koin.compose.koinInject
 
 /**
@@ -142,7 +145,7 @@ fun TeaCard(
                         ) {
                             if (hasBrews) {
                                 Text(
-                                    text = "${tea.totalSessions} brews",
+                                    text = pluralStringResource(Res.plurals.brew_count, tea.totalSessions, tea.totalSessions),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

@@ -33,6 +33,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.import_skipped
+import org.jetbrains.compose.resources.pluralStringResource
 
 /** What importing a backup would change, confirmed before anything does. */
 @Composable
@@ -152,8 +155,7 @@ private fun ImportSummaryContent(summary: ImportSummary, isPreview: Boolean) {
         }
         if (summary.skipped > 0) {
             Text(
-                text = "${summary.skipped} records are left out: what they belonged to was " +
-                    "deleted before this backup was made.",
+                text = pluralStringResource(Res.plurals.import_skipped, summary.skipped, summary.skipped),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

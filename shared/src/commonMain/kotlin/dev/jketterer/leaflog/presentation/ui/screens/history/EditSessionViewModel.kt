@@ -17,6 +17,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurat
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.screens.collection.validateQuantity
 import dev.jketterer.leaflog.presentation.ui.screens.collection.validateTemperature
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
@@ -41,6 +42,7 @@ import kotlin.time.Duration
 import kotlin.uuid.Uuid
 
 class EditSessionViewModel(
+    private val route: NavRoute.EditSessionRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
@@ -81,15 +83,11 @@ class EditSessionViewModel(
             updateState = { state, prefs -> state.copy(userPreferences = prefs) },
         )
         loadVessels()
+        loadSession(route.sessionId, route.editFullSession)
     }
 
     fun onIntent(intent: EditSessionIntent) {
         when (intent) {
-            is EditSessionIntent.LoadSession -> loadSession(
-                intent.sessionId,
-                intent.editFullSession
-            )
-
             is EditSessionIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
             is EditSessionIntent.TemperatureChanged -> updateTemperature(intent.celsius)
             is EditSessionIntent.VesselSelected -> selectVessel(intent.vessel)
@@ -141,7 +139,7 @@ class EditSessionViewModel(
         }
     }
 
-    private fun loadSession(sessionId: String, editFullSession: Boolean = false) {
+    private fun loadSession(sessionId: String, editFullSession: Boolean) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 

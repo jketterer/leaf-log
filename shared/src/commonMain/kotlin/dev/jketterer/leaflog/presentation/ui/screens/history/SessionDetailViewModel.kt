@@ -20,6 +20,7 @@ import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +42,7 @@ import leaf_log.shared.generated.resources.failure_not_found
 import leaf_log.shared.generated.resources.method_already_saved
 
 class SessionDetailViewModel(
+    private val route: NavRoute.SessionDetailsRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
@@ -91,9 +93,12 @@ class SessionDetailViewModel(
             },
         )
 
+    init {
+        loadSession(route.sessionId)
+    }
+
     fun onIntent(intent: SessionDetailIntent) {
         when (intent) {
-            is SessionDetailIntent.LoadSession -> loadSession(intent.sessionId)
             is SessionDetailIntent.EditSteepClicked -> {
                 // Edit only steep parameters (editFullSession = false)
                 _navEvents.trySend(

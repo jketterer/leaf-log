@@ -22,6 +22,7 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.screens.collection.validateQuantity
 import dev.jketterer.leaflog.presentation.ui.screens.collection.validateTemperature
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
@@ -45,6 +46,7 @@ import leaf_log.shared.generated.resources.error_water_quantity_required
 import kotlin.time.Duration
 
 class LogTeaViewModel(
+    private val route: NavRoute.LogTeaRoute,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
@@ -103,6 +105,9 @@ class LogTeaViewModel(
 
     init {
         onIntent(LogTeaIntent.LoadData)
+        route.teaId?.let(::selectTea)
+        route.vesselId?.let(::selectVessel)
+        route.configurationId?.let(::selectMethod)
     }
 
     fun onIntent(intent: LogTeaIntent) {

@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.home
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
@@ -28,6 +29,7 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessage
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.messages.UiText
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -68,6 +70,8 @@ private sealed interface HomePendingAction {
 }
 
 class HomeViewModel(
+    private val route: NavRoute.HomeRoute,
+    private val savedStateHandle: SavedStateHandle,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
@@ -124,6 +128,23 @@ class HomeViewModel(
     init {
         collectTimerState()
         onIntent(HomeIntent.LoadData)
+        offerUndoFinish()
+    }
+
+    // Once per entry. The saved flag outlives process death, so a restored Home stays quiet
+    private fun offerUndoFinish() {
+        val sessionId = route.finishedSessionId ?: return
+        if (savedStateHandle.get<Boolean>(UNDO_OFFERED_KEY) == true) return
+        savedStateHandle[UNDO_OFFERED_KEY] = true
+        messages.show(
+            UiMessage(
+                text = UiText.Plain(Res.string.session_finished),
+                action = UiMessage.Action(
+                    label = Res.string.undo,
+                    intent = HomeIntent.UndoFinishClicked(sessionId),
+                ),
+            ),
+        )
     }
 
     private fun collectTimerState() {
@@ -163,16 +184,6 @@ class HomeViewModel(
             is HomeIntent.FabExpandedChanged -> {
                 _state.update { it.copy(isFabExpanded = intent.expanded) }
             }
-
-            is HomeIntent.OfferUndoFinish -> messages.show(
-                UiMessage(
-                    text = UiText.Plain(Res.string.session_finished),
-                    action = UiMessage.Action(
-                        label = Res.string.undo,
-                        intent = HomeIntent.UndoFinishClicked(intent.sessionId),
-                    ),
-                ),
-            )
 
             is HomeIntent.UndoFinishClicked -> undoFinish(intent.sessionId)
             is HomeIntent.BrewAgainClicked ->
@@ -557,3 +568,5 @@ private data class HomeSessionData(
     val types: List<TeaType>,
     val vessels: List<BrewingVessel>,
 )
+
+private const val UNDO_OFFERED_KEY = "undoOffered"

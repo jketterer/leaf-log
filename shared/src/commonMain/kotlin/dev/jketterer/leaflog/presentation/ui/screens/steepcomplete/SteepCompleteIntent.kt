@@ -4,7 +4,6 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 sealed interface SteepCompleteIntent {
-    data class Initialize(val sessionId: String) : SteepCompleteIntent
     data class RatingChanged(val rating: Float) : SteepCompleteIntent
     data class NotesChanged(val notes: String) : SteepCompleteIntent
     data class PhotoSelected(val imageBytes: ByteArray) : SteepCompleteIntent

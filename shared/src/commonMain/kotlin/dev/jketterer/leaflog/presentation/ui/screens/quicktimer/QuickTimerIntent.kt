@@ -8,7 +8,6 @@ import kotlin.time.Duration
  */
 sealed interface QuickTimerIntent {
     // Timer control
-    data class Initialize(val durationSeconds: Int) : QuickTimerIntent
     data object StartTimer : QuickTimerIntent
     data object PauseTimer : QuickTimerIntent
     data object ResumeTimer : QuickTimerIntent

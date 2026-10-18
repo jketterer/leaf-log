@@ -50,6 +50,7 @@ import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMeth
 import dev.jketterer.leaflog.presentation.ui.components.session.CompleteSessionDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_temperature_required
@@ -58,30 +59,22 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Log Tea Screen - create a new brewing session.
  */
 @Composable
 fun LogTeaScreen(
-    teaId: String?,
-    vesselId: String?,
-    configurationId: String? = null,
+    route: NavRoute.LogTeaRoute,
     onNavigateBack: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
-    viewModel: LogTeaViewModel,
+    viewModel: LogTeaViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(teaId, vesselId, configurationId) {
-        viewModel.onIntent(LogTeaIntent.TeaSelected(teaId))
-        viewModel.onIntent(LogTeaIntent.VesselSelected(vesselId))
-        if (configurationId != null) {
-            viewModel.onIntent(LogTeaIntent.MethodSelected(configurationId))
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->

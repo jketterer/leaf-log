@@ -56,6 +56,7 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButton
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.discard
@@ -67,24 +68,21 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import org.koin.core.parameter.parametersOf
 
 /**
  * Timer Screen - brewing countdown timer.
  */
 @Composable
 fun TimerScreen(
-    sessionId: String,
+    route: NavRoute.TimerRoute,
     onNavigateBack: () -> Unit,
     onNavigateToSteepComplete: (String) -> Unit,
-    viewModel: TimerViewModel = koinViewModel(),
+    viewModel: TimerViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(sessionId) {
-        viewModel.onIntent(TimerIntent.Initialize(sessionId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navigationEvents.collect { event ->

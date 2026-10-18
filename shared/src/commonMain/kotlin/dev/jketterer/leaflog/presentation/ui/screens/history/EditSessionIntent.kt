@@ -5,11 +5,6 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 
 sealed interface EditSessionIntent {
-    data class LoadSession(
-        val sessionId: String,
-        val editFullSession: Boolean = false
-    ) : EditSessionIntent
-
     // Field changes - Brewing Parameters
     data class BrewingTimeChanged(val duration: Duration) : EditSessionIntent
     data class TemperatureChanged(val celsius: Double?) : EditSessionIntent

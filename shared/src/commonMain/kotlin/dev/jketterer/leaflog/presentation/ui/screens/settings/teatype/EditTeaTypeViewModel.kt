@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaTypeUseCase
 import dev.jketterer.leaflog.domain.usecases.MergeTeaTypeUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.screens.collection.validateTemperature
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,7 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 class EditTeaTypeViewModel(
+    private val route: NavRoute.EditTeaTypeRoute,
     private val teaTypeRepository: TeaTypeRepository,
     private val teaRepository: TeaRepository,
     private val preferencesRepository: PreferencesRepository,
@@ -43,6 +45,7 @@ class EditTeaTypeViewModel(
     val navigationEvent: StateFlow<EditTeaTypeNavigationEvent?> = _navigationEvent.asStateFlow()
 
     init {
+        loadTeaType(route.teaTypeId)
         loadPreferences(
             preferencesRepository = preferencesRepository,
             stateFlow = _state,
@@ -52,7 +55,6 @@ class EditTeaTypeViewModel(
 
     fun onIntent(intent: EditTeaTypeIntent) {
         when (intent) {
-            is EditTeaTypeIntent.LoadTeaType -> loadTeaType(intent.teaTypeId)
             is EditTeaTypeIntent.NameChanged -> onNameChanged(intent.name)
             is EditTeaTypeIntent.ColorSelected -> onColorSelected(intent.colorHex)
             is EditTeaTypeIntent.TemperatureChanged -> onTemperatureChanged(intent.celsius)

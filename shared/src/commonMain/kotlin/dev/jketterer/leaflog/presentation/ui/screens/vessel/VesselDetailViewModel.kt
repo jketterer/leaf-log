@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +20,7 @@ import leaf_log.shared.generated.resources.couldnt_unarchive_vessel
 import kotlin.time.Clock
 
 class VesselDetailViewModel(
+    private val route: NavRoute.VesselDetailRoute,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val teaSessionRepository: TeaSessionRepository,
     private val deleteBrewingVesselUseCase: DeleteBrewingVesselUseCase,
@@ -32,9 +34,12 @@ class VesselDetailViewModel(
     private val _navigationEvent = MutableStateFlow<VesselDetailNavigationEvent?>(null)
     val navigationEvent: StateFlow<VesselDetailNavigationEvent?> = _navigationEvent.asStateFlow()
 
+    init {
+        loadVessel(route.vesselId)
+    }
+
     fun onIntent(intent: VesselDetailIntent) {
         when (intent) {
-            is VesselDetailIntent.LoadVessel -> loadVessel(intent.vesselId)
             is VesselDetailIntent.EditVesselClicked -> navigateToEditVessel()
             is VesselDetailIntent.DeleteVesselClicked -> showDeleteConfirmation()
             is VesselDetailIntent.ConfirmDelete -> deleteVessel()

@@ -17,6 +17,7 @@ import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -37,6 +38,7 @@ import leaf_log.shared.generated.resources.failure_not_found
 import kotlinx.datetime.toLocalDateTime
 
 class HistoryViewModel(
+    route: NavRoute.HistoryRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
@@ -49,7 +51,7 @@ class HistoryViewModel(
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(HistoryState())
+    private val _state = MutableStateFlow(initialHistoryState(route))
     val state: StateFlow<HistoryState> = _state.asStateFlow()
 
     private val _navEvents = Channel<HistoryNavEvent>()
@@ -320,6 +322,14 @@ class HistoryViewModel(
         }
     }
 }
+
+/** Opened from elsewhere, History starts filtered the way the route asks. */
+internal fun initialHistoryState(route: NavRoute.HistoryRoute) = HistoryState(
+    selectedTeaTypeId = route.filterTeaTypeId,
+    selectedTeaId = route.filterTeaId,
+    dateRangeStart = route.filterDateStart?.let(LocalDate::parse),
+    dateRangeEnd = route.filterDateEnd?.let(LocalDate::parse),
+)
 
 sealed interface HistoryNavEvent {
     data class NavigateToSession(val sessionId: String) : HistoryNavEvent

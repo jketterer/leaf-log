@@ -68,6 +68,7 @@ import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfig
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.discard
@@ -82,22 +83,19 @@ import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.seconds
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun SteepCompleteScreen(
-    sessionId: String,
+    route: NavRoute.SteepCompleteRoute,
     onNavigateToHome: (finishedSessionId: String?) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateBack: () -> Unit,
-    viewModel: SteepCompleteViewModel = koinViewModel(),
+    viewModel: SteepCompleteViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(sessionId) {
-        viewModel.onIntent(SteepCompleteIntent.Initialize(sessionId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navigationEvents.collect { event ->

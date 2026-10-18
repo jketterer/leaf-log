@@ -22,7 +22,9 @@ import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigat
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToSession
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +48,7 @@ import leaf_log.shared.generated.resources.failure_not_found
 import org.jetbrains.compose.resources.StringResource
 
 class TeaDetailViewModel(
+    private val route: NavRoute.TeaDetailsRoute,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val teaSessionRepository: TeaSessionRepository,
@@ -70,7 +73,7 @@ class TeaDetailViewModel(
 
     val messages = UiMessages<Nothing>()
 
-    private var teaId: String? = null
+    private var teaTypeJob: Job? = null
 
     private sealed interface PendingAction {
         data class BrewThisTea(val vesselId: String?) : PendingAction
@@ -100,9 +103,15 @@ class TeaDetailViewModel(
         },
     )
 
+    init {
+        loadTea(route.teaId)
+        loadRecentSessions(route.teaId)
+        loadConfigurations(route.teaId)
+        loadVessels()
+    }
+
     fun onIntent(intent: TeaDetailIntent) {
         when (intent) {
-            is TeaDetailIntent.LoadTea -> loadTea(intent.teaId)
             is TeaDetailIntent.DeleteTeaClicked -> showDeleteConfirmation()
             is TeaDetailIntent.ConfirmDelete -> confirmDelete()
             is TeaDetailIntent.CancelDelete -> cancelDelete()
@@ -169,7 +178,6 @@ class TeaDetailViewModel(
     }
 
     private fun loadTea(teaId: String) {
-        this.teaId = teaId
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
@@ -180,9 +188,6 @@ class TeaDetailViewModel(
                         if (tea != null) {
                             _state.update { it.copy(tea = tea, isLoading = false) }
                             loadTeaType(tea.teaTypeId)
-                            loadRecentSessions(teaId)
-                            loadConfigurations(teaId)
-                            loadVessels()
                         } else if (_state.value.tea != null) {
                             // Deleted while open, from here or anywhere else
                             _navEvents.trySend(NavigateBack)
@@ -206,7 +211,8 @@ class TeaDetailViewModel(
     }
 
     private fun loadTeaType(teaTypeId: String) {
-        viewModelScope.launch {
+        teaTypeJob?.cancel()
+        teaTypeJob = viewModelScope.launch {
             teaTypeRepository.getByIdFlow(teaTypeId)
                 .catchError(Res.string.couldnt_load_tea)
                 .collect { teaType ->

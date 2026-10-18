@@ -19,6 +19,7 @@ import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.async
@@ -43,6 +44,7 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class SteepCompleteViewModel(
+    private val route: NavRoute.SteepCompleteRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
@@ -83,11 +85,11 @@ class SteepCompleteViewModel(
             stateFlow = _state,
             updateState = { state, prefs -> state.copy(userPreferences = prefs) },
         )
+        initialize(route.sessionId)
     }
 
     fun onIntent(intent: SteepCompleteIntent) {
         when (intent) {
-            is SteepCompleteIntent.Initialize -> initialize(intent.sessionId)
             is SteepCompleteIntent.RatingChanged -> updateRating(intent.rating)
             is SteepCompleteIntent.NotesChanged -> updateNotes(intent.notes)
             is SteepCompleteIntent.PhotoSelected -> addPhoto(intent.imageBytes)

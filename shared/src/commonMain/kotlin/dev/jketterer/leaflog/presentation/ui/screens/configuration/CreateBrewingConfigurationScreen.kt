@@ -47,6 +47,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_tea_quantity
@@ -55,23 +56,19 @@ import leaf_log.shared.generated.resources.field_temperature_required
 import leaf_log.shared.generated.resources.field_water_quantity_required
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun CreateBrewingConfigurationScreen(
-    teaId: String,
-    configurationId: String? = null,
+    route: NavRoute.CreateBrewingConfigurationRoute,
     onNavigateBack: () -> Unit,
-    viewModel: CreateBrewingConfigurationViewModel = koinViewModel(),
+    viewModel: CreateBrewingConfigurationViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(teaId, configurationId) {
-        viewModel.onIntent(CreateBrewingConfigurationIntent.LoadData(teaId, configurationId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->

@@ -73,6 +73,7 @@ import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameter
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -87,26 +88,23 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Instant
+import org.koin.core.parameter.parametersOf
 
 /**
  * Session Detail Screen - displays complete session information.
  */
 @Composable
 fun SessionDetailScreen(
-    sessionId: String,
+    route: NavRoute.SessionDetailsRoute,
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String, Boolean) -> Unit,
     onNavigateToTea: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
-    viewModel: SessionDetailViewModel = koinViewModel(),
+    viewModel: SessionDetailViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(sessionId) {
-        viewModel.onIntent(SessionDetailIntent.LoadSession(sessionId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->

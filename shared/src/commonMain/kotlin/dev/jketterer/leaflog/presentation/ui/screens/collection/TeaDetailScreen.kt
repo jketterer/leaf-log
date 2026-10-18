@@ -81,6 +81,7 @@ import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMetho
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
@@ -97,6 +98,7 @@ import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -105,7 +107,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 @Composable
 fun TeaDetailScreen(
-    teaId: String,
+    route: NavRoute.TeaDetailsRoute,
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onNavigateToSession: (String) -> Unit,
@@ -115,15 +117,11 @@ fun TeaDetailScreen(
     onNavigateToHistory: (String) -> Unit,
     onNavigateToCreateConfig: (String) -> Unit,
     onNavigateToEditConfig: (configId: String, teaId: String) -> Unit,
-    viewModel: TeaDetailViewModel = koinViewModel(),
+    viewModel: TeaDetailViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(teaId) {
-        viewModel.onIntent(TeaDetailIntent.LoadTea(teaId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->
@@ -133,7 +131,7 @@ fun TeaDetailScreen(
                 }
 
                 is TeaDetailNavigationEvent.NavigateToEditTea -> {
-                    onNavigateToEdit(teaId)
+                    onNavigateToEdit(route.teaId)
                 }
 
                 is TeaDetailNavigationEvent.NavigateToSession -> {
@@ -141,7 +139,7 @@ fun TeaDetailScreen(
                 }
 
                 is TeaDetailNavigationEvent.NavigateToLogTea -> {
-                    onNavigateToLogTea(teaId, event.vesselId)
+                    onNavigateToLogTea(route.teaId, event.vesselId)
                 }
 
                 is TeaDetailNavigationEvent.NavigateToTimer -> {

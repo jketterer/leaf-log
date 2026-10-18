@@ -27,10 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,6 +56,7 @@ import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIcons
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import leaf_log.shared.generated.resources.Res
@@ -77,13 +75,14 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import org.koin.core.parameter.parametersOf
 
 /**
  * Home Screen - main dashboard with stats and recent sessions.
  */
 @Composable
 fun HomeScreen(
-    finishedSessionId: String?,
+    route: NavRoute.HomeRoute,
     onNavigateToLogTea: (teaId: String?, vesselId: String?, configurationId: String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
@@ -94,7 +93,7 @@ fun HomeScreen(
     onNavigateToQuickTimer: (Int) -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToEditBrewingMethod: (String, String) -> Unit,
-    viewModel: HomeViewModel = koinViewModel(),
+    viewModel: HomeViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -149,14 +148,6 @@ fun HomeScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState, viewModel::onIntent)
-
-    // Offered once: saved with the entry, so returning to Home doesn't offer it again
-    var undoOffered by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(finishedSessionId) {
-        if (finishedSessionId == null || undoOffered) return@LaunchedEffect
-        undoOffered = true
-        viewModel.onIntent(HomeIntent.OfferUndoFinish(finishedSessionId))
-    }
 
     HomeContent(
         state = state,

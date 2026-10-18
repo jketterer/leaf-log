@@ -20,6 +20,7 @@ import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +43,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 
 class TimerViewModel(
+    private val route: NavRoute.TimerRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
@@ -74,6 +76,7 @@ class TimerViewModel(
             updateState = { state, prefs -> state.copy(userPreferences = prefs) },
         )
         collectTimerState()
+        initialize(route.sessionId)
     }
 
     override fun onCleared() {
@@ -91,7 +94,6 @@ class TimerViewModel(
 
     fun onIntent(intent: TimerIntent) {
         when (intent) {
-            is TimerIntent.Initialize -> initialize(intent.sessionId)
             is TimerIntent.StartTimer -> startTimer()
             is TimerIntent.PauseTimer -> pauseTimer()
             is TimerIntent.ResumeTimer -> resumeTimer()

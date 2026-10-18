@@ -41,26 +41,24 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGuardDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Add/Edit Tea Screen - create or edit a tea in the collection.
  */
 @Composable
 fun EditTeaScreen(
-    teaId: String?,
+    route: NavRoute.EditTeaRoute,
     onNavigateBack: () -> Unit,
-    viewModel: EditTeaViewModel = koinViewModel(),
+    viewModel: EditTeaViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(teaId) {
-        viewModel.onIntent(EditTeaIntent.LoadTea(teaId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->
@@ -82,9 +80,9 @@ fun EditTeaScreen(
             onIntent = viewModel::onIntent,
             onBack = onBack,
             snackbarHostState = snackbarHostState,
-            // From teaId, not state.isEditMode: the state defaults to add mode and only flips once
-            // LoadTea has run, which is a composition too late to decide about the keyboard.
-            autoFocusName = teaId == null,
+            // From the route, not state.isEditMode: the state defaults to add mode and only flips once
+            // the tea loads, which is a composition too late to decide about the keyboard.
+            autoFocusName = route.teaId == null,
         )
     }
 }

@@ -7,7 +7,6 @@ import kotlin.time.Duration
  * All possible user actions on the Timer screen.
  */
 sealed interface TimerIntent {
-    data class Initialize(val sessionId: String) : TimerIntent
     data object StartTimer : TimerIntent
     data object PauseTimer : TimerIntent
     data object ResumeTimer : TimerIntent

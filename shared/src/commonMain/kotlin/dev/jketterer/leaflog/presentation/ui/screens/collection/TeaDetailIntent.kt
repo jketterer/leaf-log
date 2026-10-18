@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
 sealed interface TeaDetailIntent {
-    data class LoadTea(val teaId: String) : TeaDetailIntent
     data object EditTeaClicked : TeaDetailIntent
     data object DeleteTeaClicked : TeaDetailIntent
     data object ConfirmDelete : TeaDetailIntent

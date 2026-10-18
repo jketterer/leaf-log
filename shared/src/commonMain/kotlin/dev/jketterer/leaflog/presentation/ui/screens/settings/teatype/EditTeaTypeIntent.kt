@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.settings.teatype
 
 sealed interface EditTeaTypeIntent {
-    data class LoadTeaType(val teaTypeId: String?) : EditTeaTypeIntent
     data class NameChanged(val name: String) : EditTeaTypeIntent
     data class ColorSelected(val colorHex: String) : EditTeaTypeIntent
     data class TemperatureChanged(val celsius: Double?) : EditTeaTypeIntent

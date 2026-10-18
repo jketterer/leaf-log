@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefill
 import dev.jketterer.leaflog.domain.usecases.session.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -33,6 +34,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class QuickTimerViewModel(
+    private val route: NavRoute.QuickTimerRoute,
     private val teaRepository: TeaRepository,
     private val vesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
@@ -64,6 +66,7 @@ class QuickTimerViewModel(
             },
         )
         loadTeasAndVessels()
+        initialize(route.durationSeconds)
     }
 
     private fun loadTeasAndVessels() {
@@ -86,7 +89,6 @@ class QuickTimerViewModel(
 
     fun onIntent(intent: QuickTimerIntent) {
         when (intent) {
-            is QuickTimerIntent.Initialize -> initialize(intent.durationSeconds)
             is QuickTimerIntent.StartTimer -> startTimer()
             is QuickTimerIntent.PauseTimer -> pauseTimer()
             is QuickTimerIntent.ResumeTimer -> resumeTimer()

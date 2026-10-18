@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.UpdateBrewingVesselUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.uuid.Uuid
 
 class EditVesselViewModel(
+    private val route: NavRoute.EditVesselRoute,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val imageStorage: ImageStorage,
@@ -40,6 +42,7 @@ class EditVesselViewModel(
     val messages = UiMessages<Nothing>()
 
     init {
+        loadVessel(route.vesselId)
         loadPreferences(
             preferencesRepository = preferencesRepository,
             stateFlow = _state,
@@ -49,7 +52,6 @@ class EditVesselViewModel(
 
     fun onIntent(intent: EditVesselIntent) {
         when (intent) {
-            is EditVesselIntent.LoadVessel -> loadVessel(intent.vesselId)
             is EditVesselIntent.NameChanged -> onNameChanged(intent.name)
             is EditVesselIntent.IconSelected -> onIconSelected(intent.iconName)
             is EditVesselIntent.CapacityChanged -> onCapacityChanged(intent.capacityMl)

@@ -11,6 +11,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigur
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ import leaf_log.shared.generated.resources.couldnt_save_method
 import leaf_log.shared.generated.resources.failure_not_found
 
 class CreateBrewingConfigurationViewModel(
+    private val route: NavRoute.CreateBrewingConfigurationRoute,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
@@ -42,24 +44,17 @@ class CreateBrewingConfigurationViewModel(
     private val _navEvents = Channel<CreateBrewingConfigurationNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
-    private var loadedTeaId: String? = null
-    private var loadedConfigId: String? = null
-
     init {
         loadPreferences(
             preferencesRepository = preferencesRepository,
             stateFlow = _state,
             updateState = { state, prefs -> state.copy(userPreferences = prefs) }
         )
+        loadData(route.teaId, route.configurationId)
     }
 
     fun onIntent(intent: CreateBrewingConfigurationIntent) {
         when (intent) {
-            is CreateBrewingConfigurationIntent.LoadData -> loadData(
-                intent.teaId,
-                intent.configurationId
-            )
-
             is CreateBrewingConfigurationIntent.SelectVessel -> {
                 val vessel = _state.value.vessels.firstOrNull { it.id == intent.vesselId }
                 _state.update { it.copy(selectedVessel = vessel) }
@@ -97,10 +92,6 @@ class CreateBrewingConfigurationViewModel(
     }
 
     private fun loadData(teaId: String, configurationId: String?) {
-        if (loadedTeaId == teaId && loadedConfigId == configurationId) return
-        loadedTeaId = teaId
-        loadedConfigId = configurationId
-
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
@@ -171,7 +162,7 @@ class CreateBrewingConfigurationViewModel(
     private fun save() {
         val currentState = _state.value
         val vessel = currentState.selectedVessel ?: return
-        val teaId = loadedTeaId ?: return
+        val teaId = route.teaId
         val temperatureCelsius = currentState.temperatureCelsius ?: return
         val waterQuantityMl = currentState.waterQuantityMl ?: return
         val brewingTime = currentState.brewingTime ?: return

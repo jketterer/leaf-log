@@ -51,7 +51,7 @@ import compose.icons.feathericons.Search
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import kotlinx.datetime.LocalDate
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
@@ -69,43 +69,21 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Instant
+import org.koin.core.parameter.parametersOf
 
 /**
  * History Screen - displays all brewing sessions.
  */
 @Composable
 fun HistoryScreen(
-    filterTeaTypeId: String? = null,
-    filterTeaId: String? = null,
-    filterDateStart: String? = null,
-    filterDateEnd: String? = null,
+    route: NavRoute.HistoryRoute,
     onNavigateToSession: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
-    viewModel: HistoryViewModel = koinViewModel()
+    viewModel: HistoryViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(filterTeaTypeId) {
-        if (filterTeaTypeId != null) {
-            viewModel.onIntent(HistoryIntent.FilterByTeaType(filterTeaTypeId))
-        }
-    }
-
-    LaunchedEffect(filterTeaId) {
-        if (filterTeaId != null) {
-            viewModel.onIntent(HistoryIntent.FilterByTea(filterTeaId))
-        }
-    }
-
-    LaunchedEffect(filterDateStart, filterDateEnd) {
-        if (filterDateStart != null || filterDateEnd != null) {
-            val start = filterDateStart?.let { LocalDate.parse(it) }
-            val end = filterDateEnd?.let { LocalDate.parse(it) }
-            viewModel.onIntent(HistoryIntent.FilterByDateRange(start, end))
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->

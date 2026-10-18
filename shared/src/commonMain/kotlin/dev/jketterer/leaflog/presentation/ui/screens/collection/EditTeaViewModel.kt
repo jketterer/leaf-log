@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +30,7 @@ import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.uuid.Uuid
 
 class EditTeaViewModel(
+    private val route: NavRoute.EditTeaRoute,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val preferencesRepository: PreferencesRepository,
@@ -48,6 +50,7 @@ class EditTeaViewModel(
     private val newlyAddedPhotos = mutableListOf<String>()
 
     init {
+        loadTea(route.teaId)
         loadTeaTypes()
         loadProducers()
         loadPreferences(
@@ -59,7 +62,6 @@ class EditTeaViewModel(
 
     fun onIntent(intent: EditTeaIntent) {
         when (intent) {
-            is EditTeaIntent.LoadTea -> loadTea(intent.teaId)
             is EditTeaIntent.NameChanged -> updateName(intent.name)
             is EditTeaIntent.TeaTypeSelected -> updateTeaType(intent.teaTypeId)
             is EditTeaIntent.OriginChanged -> updateOrigin(intent.origin)

@@ -48,6 +48,7 @@ import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGuardDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
@@ -56,6 +57,7 @@ import leaf_log.shared.generated.resources.field_default_temperature
 import leaf_log.shared.generated.resources.field_optional
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 // Muted tea colours, spaced so no two look alike once toned for either theme
 val colorPalette = listOf(
@@ -75,18 +77,14 @@ val colorPalette = listOf(
 
 @Composable
 fun EditTeaTypeScreen(
-    teaTypeId: String?,
+    route: NavRoute.EditTeaTypeRoute,
     onNavigateBack: () -> Unit,
-    viewModel: EditTeaTypeViewModel = koinViewModel(),
+    viewModel: EditTeaTypeViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
     val navigationEvent by viewModel.navigationEvent.collectAsState()
-
-    LaunchedEffect(teaTypeId) {
-        viewModel.onIntent(EditTeaTypeIntent.LoadTeaType(teaTypeId))
-    }
 
     LaunchedEffect(navigationEvent) {
         when (navigationEvent) {

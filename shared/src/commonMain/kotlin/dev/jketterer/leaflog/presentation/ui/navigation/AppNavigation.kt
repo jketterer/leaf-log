@@ -42,7 +42,6 @@ import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
-import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeScreen
@@ -51,7 +50,6 @@ import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.SteepComplete
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AppNavigation() {
@@ -120,7 +118,7 @@ fun AppNavigation() {
             entryProvider = entryProvider {
                 entry<NavRoute.HomeRoute> { route ->
                     HomeScreen(
-                        finishedSessionId = route.finishedSessionId,
+                        route = route,
                         onNavigateToLogTea = { teaId, vesselId, configurationId ->
                             backStack.add(NavRoute.LogTeaRoute(teaId, vesselId, configurationId))
                         },
@@ -175,10 +173,7 @@ fun AppNavigation() {
 
                 entry<NavRoute.HistoryRoute> { route ->
                     HistoryScreen(
-                        filterTeaTypeId = route.filterTeaTypeId,
-                        filterTeaId = route.filterTeaId,
-                        filterDateStart = route.filterDateStart,
-                        filterDateEnd = route.filterDateEnd,
+                        route = route,
                         onNavigateToSession = { sessionId ->
                             backStack.add(NavRoute.SessionDetailsRoute(sessionId))
                         },
@@ -235,7 +230,7 @@ fun AppNavigation() {
 
                 entry<NavRoute.EditTeaTypeRoute> { route ->
                     EditTeaTypeScreen(
-                        teaTypeId = route.teaTypeId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
@@ -246,7 +241,7 @@ fun AppNavigation() {
 
                 entry<NavRoute.TeaDetailsRoute> { route ->
                     TeaDetailScreen(
-                        teaId = route.teaId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                         onNavigateToEdit = { teaId ->
                             backStack.add(NavRoute.EditTeaRoute(teaId))
@@ -277,15 +272,14 @@ fun AppNavigation() {
 
                 entry<NavRoute.CreateBrewingConfigurationRoute> { route ->
                     CreateBrewingConfigurationScreen(
-                        teaId = route.teaId,
-                        configurationId = route.configurationId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
 
-                entry<NavRoute.EditTeaRoute> { entry ->
+                entry<NavRoute.EditTeaRoute> { route ->
                     EditTeaScreen(
-                        teaId = entry.teaId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
@@ -296,7 +290,7 @@ fun AppNavigation() {
 
                 entry<NavRoute.VesselDetailRoute> { route ->
                     VesselDetailScreen(
-                        vesselId = route.vesselId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                         onNavigateToEditVessel = { vesselId ->
                             backStack.add(NavRoute.EditVesselRoute(vesselId))
@@ -306,7 +300,7 @@ fun AppNavigation() {
 
                 entry<NavRoute.EditVesselRoute> { route ->
                     EditVesselScreen(
-                        vesselId = route.vesselId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
@@ -317,22 +311,19 @@ fun AppNavigation() {
 
                 entry<NavRoute.LogTeaRoute> { route ->
                     LogTeaScreen(
-                        teaId = route.teaId,
-                        vesselId = route.vesselId,
-                        configurationId = route.configurationId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                         onNavigateToTimer = { sessionId ->
                             backStack.clear()
                             backStack.add(NavRoute.TimerRoute(sessionId))
                             backStack.add(0, NavRoute.HomeRoute())
                         },
-                        viewModel = koinViewModel<LogTeaViewModel>()
                     )
                 }
 
-                entry<NavRoute.SessionDetailsRoute> { entry ->
+                entry<NavRoute.SessionDetailsRoute> { route ->
                     SessionDetailScreen(
-                        sessionId = entry.sessionId,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                         onNavigateToEdit = { sessionId, editFullSession ->
                             backStack.add(NavRoute.EditSessionRoute(sessionId, editFullSession))
@@ -350,8 +341,7 @@ fun AppNavigation() {
 
                 entry<NavRoute.EditSessionRoute> { route ->
                     EditSessionScreen(
-                        sessionId = route.sessionId,
-                        editFullSession = route.editFullSession,
+                        route = route,
                         onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                     )
                 }
@@ -360,9 +350,9 @@ fun AppNavigation() {
                 // Timer Destinations
                 // =========================================================
 
-                entry<NavRoute.TimerRoute> { entry ->
+                entry<NavRoute.TimerRoute> { route ->
                     TimerScreen(
-                        sessionId = entry.sessionId,
+                        route = route,
                         onNavigateBack = {
                             // Timer keeps running in background via TimerService
                             backStack.removeAt(backStack.lastIndex)
@@ -374,9 +364,9 @@ fun AppNavigation() {
                     )
                 }
 
-                entry<NavRoute.QuickTimerRoute> { entry ->
+                entry<NavRoute.QuickTimerRoute> { route ->
                     QuickTimerScreen(
-                        durationSeconds = entry.durationSeconds,
+                        route = route,
                         onNavigateBack = {
                             backStack.removeAt(backStack.lastIndex)
                         },
@@ -392,9 +382,9 @@ fun AppNavigation() {
                     )
                 }
 
-                entry<NavRoute.SteepCompleteRoute> { entry ->
+                entry<NavRoute.SteepCompleteRoute> { route ->
                     SteepCompleteScreen(
-                        sessionId = entry.sessionId,
+                        route = route,
                         onNavigateToHome = { finishedSessionId ->
                             backStack.clear()
                             backStack.add(NavRoute.HomeRoute(finishedSessionId))

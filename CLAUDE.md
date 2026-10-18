@@ -186,6 +186,10 @@ Example: Rating calculations, session completion flows, steep management.
 - ViewModels manage UI state, NOT business logic
 - Keep ViewModels thin - delegate to use cases
 - Use sealed interfaces for Intents and Navigation Events
+- A screen with route args takes its route and builds its ViewModel with
+  `koinViewModel { parametersOf(route) }`; the ViewModel takes the route as a constructor param
+  and loads in `init`, never from a `LaunchedEffect` that sends a load intent. Nav3 disposes an
+  entry's composition while keeping its ViewModel, so such an effect re-runs on every return
 - Snackbars go through the ViewModel's `UiMessages`, shown by one `UiMessageEffect` per screen; a
   failed operation calls `messages.failure(e, Res.string.couldnt_…)`, never puts `e.message`
   in State. A failure the user should hear the reason for is a `DomainFailure`

@@ -604,7 +604,7 @@ state across rotation and process death.
   sheets, the next-steep dialog, Quick Timer. `editedUnitValue` and the old variants go.
 - [x] `feat: honour the weight unit everywhere`: `LocalUnits`, the Settings row, every hardcoded
   `"g"`, the local display toggles, the CLAUDE.md rule rewritten.
-- [ ] `refactor: load route args in ViewModel init`. Test: History applies its route filter once.
+- [x] `refactor: load route args in ViewModel init`. Test: History applies its route filter once.
 - [ ] `feat: per-tab back stacks`. Test: the navigator — back from a tab root, re-tap, the
   double-pop guard, switch vs push.
 - [ ] `chore: release 0.4.0`: audit rows struck.

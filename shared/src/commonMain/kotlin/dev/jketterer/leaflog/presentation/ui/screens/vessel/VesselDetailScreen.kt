@@ -52,6 +52,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_vessel_text
@@ -62,13 +63,14 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun VesselDetailScreen(
-    vesselId: String,
+    route: NavRoute.VesselDetailRoute,
     onNavigateBack: () -> Unit,
     onNavigateToEditVessel: (String) -> Unit,
-    viewModel: VesselDetailViewModel = koinViewModel(),
+    viewModel: VesselDetailViewModel = koinViewModel { parametersOf(route) },
     imageStorage: ImageStorage = koinInject(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -76,11 +78,6 @@ fun VesselDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
     var showMenu by remember { mutableStateOf(false) }
-
-    // Load vessel on initial composition
-    LaunchedEffect(vesselId) {
-        viewModel.onIntent(VesselDetailIntent.LoadVessel(vesselId))
-    }
 
     // Handle navigation events
     LaunchedEffect(navigationEvent) {

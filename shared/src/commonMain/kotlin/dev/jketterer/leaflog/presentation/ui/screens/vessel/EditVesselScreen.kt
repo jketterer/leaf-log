@@ -39,28 +39,26 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Save
 import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGuardDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.error_capacity_positive
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 /**
  * Add/Edit Vessel Screen - create or edit a brewing vessel.
  */
 @Composable
 fun EditVesselScreen(
-    vesselId: String?,
+    route: NavRoute.EditVesselRoute,
     onNavigateBack: () -> Unit,
-    viewModel: EditVesselViewModel = koinViewModel(),
+    viewModel: EditVesselViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(vesselId) {
-        viewModel.onIntent(EditVesselIntent.LoadVessel(vesselId))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->
@@ -80,9 +78,9 @@ fun EditVesselScreen(
             onIntent = viewModel::onIntent,
             onBack = onBack,
             snackbarHostState = snackbarHostState,
-            // From vesselId, not state.isEditMode: the state defaults to add mode and only flips
-            // once LoadVessel has run, which is a composition too late to decide about the keyboard.
-            autoFocusName = vesselId == null,
+            // From the route, not state.isEditMode: the state defaults to add mode and only flips
+            // once the vessel loads, which is a composition too late to decide about the keyboard.
+            autoFocusName = route.vesselId == null,
         )
     }
 }

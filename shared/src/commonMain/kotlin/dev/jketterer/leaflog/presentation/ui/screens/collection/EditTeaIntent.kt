@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 import kotlinx.datetime.LocalDate
 
 sealed interface EditTeaIntent {
-    data class LoadTea(val teaId: String?) : EditTeaIntent
 
     // Field changes
     data class NameChanged(val name: String) : EditTeaIntent

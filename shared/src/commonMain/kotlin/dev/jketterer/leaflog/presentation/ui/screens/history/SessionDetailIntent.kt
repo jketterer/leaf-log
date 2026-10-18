@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 import kotlin.time.Duration
 
 sealed interface SessionDetailIntent {
-    data class LoadSession(val sessionId: String) : SessionDetailIntent
     data object EditSessionClicked : SessionDetailIntent
     data class EditSteepClicked(val steepId: String) : SessionDetailIntent
     data object DeleteSessionClicked : SessionDetailIntent

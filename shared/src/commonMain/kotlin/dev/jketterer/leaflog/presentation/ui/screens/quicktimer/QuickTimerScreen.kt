@@ -37,6 +37,7 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.add_details
@@ -53,23 +54,20 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import org.koin.core.parameter.parametersOf
 
 /**
  * Quick Timer Screen - simple timer without a database session.
  */
 @Composable
 fun QuickTimerScreen(
-    durationSeconds: Int,
+    route: NavRoute.QuickTimerRoute,
     onNavigateBack: () -> Unit,
     onNavigateToSteepComplete: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
-    viewModel: QuickTimerViewModel = koinViewModel(),
+    viewModel: QuickTimerViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
-
-    LaunchedEffect(durationSeconds) {
-        viewModel.onIntent(QuickTimerIntent.Initialize(durationSeconds))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navigationEvents.collect { event ->

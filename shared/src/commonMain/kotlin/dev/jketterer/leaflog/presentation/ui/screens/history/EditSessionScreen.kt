@@ -49,6 +49,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_tea_quantity
@@ -62,24 +63,20 @@ import leaf_log.shared.generated.resources.header_steep_parameters
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
+import org.koin.core.parameter.parametersOf
 
 /**
  * Edit Session Screen - edit both parent sessions and individual steeps.
  */
 @Composable
 fun EditSessionScreen(
-    sessionId: String,
-    editFullSession: Boolean = false,
+    route: NavRoute.EditSessionRoute,
     onNavigateBack: () -> Unit,
-    viewModel: EditSessionViewModel = koinViewModel()
+    viewModel: EditSessionViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
-
-    LaunchedEffect(sessionId, editFullSession) {
-        viewModel.onIntent(EditSessionIntent.LoadSession(sessionId, editFullSession))
-    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->

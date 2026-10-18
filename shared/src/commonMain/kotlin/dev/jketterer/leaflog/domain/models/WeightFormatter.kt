@@ -13,8 +13,8 @@ object WeightFormatter {
      * Formats a weight in grams to the user's preferred unit, upgrading to kg or lb once the
      * total gets large enough that the small unit stops reading cleanly.
      *
-     * Single brews are a few grams, so the small unit keeps one decimal place; totals that reach
-     * the large unit are rounded the same way.
+     * The small unit shows as many decimals as it's typed in ("5.5 g", "0.18 oz"); totals that
+     * reach the large unit keep one.
      */
     fun format(grams: Double, unit: WeightUnit): String {
         return when (unit) {
@@ -22,14 +22,14 @@ object WeightFormatter {
                 if (grams >= KILOGRAMS_THRESHOLD_G) {
                     "${oneDecimal(grams / KILOGRAMS_THRESHOLD_G)} ${unit.largeSymbol}"
                 } else {
-                    "${oneDecimal(grams)} ${unit.symbol}"
+                    "${formatDecimals(grams, unit.decimals)} ${unit.symbol}"
                 }
 
             WeightUnit.OUNCES ->
                 if (grams >= POUNDS_THRESHOLD_G) {
                     "${oneDecimal(grams / WeightUnit.GRAMS_PER_POUND)} ${unit.largeSymbol}"
                 } else {
-                    "${oneDecimal(unit.fromGrams(grams))} ${unit.symbol}"
+                    "${formatDecimals(unit.fromGrams(grams), unit.decimals)} ${unit.symbol}"
                 }
         }
     }

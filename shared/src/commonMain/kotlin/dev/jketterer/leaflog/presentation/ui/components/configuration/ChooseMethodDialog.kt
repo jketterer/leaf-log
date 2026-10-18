@@ -3,22 +3,16 @@ package dev.jketterer.leaflog.presentation.ui.components.configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Clock
-import compose.icons.feathericons.Droplet
-import compose.icons.feathericons.Star
-import compose.icons.feathericons.Thermometer
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -35,16 +29,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import compose.icons.FeatherIcons
+import compose.icons.feathericons.Clock
+import compose.icons.feathericons.Droplet
+import compose.icons.feathericons.Star
+import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
-import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
@@ -62,7 +59,6 @@ import kotlin.time.Instant
 fun ChooseMethodDialog(
     configurations: List<BrewingConfiguration>,
     selectedConfigurationId: String?,
-    userPreferences: UserPreferences,
     onSelect: (String?) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -88,7 +84,6 @@ fun ChooseMethodDialog(
                         configuration = config,
                         isSelected = selectedId == config.id,
                         isRecommended = config.id == configurations.firstOrNull()?.id,
-                        userPreferences = userPreferences,
                         onClick = { selectedId = if (selectedId == config.id) null else config.id },
                     )
                 }
@@ -113,13 +108,11 @@ fun ChooseMethodDialog(
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ConfigurationOption(
     configuration: BrewingConfiguration,
     isSelected: Boolean,
     isRecommended: Boolean,
-    userPreferences: UserPreferences,
     onClick: () -> Unit,
 ) {
     Card(
@@ -188,15 +181,12 @@ private fun ConfigurationOption(
                     configuration.teaQuantityGrams?.let {
                         BrewingParamChip(
                             vectorResource(Res.drawable.ic_tea_leaf),
-                            "${it}g",
+                            formatWeight(it),
                         )
                     }
                     BrewingParamChip(
                         FeatherIcons.Thermometer,
-                        TemperatureFormatter.format(
-                            configuration.temperatureCelsius,
-                            userPreferences.temperatureUnit,
-                        ),
+                        formatTemperature(configuration.temperatureCelsius),
                     )
                     BrewingParamChip(
                         FeatherIcons.Clock,
@@ -204,10 +194,7 @@ private fun ConfigurationOption(
                     )
                     BrewingParamChip(
                         FeatherIcons.Droplet,
-                        VolumeFormatter.format(
-                            configuration.waterQuantityMl,
-                            userPreferences.volumeUnit,
-                        ),
+                        formatVolume(configuration.waterQuantityMl),
                     )
                 }
 
@@ -289,10 +276,6 @@ private fun ChooseMethodDialogPreview() {
         ChooseMethodDialog(
             configurations = configs,
             selectedConfigurationId = "1",
-            userPreferences = UserPreferences(
-                temperatureUnit = TemperatureUnit.CELSIUS,
-                volumeUnit = VolumeUnit.MILLILITERS,
-            ),
             onSelect = {},
             onDismiss = {},
         )

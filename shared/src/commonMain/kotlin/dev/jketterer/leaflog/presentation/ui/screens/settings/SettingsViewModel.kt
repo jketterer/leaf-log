@@ -50,6 +50,7 @@ class SettingsViewModel(
             is SettingsIntent.UpdateThemeMode -> updateThemeMode(intent.mode)
             is SettingsIntent.UpdateTemperatureUnit -> updateTemperatureUnit(intent.unit)
             is SettingsIntent.UpdateVolumeUnit -> updateVolumeUnit(intent.unit)
+            is SettingsIntent.UpdateWeightUnit -> updateWeightUnit(intent.unit)
             is SettingsIntent.UpdateDefaultWaterType -> updateDefaultWaterType(intent.waterType)
 
             is SettingsIntent.UpdateTimerCompletionNotifications ->
@@ -135,6 +136,13 @@ class SettingsViewModel(
     private fun updateVolumeUnit(unit: dev.jketterer.leaflog.domain.models.VolumeUnit) {
         viewModelScope.launch {
             preferencesRepository.updateVolumeUnit(unit)
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
+        }
+    }
+
+    private fun updateWeightUnit(unit: dev.jketterer.leaflog.domain.models.WeightUnit) {
+        viewModelScope.launch {
+            preferencesRepository.updateWeightUnit(unit)
                 .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }

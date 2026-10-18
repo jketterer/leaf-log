@@ -5,6 +5,12 @@
     <string name="theme_mode_system">System</string>
     <string name="theme_mode_light">Light</string>
     <string name="theme_mode_dark">Dark</string>
+    <string name="settings_temperature_unit">Temperature unit</string>
+    <string name="settings_volume_unit">Volume unit</string>
+    <string name="settings_weight_unit">Weight unit</string>
+    <string name="settings_temperature_unit_subtitle">Display unit for temperatures</string>
+    <string name="settings_volume_unit_subtitle">Display unit for volumes</string>
+    <string name="settings_weight_unit_subtitle">Display unit for leaf weights</string>
 
     <!-- Units, as a screen reader speaks them -->
     <string name="unit_celsius">Celsius</string>

@@ -6,8 +6,6 @@ import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TrendGranularity
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
-import dev.jketterer.leaflog.domain.models.WeightFormatter
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
@@ -121,39 +119,6 @@ class AnalyticsViewModel(
             is AnalyticsIntent.TapTopRatedTea -> {
                 _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
             }
-
-            is AnalyticsIntent.ToggleWaterUnit -> toggleWaterUnit()
-
-            is AnalyticsIntent.ToggleWeightUnit -> toggleWeightUnit()
-        }
-    }
-
-    private fun toggleWaterUnit() {
-        viewModelScope.launch {
-            val prefs = preferencesRepository.getPreferences()
-            val newUnit = prefs.volumeUnit.toggle()
-            preferencesRepository.updateVolumeUnit(newUnit)
-            val currentWaterMl = _state.value.analytics?.totalWaterMl ?: return@launch
-            _state.update {
-                it.copy(formattedWaterQuantity = VolumeFormatter.format(currentWaterMl, newUnit))
-            }
-        }
-    }
-
-    private fun toggleWeightUnit() {
-        viewModelScope.launch {
-            val prefs = preferencesRepository.getPreferences()
-            val newUnit = prefs.weightUnit.toggle()
-            preferencesRepository.updateWeightUnit(newUnit)
-            val analytics = _state.value.analytics ?: return@launch
-            _state.update {
-                it.copy(
-                    formattedTeaQuantity = WeightFormatter.format(analytics.totalTeaGrams, newUnit),
-                    formattedAverageTeaQuantity = analytics.averageTeaGrams
-                        ?.let { avg -> WeightFormatter.format(avg, newUnit) }
-                        .orEmpty(),
-                )
-            }
         }
     }
 
@@ -187,8 +152,6 @@ class AnalyticsViewModel(
             _state.update { it.copy(isLoading = true) }
 
             try {
-                val prefs = preferencesRepository.getPreferences()
-
                 // Count total completed sessions for empty state check
                 val totalCompleted = teaSessionRepository.getAllSessions()
                     .count { it.session.status == SessionStatus.COMPLETED }
@@ -248,14 +211,7 @@ class AnalyticsViewModel(
                     null
                 }
 
-                val formattedWater =
-                    VolumeFormatter.format(currentData.totalWaterMl, prefs.volumeUnit)
                 val formattedTime = formatDuration(currentData.totalBrewingTime)
-                val formattedTea =
-                    WeightFormatter.format(currentData.totalTeaGrams, prefs.weightUnit)
-                val formattedAverageTea = currentData.averageTeaGrams
-                    ?.let { WeightFormatter.format(it, prefs.weightUnit) }
-                    .orEmpty()
 
                 // Load chart data
                 val brewingTrends = getBrewingTrendsUseCase(start, end)
@@ -285,10 +241,7 @@ class AnalyticsViewModel(
                         analytics = currentData,
                         comparison = comparison,
                         insights = insights,
-                        formattedWaterQuantity = formattedWater,
                         formattedBrewingTime = formattedTime,
-                        formattedTeaQuantity = formattedTea,
-                        formattedAverageTeaQuantity = formattedAverageTea,
                         isLoading = false,
                         hasMinimumData = hasMinimumData,
                         totalCompletedSessions = totalCompleted,

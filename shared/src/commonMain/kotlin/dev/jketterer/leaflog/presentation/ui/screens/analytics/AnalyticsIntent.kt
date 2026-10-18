@@ -15,6 +15,4 @@ sealed interface AnalyticsIntent {
     data class TapTopTea(val teaId: String) : AnalyticsIntent
 data class TapVessel(val vesselId: String) : AnalyticsIntent
     data class TapTopRatedTea(val teaId: String) : AnalyticsIntent
-    data object ToggleWaterUnit : AnalyticsIntent
-    data object ToggleWeightUnit : AnalyticsIntent
 }

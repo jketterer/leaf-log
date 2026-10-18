@@ -245,7 +245,6 @@ private fun Step1Content(
             selectedVessel = selectedVessel,
             onVesselSelected = { vessel -> onVesselSelected(vessel.id) },
             label = "Brewing Vessel",
-            volumeUnit = userPreferences.volumeUnit,
             modifier = Modifier.fillMaxWidth(),
         )
 

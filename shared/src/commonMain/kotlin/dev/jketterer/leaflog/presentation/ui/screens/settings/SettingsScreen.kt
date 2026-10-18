@@ -81,9 +81,11 @@ private fun SettingsContent(
                 themeMode = state.preferences.themeMode,
                 temperatureUnit = state.preferences.temperatureUnit,
                 volumeUnit = state.preferences.volumeUnit,
+                weightUnit = state.preferences.weightUnit,
                 onThemeModeChange = { onIntent(SettingsIntent.UpdateThemeMode(it)) },
                 onTemperatureUnitChange = { onIntent(SettingsIntent.UpdateTemperatureUnit(it)) },
                 onVolumeUnitChange = { onIntent(SettingsIntent.UpdateVolumeUnit(it)) },
+                onWeightUnitChange = { onIntent(SettingsIntent.UpdateWeightUnit(it)) },
             )
 
             BrewingSection(

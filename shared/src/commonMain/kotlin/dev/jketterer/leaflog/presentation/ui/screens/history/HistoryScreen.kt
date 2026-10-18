@@ -304,7 +304,6 @@ private fun HistoryContent(
                                     teaTypeName = teaType?.name ?: "Unknown Type",
                                     vesselName = vessel?.name ?: "Unknown Vessel",
                                     teaPhotoUrl = tea?.photos?.firstOrNull(),
-                                    userPrefs = state.userPreferences,
                                     onSessionClick = {
                                         if (session.session.status == SessionStatus.IN_PROGRESS) {
                                             onIntent(HistoryIntent.CompleteInProgress(sessionId))
@@ -334,7 +333,6 @@ private fun HistoryContent(
                 teaName = dialogState.teaName,
                 vesselName = dialogState.vesselName,
                 session = dialogState.session,
-                userPreferences = state.userPreferences,
                 isProcessing = dialogState.isProcessing,
                 onResume = { onIntent(HistoryIntent.ResumeInProgress) },
                 onCompleteAndContinue = { onIntent(HistoryIntent.CompleteInProgressAndContinue) },

@@ -4,12 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,34 +14,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import compose.icons.FeatherIcons
-import compose.icons.feathericons.Repeat
 import dev.jketterer.leaflog.domain.models.MeasurementUnit
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WeightUnit
+import dev.jketterer.leaflog.domain.models.formatDecimals
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.unit_celsius
-import leaf_log.shared.generated.resources.unit_fahrenheit
-import leaf_log.shared.generated.resources.unit_fluid_ounces
-import leaf_log.shared.generated.resources.unit_grams
-import leaf_log.shared.generated.resources.unit_milliliters
-import leaf_log.shared.generated.resources.unit_ounces
-import leaf_log.shared.generated.resources.unit_switch_to
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
-import kotlin.math.abs
-import kotlin.math.roundToLong
 
 /**
  * A temperature, volume or weight, held in canonical units and typed in [unit] or, after a tap on
@@ -107,11 +83,12 @@ fun UnitInputField(
             ),
             enabled = enabled,
             trailingIcon = {
-                UnitChip(
+                UnitSwitchChip(
                     unit = shown,
                     switched = switched,
                     enabled = enabled,
                     onClick = { switched = !switched },
+                    modifier = Modifier.padding(end = 8.dp),
                 )
             },
         )
@@ -128,69 +105,6 @@ fun UnitInputField(
         }
     }
 }
-
-@Composable
-private fun UnitChip(
-    unit: MeasurementUnit,
-    switched: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    val name = stringResource(unit.spokenName)
-    val switchLabel = stringResource(Res.string.unit_switch_to, stringResource(unit.toggle().spokenName))
-    // Tertiary marks a unit that differs from Settings.
-    val tint = if (switched) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
-    AssistChip(
-        onClick = onClick,
-        label = { Text(unit.symbol) },
-        enabled = enabled,
-        trailingIcon = {
-            Icon(
-                imageVector = FeatherIcons.Repeat,
-                contentDescription = null,
-                modifier = Modifier.size(AssistChipDefaults.IconSize),
-            )
-        },
-        colors = AssistChipDefaults.assistChipColors(
-            labelColor = tint,
-            trailingIconContentColor = tint,
-        ),
-        border = if (switched) {
-            AssistChipDefaults.assistChipBorder(enabled = enabled, borderColor = tint)
-        } else {
-            AssistChipDefaults.assistChipBorder(enabled = enabled)
-        },
-        modifier = Modifier
-            .padding(end = 8.dp)
-            .clearAndSetSemantics {
-                contentDescription = name
-                role = Role.Button
-                if (!enabled) disabled()
-                onClick(label = switchLabel) {
-                    onClick()
-                    true
-                }
-            },
-    )
-}
-
-private val MeasurementUnit.spokenName: StringResource
-    get() = when (this) {
-        is TemperatureUnit -> when (this) {
-            TemperatureUnit.CELSIUS -> Res.string.unit_celsius
-            TemperatureUnit.FAHRENHEIT -> Res.string.unit_fahrenheit
-        }
-
-        is VolumeUnit -> when (this) {
-            VolumeUnit.MILLILITERS -> Res.string.unit_milliliters
-            VolumeUnit.FLUID_OUNCES -> Res.string.unit_fluid_ounces
-        }
-
-        is WeightUnit -> when (this) {
-            WeightUnit.GRAMS -> Res.string.unit_grams
-            WeightUnit.OUNCES -> Res.string.unit_ounces
-        }
-    }
 
 /** Common brewing values, in [unit] itself. */
 private fun presetsFor(unit: MeasurementUnit): List<Double> = when (unit) {
@@ -234,17 +148,6 @@ internal fun typedUnitValue(text: String, unit: MeasurementUnit, opened: Double?
 /** Whether the field may hold [text]: digits, with at most [unit]'s decimals after a point. */
 internal fun isUnitInput(text: String, unit: MeasurementUnit): Boolean =
     Regex(if (unit.decimals == 0) "\\d*" else "\\d*(\\.\\d{0,${unit.decimals}})?").matches(text)
-
-/** Rounded to [decimals] places, trailing zeros dropped: "6.8", "7", "0.05". */
-private fun formatDecimals(value: Double, decimals: Int): String {
-    var factor = 1L
-    repeat(decimals) { factor *= 10 }
-    val scaled = (value * factor).roundToLong()
-    val sign = if (scaled < 0) "-" else ""
-    val fraction = (abs(scaled) % factor).toString().padStart(decimals, '0').trimEnd('0')
-    val whole = "$sign${abs(scaled) / factor}"
-    return if (fraction.isEmpty()) whole else "$whole.$fraction"
-}
 
 @Preview(showBackground = true)
 @Composable

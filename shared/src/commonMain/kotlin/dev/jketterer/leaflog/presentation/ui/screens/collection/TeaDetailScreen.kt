@@ -66,7 +66,6 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
@@ -76,6 +75,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
@@ -365,10 +365,7 @@ private fun TeaDetailContent(
                                     if (state.tea.defaultTemperatureCelsius != null) {
                                         DetailRow(
                                             label = "Temperature",
-                                            value = TemperatureFormatter.format(
-                                                state.tea.defaultTemperatureCelsius,
-                                                state.userPreferences.temperatureUnit
-                                            ),
+                                            value = formatTemperature(state.tea.defaultTemperatureCelsius),
                                         )
                                     }
 
@@ -420,7 +417,6 @@ private fun TeaDetailContent(
                                 getVesselName = { vesselId ->
                                     state.vessels.find { it.id == vesselId }?.name ?: "Unknown"
                                 },
-                                userPreferences = state.userPreferences,
                                 onAdd = { onIntent(TeaDetailIntent.AddConfigurationClicked) },
                                 onEdit = { configId ->
                                     onIntent(TeaDetailIntent.EditConfigurationClicked(configId))
@@ -455,7 +451,6 @@ private fun TeaDetailContent(
                                     teaTypeName = state.teaType?.name ?: "",
                                     vesselName = vesselName,
                                     teaPhotoUrl = state.tea.photos.firstOrNull(),
-                                    userPrefs = state.userPreferences,
                                     onSessionClick = {
                                         onIntent(TeaDetailIntent.SessionClicked(sessionId))
                                     },
@@ -545,7 +540,6 @@ private fun TeaDetailContent(
                 teaName = dialogState.teaName,
                 vesselName = dialogState.vesselName,
                 session = dialogState.session,
-                userPreferences = state.userPreferences,
                 isProcessing = dialogState.isProcessing,
                 onResume = { onIntent(TeaDetailIntent.ResumeInProgress) },
                 onCompleteAndContinue = { onIntent(TeaDetailIntent.CompleteInProgressAndContinue) },

@@ -47,9 +47,9 @@ import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import leaf_log.shared.generated.resources.Res
@@ -313,10 +313,7 @@ fun VesselDetailScreen(
                                                 style = MaterialTheme.typography.bodyMedium
                                             )
                                             Text(
-                                                text = VolumeFormatter.format(
-                                                    milliliters = state.vessel!!.capacityMl!!.toDouble(),
-                                                    unit = state.volumeUnit,
-                                                ),
+                                                text = formatVolume(state.vessel!!.capacityMl!!.toDouble()),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = FontWeight.Medium
                                             )

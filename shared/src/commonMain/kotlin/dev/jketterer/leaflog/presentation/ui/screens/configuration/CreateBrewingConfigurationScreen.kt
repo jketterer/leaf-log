@@ -132,7 +132,6 @@ private fun CreateBrewingConfigurationContent(
                             onIntent(CreateBrewingConfigurationIntent.SelectVessel(vessel.id))
                         },
                         label = "Brewing Vessel *",
-                        volumeUnit = state.userPreferences.volumeUnit,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

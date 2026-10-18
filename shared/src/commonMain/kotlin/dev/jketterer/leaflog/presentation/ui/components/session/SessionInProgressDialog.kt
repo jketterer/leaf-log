@@ -27,11 +27,10 @@ import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Clock
@@ -47,7 +46,6 @@ fun SessionInProgressDialog(
     teaName: String,
     vesselName: String,
     session: SessionWithSteeps,
-    userPreferences: UserPreferences,
     isProcessing: Boolean,
     onResume: () -> Unit,
     onCompleteAndContinue: () -> Unit,
@@ -96,10 +94,7 @@ fun SessionInProgressDialog(
                         ) {
                             BrewingParamChip(
                                 FeatherIcons.Thermometer,
-                                TemperatureFormatter.format(
-                                    steep.temperatureCelsius,
-                                    userPreferences.temperatureUnit,
-                                ),
+                                formatTemperature(steep.temperatureCelsius),
                             )
                             BrewingParamChip(
                                 FeatherIcons.Clock,
@@ -107,10 +102,7 @@ fun SessionInProgressDialog(
                             )
                             BrewingParamChip(
                                 FeatherIcons.Droplet,
-                                VolumeFormatter.format(
-                                    steep.waterQuantityMl,
-                                    userPreferences.volumeUnit,
-                                ),
+                                formatVolume(steep.waterQuantityMl),
                             )
                         }
                     }
@@ -168,7 +160,6 @@ private fun SessionInProgressDialogPreview() {
             teaName = "Dragon Well",
             vesselName = "Gaiwan",
             session = previewSession(brewingTime = 2.minutes + 30.seconds),
-            userPreferences = UserPreferences(),
             isProcessing = false,
             onResume = {},
             onCompleteAndContinue = {},
@@ -191,7 +182,6 @@ private fun SessionInProgressDialogProcessingPreview() {
                 temperatureCelsius = 75.0,
                 waterQuantityMl = 150.0,
             ),
-            userPreferences = UserPreferences(),
             isProcessing = true,
             onResume = {},
             onCompleteAndContinue = {},

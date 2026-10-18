@@ -15,7 +15,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.PlusCircle
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
@@ -33,7 +32,6 @@ import org.jetbrains.compose.resources.stringResource
 fun SavedMethodsSection(
     configurations: List<BrewingConfiguration>,
     getVesselName: (String) -> String,
-    userPreferences: UserPreferences,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
     onDelete: (String) -> Unit,
@@ -64,7 +62,6 @@ fun SavedMethodsSection(
                 ConfigurationCard(
                     configuration = config,
                     vesselName = getVesselName(config.vesselId),
-                    userPreferences = userPreferences,
                     onEdit = { onEdit(config.id) },
                     onDelete = { onDelete(config.id) },
                 )
@@ -80,7 +77,6 @@ private fun SavedMethodsSectionEmptyPreview() {
         SavedMethodsSection(
             configurations = emptyList(),
             getVesselName = { "Gaiwan" },
-            userPreferences = UserPreferences(),
             onAdd = {},
             onEdit = {},
             onDelete = {},
@@ -114,7 +110,6 @@ private fun SavedMethodsSectionWithItemsPreview() {
                 ),
             ),
             getVesselName = { "Gaiwan (100ml)" },
-            userPreferences = UserPreferences(),
             onAdd = {},
             onEdit = {},
             onDelete = {},

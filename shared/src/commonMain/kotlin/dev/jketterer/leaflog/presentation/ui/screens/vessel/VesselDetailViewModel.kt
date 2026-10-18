@@ -3,11 +3,9 @@ package dev.jketterer.leaflog.presentation.ui.screens.vessel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
-import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
-import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +20,6 @@ import kotlin.time.Clock
 
 class VesselDetailViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
-    private val preferencesRepository: PreferencesRepository,
     private val teaSessionRepository: TeaSessionRepository,
     private val deleteBrewingVesselUseCase: DeleteBrewingVesselUseCase,
 ) : ViewModel() {
@@ -34,14 +31,6 @@ class VesselDetailViewModel(
 
     private val _navigationEvent = MutableStateFlow<VesselDetailNavigationEvent?>(null)
     val navigationEvent: StateFlow<VesselDetailNavigationEvent?> = _navigationEvent.asStateFlow()
-
-    init {
-        loadPreferences(
-            preferencesRepository = preferencesRepository,
-            stateFlow = _state,
-            updateState = { state, prefs -> state.copy(volumeUnit = prefs.volumeUnit) },
-        )
-    }
 
     fun onIntent(intent: VesselDetailIntent) {
         when (intent) {

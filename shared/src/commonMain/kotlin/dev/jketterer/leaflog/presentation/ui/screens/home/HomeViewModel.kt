@@ -13,7 +13,6 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
-import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -30,7 +29,6 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessage
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.messages.UiText
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
-import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,7 +73,6 @@ class HomeViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val vesselRepository: BrewingVesselRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
-    private val preferencesRepository: PreferencesRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
@@ -125,11 +122,6 @@ class HomeViewModel(
     )
 
     init {
-        loadPreferences(
-            preferencesRepository = preferencesRepository,
-            stateFlow = _state,
-            updateState = { state, prefs -> state.copy(userPreferences = prefs) },
-        )
         collectTimerState()
         onIntent(HomeIntent.LoadData)
     }
@@ -238,7 +230,6 @@ class HomeViewModel(
                 )
             }
 
-            is HomeIntent.DailyStatsWaterCardClicked -> toggleVolumeUnit()
 
             is HomeIntent.DailyStatsTeasCardClicked -> _navEvents.trySend(HomeNavEvent.NavigateToCollection)
 
@@ -516,11 +507,6 @@ class HomeViewModel(
         deleteSessionUseCase(sessionId)
             .onSuccess { timerService.onSessionResolved(sessionId) }
             .onFailure { messages.failure(it, Res.string.couldnt_delete_session) }
-    }
-
-    private fun toggleVolumeUnit() = viewModelScope.launch {
-        val toggled = _state.value.userPreferences.volumeUnit.toggle()
-        preferencesRepository.updateVolumeUnit(toggled)
     }
 }
 

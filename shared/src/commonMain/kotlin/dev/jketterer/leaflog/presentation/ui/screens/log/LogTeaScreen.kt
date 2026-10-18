@@ -168,7 +168,6 @@ private fun LogTeaContent(
                             onIntent(LogTeaIntent.VesselSelected(vessel.id))
                         },
                         label = "Brewing Vessel *",
-                        volumeUnit = state.userPreferences.volumeUnit,
                         isError = state.vesselError != null,
                         errorMessage = state.vesselError,
                         modifier = Modifier.fillMaxWidth(),
@@ -320,7 +319,6 @@ private fun LogTeaDialogs(
             teaName = dialogState.teaName,
             vesselName = dialogState.vesselName,
             session = dialogState.session,
-            userPreferences = state.userPreferences,
             isProcessing = dialogState.isProcessing,
             onResume = { onIntent(LogTeaIntent.ResumeInProgress) },
             onCompleteAndContinue = { onIntent(LogTeaIntent.CompleteInProgressAndContinue) },
@@ -357,7 +355,6 @@ private fun LogTeaDialogs(
         ChooseMethodDialog(
             configurations = state.availableConfigurations,
             selectedConfigurationId = state.usedConfigurationId,
-            userPreferences = state.userPreferences,
             onSelect = { configId ->
                 onIntent(LogTeaIntent.MethodSelected(configId))
             },

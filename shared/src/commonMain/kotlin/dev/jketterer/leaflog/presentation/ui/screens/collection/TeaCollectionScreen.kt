@@ -415,7 +415,6 @@ private fun VesselsTabContent(
                     ) { vessel ->
                         VesselCard(
                             vessel = vessel,
-                            volumeUnit = vesselState.userPreferences.volumeUnit,
                             onClick = { onNavigateToVesselDetail(vessel.id) },
                         )
                     }

@@ -296,7 +296,6 @@ private fun TimerRunningContent(
             if (state.session != null) {
                 SteepParameterCard(
                     session = state.session,
-                    userPreferences = state.userPreferences,
                     onEditClick = { onIntent(TimerIntent.EditSession) },
                 )
             }

@@ -37,6 +37,8 @@ fun DailyStatsCard(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    /** A control in the top-end corner, such as a unit switch. It adds no height. */
+    action: (@Composable () -> Unit)? = null,
 ) {
     Card(
         onClick = onClick,
@@ -47,41 +49,46 @@ fun DailyStatsCard(
             contentColor = contentColor,
         ),
     ) {
-        Column(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = contentColor,
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            val baseStyle = MaterialTheme.typography.headlineMedium
-            var scaleFactor by remember { mutableFloatStateOf(1f) }
-            Text(
-                text = value,
-                style = baseStyle.copy(fontSize = baseStyle.fontSize * scaleFactor),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                color = contentColor,
-                onTextLayout = { result ->
-                    if (result.hasVisualOverflow) {
-                        scaleFactor *= 0.9f
-                    }
-                },
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = contentColor.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center,
-            )
+        Box {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = contentColor,
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                val baseStyle = MaterialTheme.typography.headlineMedium
+                var scaleFactor by remember { mutableFloatStateOf(1f) }
+                Text(
+                    text = value,
+                    style = baseStyle.copy(fontSize = baseStyle.fontSize * scaleFactor),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    color = contentColor,
+                    onTextLayout = { result ->
+                        if (result.hasVisualOverflow) {
+                            scaleFactor *= 0.9f
+                        }
+                    },
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = contentColor.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center,
+                )
+            }
+            if (action != null) {
+                Box(modifier = Modifier.align(Alignment.TopEnd)) { action() }
+            }
         }
     }
 }

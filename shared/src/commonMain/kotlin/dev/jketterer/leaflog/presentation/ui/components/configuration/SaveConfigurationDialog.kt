@@ -2,12 +2,13 @@ package dev.jketterer.leaflog.presentation.ui.components.configuration
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -22,30 +23,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Thermometer
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 /**
  * Dialog to save a brewing configuration after a great session
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SaveConfigurationDialog(
     teaName: String,
@@ -56,7 +54,6 @@ fun SaveConfigurationDialog(
     brewingTimeSeconds: Int,
     rating: Float?,
     suggestedLabel: String,
-    userPreferences: UserPreferences,
     onSave: (label: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -105,13 +102,25 @@ fun SaveConfigurationDialog(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     if (teaQuantityGrams != null) {
-                        BrewingParamChip(icon = FeatherIcons.Coffee, text = "${teaQuantityGrams}g")
+                        BrewingParamChip(
+                            icon = FeatherIcons.Coffee,
+                            text = formatWeight(teaQuantityGrams)
+                        )
                     } else {
                         BrewingParamChip(icon = FeatherIcons.Coffee, text = "Tea Bag")
                     }
-                    BrewingParamChip(icon = FeatherIcons.Droplet, text = VolumeFormatter.format(waterQuantityMl, userPreferences.volumeUnit))
-                    BrewingParamChip(icon = FeatherIcons.Thermometer, text = TemperatureFormatter.format(temperatureCelsius, userPreferences.temperatureUnit))
-                    BrewingParamChip(icon = FeatherIcons.Clock, text = formatBrewingTime(brewingTimeSeconds))
+                    BrewingParamChip(
+                        icon = FeatherIcons.Droplet,
+                        text = formatVolume(waterQuantityMl)
+                    )
+                    BrewingParamChip(
+                        icon = FeatherIcons.Thermometer,
+                        text = formatTemperature(temperatureCelsius)
+                    )
+                    BrewingParamChip(
+                        icon = FeatherIcons.Clock,
+                        text = formatBrewingTime(brewingTimeSeconds)
+                    )
                 }
 
                 // Editable label
@@ -170,7 +179,6 @@ private fun SaveConfigurationDialogPreview() {
             brewingTimeSeconds = 45,
             rating = 4.5f,
             suggestedLabel = "Gongfu Style",
-            userPreferences = UserPreferences(),
             onSave = {},
             onDismiss = {},
         )

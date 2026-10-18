@@ -5,7 +5,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
@@ -26,7 +25,6 @@ private fun SessionCardWithPhotoPreview() {
             teaTypeName = "Green Tea",
             vesselName = "Gaiwan",
             teaPhotoUrl = null,
-            userPrefs = UserPreferences.METRIC,
             onSessionClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},

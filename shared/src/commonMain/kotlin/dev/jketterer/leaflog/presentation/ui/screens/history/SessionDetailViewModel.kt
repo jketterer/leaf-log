@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
-import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -47,7 +46,6 @@ class SessionDetailViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
-    private val preferencesRepository: PreferencesRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val deleteSteepUseCase: DeleteSteepUseCase,
     private val startSessionUseCase: StartSessionUseCase,
@@ -92,20 +90,6 @@ class SessionDetailViewModel(
                 }
             },
         )
-
-    init {
-        loadPreferences()
-    }
-
-    private fun loadPreferences() {
-        viewModelScope.launch {
-            preferencesRepository.getPreferencesFlow()
-                .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load preferences: ${e.message}" } }
-                .collect { preferences ->
-                    _state.update { it.copy(userPreferences = preferences) }
-                }
-        }
-    }
 
     fun onIntent(intent: SessionDetailIntent) {
         when (intent) {

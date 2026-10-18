@@ -262,7 +262,6 @@ private fun HomeContent(
                             DailyStatsSection(
                                 stats = state.dailyStats,
                                 onSessionsCardClick = { onIntent(HomeIntent.DailyStatsTodaySessionsClicked) },
-                                onWaterCardClick = { onIntent(HomeIntent.DailyStatsWaterCardClicked) },
                                 onTeasCardClick = { onIntent(HomeIntent.DailyStatsTeasCardClicked) },
                                 onViewAllClick = { onIntent(HomeIntent.ViewAllStatsClicked) },
                             )
@@ -273,7 +272,6 @@ private fun HomeContent(
                             item(key = "quick_brew") {
                                 QuickBrewSection(
                                     configurations = state.quickBrewConfigurations,
-                                    userPreferences = state.userPreferences,
                                     onConfigClick = { data ->
                                         onIntent(
                                             HomeIntent.QuickBrewClicked(
@@ -323,7 +321,6 @@ private fun HomeContent(
                                 vesselName = sessionData.vesselName,
                                 session = sessionData.session,
                                 teaPhotoUrl = sessionData.teaPhotoUrl,
-                                userPrefs = state.userPreferences,
                                 onSessionClick = {
                                     onIntent(HomeIntent.SessionClicked(sessionData.session.session.id))
                                 },
@@ -392,7 +389,6 @@ private fun HomeContent(
             teaName = dialogState.teaName,
             vesselName = dialogState.vesselName,
             session = dialogState.session,
-            userPreferences = state.userPreferences,
             isProcessing = dialogState.isProcessing,
             onResume = { onIntent(HomeIntent.ResumeInProgressFromDialog) },
             onCompleteAndContinue = { onIntent(HomeIntent.CompleteInProgressAndContinue) },
@@ -436,7 +432,7 @@ private fun HomeScreenPreview() {
                 greeting = "Good morning",
                 dailyStats = DailyStats(
                     sessionCount = 3,
-                    formattedWaterQuantity = "32 fl oz",
+                    totalWaterMl = 946.0,
                     differentTeasCount = 2,
                 ),
                 quickBrewConfigurations = listOf(

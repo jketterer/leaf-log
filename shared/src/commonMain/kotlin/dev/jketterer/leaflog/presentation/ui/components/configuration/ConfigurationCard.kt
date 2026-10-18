@@ -24,17 +24,15 @@ import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
-import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.days_ago
@@ -60,7 +58,6 @@ import kotlin.time.Duration.Companion.seconds
 fun ConfigurationCard(
     configuration: BrewingConfiguration,
     vesselName: String,
-    userPreferences: UserPreferences,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -114,10 +111,7 @@ fun ConfigurationCard(
             // Vessel name
             Text(
                 text = "$vesselName • ${
-                    VolumeFormatter.format(
-                        configuration.waterQuantityMl,
-                        userPreferences.volumeUnit
-                    )
+                    formatVolume(configuration.waterQuantityMl)
                 }",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -162,15 +156,12 @@ fun ConfigurationCard(
                 configuration.teaQuantityGrams?.let {
                     BrewingParamChip(
                         vectorResource(Res.drawable.ic_tea_leaf),
-                        "${it}g"
+                        formatWeight(it)
                     )
                 }
                 BrewingParamChip(
                     FeatherIcons.Thermometer,
-                    TemperatureFormatter.format(
-                        configuration.temperatureCelsius,
-                        userPreferences.temperatureUnit
-                    )
+                    formatTemperature(configuration.temperatureCelsius)
                 )
                 BrewingParamChip(
                     FeatherIcons.Clock,
@@ -178,10 +169,7 @@ fun ConfigurationCard(
                 )
                 BrewingParamChip(
                     FeatherIcons.Droplet,
-                    VolumeFormatter.format(
-                        configuration.waterQuantityMl,
-                        userPreferences.volumeUnit
-                    )
+                    formatVolume(configuration.waterQuantityMl)
                 )
             }
         }
@@ -212,10 +200,6 @@ private fun ConfigurationCardPreview() {
                 updatedAt = PreviewInstant
             ),
             vesselName = "Gaiwan (100ml)",
-            userPreferences = UserPreferences(
-                temperatureUnit = TemperatureUnit.CELSIUS,
-                volumeUnit = VolumeUnit.MILLILITERS
-            ),
             onEdit = {},
             onDelete = {}
         )
@@ -245,10 +229,6 @@ private fun ConfigurationCardImperialUnitsPreview() {
                 updatedAt = PreviewInstant
             ),
             vesselName = "Ceramic Mug",
-            userPreferences = UserPreferences(
-                temperatureUnit = TemperatureUnit.FAHRENHEIT,
-                volumeUnit = VolumeUnit.FLUID_OUNCES
-            ),
             onEdit = {},
             onDelete = {}
         )
@@ -278,7 +258,6 @@ private fun ConfigurationCardUnnamedPreview() {
                 updatedAt = PreviewInstant
             ),
             vesselName = "Small Cup",
-            userPreferences = UserPreferences(),
             onEdit = {},
             onDelete = {}
         )

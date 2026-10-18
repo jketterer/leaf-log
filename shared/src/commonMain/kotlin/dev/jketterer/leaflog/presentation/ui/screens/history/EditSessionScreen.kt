@@ -213,7 +213,6 @@ private fun EditSessionContent(
                             onVesselSelected = { vessel ->
                                 onIntent(EditSessionIntent.VesselSelected(vessel))
                             },
-                            volumeUnit = state.userPreferences.volumeUnit,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }
@@ -371,7 +370,6 @@ private fun EditSessionContent(
                 brewingTimeSeconds = first.brewingTime.inWholeSeconds.toInt(),
                 rating = session.effectiveRating,
                 suggestedLabel = state.suggestedConfigurationLabel,
-                userPreferences = state.userPreferences,
                 onSave = { label ->
                     onIntent(EditSessionIntent.SaveConfigurationClicked(label.ifBlank { null }))
                 },

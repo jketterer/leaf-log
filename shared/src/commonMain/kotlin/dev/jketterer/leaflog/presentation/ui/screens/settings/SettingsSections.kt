@@ -28,10 +28,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronRight
+import dev.jketterer.leaflog.domain.models.MeasurementUnit
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -41,7 +43,13 @@ import leaf_log.shared.generated.resources.header_data
 import leaf_log.shared.generated.resources.header_management
 import leaf_log.shared.generated.resources.header_notifications
 import leaf_log.shared.generated.resources.settings_appearance
+import leaf_log.shared.generated.resources.settings_temperature_unit
+import leaf_log.shared.generated.resources.settings_temperature_unit_subtitle
 import leaf_log.shared.generated.resources.settings_theme
+import leaf_log.shared.generated.resources.settings_volume_unit
+import leaf_log.shared.generated.resources.settings_volume_unit_subtitle
+import leaf_log.shared.generated.resources.settings_weight_unit
+import leaf_log.shared.generated.resources.settings_weight_unit_subtitle
 import leaf_log.shared.generated.resources.theme_mode_dark
 import leaf_log.shared.generated.resources.theme_mode_light
 import leaf_log.shared.generated.resources.theme_mode_system
@@ -52,9 +60,11 @@ internal fun AppearanceSection(
     themeMode: ThemeMode,
     temperatureUnit: TemperatureUnit,
     volumeUnit: VolumeUnit,
+    weightUnit: WeightUnit,
     onThemeModeChange: (ThemeMode) -> Unit,
     onTemperatureUnitChange: (TemperatureUnit) -> Unit,
     onVolumeUnitChange: (VolumeUnit) -> Unit,
+    onWeightUnitChange: (WeightUnit) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -70,16 +80,32 @@ internal fun AppearanceSection(
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
-        TemperatureUnitSetting(
+        UnitSetting(
+            title = stringResource(Res.string.settings_temperature_unit),
+            subtitle = stringResource(Res.string.settings_temperature_unit_subtitle),
+            units = TemperatureUnit.entries,
             currentUnit = temperatureUnit,
             onUnitChange = onTemperatureUnitChange,
         )
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
-        VolumeUnitSetting(
+        UnitSetting(
+            title = stringResource(Res.string.settings_volume_unit),
+            subtitle = stringResource(Res.string.settings_volume_unit_subtitle),
+            units = VolumeUnit.entries,
             currentUnit = volumeUnit,
             onUnitChange = onVolumeUnitChange,
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+        UnitSetting(
+            title = stringResource(Res.string.settings_weight_unit),
+            subtitle = stringResource(Res.string.settings_weight_unit_subtitle),
+            units = WeightUnit.entries,
+            currentUnit = weightUnit,
+            onUnitChange = onWeightUnitChange,
         )
     }
 }
@@ -341,41 +367,23 @@ private fun DefaultWaterTypeSetting(
 }
 
 @Composable
-private fun TemperatureUnitSetting(
-    currentUnit: TemperatureUnit,
-    onUnitChange: (TemperatureUnit) -> Unit
+private fun <T : MeasurementUnit> UnitSetting(
+    title: String,
+    subtitle: String,
+    units: List<T>,
+    currentUnit: T,
+    onUnitChange: (T) -> Unit,
 ) {
     SettingRow(
-        title = "Temperature Unit",
-        subtitle = "Choose display unit for temperatures"
+        title = title,
+        subtitle = subtitle,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TemperatureUnit.entries.forEach { unit ->
+            units.forEach { unit ->
                 FilterChip(
                     selected = unit == currentUnit,
                     onClick = { onUnitChange(unit) },
-                    label = { Text(unit.symbol) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun VolumeUnitSetting(
-    currentUnit: VolumeUnit,
-    onUnitChange: (VolumeUnit) -> Unit
-) {
-    SettingRow(
-        title = "Volume Unit",
-        subtitle = "Choose display unit for volumes"
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            VolumeUnit.entries.forEach { unit ->
-                FilterChip(
-                    selected = unit == currentUnit,
-                    onClick = { onUnitChange(unit) },
-                    label = { Text(unit.symbol) }
+                    label = { Text(unit.symbol) },
                 )
             }
         }
@@ -481,9 +489,11 @@ private fun AppearanceSectionPreview() {
             themeMode = ThemeMode.DARK,
             temperatureUnit = TemperatureUnit.CELSIUS,
             volumeUnit = VolumeUnit.MILLILITERS,
+            weightUnit = WeightUnit.GRAMS,
             onThemeModeChange = {},
             onTemperatureUnitChange = {},
             onVolumeUnitChange = {},
+            onWeightUnitChange = {},
         )
     }
 }

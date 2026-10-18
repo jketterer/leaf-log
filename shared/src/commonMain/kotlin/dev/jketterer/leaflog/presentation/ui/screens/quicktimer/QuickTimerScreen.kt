@@ -25,12 +25,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDetailsSheet
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
@@ -226,12 +227,12 @@ private fun QuickTimerRunningContent(
         ) {
             // Brewing parameters card
             SteepParameterCard(
-                teaQuantity = state.teaQuantityGrams?.let { "${it.toFloat()}g" },
+                teaQuantity = state.teaQuantityGrams?.let { formatWeight(it) },
                 waterQuantity = state.waterQuantityMl?.let {
-                    VolumeFormatter.format(it, state.userPreferences.volumeUnit)
+                    formatVolume(it)
                 },
                 temperature = state.temperatureCelsius?.let {
-                    TemperatureFormatter.format(it, state.userPreferences.temperatureUnit)
+                    formatTemperature(it)
                 },
                 brewingTime = formatBrewingTime((state.originalDuration ?: state.totalDuration).inWholeSeconds.toInt()),
                 onEditClick = { onIntent(QuickTimerIntent.ShowDetailsSheet) },

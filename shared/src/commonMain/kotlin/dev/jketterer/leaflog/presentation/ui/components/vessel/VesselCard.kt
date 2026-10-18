@@ -29,16 +29,14 @@ import compose.icons.feathericons.ChevronRight
 import androidx.compose.ui.tooling.preview.Preview
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
-import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 
 @Composable
 fun VesselCard(
     vessel: BrewingVessel,
-    volumeUnit: VolumeUnit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     // Null in a preview, where no Koin application is running and resolving would throw.
@@ -94,10 +92,7 @@ fun VesselCard(
                     // Show capacity if set
                     if (vessel.capacityMl != null) {
                         Text(
-                            text = VolumeFormatter.format(
-                                milliliters = vessel.capacityMl.toDouble(),
-                                unit = volumeUnit,
-                            ),
+                            text = formatVolume(vessel.capacityMl.toDouble()),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -139,7 +134,6 @@ private fun VesselCardPreview() {
                 createdAt = now,
                 updatedAt = now,
             ),
-            volumeUnit = VolumeUnit.MILLILITERS,
             onClick = {},
         )
     }
@@ -162,7 +156,6 @@ private fun VesselCardArchivedPreview() {
                 createdAt = now,
                 updatedAt = now,
             ),
-            volumeUnit = VolumeUnit.MILLILITERS,
             onClick = {},
         )
     }
@@ -184,7 +177,6 @@ private fun VesselCardNoCapacityPreview() {
                 createdAt = now,
                 updatedAt = now,
             ),
-            volumeUnit = VolumeUnit.FLUID_OUNCES,
             onClick = {},
         )
     }

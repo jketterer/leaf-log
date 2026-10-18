@@ -9,6 +9,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -16,7 +20,10 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
 import dev.jketterer.leaflog.domain.models.DailyStats
+import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitSwitchIcon
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.header_todays_stats
@@ -35,7 +42,6 @@ import org.jetbrains.compose.resources.vectorResource
 fun DailyStatsSection(
     stats: DailyStats,
     onSessionsCardClick: () -> Unit,
-    onWaterCardClick: () -> Unit,
     onTeasCardClick: () -> Unit,
     onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -67,11 +73,20 @@ fun DailyStatsSection(
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.weight(1f),
             )
+            var volumeSwitched by rememberSaveable { mutableStateOf(false) }
+            val volume = LocalUnits.current.volume.let { if (volumeSwitched) it.toggle() else it }
             DailyStatsCard(
-                value = stats.formattedWaterQuantity,
+                value = formatVolume(stats.totalWaterMl, volume),
                 label = "Water Used",
                 icon = FeatherIcons.Droplet,
-                onClick = onWaterCardClick,
+                onClick = { volumeSwitched = !volumeSwitched },
+                action = {
+                    UnitSwitchIcon(
+                        unit = volume,
+                        switched = volumeSwitched,
+                        onClick = { volumeSwitched = !volumeSwitched },
+                    )
+                },
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.weight(1f),
@@ -100,11 +115,10 @@ private fun DailyStatsSectionPreview() {
             DailyStatsSection(
                 stats = DailyStats(
                     sessionCount = 3,
-                    formattedWaterQuantity = "32 fl oz",
+                    totalWaterMl = 946.0,
                     differentTeasCount = 2,
                 ),
                 onSessionsCardClick = {},
-                onWaterCardClick = {},
                 onTeasCardClick = {},
                 onViewAllClick = {},
             )
@@ -113,7 +127,6 @@ private fun DailyStatsSectionPreview() {
             DailyStatsSection(
                 stats = DailyStats(),
                 onSessionsCardClick = {},
-                onWaterCardClick = {},
                 onTeasCardClick = {},
                 onViewAllClick = {},
             )

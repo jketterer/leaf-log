@@ -4,7 +4,6 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlin.time.Duration
 
@@ -29,7 +28,6 @@ data class SessionDetailState(
     val suggestedConfigurationLabel: String = "",
 
     // User preferences
-    val userPreferences: UserPreferences = UserPreferences(),
 
     // In-progress session conflict dialog
     val inProgressDialogState: InProgressDialogState? = null,

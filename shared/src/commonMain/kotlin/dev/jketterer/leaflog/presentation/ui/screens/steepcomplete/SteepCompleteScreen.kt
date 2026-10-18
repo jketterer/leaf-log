@@ -52,9 +52,6 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
@@ -63,6 +60,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
@@ -264,7 +264,6 @@ private fun SteepCompleteContent(
                 brewingTimeSeconds = first.brewingTime.inWholeSeconds.toInt(),
                 rating = session.effectiveRating,
                 suggestedLabel = state.suggestedConfigurationLabel,
-                userPreferences = state.userPreferences,
                 onSave = { label ->
                     onIntent(SteepCompleteIntent.SaveConfigurationClicked(label.ifBlank { null }))
                 },
@@ -296,7 +295,6 @@ private fun SteepCompleteBody(
         state.session?.let { session ->
             SteepParameterCard(
                 session = session,
-                userPreferences = state.userPreferences,
                 onEditClick = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
             )
         }
@@ -351,7 +349,6 @@ private fun SteepCompleteBody(
                 PreviousSteepItem(
                     steep = steep,
                     teaQuantityGrams = state.session?.session?.teaQuantityGrams,
-                    userPreferences = state.userPreferences,
                     onRatingChanged = { rating ->
                         onIntent(SteepCompleteIntent.PreviousSteepRatingChanged(steep.id, rating))
                     },
@@ -370,7 +367,6 @@ private fun SteepCompleteBody(
 private fun PreviousSteepItem(
     steep: Steep,
     teaQuantityGrams: Float?,
-    userPreferences: UserPreferences,
     onRatingChanged: (Float) -> Unit,
     onNotesChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -406,22 +402,16 @@ private fun PreviousSteepItem(
                     teaQuantityGrams?.let {
                         BrewingParamChip(
                             icon = vectorResource(Res.drawable.ic_tea_leaf),
-                            text = "${it}g"
+                            text = formatWeight(it)
                         )
                     }
                     BrewingParamChip(
                         icon = FeatherIcons.Droplet,
-                        text = VolumeFormatter.format(
-                            steep.waterQuantityMl,
-                            userPreferences.volumeUnit
-                        ),
+                        text = formatVolume(steep.waterQuantityMl),
                     )
                     BrewingParamChip(
                         icon = FeatherIcons.Thermometer,
-                        text = TemperatureFormatter.format(
-                            steep.temperatureCelsius,
-                            userPreferences.temperatureUnit
-                        ),
+                        text = formatTemperature(steep.temperatureCelsius),
                     )
                     BrewingParamChip(
                         icon = FeatherIcons.Clock,

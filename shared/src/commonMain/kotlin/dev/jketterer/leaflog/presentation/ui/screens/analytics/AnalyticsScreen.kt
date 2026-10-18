@@ -22,7 +22,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -62,6 +65,10 @@ import dev.jketterer.leaflog.presentation.ui.components.analytics.TopRatedTeasCh
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.VesselDistributionChart
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
+import dev.jketterer.leaflog.presentation.ui.components.common.UnitSwitchIcon
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
@@ -209,6 +216,24 @@ private fun AnalyticsDataContent(
 
         // Summary cards - 2x2 grid
         val analytics = state.analytics
+        var volumeSwitched by rememberSaveable { mutableStateOf(false) }
+        var weightSwitched by rememberSaveable { mutableStateOf(false) }
+        val volume = LocalUnits.current.volume.let { if (volumeSwitched) it.toggle() else it }
+        val weight = LocalUnits.current.weight.let { if (weightSwitched) it.toggle() else it }
+        val volumeChip = @Composable {
+            UnitSwitchIcon(
+                unit = volume,
+                switched = volumeSwitched,
+                onClick = { volumeSwitched = !volumeSwitched },
+            )
+        }
+        val weightChip = @Composable {
+            UnitSwitchIcon(
+                unit = weight,
+                switched = weightSwitched,
+                onClick = { weightSwitched = !weightSwitched },
+            )
+        }
         if (analytics != null) {
             Row(
                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
@@ -235,11 +260,12 @@ private fun AnalyticsDataContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 SummaryCard(
-                    value = state.formattedWaterQuantity,
+                    value = formatVolume(analytics.totalWaterMl, volume),
                     label = "Water Used",
                     icon = FeatherIcons.Droplet,
                     percentageChange = state.comparison?.percentageChangeWater,
-                    onClick = { onIntent(AnalyticsIntent.ToggleWaterUnit) },
+                    onClick = { volumeSwitched = !volumeSwitched },
+                    action = volumeChip,
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
@@ -261,7 +287,7 @@ private fun AnalyticsDataContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 SummaryCard(
-                    value = state.formattedTeaQuantity,
+                    value = formatWeight(analytics.totalTeaGrams, weight),
                     label = "Tea Used",
                     icon = FeatherIcons.Package,
                     percentageChange = state.comparison?.percentageChangeTeaUsed,
@@ -270,14 +296,16 @@ private fun AnalyticsDataContent(
                     } else {
                         null
                     },
-                    onClick = { onIntent(AnalyticsIntent.ToggleWeightUnit) },
+                    onClick = { weightSwitched = !weightSwitched },
+                    action = weightChip,
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
-                    value = state.formattedAverageTeaQuantity,
+                    value = analytics.averageTeaGrams?.let { formatWeight(it, weight) }.orEmpty(),
                     label = "Avg per Session",
                     icon = FeatherIcons.Feather,
-                    onClick = { onIntent(AnalyticsIntent.ToggleWeightUnit) },
+                    onClick = { weightSwitched = !weightSwitched },
+                    action = weightChip,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -383,8 +411,6 @@ private fun AnalyticsDataContentPreview() {
                     totalTeaGrams = 218.5,
                     weighedSessionsCount = 31,
                 ),
-                formattedTeaQuantity = "218.5 g",
-                formattedAverageTeaQuantity = "7.0 g",
                 comparison = PeriodComparison(
                     percentageChangeSessions = 10.5f,
                     percentageChangeBrewTime = 8.0f,
@@ -431,7 +457,6 @@ private fun AnalyticsDataContentPreview() {
                         "Gaiwan is your go-to vessel, used in 60% of sessions",
                     ),
                 ),
-                formattedWaterQuantity = "5.2L",
                 formattedBrewingTime = "2h 30m",
                 periodLabel = "This Month",
                 isLoading = false,

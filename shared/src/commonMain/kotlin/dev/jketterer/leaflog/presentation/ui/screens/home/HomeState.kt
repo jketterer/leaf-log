@@ -4,7 +4,6 @@ import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 
 data class HomeState(
@@ -21,7 +20,6 @@ data class HomeState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val isEmpty: Boolean = true,
-    val userPreferences: UserPreferences = UserPreferences(),
     // FAB menu state
     val isFabExpanded: Boolean = false,
     val showDurationSheet: Boolean = false,

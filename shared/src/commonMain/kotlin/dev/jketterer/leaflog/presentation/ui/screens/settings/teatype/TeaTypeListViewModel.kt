@@ -2,10 +2,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings.teatype
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
-import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +14,6 @@ import leaf_log.shared.generated.resources.couldnt_load_tea_types
 
 class TeaTypeListViewModel(
     private val teaTypeRepository: TeaTypeRepository,
-    private val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaTypeListState())
@@ -29,11 +26,6 @@ class TeaTypeListViewModel(
 
     init {
         loadTeaTypes()
-        loadPreferences(
-            preferencesRepository = preferencesRepository,
-            stateFlow = _state,
-            updateState = { state, prefs -> state.copy(userPreferences = prefs) },
-        )
     }
 
     fun onIntent(intent: TeaTypeListIntent) {

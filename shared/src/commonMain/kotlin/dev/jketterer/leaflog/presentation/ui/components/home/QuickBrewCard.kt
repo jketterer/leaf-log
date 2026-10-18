@@ -29,13 +29,11 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.collection.FINISHED_ALPHA
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.screens.home.QuickBrewCardData
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
@@ -45,7 +43,6 @@ import kotlin.time.Instant
 @Composable
 fun QuickBrewCard(
     data: QuickBrewCardData,
-    userPreferences: UserPreferences,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -121,10 +118,7 @@ fun QuickBrewCard(
                     )
                     BrewingParamChip(
                         icon = FeatherIcons.Thermometer,
-                        text = TemperatureFormatter.format(
-                            data.configuration.temperatureCelsius,
-                            userPreferences.temperatureUnit,
-                        ),
+                        text = formatTemperature(data.configuration.temperatureCelsius),
                     )
                 }
             }
@@ -160,7 +154,6 @@ private fun QuickBrewCardPreview() {
                 teaTypeColorHex = "#FF9800",
                 vesselName = "Gaiwan",
             ),
-            userPreferences = UserPreferences(temperatureUnit = TemperatureUnit.CELSIUS),
             onClick = {},
             onLongClick = {},
         )
@@ -196,7 +189,6 @@ private fun QuickBrewCardFinishedPreview() {
                 vesselName = "Gaiwan",
                 isFinished = true,
             ),
-            userPreferences = UserPreferences(temperatureUnit = TemperatureUnit.CELSIUS),
             onClick = {},
             onLongClick = {},
         )

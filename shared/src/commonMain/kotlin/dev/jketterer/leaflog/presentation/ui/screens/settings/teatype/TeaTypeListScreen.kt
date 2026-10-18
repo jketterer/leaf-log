@@ -41,9 +41,8 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Plus
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.UnitConverter
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
@@ -137,7 +136,6 @@ private fun TeaTypeListContent(
                             ) { teaType ->
                                 TeaTypeCard(
                                     teaType = teaType,
-                                    userPreferences = state.userPreferences,
                                     onClick = { onIntent(TeaTypeListIntent.TeaTypeClicked(teaType.id)) },
                                 )
                             }
@@ -164,7 +162,6 @@ private fun TeaTypeListContent(
 @Composable
 private fun TeaTypeCard(
     teaType: TeaType,
-    userPreferences: UserPreferences,
     onClick: () -> Unit,
 ) {
     Card(
@@ -201,18 +198,9 @@ private fun TeaTypeCard(
                     style = MaterialTheme.typography.bodyLarge,
                 )
 
-                val details = buildList {
-                    teaType.defaultTemperatureCelsius?.let { celsius ->
-                        val displayTemp = UnitConverter.celsiusToDisplayTemperature(
-                            celsius,
-                            userPreferences.temperatureUnit,
-                        )
-                        add("$displayTemp${userPreferences.temperatureUnit.symbol}")
-                    }
-                }
-                if (details.isNotEmpty()) {
+                teaType.defaultTemperatureCelsius?.let { celsius ->
                     Text(
-                        text = details.joinToString(" · "),
+                        text = formatTemperature(celsius),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

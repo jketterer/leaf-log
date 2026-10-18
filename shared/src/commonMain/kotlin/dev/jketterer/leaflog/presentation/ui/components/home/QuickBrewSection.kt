@@ -16,8 +16,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.TemperatureUnit
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.screens.home.QuickBrewCardData
@@ -33,7 +31,6 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun QuickBrewSection(
     configurations: List<QuickBrewCardData>,
-    userPreferences: UserPreferences,
     onConfigClick: (QuickBrewCardData) -> Unit,
     onEditClick: (QuickBrewCardData) -> Unit,
     onManageClick: () -> Unit,
@@ -74,7 +71,6 @@ fun QuickBrewSection(
                 ) { data ->
                     QuickBrewCard(
                         data = data,
-                        userPreferences = userPreferences,
                         onClick = { onConfigClick(data) },
                         onLongClick = { onEditClick(data) },
                         cardWidth = cardWidth,
@@ -138,7 +134,6 @@ private fun QuickBrewSectionPreview() {
                     vesselName = "Mug",
                 ),
             ),
-            userPreferences = UserPreferences(temperatureUnit = TemperatureUnit.CELSIUS),
             onConfigClick = {},
             onEditClick = {},
             onManageClick = {},

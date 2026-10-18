@@ -27,9 +27,6 @@ import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
-import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
@@ -38,22 +35,15 @@ import org.jetbrains.compose.resources.vectorResource
 @Composable
 fun SteepParameterCard(
     session: SessionWithSteeps,
-    userPreferences: UserPreferences,
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val steep = session.currentSteep
     SteepParameterCard(
         steepNumber = steep.number,
-        teaQuantity = session.session.teaQuantityGrams?.let { "${it}g" },
-        waterQuantity = VolumeFormatter.format(
-            steep.waterQuantityMl,
-            userPreferences.volumeUnit,
-        ),
-        temperature = TemperatureFormatter.format(
-            steep.temperatureCelsius,
-            userPreferences.temperatureUnit,
-        ),
+        teaQuantity = session.session.teaQuantityGrams?.let { formatWeight(it) },
+        waterQuantity = formatVolume(steep.waterQuantityMl),
+        temperature = formatTemperature(steep.temperatureCelsius),
         brewingTime = formatBrewingTime(steep.brewingTime.inWholeSeconds.toInt()),
         onEditClick = onEditClick,
         modifier = modifier,

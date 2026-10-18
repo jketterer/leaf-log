@@ -209,8 +209,11 @@ Guidelines:
 
 - Sections take the specific values they render, not the whole State - this keeps them previewable
   and avoids recomposing on unrelated state changes
-- Derivations that depend on `userPreferences` (unit conversion, formatting) stay in the screen;
-  pass display-ready values down
+- A temperature, volume or weight is shown with `formatTemperature`, `formatVolume` or
+  `formatWeight`, which read Settings' units from `LocalUnits`; State never carries units for
+  display. A form passes its unit to `UnitInputField`, and a screen that lets the user switch a
+  shown unit holds the switch locally behind a `UnitSwitchChip` (or a `UnitSwitchIcon` in a stat
+  tile's corner, where the value already shows the unit), never writing Settings
 - Presets, `remember` blocks, and `LocalFocusManager` belong to the section that uses them
 - Extraction should be a pure move - behavior does not change
 - A preview of an `AlertDialog` renders blank, because the dialog is hosted in its own window that

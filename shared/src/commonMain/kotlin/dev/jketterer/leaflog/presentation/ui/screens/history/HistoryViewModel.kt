@@ -6,9 +6,7 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
-import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -43,7 +41,6 @@ class HistoryViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
-    private val preferencesRepository: PreferencesRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
@@ -136,21 +133,13 @@ class HistoryViewModel(
                     teaRepository.getAllFlow(),
                     teaTypeRepository.getAllFlow(),
                     brewingVesselRepository.getAllFlow(),
-                    preferencesRepository.getPreferencesFlow(),
-                ) { sessions, teas, types, vessels, prefs ->
-                    HistoryData(
-                        sessions,
-                        teas,
-                        types,
-                        vessels,
-                        prefs
-                    )
-                }
+                    ::HistoryData,
+                )
                     .catch { e ->
                         _state.update { it.copy(isLoading = false) }
                         messages.failure(e, Res.string.couldnt_load_sessions)
                     }
-                    .collect { (sessions, teas, types, vessels, prefs) ->
+                    .collect { (sessions, teas, types, vessels) ->
                         val teasMap = teas.associateBy { tea -> tea.id }
                         val filteredSessions = applyFilters(sessions, teasMap)
 
@@ -161,7 +150,6 @@ class HistoryViewModel(
                                 teas = teasMap,
                                 teaTypes = types.associateBy { type -> type.id },
                                 vessels = vessels.associateBy { vessel -> vessel.id },
-                                userPreferences = prefs,
                                 isLoading = false,
                                 isEmpty = filteredSessions.isEmpty(),
                             )
@@ -343,5 +331,4 @@ private data class HistoryData(
     val teas: List<Tea>,
     val types: List<TeaType>,
     val vessels: List<BrewingVessel>,
-    val prefs: UserPreferences,
 )

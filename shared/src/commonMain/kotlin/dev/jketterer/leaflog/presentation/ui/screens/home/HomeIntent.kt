@@ -33,7 +33,6 @@ sealed interface HomeIntent {
     data object ViewAllSessionsClicked : HomeIntent
     data object ViewAllStatsClicked : HomeIntent
     data object DailyStatsTodaySessionsClicked : HomeIntent
-    data object DailyStatsWaterCardClicked : HomeIntent
     data object DailyStatsTeasCardClicked : HomeIntent
     data object ResumeInProgressClicked : HomeIntent
     data object SettingsClicked : HomeIntent

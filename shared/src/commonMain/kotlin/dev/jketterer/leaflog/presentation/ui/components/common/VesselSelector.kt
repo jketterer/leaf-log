@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.components.common
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,16 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.Image
-import androidx.compose.ui.platform.LocalInspectionMode
 import coil3.compose.AsyncImage
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
-import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import org.koin.compose.koinInject
 
@@ -41,12 +39,11 @@ import org.koin.compose.koinInject
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VesselSelector(
+    modifier: Modifier = Modifier,
     vessels: List<BrewingVessel>,
     selectedVessel: BrewingVessel?,
     onVesselSelected: (BrewingVessel) -> Unit,
     label: String = "Brewing Vessel",
-    volumeUnit: VolumeUnit,
-    modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
     // Null in a preview, where no Koin application is running and resolving would throw.
@@ -111,10 +108,7 @@ fun VesselSelector(
                                     Text(vessel.name)
                                     if (vessel.capacityMl != null) {
                                         Text(
-                                            text = VolumeFormatter.format(
-                                                milliliters = vessel.capacityMl.toDouble(),
-                                                unit = volumeUnit,
-                                            ),
+                                            text = formatVolume(vessel.capacityMl.toDouble()),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -183,7 +177,6 @@ private fun VesselSelectorPreview() {
                 ),
                 selectedVessel = null,
                 onVesselSelected = {},
-                volumeUnit = VolumeUnit.FLUID_OUNCES,
             )
         }
     }

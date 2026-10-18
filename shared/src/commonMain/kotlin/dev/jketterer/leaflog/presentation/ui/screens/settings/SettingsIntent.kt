@@ -4,11 +4,13 @@ import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 
 sealed interface SettingsIntent {
     data class UpdateThemeMode(val mode: ThemeMode) : SettingsIntent
     data class UpdateTemperatureUnit(val unit: TemperatureUnit) : SettingsIntent
     data class UpdateVolumeUnit(val unit: VolumeUnit) : SettingsIntent
+    data class UpdateWeightUnit(val unit: WeightUnit) : SettingsIntent
     data class UpdateDefaultWaterType(val waterType: WaterType) : SettingsIntent
     data class UpdateTimerCompletionNotifications(val enabled: Boolean) : SettingsIntent
     data class UpdateSessionReminderNotifications(val enabled: Boolean) : SettingsIntent

@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
-import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -52,7 +51,6 @@ class TeaDetailViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
-    private val preferencesRepository: PreferencesRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val deleteTeaUseCase: DeleteTeaUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
@@ -101,20 +99,6 @@ class TeaDetailViewModel(
             }
         },
     )
-
-    init {
-        loadPreferences()
-    }
-
-    private fun loadPreferences() {
-        viewModelScope.launch {
-            preferencesRepository.getPreferencesFlow()
-                .catchError(Res.string.couldnt_load)
-                .collect { preferences ->
-                    _state.update { it.copy(userPreferences = preferences) }
-                }
-        }
-    }
 
     fun onIntent(intent: TeaDetailIntent) {
         when (intent) {

@@ -602,7 +602,7 @@ state across rotation and process death.
   input, an untouched field reports nothing.
 - [x] `refactor: brew and journal forms on the unit field`: Log Tea, Edit Session, the parameter
   sheets, the next-steep dialog, Quick Timer. `editedUnitValue` and the old variants go.
-- [ ] `feat: honour the weight unit everywhere`: `LocalUnits`, the Settings row, every hardcoded
+- [x] `feat: honour the weight unit everywhere`: `LocalUnits`, the Settings row, every hardcoded
   `"g"`, the local display toggles, the CLAUDE.md rule rewritten.
 - [ ] `refactor: load route args in ViewModel init`. Test: History applies its route filter once.
 - [ ] `feat: per-tab back stacks`. Test: the navigator — back from a tab root, re-tap, the

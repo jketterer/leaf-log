@@ -43,16 +43,16 @@ import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
-import dev.jketterer.leaflog.domain.models.TemperatureFormatter
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
-import dev.jketterer.leaflog.domain.models.UserPreferences
-import dev.jketterer.leaflog.domain.models.VolumeFormatter
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
@@ -73,7 +73,6 @@ fun SessionCard(
     teaTypeName: String,
     vesselName: String,
     teaPhotoUrl: String?,
-    userPrefs: UserPreferences,
     onSessionClick: () -> Unit,
     onBrewAgainClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -160,14 +159,11 @@ fun SessionCard(
                     modifier = Modifier.padding(top = 4.dp),
                 ) {
                     session.session.teaQuantityGrams?.let {
-                        BrewingParamChip(vectorResource(Res.drawable.ic_tea_leaf), "${it}g")
+                        BrewingParamChip(vectorResource(Res.drawable.ic_tea_leaf), formatWeight(it))
                     }
                     BrewingParamChip(
                         FeatherIcons.Thermometer,
-                        TemperatureFormatter.format(
-                            first.temperatureCelsius,
-                            userPrefs.temperatureUnit
-                        ),
+                        formatTemperature(first.temperatureCelsius),
                     )
                     BrewingParamChip(
                         FeatherIcons.Clock,
@@ -175,7 +171,7 @@ fun SessionCard(
                     )
                     BrewingParamChip(
                         FeatherIcons.Droplet,
-                        VolumeFormatter.format(first.waterQuantityMl, userPrefs.volumeUnit),
+                        formatVolume(first.waterQuantityMl),
                     )
                 }
 
@@ -266,7 +262,6 @@ private fun SessionCardCompletedPreview() {
             teaTypeName = "Green Tea",
             vesselName = "Gaiwan",
             teaPhotoUrl = null,
-            userPrefs = UserPreferences.IMPERIAL,
             onSessionClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
@@ -290,7 +285,6 @@ private fun SessionCardInProgressPreview() {
             teaTypeName = "Black Tea",
             vesselName = "Mug",
             teaPhotoUrl = null,
-            userPrefs = UserPreferences.METRIC,
             onSessionClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
@@ -316,7 +310,6 @@ private fun SessionCardNoRatingPreview() {
             teaTypeName = "White Tea",
             vesselName = "Teapot",
             teaPhotoUrl = null,
-            userPrefs = UserPreferences.IMPERIAL,
             onSessionClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
@@ -341,7 +334,6 @@ private fun SessionCardLongNamesPreview() {
             teaTypeName = "Green Tea - Premium Grade",
             vesselName = "Black Teapot",
             teaPhotoUrl = null,
-            userPrefs = UserPreferences(),
             onSessionClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},

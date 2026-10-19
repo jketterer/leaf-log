@@ -106,22 +106,22 @@ These are where the roadmap should spend its first real effort. Each deletes a *
   natural alternative to deleting a tea you've drunk.
 
 ### D. Screen lifecycle and navigation
-- Loading from `LaunchedEffect` with ViewModels that outlive the composition: edit forms re-seed
+- ~~Loading from `LaunchedEffect` with ViewModels that outlive the composition: edit forms re-seed
   over user edits on any Activity recreation (4 screens), collectors stack on every return
   (Session Detail, Tea Detail, Collection), route filters re-apply on back (History), Quick Timer
-  restarts on recreation. Fix once: route args into the ViewModel, load in `init`.
-- Tabs `clear()` the back stack: back from any tab exits the app, every tab rebuilds on return
-  (spinner, lost scroll/search/filters), pushed tab screens have no Up arrow.
+  restarts on recreation. Fix once: route args into the ViewModel, load in `init`.~~
+- ~~Tabs `clear()` the back stack: back from any tab exits the app, every tab rebuilds on return
+  (spinner, lost scroll/search/filters), pushed tab screens have no Up arrow.~~
 - Deep link replays on every `onCreate`; notification taps don't check session status;
   `PendingIntent` requestCode 0 shared across notifications *(device)*.
 - No `SavedStateHandle` anywhere; form state dies with the process (photo picker is the classic
   trigger).
 
 ### E. Error handling
-- Five patterns: `SnackbarHost` (5 files), inline `Snackbar` (7), full-screen replace with no
+- ~~Five patterns: `SnackbarHost` (5 files), inline `Snackbar` (7), full-screen replace with no
   recovery (Steep Complete, Analytics), set-but-never-rendered (Timer, Quick Timer, Brewing
-  Method, Edit Session, Vessels), swallowed (export/import, Quick Timer auto-save).
-- 85 sites show raw `e.message`. User-facing copy lives in domain use cases.
+  Method, Edit Session, Vessels), swallowed (export/import~~, Quick Timer auto-save).
+- ~~85 sites show raw `e.message`. User-facing copy lives in domain use cases.~~
 - Fix shape: one `UiMessage` channel + `SnackbarHost` per screen; a handful of typed domain
   failures (`NotFound`, `InUse(n)`, `LastRemaining`, `Io`) mapped to copy in the UI. This pulls
   Phase 4's "user-facing errors" forward: the invisible/unrendered cases are bugs now.
@@ -139,19 +139,19 @@ existing photos, temp files never cleaned, preferences not exported, no "last ba
 though export is the only backup under the no-sync decision.
 
 ### H. Presentation system
-- **Strings:** 0 `stringResource` calls; ~550 hardcoded literals in 71 files; hand-rolled plurals
-  ("1 brews", "Used 1 times", "week(s)"); US-only date patterns in 5 places.
-- **Formatting:** `WeightFormatter` used only in Analytics — "5.0g" everywhere else. A weight
+- **Strings:** ~~0 `stringResource` calls;~~ ~550 hardcoded literals in 71 files; ~~hand-rolled plurals
+  ("1 brews", "Used 1 times", "week(s)"); US-only date patterns in 5 places.~~
+- ~~**Formatting:** `WeightFormatter` used only in Analytics — "5.0g" everywhere else. A weight
   setting row (2.7) would promise something the app doesn't honour. Rating display truncates in
-  some places and rounds in others; stars floor.
-- **Design identity:** stock `Typography()`, no `Shapes`, M3 baseline fallbacks for unset roles,
+  some places and rounds in others; stars floor.~~
+- ~~**Design identity:** stock `Typography()`, no `Shapes`, M3 baseline fallbacks for unset roles,
   tea-type colours never adjusted for dark mode (White `#FFFDE7` invisible on light surfaces), white
-  splash in dark mode, two icon families (Feather + FontAwesome).
-- **Duplication:** 4 discard dialogs, 4 delete-session dialogs (11 inline delete dialogs total),
-  5 section-header variants, Temperature/Volume/Capacity inputs, preset tables (with *different*
-  brew-time presets in Log Tea vs Quick Timer), `catchError` ×3, `formatBrewingTime` ×2.
-- **Unit suffix toggles in forms silently change a global preference** (6+ places, ~24–28 dp
-  touch targets).
+  splash in dark mode, two icon families (Feather + FontAwesome).~~
+- **Duplication:** ~~4 discard dialogs, 4 delete-session dialogs (11 inline delete dialogs total),
+  5 section-header variants, Temperature/Volume/Capacity inputs,~~ preset tables (with *different*
+  brew-time presets in Log Tea vs Quick Timer), `catchError` ×3~~, `formatBrewingTime` ×2~~.
+- ~~**Unit suffix toggles in forms silently change a global preference** (6+ places, ~24–28 dp
+  touch targets).~~
 - **Hardcoded layout offsets** (60/80/88 dp FAB clearance, `maxHeight − 420.dp` timer ring) and
   non-scrolling containers; hidden on phones by the portrait lock, exposed on iPad/tablets —
   which Android 16 no longer lets you lock.
@@ -259,10 +259,10 @@ This is the raw material for choosing big bets in the vision interview — not a
   ("your usual 3pm oolong").
 
 **Platform and craft**
-- Tea-appropriate display font + Shapes; dark-mode-toned tea colours; fade-through tab transitions.
-- Per-tab back stacks; tablet/iPad layouts (can't be avoided on Android 16 anyway).
+- ~~Tea-appropriate display font + Shapes; dark-mode-toned tea colours; fade-through tab transitions.~~
+- ~~Per-tab back stacks;~~ tablet/iPad layouts (can't be avoided on Android 16 anyway).
 - "Last backup 42 days ago" nudge; import preview; preferences in export.
-- String resources + typed errors — the prerequisite for localization and for Phase 4.
+- ~~String resources + typed errors — the prerequisite for localization and for Phase 4.~~
 - Canvas chart semantics (one line per chart)~~ and RatingSelector semantics — the rating control is
   the loop's central input and is currently unusable with a screen reader~~.
 

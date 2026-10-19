@@ -162,6 +162,9 @@ the Activity is portrait-locked.
 - [ ] **[iOS]** Back-swipe on a screen pushed inside a tab returns to the previous screen, not out
       of the tab.
 - [ ] **[A]** System back from a tab's root returns Home, then exits.
+- [ ] Open a screen inside Collection and type a History search, then recreate, and separately
+      let the process die in the background: the selected tab and each tab's screens and search
+      come back as they were.
 - [ ] Edit Tea, Edit Vessel, Edit Tea Type and Edit Session, each with a change made: system back
       (Android) or the edge swipe (iOS) asks before discarding, as the toolbar arrow does. With no
       change it leaves at once, with the predictive-back peek. The question survives rotation.

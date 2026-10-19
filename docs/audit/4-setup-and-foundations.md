@@ -10,7 +10,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 |---|---|---|---|---|
 | polish | layout | presentation/ui/screens/collection/TeaCollectionScreen.kt:409-424 | The vessel list has no bottom clearance for the FAB, so the last card sits under the "+" button. | The Teas tab adds `Spacer(60.dp)` (:349). The Vessels `LazyColumn` only has `PaddingValues(16.dp)` (:411). |
 | arch | dead code | presentation/ui/screens/vessel/VesselListViewModel.kt:44-45,106-124; VesselListIntent.kt | `VesselClicked`, `AddVesselClicked`, `BackClicked`, `ClearError` and `LoadVessels`, the `_navigationEvent` StateFlow and `VesselListNavigationEvent` are never used. | The screen calls the nav lambdas directly (TeaCollectionScreen.kt:421, :404). Only `ToggleShowArchived` is dispatched. |
-| bug | error handling | VesselListState.kt:21 / TeaCollectionScreen.kt:390-426 | `vesselState.error` is set on a load failure but never rendered, so a failure shows as an empty state. | The Vessels tab never reads `vesselState.error`. |
+| ~~bug~~ | ~~error handling~~ | ~~VesselListState.kt:21 / TeaCollectionScreen.kt:390-426~~ | ~~`vesselState.error` is set on a load failure but never rendered, so a failure shows as an empty state.~~ | ~~The Vessels tab never reads `vesselState.error`.~~ |
 | consistency | code | TeaCollectionScreen.kt:89,91,358,359,374,383,436 | `dev.jketterer...vessel.VesselListState/Intent` is written out fully qualified 7 times instead of imported. | Readability. |
 | friction | empty state | TeaCollectionScreen.kt:402 | "No vessels yet" under "All" can't actually happen: defaults are seeded and the last active vessel can't be deleted. "No active vessels" also offers "Add Your First Vessel", which is wrong when archived vessels exist. | InitializeDefaults plus the DeleteBrewingVesselUseCase guard. |
 | polish | ripple | presentation/ui/components/vessel/VesselCard.kt:48-52 | `Modifier.clickable` sits on the `Card` rather than using `Card(onClick=…)`, so the ripple isn't clipped to the rounded shape and the card gets no button role. The `alpha(0.6f)` for archived cards also dims the ripple. | Modifier order. |
@@ -32,7 +32,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 | friction | polish | VesselDetailScreen.kt:343-379 | A red `errorContainer` "Cannot Delete" card is always shown for any vessel with sessions, i.e. nearly every vessel in daily use. It's alarm styling for a normal state. | `if (!state.canDelete)` |
 | polish | loading | VesselDetailViewModel.kt:57 / VesselDetailScreen.kt:72,195 | Coming back from Edit, or unarchiving, re-runs `loadVessel`, which sets `isLoading=true` and replaces the whole page with a spinner for a moment. | One-shot `getById` instead of the existing `getByIdFlow`. |
 | ~~arch~~ | ~~dead code~~ | ~~VesselDetailScreen.kt:406-418~~ | ~~The "can't delete" branch of `DeleteConfirmationDialog` can never run, because the Delete menu item is `enabled = state.canDelete` (:188).~~ | |
-| consistency | error | VesselDetailScreen.kt:93-97 | The error snackbar never clears `state.error` (there's no ClearError intent), so the same failure twice shows only once. | EditVessel does this correctly with `ErrorShown`. |
+| ~~consistency~~ | ~~error~~ | ~~VesselDetailScreen.kt:93-97~~ | ~~The error snackbar never clears `state.error` (there's no ClearError intent), so the same failure twice shows only once.~~ | ~~EditVessel does this correctly with `ErrorShown`.~~ |
 | consistency | nav | VesselDetailViewModel.kt:197 | Nav events use a `MutableStateFlow<Event?>` plus a manual "handled" call. The 13 other VMs use `Channel` + `receiveAsFlow`. | See Navigation. |
 | polish | code | VesselDetailScreen.kt:256-315 | `state.vessel!!` appears 7 times. | |
 | polish | long text | VesselDetailScreen.kt:138 | The TopAppBar title has no `maxLines`/ellipsis. A 50-character name is allowed. | |
@@ -51,14 +51,14 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 
 | Sev | Category | Location | Finding | Evidence/why |
 |---|---|---|---|---|
-| bug | state | EditVesselScreen.kt:63-65 / EditVesselViewModel.kt:72 | `LaunchedEffect(vesselId) → LoadVessel` isn't idempotent. Any Activity recreation (dark-mode switch, font-scale or locale change, window resize) builds a new composition while the ViewModel survives, so the load re-runs and overwrites the user's edits with DB values. A freshly picked photo is lost and its file orphaned. | The manifest has no `configChanges`. **The same pattern exists in EditTea, EditSession and EditTeaType.** |
+| ~~bug~~ | ~~state~~ | ~~EditVesselScreen.kt:63-65 / EditVesselViewModel.kt:72~~ | ~~`LaunchedEffect(vesselId) → LoadVessel` isn't idempotent. Any Activity recreation (dark-mode switch, font-scale or locale change, window resize) builds a new composition while the ViewModel survives, so the load re-runs and overwrites the user's edits with DB values. A freshly picked photo is lost and its file orphaned.~~ | ~~The manifest has no `configChanges`. **The same pattern exists in EditTea, EditSession and EditTeaType.**~~ |
 | bug | data | EditVesselViewModel.kt:168-176 | The old photo file is deleted **before** the update is saved. If the save fails, the DB still points at a file that no longer exists. | Cleanup belongs in `onSuccess`. |
 | bug | double submit | EditVesselViewModel.kt:154 / EditVesselScreen.kt:157-177 | `saveVessel()` has no `isSaving` guard and the FAB is always enabled on purpose. A double tap in add mode creates two vessels, because each call makes a random UUID. | |
 | bug | storage | EditVesselViewModel.kt:150-152 | `RemovePhoto` clears `imagePath` without deleting a photo that was picked but not yet saved, so the file is orphaned. `onPhotoSelected` handles this case (:136-142); remove doesn't. | Adds to the roadmap's photo-storage growth. |
 | friction | process death | EditVesselState / VM | Form state isn't saved, so it's lost if the process dies. The Android photo picker is exactly when that tends to happen. | No SavedStateHandle anywhere in the app. |
-| consistency | side effect | EditVesselViewModel.kt:122-126 via VolumeInputField suffix | Tapping the unit suffix in one form field changes the app-wide volume unit. The field converts correctly, but nothing tells the user it's a global setting. | Same for temperature in EditTeaType. |
+| ~~consistency~~ | ~~side effect~~ | ~~EditVesselViewModel.kt:122-126 via VolumeInputField suffix~~ | ~~Tapping the unit suffix in one form field changes the app-wide volume unit. The field converts correctly, but nothing tells the user it's a global setting.~~ | ~~Same for temperature in EditTeaType.~~ |
 | polish | flicker | EditVesselScreen.kt:132 | The title reads "Add Vessel" and then flips to "Edit Vessel" once loading finishes (isEditMode defaults to false). autoFocus already uses `vesselId`; the title could too. | |
-| polish | copy | EditVesselViewModel.kt:145 | Shows `"Failed to save image: ${e.message}"`, i.e. the raw exception text. | |
+| ~~polish~~ | ~~copy~~ | ~~EditVesselViewModel.kt:145~~ | ~~Shows `"Failed to save image: ${e.message}"`, i.e. the raw exception text.~~ |  |
 
 - **Opportunities:**
   - Make loading idempotent by guarding on the loaded id or loading from VM init with the route key. That one change fixes 4 edit screens.
@@ -82,7 +82,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 | friction | missing | SettingsScreen.kt | There's no About section (version, licences, privacy policy, support), and the app version isn't shown anywhere. This is also needed for Phase 4. | grep for version/about/privacy finds nothing. |
 | friction | missing | SettingsScreen / TimerViewModel.kt:156 | The "Brew complete" switch shows ON even when OS notification permission is denied. Only the Timer screen checks `hasNotificationPermission()`. | |
 | polish | flicker | SettingsState.kt:28 | `isLoading` is never read, so default units flash before DataStore emits. | |
-| **[ROADMAP+]** consistency | units | domain `WeightFormatter` used only in AnalyticsViewModel | The roadmap calls the missing weight-unit row "discoverability only". It's worse than that: the weight preference only affects one Analytics card. SessionCard.kt:159, SessionDetailScreen.kt:268, SteepCompleteScreen.kt:409, SteepParameterCard.kt:47, QuickTimerScreen.kt:218 and LogTeaSections.kt:217 all hardcode `"g"`. A Settings row would promise something the app doesn't honour. | |
+| ~~**[ROADMAP+]** consistency~~ | ~~units~~ | ~~domain `WeightFormatter` used only in AnalyticsViewModel~~ | ~~The roadmap calls the missing weight-unit row "discoverability only". It's worse than that: the weight preference only affects one Analytics card. SessionCard.kt:159, SessionDetailScreen.kt:268, SteepCompleteScreen.kt:409, SteepParameterCard.kt:47, QuickTimerScreen.kt:218 and LogTeaSections.kt:217 all hardcode `"g"`. A Settings row would promise something the app doesn't honour.~~ |  |
 
 - **Opportunities:**
   - Record `lastExportedAt` and show "Last backup: 42 days ago" with a nudge. Export is the only backup under the "sync deferred" decision.
@@ -98,9 +98,9 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 | Sev | Category | Location | Finding | Evidence/why |
 |---|---|---|---|---|
 | arch | ceremony | TeaTypeListViewModel.kt:22-23,67-82 | Clicks go screen → VM → StateFlow nav event → screen, only to call a lambda. The pattern is copied from VesselList. | |
-| consistency | colour | TeaTypeListScreen.kt:184 | "Is this colour light?" is hardcoded to `"#FFFDE7"`. EditTeaTypeScreen.kt:258 hardcodes `#FFFDE7`/`#FFEB3B`, and BrewingActivityHeatmap.kt:51-58 hand-rolls luminance. That's three approaches where Compose's built-in `Color.luminance()` would do. | |
+| ~~consistency~~ | ~~colour~~ | ~~TeaTypeListScreen.kt:184~~ | ~~"Is this colour light?" is hardcoded to `"#FFFDE7"`. EditTeaTypeScreen.kt:258 hardcodes `#FFFDE7`/`#FFEB3B`, and BrewingActivityHeatmap.kt:51-58 hand-rolls luminance. That's three approaches where Compose's built-in `Color.luminance()` would do.~~ |  |
 | polish | empty | TeaTypeListScreen.kt:117-121 | ~~The empty state is bare `Text("No tea types found")`, not `EmptyState`, and~~ has no action. | |
-| polish | dark mode | TeaTypeListScreen.kt:176-189 | The brown and tan dots (#795548, #8D6E63) have low contrast on the dark surface #1B1C18. Only cream gets an outline. | |
+| ~~polish~~ | ~~dark mode~~ | ~~TeaTypeListScreen.kt:176-189~~ | ~~The brown and tan dots (#795548, #8D6E63) have low contrast on the dark surface #1B1C18. Only cream gets an outline.~~ |  |
 | a11y | semantics | TeaTypeListScreen.kt:161-165 | The card uses `.clickable` with no role and the colour isn't described. | |
 
 - **Opportunities:**
@@ -117,13 +117,13 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 |---|---|---|---|---|
 | ~~bug~~ | ~~data loss~~ | ~~EditTeaTypeScreen.kt (no BackHandler)~~ | ~~System back or swipe-back throws away edits silently. The discard dialog only triggers from the toolbar arrow. EditVessel added `NavigationBackHandler` for exactly this.~~ | ~~**EditSessionScreen has the same gap.**~~ |
 | friction | dead button | EditTeaTypeState.kt:13,42 / EditTeaTypeScreen.kt:151 | In add mode no colour is preselected (`colorHex=""`), and the Save icon stays disabled until you pick one, with nothing explaining why. EditVessel's rule is "a dead button explains nothing". | |
-| friction | data loss | EditTeaTypeViewModel.kt:117-121 | The unit toggle sets `temperature = ""`, wiping the input. EditVessel converts the value instead (`convertCapacity`). | |
-| bug | validation | EditTeaTypeViewModel.kt:130-138 | Temperature is checked against `>212` whatever the unit. In °C it accepts 150–212; in °F it accepts 1–31. LogTeaViewModel.kt:444-451 already validates per unit correctly. | |
+| ~~friction~~ | ~~data loss~~ | ~~EditTeaTypeViewModel.kt:117-121~~ | ~~The unit toggle sets `temperature = ""`, wiping the input. EditVessel converts the value instead (`convertCapacity`).~~ |  |
+| ~~bug~~ | ~~validation~~ | ~~EditTeaTypeViewModel.kt:130-138~~ | ~~Temperature is checked against `>212` whatever the unit. In °C it accepts 150–212; in °F it accepts 1–31. LogTeaViewModel.kt:444-451 already validates per unit correctly.~~ |  |
 | bug | double submit | EditTeaTypeViewModel.kt:142 | `save()` doesn't check `isSaving`, so it can create duplicate types. The icon is disabled only after a recomposition. | |
-| bug | edge | EditTeaTypeViewModel.kt:228 / TeaTypeRepositoryImpl.initializeDefaults | Nothing prevents deleting the **last** type (vessels have that guard). Delete every type and on next launch `count()==0` re-seeds the defaults with fixed ids via `upsertAll`, un-deleting the soft-deleted rows. | |
-| polish | precision | EditTeaTypeViewModel.kt:~156-162 | Saving always rewrites the temperature from the rounded display value, so a °F user who only renames the type turns 72.0°C into 72.2°C. EditVessel compares in storage units to avoid this. | |
+| ~~bug~~ | ~~edge~~ | ~~EditTeaTypeViewModel.kt:228 / TeaTypeRepositoryImpl.initializeDefaults~~ | ~~Nothing prevents deleting the **last** type (vessels have that guard). Delete every type and on next launch `count()==0` re-seeds the defaults with fixed ids via `upsertAll`, un-deleting the soft-deleted rows.~~ |  |
+| ~~polish~~ | ~~precision~~ | ~~EditTeaTypeViewModel.kt:~156-162~~ | ~~Saving always rewrites the temperature from the rounded display value, so a °F user who only renames the type turns 72.0°C into 72.2°C. EditVessel compares in storage units to avoid this.~~ |  |
 | polish | data | EditTeaTypeViewModel.kt:169 | The name isn't trimmed and there's no duplicate-name check. | |
-| consistency | error | EditTeaTypeScreen.kt:111-115 | The error is never cleared, so a repeated error won't show again. | |
+| ~~consistency~~ | ~~error~~ | ~~EditTeaTypeScreen.kt:111-115~~ | ~~The error is never cleared, so a repeated error won't show again.~~ |  |
 | a11y | semantics | EditTeaTypeScreen.kt:251-274 | Colour swatches are clickable boxes with no label, role or selected state, and 44dp is below the 48dp minimum. | |
 | consistency | copy | EditTeaTypeScreen.kt:298-305,323 | ~~"Discard" isn't styled as an error here (it is in EditVessel), and~~ "Delete Tea Type" has no "?" while every other delete dialog does. | |
 
@@ -137,7 +137,7 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 
 | Sev | Category | Location | Finding | Evidence/why |
 |---|---|---|---|---|
-| arch | dead code | presentation/ui/navigation/NavRoute.kt:36, NavConfig.kt:14 | The vestigial route would crash if it were ever pushed. | No `entry<NavRoute.MoreRoute>` in AppNavigation. |
+| ~~arch~~ | ~~dead code~~ | ~~presentation/ui/navigation/NavRoute.kt:36, NavConfig.kt:14~~ | ~~The vestigial route would crash if it were ever pushed.~~ | ~~No `entry<NavRoute.MoreRoute>` in AppNavigation.~~ |
 | friction | IA | SettingsScreen.kt:234-270 | Tea Types are only reachable via Home → gear → Management. Vessels are only reachable via Collection → Vessels tab. Two similar "setup" entities are found in two different ways. | |
 
 - **Opportunities:** Either delete MoreRoute, or make Collection the home for both vessels and tea types (a third tab or a "Types" chip-row action) and keep Settings for preferences only.
@@ -150,13 +150,13 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 |---|---|---|---|---|
 | ~~bug (unverified on device)~~ | ~~crash~~ | ~~AppNavigation.kt (18× `backStack.removeLast()`, e.g. :206,:219,:361)~~ | ~~With compileSdk 37, Kotlin `MutableList.removeLast()` binds to the JDK 21 `java.util.List.removeLast()`, which doesn't exist before API 35. That's a likely `NoSuchMethodError` on Android 7–14 (minSdk 24). This is a well-known compileSdk-35 trap.~~ | ~~Use `removeAt(lastIndex)` or `removeLastOrNull()`.~~ |
 | bug | deep link | androidApp/.../MainActivity.kt:28 | `handleDeepLink(intent)` runs on **every** `onCreate`, including recreations. After a cold start from a notification, every config change or process-death restore re-pushes TimerRoute/SteepCompleteRoute onto the restored stack, e.g. after you've already finished and gone Home. | Needs a `savedInstanceState == null` guard and clearing the extras. |
-| friction | back behaviour | AppNavigation.kt:89-92 | Tapping a tab does `clear()` + `add(tab)`, so system back from Collection/History/Analytics **exits the app** instead of returning to Home. | |
-| consistency | back behaviour | AppNavigation.kt:137,145 vs :89 | The same tab screen behaves differently depending on how you got there. Home's shortcuts *push* Collection/Analytics on top of Home (back returns Home); the tab bar *replaces* the stack (back exits). | |
-| friction | state loss | AppNavigation.kt:89-92 + `rememberViewModelStoreNavEntryDecorator` | Switching tabs destroys the other tab's ViewModel, scroll position, search and filters (e.g. History search, Collection Vessels tab). | |
-| friction | iOS | HistoryScreen.kt, AnalyticsScreen.kt, TeaCollectionScreen.kt | Tab screens reached as drill-downs (TeaDetail → History, Analytics → History, Home → Collection) show no Up arrow. On iOS the only way back is the edge swipe (*support in CMP 1.12 + Nav3 unverified*) or a tab tap that clears the stack. | |
-| bug (unverified) | double pop | all `onNavigateBack = { backStack.removeLast() }` | Pops aren't guarded by "am I still on top". A fast double-tap on Up during the exit animation can pop twice, or empty the stack, which Nav3 rejects. | |
-| polish | transitions | AppNavigation.kt:108-119 | Every change, tab switches included, uses a horizontal slide. Tab switches slide "forward" even when going back to Home. Material recommends fade-through for top-level changes. | |
-| a11y | nav bar | AppNavigation.kt:420,432,444,456 | Nav icons use `contentDescription = ""` where it should be `null`. Harmless because there's a label, but it's the wrong idiom. | |
+| ~~friction~~ | ~~back behaviour~~ | ~~AppNavigation.kt:89-92~~ | ~~Tapping a tab does `clear()` + `add(tab)`, so system back from Collection/History/Analytics **exits the app** instead of returning to Home.~~ |  |
+| ~~consistency~~ | ~~back behaviour~~ | ~~AppNavigation.kt:137,145 vs :89~~ | ~~The same tab screen behaves differently depending on how you got there. Home's shortcuts *push* Collection/Analytics on top of Home (back returns Home); the tab bar *replaces* the stack (back exits).~~ |  |
+| ~~friction~~ | ~~state loss~~ | ~~AppNavigation.kt:89-92 + `rememberViewModelStoreNavEntryDecorator`~~ | ~~Switching tabs destroys the other tab's ViewModel, scroll position, search and filters (e.g. History search, Collection Vessels tab).~~ |  |
+| ~~friction~~ | ~~iOS~~ | ~~HistoryScreen.kt, AnalyticsScreen.kt, TeaCollectionScreen.kt~~ | ~~Tab screens reached as drill-downs (TeaDetail → History, Analytics → History, Home → Collection) show no Up arrow. On iOS the only way back is the edge swipe (*support in CMP 1.12 + Nav3 unverified*) or a tab tap that clears the stack.~~ |  |
+| ~~bug (unverified)~~ | ~~double pop~~ | ~~all `onNavigateBack = { backStack.removeLast() }`~~ | ~~Pops aren't guarded by "am I still on top". A fast double-tap on Up during the exit animation can pop twice, or empty the stack, which Nav3 rejects.~~ |  |
+| ~~polish~~ | ~~transitions~~ | ~~AppNavigation.kt:108-119~~ | ~~Every change, tab switches included, uses a horizontal slide. Tab switches slide "forward" even when going back to Home. Material recommends fade-through for top-level changes.~~ |  |
+| ~~a11y~~ | ~~nav bar~~ | ~~AppNavigation.kt:420,432,444,456~~ | ~~Nav icons use `contentDescription = ""` where it should be `null`. Harmless because there's a label, but it's the wrong idiom.~~ |  |
 | consistency | events | VesselList/VesselDetail/TeaTypeList/EditTeaType VMs | 4 VMs (all in this slice) use `MutableStateFlow<NavEvent?>` plus `onNavigationEventHandled()`. 13 use `Channel.receiveAsFlow`. | |
 | verified | restoration | AppNavigation.kt:58-61, NavConfig.kt | The back stack survives process death (serializable NavKeys, all 19 routes registered). ViewModel form state does not: there's no SavedStateHandle anywhere. | |
 
@@ -170,22 +170,22 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 
 | Sev | Category | Location | Finding | Evidence/why |
 |---|---|---|---|---|
-| polish | identity | theme/Typography.kt:4 | `val Typography = Typography()`: a stock type scale with no brand font. There's no `Shapes` either; 9 ad-hoc `RoundedCornerShape(4/6/8/12.dp)`. | |
-| polish | palette gaps | theme/Theme.kt | `surfaceBright`, `surfaceDim` and the `*Fixed` roles aren't set, so they fall back to the M3 baseline (purple-tinted) values. *Which components render them is unverified.* | |
-| consistency | tea colours | EditTeaTypeScreen.kt:57-71, ChartUtils.kt:19-30 | Tea-type colours are stock Material 500 hex values stored as strings and never adjusted for dark mode. | |
+| ~~polish~~ | ~~identity~~ | ~~theme/Typography.kt:4~~ | ~~`val Typography = Typography()`: a stock type scale with no brand font. There's no `Shapes` either; 9 ad-hoc `RoundedCornerShape(4/6/8/12.dp)`.~~ |  |
+| ~~polish~~ | ~~palette gaps~~ | ~~theme/Theme.kt~~ | ~~`surfaceBright`, `surfaceDim` and the `*Fixed` roles aren't set, so they fall back to the M3 baseline (purple-tinted) values. *Which components render them is unverified.*~~ |  |
+| ~~consistency~~ | ~~tea colours~~ | ~~EditTeaTypeScreen.kt:57-71, ChartUtils.kt:19-30~~ | ~~Tea-type colours are stock Material 500 hex values stored as strings and never adjusted for dark mode.~~ |  |
 | arch | placement | components/analytics/ChartUtils.kt:5 | `String.hexToColor()` lives in the analytics package but is imported by 7 non-analytics files. | |
-| bug | dark mode | androidApp/src/main/AndroidManifest.xml:15 | The window theme is `@android:style/Theme.Material.Light.NoActionBar` with no `values-night` and no SplashScreen API, so dark-mode users get a white splash and a white flash on launch. | |
+| ~~bug~~ | ~~dark mode~~ | ~~androidApp/src/main/AndroidManifest.xml:15~~ | ~~The window theme is `@android:style/Theme.Material.Light.NoActionBar` with no `values-night` and no SplashScreen API, so dark-mode users get a white splash and a white flash on launch.~~ |  |
 | verified | hardcoded colours | 21 `Color(...)`/`Color.X` literals outside theme, in 6 files | These are mostly legitimate (fullscreen viewer black, scrims, the chart fallback palette). `VesselIcons.kt:19` uses a black stroke, but every call site tints it via `Icon`, so that's fine. | |
 | polish | spacing | presentation/ | 732 `.dp` literals. They mostly follow a 4dp grid (16×193, 8×147, 4×86, 12×73, 24×46), but FAB clearance is done three different ways (60dp spacer, 88dp padding, none). | |
 
 **Opportunity:** A tea-appropriate display font plus Shapes would give real identity cheaply. Tone tea-type colours per theme (e.g. derive a container colour from the hex).
 
 ### Strings and localization — not localization-ready at all.
-- **0** `stringResource` calls. There's no `composeResources/values/strings.xml`; composeResources has only `drawable/`.
+- ~~**0** `stringResource` calls. There's no `composeResources/values/strings.xml`; composeResources has only `drawable/`.~~
 - **246** `Text("…")` literals and **303** `text=/label=/title=/message=/contentDescription="…"` literals across **71 files**. Representative: SettingsScreen.kt:207, VesselDetailScreen.kt:106-107, EditTeaTypeScreen.kt:343-347.
-- Plurals are done by hand with "(s)" (VesselDetailScreen.kt:367,413, DeleteBrewingVesselUseCase.kt:28) or inline `if (n==1)` (EditTeaTypeScreen.kt:345).
-- **User-facing copy lives in the domain layer**: DeleteBrewingVesselUseCase.kt:19,28 messages are shown verbatim in snackbars.
-- Dates use hardcoded US-order patterns `"MMM d"` / `"MMM d, yyyy"` (TimeFormatter.android.kt, .ios.kt), and "Yesterday" is hardcoded.
+- ~~Plurals are done by hand with "(s)" (VesselDetailScreen.kt:367,413, DeleteBrewingVesselUseCase.kt:28) or inline `if (n==1)` (EditTeaTypeScreen.kt:345).~~
+- ~~**User-facing copy lives in the domain layer**: DeleteBrewingVesselUseCase.kt:19,28 messages are shown verbatim in snackbars.~~
+- ~~Dates use hardcoded US-order patterns `"MMM d"` / `"MMM d, yyyy"` (TimeFormatter.android.kt, .ios.kt), and "Yesterday" is hardcoded.~~
 - **Opportunity:** Given Phase 4, move strings as screens are touched. At minimum, errors should become typed domain errors mapped to copy in the UI.
 
 ### components/common reuse — decent shared kit, but several near-duplicates and inconsistent empty states.
@@ -193,24 +193,24 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 | Sev | Category | Location | Finding |
 |---|---|---|---|
 | ~~consistency~~ | ~~duplication~~ | ~~EditTeaSections.kt:43 & EditVesselSections.kt:52~~ | ~~Byte-identical `internal fun SectionHeader`. There are 3 more private header variants (SettingsScreen.kt:379, TeaPickerSheet.kt:367, HistoryFilterSheet.kt:338).~~ |
-| consistency | duplication | TemperatureInputField.kt / VolumeInputField.kt | 123 lines each; they differ by only 44 lines after swapping names. `EditCapacityField.kt` is a label-only wrapper. One `UnitInputField` would cover all three. |
+| ~~consistency~~ | ~~duplication~~ | ~~TemperatureInputField.kt / VolumeInputField.kt~~ | ~~123 lines each; they differ by only 44 lines after swapping names. `EditCapacityField.kt` is a label-only wrapper. One `UnitInputField` would cover all three.~~ |
 | ~~consistency~~ | ~~duplication~~ | ~~EditTea/EditSession/EditVessel/EditTeaType screens~~ | ~~4 copies of the "Discard Changes?" dialog, with inconsistent Discard styling.~~ |
 | ~~consistency~~ | ~~duplication~~ | ~~HomeScreen.kt:374, TeaDetailScreen.kt:511, SessionDetailScreen.kt:409, HistoryScreen.kt:350~~ | ~~4 copies of the "Delete Session?" dialog. 11 inline delete dialogs total.~~ |
 | consistency | duplication | EditTeaVM:95, TeaCollectionVM:117, TeaDetailVM:180 | A private `Flow.catchError` helper copy-pasted 3 times. |
 | ~~consistency~~ | ~~empty states~~ | ~~EmptyState used in 5 places~~ | ~~`AnalyticsEmptyState` and `EmptyHomeState` are separate. TeaTypeList (bare Text), VesselDetail ("Vessel not found" bare Text) and QuickTimerDetailsSheet:221 don't use it. `EmptyState` has no icon slot and always shows a FontAwesome PlusSquare.~~ |
-| consistency | icons | 49 files use Feather, 8 use FontAwesome, plus custom vectors | Two icon families are mixed, and FontAwesome ships whole because R8 is off. |
-| a11y | touch target | TemperatureInputField.kt:56-66 (and Volume) | The unit-toggle suffix is text plus 4dp padding, about 28dp tall, and it changes a **global** preference. |
+| ~~consistency~~ | ~~icons~~ | ~~49 files use Feather, 8 use FontAwesome, plus custom vectors~~ | ~~Two icon families are mixed, and FontAwesome ships whole because R8 is off.~~ |
+| ~~a11y~~ | ~~touch target~~ | ~~TemperatureInputField.kt:56-66 (and Volume)~~ | ~~The unit-toggle suffix is text plus 4dp padding, about 28dp tall, and it changes a **global** preference.~~ |
 
 ### Error handling — five different patterns, and several screens drop failures silently.
 Counts: 41 `.onFailure`, 14 `catchError`, 85 sites that put `e.message` or `error.message` into user-facing text, and 7 `showSnackbar` calls in 5 files.
 
 | Sev | Pattern | Where | Finding |
 |---|---|---|---|
-| bug | **invisible inline Snackbar** | TeaCollectionScreen.kt:232, HistoryScreen.kt:317 | The `Snackbar` sits in a `Column` **after** a `fillMaxSize()` LazyColumn with no `weight`. It gets no height and is laid out off-screen, so these errors never appear. (SessionDetail/Home/TeaDetail/LogTea use `align` in a Box and do show.) |
-| bug | **error set, never rendered** | TimerScreen (TimerViewModel.kt:148,215,244,266,285), CreateBrewingConfigurationScreen (VM :121,234,254), VesselList | Timer start/pause/resume failures and brewing-method save failures are completely silent. `QuickTimerState.error` is never even written. |
-| bug | **swallowed** | SettingsScreen.kt:145-148,155 | Export and import picker failures are mapped to "completed" or "cancelled". |
-| friction | raw exceptions | 85 sites, e.g. CreateBrewingConfigurationVM:234 `"Failed to save: ${e.message}"` | SQLite and IO messages reach the user verbatim. |
-| consistency | 3 UI mechanisms | SnackbarHost (5 files), static inline `Snackbar` + Dismiss (7 files), nothing (4 States) | Some clear the error after showing it (EditVessel `ErrorShown`), others never do (VesselDetail, EditTeaType), so a repeated identical error isn't shown again. |
+| ~~bug~~ | ~~**invisible inline Snackbar**~~ | ~~TeaCollectionScreen.kt:232, HistoryScreen.kt:317~~ | ~~The `Snackbar` sits in a `Column` **after** a `fillMaxSize()` LazyColumn with no `weight`. It gets no height and is laid out off-screen, so these errors never appear. (SessionDetail/Home/TeaDetail/LogTea use `align` in a Box and do show.)~~ |
+| ~~bug~~ | ~~**error set, never rendered**~~ | ~~TimerScreen (TimerViewModel.kt:148,215,244,266,285), CreateBrewingConfigurationScreen (VM :121,234,254), VesselList~~ | ~~Timer start/pause/resume failures and brewing-method save failures are completely silent. `QuickTimerState.error` is never even written.~~ |
+| ~~bug~~ | ~~**swallowed**~~ | ~~SettingsScreen.kt:145-148,155~~ | ~~Export and import picker failures are mapped to "completed" or "cancelled".~~ |
+| ~~friction~~ | ~~raw exceptions~~ | ~~85 sites, e.g. CreateBrewingConfigurationVM:234 `"Failed to save: ${e.message}"`~~ | ~~SQLite and IO messages reach the user verbatim.~~ |
+| ~~consistency~~ | ~~3 UI mechanisms~~ | ~~SnackbarHost (5 files), static inline `Snackbar` + Dismiss (7 files), nothing (4 States)~~ | ~~Some clear the error after showing it (EditVessel `ErrorShown`), others never do (VesselDetail, EditTeaType), so a repeated identical error isn't shown again.~~ |
 
 **Opportunity [ROADMAP+ for Phase 4 "user-facing errors"]:** One `UiMessage` channel per VM rendered by a single `SnackbarHost` pattern. Map a small set of typed domain failures (`NotFound`, `InUse(count)`, `LastRemaining`, `Io`) to copy. Treat the invisible and unrendered cases above as bugs now, not Phase 4.
 
@@ -260,7 +260,7 @@ Counts: 41 `.onFailure`, 14 `catchError`, 85 sites that put `e.message` or `erro
 | store blocker | iOS | (missing) PrivacyInfo.xcprivacy | iOS preferences use `NSUserDefaults` (PreferencesDataStore.ios.kt), a required-reason API. Without a privacy manifest, App Store Connect rejects the upload (ITMS-91053). |
 | polish | iOS | pbxproj:310,343 | The widget's display name is "LeafLogWidgets" (visible in Live Activity settings). `ITSAppUsesNonExemptEncryption` isn't set. |
 | store risk | Android | AndroidManifest.xml | `FOREGROUND_SERVICE_SPECIAL_USE` needs a Play Console declaration and review. `SCHEDULE_EXACT_ALARM` is denied by default on 14+. *Policy outcome unverified.* |
-| polish | Android | androidApp/build.gradle.kts:21 | `isMinifyEnabled = false`: the full FontAwesome and Feather icon libraries and Ktor ship unshrunk. |
+| polish | Android | androidApp/build.gradle.kts:21 | `isMinifyEnabled = false`: the full ~~FontAwesome and~~ Feather icon ~~libraries~~ library and Ktor ship unshrunk. |
 | arch | deps | shared/build.gradle.kts | `coil-network-ktor3` is declared, but the app has no network features and no INTERNET permission, so it's dead weight. `room-sqlite-wrapper` and `lifecycle-process` in `shared` androidMain are unused. The catalog also declares unused `androidx-core-ktx`, `androidx-appcompat` and `kotlin-testJunit`, beyond the roadmap's list. |
 | polish | assets | composeResources/drawable | `compose-multiplatform.xml` (template leftover) and `french-press.svg`, `tea-leaf.svg`, `teapot.svg` are unreferenced. |
 | friction | first run **[ROADMAP+]** | MainActivity.kt:27,31-42 | Android asks for notification permission in `onCreate` on the very first launch, with no context, and asks again on every recreation until granted or permanently denied. iOS asks lazily at first timer use. |

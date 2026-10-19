@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-15 (Bet 1 designed)
+> **Last updated:** 2026-10-19 (Bet 1 released as 0.4.0)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -455,6 +455,8 @@ that was never written; these are the first.
 
 ## Bet 1 — Design system & app shell
 
+**Done, released as 0.4.0.**
+
 **Outcome:** there is a target to polish toward. Today the app is stock Material with a palette:
 stock `Typography()`, no `Shapes`, baseline fallbacks for unset colour roles, two icon families,
 five error-display patterns, four copies of the same dialogs. Bets 2–3 rewrite most screens; doing
@@ -607,7 +609,7 @@ state across rotation and process death.
 - [x] `refactor: load route args in ViewModel init`. Test: History applies its route filter once.
 - [x] `feat: per-tab back stacks`. Test: the navigator — back from a tab root, re-tap, the
   double-pop guard, switch vs push.
-- [ ] `chore: release 0.4.0`: audit rows struck.
+- [x] `chore: release 0.4.0`: audit rows struck.
 
 ---
 

@@ -16,6 +16,58 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-19
+
+One look across the app, one way of telling you something went wrong, and units that stay the way
+you set them.
+
+### Added
+
+- Choose a Light, Dark or System theme in Settings → Appearance. Backups carry the choice.
+- A weight unit in Settings, honoured everywhere a leaf weight is shown.
+- Tap a unit in a form to switch that field for as long as the form is open. Settings doesn't
+  change. Home's water tile and the Analytics totals switch the same way, only while you're there.
+- Each tab keeps its own screens. Switching tabs and back returns you to where you were, with
+  search, filters and scroll position intact. Tapping the current tab returns to its top.
+- A screen opened inside a tab, such as History for one tea, has an Up arrow.
+
+### Changed
+
+- New headings typeface, consistent corners, and a full colour scheme in light and dark.
+- Tea-type colours are toned for light and dark, so every type reads on both. The colour picker
+  offers twelve tea colours.
+- One icon set throughout.
+- Ratings show to the nearest half star with one decimal ("4.3"). An unrated session says
+  "Unrated" instead of showing empty stars, and a screen reader can read and set a rating.
+- Dates follow your device's language and region.
+- Counts read correctly: "1 brew", "used 1 time".
+- Problems appear as a short message at the bottom of the screen, never as technical error text.
+  A message cut short by leaving the screen shows again when you come back.
+- Delete and discard confirmations look and read the same everywhere.
+- Tab switches fade; screens opened inside a tab slide.
+
+### Fixed
+
+- In dark mode, the app no longer flashes white at launch.
+- Back from Collection, History or Analytics returns Home instead of leaving the app.
+- Switching a unit back and forth no longer changes the saved value, and saving a form without
+  touching a field leaves it exactly as it was (no more 150 ml becoming 147.9 ml).
+- Temperatures and volumes accept decimals, such as 92.5 °C or 6.5 fl oz.
+- Edit Tea Type checks the temperature in the unit shown, and switching the unit no longer clears
+  it.
+- The last tea type can no longer be deleted.
+- System back or swipe on Edit Tea Type and Edit Session asks before discarding your changes.
+- Forms no longer reload over what you typed after a dark-mode or font-size change, and Quick Timer
+  no longer restarts.
+- History no longer re-applies a filter you cleared when you return to it, and Session Detail no
+  longer slows down each time you come back to it.
+- History's search bar stays open when you come back to it, so a search can't keep filtering the
+  list out of sight.
+- Failures that were never shown now are: on the Timer, Steep Complete, Edit Session, the brewing
+  method form, Collection, History and Vessels.
+- Steep Complete no longer hides its form behind an error, and the next-steep dialog no longer
+  accepts water above 100 °C.
+
 ## [0.3.0] - 2026-10-15
 
 Backups restore on either platform, onto a fresh device, without losing or reverting anything.

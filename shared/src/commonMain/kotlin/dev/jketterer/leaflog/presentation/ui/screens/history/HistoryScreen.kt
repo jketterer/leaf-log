@@ -34,6 +34,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,7 +120,8 @@ private fun HistoryContent(
     imageStorage: ImageStorage? = null,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    var showSearchBar by remember { mutableStateOf(false) }
+    // Saveable: the query lives in the ViewModel, which outlives this composition on a tab switch
+    var showSearchBar by rememberSaveable { mutableStateOf(false) }
     val filterSheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
         enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
@@ -127,8 +129,11 @@ private fun HistoryContent(
     val keyboardController = LocalSoftwareKeyboardController.current
     val searchFocusRequester = remember { FocusRequester() }
 
+    // A bar restored on return to the screen shouldn't pop the keyboard; one opened here should
+    var openedHere by remember { mutableStateOf(false) }
+
     LaunchedEffect(showSearchBar) {
-        if (showSearchBar) {
+        if (showSearchBar && openedHere) {
             searchFocusRequester.requestFocus()
         }
     }
@@ -201,7 +206,7 @@ private fun HistoryContent(
                     },
                     title = { Text("History") },
                     actions = {
-                        IconButton(onClick = { showSearchBar = true }) {
+                        IconButton(onClick = { openedHere = true; showSearchBar = true }) {
                             Icon(
                                 imageVector = FeatherIcons.Search,
                                 contentDescription = "Search"

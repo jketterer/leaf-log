@@ -1,5 +1,9 @@
 package dev.jketterer.leaflog.presentation.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -21,11 +25,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.NavDisplay
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.BarChart2
@@ -33,6 +37,11 @@ import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Home
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsScreen
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.tab_analytics
+import leaf_log.shared.generated.resources.tab_collection
+import leaf_log.shared.generated.resources.tab_history
+import leaf_log.shared.generated.resources.tab_home
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailScreen
@@ -50,413 +59,383 @@ import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.SteepComplete
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AppNavigation() {
-    val backStack = rememberNavBackStack(
-        configuration = navSerializationConfig,
-        elements = arrayOf(NavRoute.HomeRoute())
-    )
+    val navigator = rememberNavigator()
 
     // Handle deep links from notification taps
     val pendingRoute by DeepLinkHandler.pendingRoute.collectAsState()
     LaunchedEffect(pendingRoute) {
         val route = pendingRoute ?: return@LaunchedEffect
-        // Ensure HomeRoute is at the bottom, then push the target route
-        if (backStack.none { it is NavRoute.HomeRoute }) {
-            backStack.add(0, NavRoute.HomeRoute())
-        }
-        // We don't need to push the route if it's already at the top of the stack
-        if (backStack.last() != route) {
-            backStack.add(route)
-        }
+        navigator.openOnHome(route)
         DeepLinkHandler.consume()
     }
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.ime),
         bottomBar = {
-            val currentRoute = backStack.lastOrNull()
-            if (currentRoute is NavRoute.HomeRoute ||
-                currentRoute is NavRoute.CollectionRoute ||
-                currentRoute is NavRoute.HistoryRoute ||
-                currentRoute is NavRoute.AnalyticsRoute
-            ) {
+            if (!navigator.current.hidesBottomBar()) {
                 BottomNavigationBar(
-                    currentRoute = currentRoute,
-                    onNavigate = { route ->
-                        backStack.clear()
-                        backStack.add(route)
-                    }
+                    currentTab = navigator.tab,
+                    onSelectTab = navigator::selectTab,
                 )
             }
         }
     ) { paddingValues ->
         NavDisplay(
-            backStack = backStack,
+            entries = navigator.entries(appEntryProvider(navigator)),
+            onBack = navigator::goBack,
             modifier = Modifier
                 .padding(bottom = paddingValues.calculateBottomPadding())
                 .consumeWindowInsets(PaddingValues(bottom = paddingValues.calculateBottomPadding()))
                 .imePadding()
                 .fillMaxSize(),
-            entryDecorators = listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
             transitionSpec = {
-                slideInHorizontally(initialOffsetX = { it }) togetherWith
+                if (isTabSwitch()) fadeThrough()
+                else slideInHorizontally(initialOffsetX = { it }) togetherWith
                         slideOutHorizontally(targetOffsetX = { -it })
             },
             popTransitionSpec = {
-                slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                if (isTabSwitch()) fadeThrough()
+                else slideInHorizontally(initialOffsetX = { -it }) togetherWith
                         slideOutHorizontally(targetOffsetX = { it })
             },
             predictivePopTransitionSpec = {
                 slideInHorizontally(initialOffsetX = { -it }) togetherWith
                         slideOutHorizontally(targetOffsetX = { it })
             },
-            entryProvider = entryProvider {
-                entry<NavRoute.HomeRoute> { route ->
-                    HomeScreen(
-                        route = route,
-                        onNavigateToLogTea = { teaId, vesselId, configurationId ->
-                            backStack.add(NavRoute.LogTeaRoute(teaId, vesselId, configurationId))
-                        },
-                        onNavigateToSession = { sessionId ->
-                            backStack.add(NavRoute.SessionDetailsRoute(sessionId))
-                        },
-                        onNavigateToHistory = { filterDateStart, filterDateEnd ->
-                            backStack.add(
-                                NavRoute.HistoryRoute(
-                                    filterDateStart = filterDateStart,
-                                    filterDateEnd = filterDateEnd,
-                                )
-                            )
-                        },
-                        onNavigateToCollection = { backStack.add(NavRoute.CollectionRoute) },
-                        onNavigateToSettings = { backStack.add(NavRoute.SettingsRoute) },
-                        onNavigateToTimer = { sessionId ->
-                            backStack.add(NavRoute.TimerRoute(sessionId))
-                        },
-                        onNavigateToSteepComplete = { sessionId ->
-                            // An equal HomeRoute would reuse this entry's state, so finishing
-                            // again after Undo would never offer Undo
-                            backStack[backStack.lastIndex] = NavRoute.HomeRoute()
-                            backStack.add(NavRoute.SteepCompleteRoute(sessionId))
-                        },
-                        onNavigateToQuickTimer = { durationSeconds ->
-                            backStack.add(NavRoute.QuickTimerRoute(durationSeconds))
-                        },
-                        onNavigateToAnalytics = { backStack.add(NavRoute.AnalyticsRoute) },
-                        onNavigateToEditBrewingMethod = { teaId, configId ->
-                            backStack.add(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
-                        }
-                    )
-                }
-
-                entry<NavRoute.CollectionRoute> {
-                    TeaCollectionScreen(
-                        onNavigateToTeaDetail = { teaId ->
-                            backStack.add(NavRoute.TeaDetailsRoute(teaId))
-                        },
-                        onNavigateToAddTea = {
-                            backStack.add(NavRoute.EditTeaRoute())
-                        },
-                        onNavigateToVesselDetail = { vesselId ->
-                            backStack.add(NavRoute.VesselDetailRoute(vesselId))
-                        },
-                        onNavigateToAddVessel = {
-                            backStack.add(NavRoute.EditVesselRoute())
-                        },
-                    )
-                }
-
-                entry<NavRoute.HistoryRoute> { route ->
-                    HistoryScreen(
-                        route = route,
-                        onNavigateToSession = { sessionId ->
-                            backStack.add(NavRoute.SessionDetailsRoute(sessionId))
-                        },
-                        onNavigateToTimer = { sessionId ->
-                            backStack.add(NavRoute.TimerRoute(sessionId))
-                        },
-                    )
-                }
-
-                entry<NavRoute.AnalyticsRoute> {
-                    AnalyticsScreen(
-                        onNavigateToLogTea = {
-                            backStack.add(NavRoute.LogTeaRoute())
-                        },
-                        onNavigateToHistory = { filterTeaTypeId, filterDateStart, filterDateEnd ->
-                            backStack.add(
-                                NavRoute.HistoryRoute(
-                                    filterTeaTypeId = filterTeaTypeId,
-                                    filterDateStart = filterDateStart,
-                                    filterDateEnd = filterDateEnd,
-                                )
-                            )
-                        },
-                        onNavigateToTeaDetail = { teaId ->
-                            backStack.add(NavRoute.TeaDetailsRoute(teaId))
-                        },
-                    )
-                }
-
-                entry<NavRoute.SettingsRoute> {
-                    SettingsScreen(
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                        onNavigateToTeaTypes = {
-                            backStack.add(NavRoute.TeaTypeListRoute)
-                        },
-                    )
-                }
-
-                // =========================================================
-                // Tea Type Management Destinations
-                // =========================================================
-
-                entry<NavRoute.TeaTypeListRoute> {
-                    TeaTypeListScreen(
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                        onNavigateToEditTeaType = { teaTypeId ->
-                            backStack.add(NavRoute.EditTeaTypeRoute(teaTypeId))
-                        },
-                        onNavigateToAddTeaType = {
-                            backStack.add(NavRoute.EditTeaTypeRoute())
-                        },
-                    )
-                }
-
-                entry<NavRoute.EditTeaTypeRoute> { route ->
-                    EditTeaTypeScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                    )
-                }
-
-                // =========================================================
-                // Tea Collection Destinations
-                // =========================================================
-
-                entry<NavRoute.TeaDetailsRoute> { route ->
-                    TeaDetailScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                        onNavigateToEdit = { teaId ->
-                            backStack.add(NavRoute.EditTeaRoute(teaId))
-                        },
-                        onNavigateToSession = { sessionId ->
-                            backStack.add(NavRoute.SessionDetailsRoute(sessionId))
-                        },
-                        onNavigateToEditSession = { sessionId ->
-                            backStack.add(NavRoute.EditSessionRoute(sessionId, false))
-                        },
-                        onNavigateToLogTea = { teaId, vesselId ->
-                            backStack.add(NavRoute.LogTeaRoute(teaId, vesselId))
-                        },
-                        onNavigateToTimer = { sessionId ->
-                            backStack.add(NavRoute.TimerRoute(sessionId))
-                        },
-                        onNavigateToHistory = { teaId ->
-                            backStack.add(NavRoute.HistoryRoute(filterTeaId = teaId))
-                        },
-                        onNavigateToCreateConfig = { teaId ->
-                            backStack.add(NavRoute.CreateBrewingConfigurationRoute(teaId))
-                        },
-                        onNavigateToEditConfig = { configId, teaId ->
-                            backStack.add(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
-                        },
-                    )
-                }
-
-                entry<NavRoute.CreateBrewingConfigurationRoute> { route ->
-                    CreateBrewingConfigurationScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                    )
-                }
-
-                entry<NavRoute.EditTeaRoute> { route ->
-                    EditTeaScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                    )
-                }
-
-                // =========================================================
-                // Vessel Management Destinations
-                // =========================================================
-
-                entry<NavRoute.VesselDetailRoute> { route ->
-                    VesselDetailScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                        onNavigateToEditVessel = { vesselId ->
-                            backStack.add(NavRoute.EditVesselRoute(vesselId))
-                        },
-                    )
-                }
-
-                entry<NavRoute.EditVesselRoute> { route ->
-                    EditVesselScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                    )
-                }
-
-                // =========================================================
-                // Session Logging Destinations
-                // =========================================================
-
-                entry<NavRoute.LogTeaRoute> { route ->
-                    LogTeaScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                        onNavigateToTimer = { sessionId ->
-                            backStack.clear()
-                            backStack.add(NavRoute.TimerRoute(sessionId))
-                            backStack.add(0, NavRoute.HomeRoute())
-                        },
-                    )
-                }
-
-                entry<NavRoute.SessionDetailsRoute> { route ->
-                    SessionDetailScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                        onNavigateToEdit = { sessionId, editFullSession ->
-                            backStack.add(NavRoute.EditSessionRoute(sessionId, editFullSession))
-                        },
-                        onNavigateToTea = { teaId ->
-                            backStack.add(NavRoute.TeaDetailsRoute(teaId))
-                        },
-                        onNavigateToTimer = { sessionId ->
-                            backStack.clear()
-                            backStack.add(NavRoute.TimerRoute(sessionId))
-                            backStack.add(0, NavRoute.HomeRoute())
-                        },
-                    )
-                }
-
-                entry<NavRoute.EditSessionRoute> { route ->
-                    EditSessionScreen(
-                        route = route,
-                        onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
-                    )
-                }
-
-                // =========================================================
-                // Timer Destinations
-                // =========================================================
-
-                entry<NavRoute.TimerRoute> { route ->
-                    TimerScreen(
-                        route = route,
-                        onNavigateBack = {
-                            // Timer keeps running in background via TimerService
-                            backStack.removeAt(backStack.lastIndex)
-                        },
-                        onNavigateToSteepComplete = { sessionId ->
-                            backStack.removeAt(backStack.lastIndex)
-                            backStack.add(NavRoute.SteepCompleteRoute(sessionId))
-                        },
-                    )
-                }
-
-                entry<NavRoute.QuickTimerRoute> { route ->
-                    QuickTimerScreen(
-                        route = route,
-                        onNavigateBack = {
-                            backStack.removeAt(backStack.lastIndex)
-                        },
-                        onNavigateToSteepComplete = { sessionId ->
-                            backStack.removeAt(backStack.lastIndex)
-                            backStack.add(NavRoute.SteepCompleteRoute(sessionId))
-                        },
-                        onNavigateToTimer = { sessionId ->
-                            // Replace quick timer with the full timer for the next steep
-                            backStack.removeAt(backStack.lastIndex)
-                            backStack.add(NavRoute.TimerRoute(sessionId))
-                        },
-                    )
-                }
-
-                entry<NavRoute.SteepCompleteRoute> { route ->
-                    SteepCompleteScreen(
-                        route = route,
-                        onNavigateToHome = { finishedSessionId ->
-                            backStack.clear()
-                            backStack.add(NavRoute.HomeRoute(finishedSessionId))
-                        },
-                        onNavigateToTimer = { sessionId ->
-                            backStack.removeAt(backStack.lastIndex)
-                            backStack.add(NavRoute.TimerRoute(sessionId))
-                        },
-                        onNavigateBack = {
-                            backStack.removeAt(backStack.lastIndex)
-                        }
-                    )
-                }
-            }
         )
     }
-
 }
 
 @Composable
-private fun BottomNavigationBar(
-    currentRoute: NavRoute,
-    onNavigate: (NavRoute) -> Unit,
-) {
-    NavigationBar {
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = FeatherIcons.Home,
-                    contentDescription = ""
-                )
-            },
-            label = { Text("Home") },
-            selected = currentRoute is NavRoute.HomeRoute,
-            onClick = { onNavigate(NavRoute.HomeRoute()) }
-        )
+private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
+    entryProvider<NavKey> {
+        entry<NavRoute.HomeRoute> { route ->
+            HomeScreen(
+                route = route,
+                onNavigateToLogTea = { teaId, vesselId, configurationId ->
+                    navigator.navigate(NavRoute.LogTeaRoute(teaId, vesselId, configurationId))
+                },
+                onNavigateToSession = { sessionId ->
+                    navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
+                },
+                onNavigateToHistory = { filterDateStart, filterDateEnd ->
+                    navigator.navigate(
+                        NavRoute.HistoryRoute(
+                            filterDateStart = filterDateStart,
+                            filterDateEnd = filterDateEnd,
+                        )
+                    )
+                },
+                onNavigateToCollection = { navigator.navigate(NavRoute.CollectionRoute) },
+                onNavigateToSettings = { navigator.navigate(NavRoute.SettingsRoute) },
+                onNavigateToTimer = { sessionId ->
+                    navigator.openOnHome(NavRoute.TimerRoute(sessionId))
+                },
+                onNavigateToSteepComplete = { sessionId ->
+                    // An equal HomeRoute would reuse this entry's state, so finishing
+                    // again after Undo would never offer Undo
+                    navigator.replace(route, NavRoute.HomeRoute())
+                    navigator.openOnHome(NavRoute.SteepCompleteRoute(sessionId))
+                },
+                onNavigateToQuickTimer = { durationSeconds ->
+                    navigator.openOnHome(NavRoute.QuickTimerRoute(durationSeconds))
+                },
+                onNavigateToAnalytics = { navigator.navigate(NavRoute.AnalyticsRoute) },
+                onNavigateToEditBrewingMethod = { teaId, configId ->
+                    navigator.navigate(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
+                }
+            )
+        }
 
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = FeatherIcons.Bookmark,
-                    contentDescription = ""
-                )
-            },
-            label = { Text("Collection") },
-            selected = currentRoute is NavRoute.CollectionRoute,
-            onClick = { onNavigate(NavRoute.CollectionRoute) }
-        )
+        entry<NavRoute.CollectionRoute> { route ->
+            TeaCollectionScreen(
+                onNavigateToTeaDetail = { teaId ->
+                    navigator.navigate(NavRoute.TeaDetailsRoute(teaId))
+                },
+                onNavigateToAddTea = {
+                    navigator.navigate(NavRoute.EditTeaRoute())
+                },
+                onNavigateToVesselDetail = { vesselId ->
+                    navigator.navigate(NavRoute.VesselDetailRoute(vesselId))
+                },
+                onNavigateToAddVessel = {
+                    navigator.navigate(NavRoute.EditVesselRoute())
+                },
+            )
+        }
 
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = FeatherIcons.Clock,
-                    contentDescription = ""
-                )
-            },
-            label = { Text("History") },
-            selected = currentRoute is NavRoute.HistoryRoute,
-            onClick = { onNavigate(NavRoute.HistoryRoute()) }
-        )
+        entry<NavRoute.HistoryRoute> { route ->
+            HistoryScreen(
+                route = route,
+                onNavigateToSession = { sessionId ->
+                    navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
+                },
+                onNavigateToTimer = { sessionId ->
+                    navigator.openOnHome(NavRoute.TimerRoute(sessionId))
+                },
+                onNavigateUp = if (route == Tab.HISTORY.root) null else ({ navigator.navigateUp(route) }),
+            )
+        }
 
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    imageVector = FeatherIcons.BarChart2,
-                    contentDescription = ""
-                )
-            },
-            label = { Text("Analytics") },
-            selected = currentRoute is NavRoute.AnalyticsRoute,
-            onClick = { onNavigate(NavRoute.AnalyticsRoute) }
-        )
+        entry<NavRoute.AnalyticsRoute> { route ->
+            AnalyticsScreen(
+                onNavigateToLogTea = {
+                    navigator.navigate(NavRoute.LogTeaRoute())
+                },
+                onNavigateToHistory = { filterTeaTypeId, filterDateStart, filterDateEnd ->
+                    navigator.navigate(
+                        NavRoute.HistoryRoute(
+                            filterTeaTypeId = filterTeaTypeId,
+                            filterDateStart = filterDateStart,
+                            filterDateEnd = filterDateEnd,
+                        )
+                    )
+                },
+                onNavigateToTeaDetail = { teaId ->
+                    navigator.navigate(NavRoute.TeaDetailsRoute(teaId))
+                },
+            )
+        }
 
+        entry<NavRoute.SettingsRoute> { route ->
+            SettingsScreen(
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToTeaTypes = {
+                    navigator.navigate(NavRoute.TeaTypeListRoute)
+                },
+            )
+        }
+
+        // =========================================================
+        // Tea Type Management Destinations
+        // =========================================================
+
+        entry<NavRoute.TeaTypeListRoute> { route ->
+            TeaTypeListScreen(
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToEditTeaType = { teaTypeId ->
+                    navigator.navigate(NavRoute.EditTeaTypeRoute(teaTypeId))
+                },
+                onNavigateToAddTeaType = {
+                    navigator.navigate(NavRoute.EditTeaTypeRoute())
+                },
+            )
+        }
+
+        entry<NavRoute.EditTeaTypeRoute> { route ->
+            EditTeaTypeScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+            )
+        }
+
+        // =========================================================
+        // Tea Collection Destinations
+        // =========================================================
+
+        entry<NavRoute.TeaDetailsRoute> { route ->
+            TeaDetailScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToEdit = { teaId ->
+                    navigator.navigate(NavRoute.EditTeaRoute(teaId))
+                },
+                onNavigateToSession = { sessionId ->
+                    navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
+                },
+                onNavigateToEditSession = { sessionId ->
+                    navigator.navigate(NavRoute.EditSessionRoute(sessionId, false))
+                },
+                onNavigateToLogTea = { teaId, vesselId ->
+                    navigator.navigate(NavRoute.LogTeaRoute(teaId, vesselId))
+                },
+                onNavigateToTimer = { sessionId ->
+                    navigator.openOnHome(NavRoute.TimerRoute(sessionId))
+                },
+                onNavigateToHistory = { teaId ->
+                    navigator.navigate(NavRoute.HistoryRoute(filterTeaId = teaId))
+                },
+                onNavigateToCreateConfig = { teaId ->
+                    navigator.navigate(NavRoute.CreateBrewingConfigurationRoute(teaId))
+                },
+                onNavigateToEditConfig = { configId, teaId ->
+                    navigator.navigate(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
+                },
+            )
+        }
+
+        entry<NavRoute.CreateBrewingConfigurationRoute> { route ->
+            CreateBrewingConfigurationScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+            )
+        }
+
+        entry<NavRoute.EditTeaRoute> { route ->
+            EditTeaScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+            )
+        }
+
+        // =========================================================
+        // Vessel Management Destinations
+        // =========================================================
+
+        entry<NavRoute.VesselDetailRoute> { route ->
+            VesselDetailScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToEditVessel = { vesselId ->
+                    navigator.navigate(NavRoute.EditVesselRoute(vesselId))
+                },
+            )
+        }
+
+        entry<NavRoute.EditVesselRoute> { route ->
+            EditVesselScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+            )
+        }
+
+        // =========================================================
+        // Session Logging Destinations
+        // =========================================================
+
+        entry<NavRoute.LogTeaRoute> { route ->
+            LogTeaScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToTimer = { sessionId ->
+                    navigator.navigateUp(route)
+                    navigator.openOnHome(NavRoute.TimerRoute(sessionId))
+                },
+            )
+        }
+
+        entry<NavRoute.SessionDetailsRoute> { route ->
+            SessionDetailScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToEdit = { sessionId, editFullSession ->
+                    navigator.navigate(NavRoute.EditSessionRoute(sessionId, editFullSession))
+                },
+                onNavigateToTea = { teaId ->
+                    navigator.navigate(NavRoute.TeaDetailsRoute(teaId))
+                },
+                onNavigateToTimer = { sessionId ->
+                    navigator.navigateUp(route)
+                    navigator.openOnHome(NavRoute.TimerRoute(sessionId))
+                },
+            )
+        }
+
+        entry<NavRoute.EditSessionRoute> { route ->
+            EditSessionScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+            )
+        }
+
+        // =========================================================
+        // Timer Destinations
+        // =========================================================
+
+        entry<NavRoute.TimerRoute> { route ->
+            TimerScreen(
+                route = route,
+                // Timer keeps running in background via TimerService
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToSteepComplete = { sessionId ->
+                    navigator.replace(route, NavRoute.SteepCompleteRoute(sessionId))
+                },
+            )
+        }
+
+        entry<NavRoute.QuickTimerRoute> { route ->
+            QuickTimerScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToSteepComplete = { sessionId ->
+                    navigator.replace(route, NavRoute.SteepCompleteRoute(sessionId))
+                },
+                onNavigateToTimer = { sessionId ->
+                    // Replace quick timer with the full timer for the next steep
+                    navigator.replace(route, NavRoute.TimerRoute(sessionId))
+                },
+            )
+        }
+
+        entry<NavRoute.SteepCompleteRoute> { route ->
+            SteepCompleteScreen(
+                route = route,
+                onNavigateToHome = { finishedSessionId ->
+                    navigator.resetHome(NavRoute.HomeRoute(finishedSessionId))
+                },
+                onNavigateToTimer = { sessionId ->
+                    navigator.replace(route, NavRoute.TimerRoute(sessionId))
+                },
+                onNavigateBack = { navigator.navigateUp(route) },
+            )
+        }
     }
 }
+
+/** Editors and the brew loop take the whole screen. */
+private fun NavKey.hidesBottomBar() = when (this) {
+    is NavRoute.LogTeaRoute,
+    is NavRoute.EditTeaRoute,
+    is NavRoute.EditSessionRoute,
+    is NavRoute.EditVesselRoute,
+    is NavRoute.EditTeaTypeRoute,
+    is NavRoute.CreateBrewingConfigurationRoute,
+    is NavRoute.TimerRoute,
+    is NavRoute.QuickTimerRoute,
+    is NavRoute.SteepCompleteRoute,
+    -> true
+    else -> false
+}
+
+private fun AnimatedContentTransitionScope<Scene<NavKey>>.isTabSwitch() =
+    initialState.metadata[TAB_METADATA] != targetState.metadata[TAB_METADATA]
+
+private fun fadeThrough() =
+    fadeIn(tween(durationMillis = 210, delayMillis = 90)) togetherWith fadeOut(tween(90))
+
+@Composable
+private fun BottomNavigationBar(
+    currentTab: Tab,
+    onSelectTab: (Tab) -> Unit,
+) {
+    NavigationBar {
+        Tab.entries.forEach { tab ->
+            NavigationBarItem(
+                icon = { Icon(imageVector = tab.icon, contentDescription = null) },
+                label = { Text(stringResource(tab.label)) },
+                selected = tab == currentTab,
+                onClick = { onSelectTab(tab) },
+            )
+        }
+    }
+}
+
+private val Tab.icon
+    get() = when (this) {
+        Tab.HOME -> FeatherIcons.Home
+        Tab.COLLECTION -> FeatherIcons.Bookmark
+        Tab.HISTORY -> FeatherIcons.Clock
+        Tab.ANALYTICS -> FeatherIcons.BarChart2
+    }
+
+private val Tab.label
+    get() = when (this) {
+        Tab.HOME -> Res.string.tab_home
+        Tab.COLLECTION -> Res.string.tab_collection
+        Tab.HISTORY -> Res.string.tab_history
+        Tab.ANALYTICS -> Res.string.tab_analytics
+    }

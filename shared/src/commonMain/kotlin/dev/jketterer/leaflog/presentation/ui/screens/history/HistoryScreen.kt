@@ -65,6 +65,7 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
+import leaf_log.shared.generated.resources.navigate_up
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -79,6 +80,8 @@ fun HistoryScreen(
     route: NavRoute.HistoryRoute,
     onNavigateToSession: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
+    /** Null at the History tab's root; set when pushed with a filter from elsewhere. */
+    onNavigateUp: (() -> Unit)?,
     viewModel: HistoryViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -103,6 +106,7 @@ fun HistoryScreen(
         onIntent = viewModel::onIntent,
         imageStorage = koinInject(),
         snackbarHostState = snackbarHostState,
+        onNavigateUp = onNavigateUp,
     )
 }
 
@@ -111,6 +115,7 @@ fun HistoryScreen(
 private fun HistoryContent(
     state: HistoryState,
     onIntent: (HistoryIntent) -> Unit,
+    onNavigateUp: (() -> Unit)? = null,
     imageStorage: ImageStorage? = null,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -184,6 +189,16 @@ private fun HistoryContent(
                 )
             } else {
                 TopAppBar(
+                    navigationIcon = {
+                        if (onNavigateUp != null) {
+                            IconButton(onClick = onNavigateUp) {
+                                Icon(
+                                    imageVector = FeatherIcons.ArrowLeft,
+                                    contentDescription = stringResource(Res.string.navigate_up),
+                                )
+                            }
+                        }
+                    },
                     title = { Text("History") },
                     actions = {
                         IconButton(onClick = { showSearchBar = true }) {

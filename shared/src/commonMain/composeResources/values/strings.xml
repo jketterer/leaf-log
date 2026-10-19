@@ -1,4 +1,11 @@
 <resources>
+    <!-- Navigation -->
+    <string name="tab_home">Home</string>
+    <string name="tab_collection">Collection</string>
+    <string name="tab_history">History</string>
+    <string name="tab_analytics">Analytics</string>
+    <string name="navigate_up">Back</string>
+
     <!-- Settings -->
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme">Theme</string>

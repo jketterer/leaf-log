@@ -11,7 +11,6 @@ val navSerializationConfig = SavedStateConfiguration {
             subclass(NavRoute.HomeRoute::class, NavRoute.HomeRoute.serializer())
             subclass(NavRoute.CollectionRoute::class, NavRoute.CollectionRoute.serializer())
             subclass(NavRoute.HistoryRoute::class, NavRoute.HistoryRoute.serializer())
-            subclass(NavRoute.MoreRoute::class, NavRoute.MoreRoute.serializer())
             subclass(NavRoute.AnalyticsRoute::class, NavRoute.AnalyticsRoute.serializer())
             subclass(NavRoute.SettingsRoute::class, NavRoute.SettingsRoute.serializer())
 

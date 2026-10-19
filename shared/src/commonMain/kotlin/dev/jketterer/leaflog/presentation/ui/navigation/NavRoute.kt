@@ -34,9 +34,6 @@ sealed interface NavRoute : NavKey {
     ) : NavRoute
 
     @Serializable
-    data object MoreRoute : NavRoute
-
-    @Serializable
     data class SessionDetailsRoute(val sessionId: String) : NavRoute
 
     @Serializable

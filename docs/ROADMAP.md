@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-19 (Bet 1 released as 0.4.0)
+> **Last updated:** 2026-10-19 (Bet 1 released as 0.4.0; Bet 2 designed)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -579,106 +579,152 @@ what was typed, and an untouched one saves nothing; tab navigation behaves per t
 Track B lines for theme mode and the dark splash on both platforms, the iOS edge swipe, and tab
 state across rotation and process death.
 
-**Commits.** Each compiles, passes tests and leaves the app working. 7 → 9–13; 6 → 13; 14 → 15 → 16.
-
-- [x] `docs: record the Bet 1 design`
-- [x] `test: render every preview`: the preview scanner, the three-way render test, fixed-clock
-  previews. Proves compose resources render under Robolectric before anything depends on it.
-- [x] `feat: Figtree type scale and shapes`
-- [x] `feat: set every colour role and tone tea-type colours`, with the dark splash. Test:
-  `teaTypeColor` on both themes.
-- [x] `feat: choose light, dark or system theme`. Test: the backup round trip.
-- [x] `refactor: one icon family`
-- [x] `feat: string resources and plurals`
-- [x] `feat: locale-aware dates`
-- [x] `feat: one message surface`: `UiMessages`, `UiMessageEffect`, the typed failures and the
-  guards that throw them, Home's Undo, and the tea library and Settings screens. Test: failure →
-  message mapping.
-- [x] `refactor: messages on the brew loop and journal`: the remaining screens; every
-  `error: String?` goes.
-- [x] `feat: shared confirm and discard dialogs`
-- [x] `feat: section header and empty state`
-- [x] `feat: rating display and selector`. Test: half-star rounding.
-- [x] `feat: one unit input field with local toggles`: the component and its pure functions, then
-  Edit Tea, Edit Vessel, Edit Tea Type and Brewing Method. Tests: flips round-trip, 93 °C, decimal
-  input, an untouched field reports nothing.
-- [x] `refactor: brew and journal forms on the unit field`: Log Tea, Edit Session, the parameter
-  sheets, the next-steep dialog, Quick Timer. `editedUnitValue` and the old variants go.
-- [x] `feat: honour the weight unit everywhere`: `LocalUnits`, the Settings row, every hardcoded
-  `"g"`, the local display toggles, the CLAUDE.md rule rewritten.
-- [x] `refactor: load route args in ViewModel init`. Test: History applies its route filter once.
-- [x] `feat: per-tab back stacks`. Test: the navigator — back from a tab root, re-tap, the
-  double-pop guard, switch vs push.
-- [x] `chore: release 0.4.0`: audit rows struck.
-
 ---
 
 ## Bet 2 — Brewing plans
 
-**Outcome:** the app knows how each tea is brewed, and a gongfu session costs one tap per steep plus
-whatever you choose to record.
+**Outcome:** the app knows how each tea is brewed, and a gongfu session costs two taps per steep —
+Next, then Start — plus whatever you choose to record.
 
 Today: a saved method holds one `brewingTime`; every extra steep costs Next → dialog → Confirm →
 Timer → Start (about three taps and two screens), and each steep's time is typed by hand.
 
 ### Design
 
+Decided 2026-10-19.
+
 - **A method is a plan.** `BrewingConfiguration` gains `steepIncrement: Duration?` (null = a single
-  western steep) and optional per-steep overrides. Steep N's time is
-  `base + (N−1) × increment` unless overridden. The style lives on the method, not the tea — a tea
-  can have a gaiwan-gongfu method and a mug-western method.
-- **Plans are learned.** Finishing a multi-steep session offers "Save as method", which captures the
-  observed base and increment, with overrides where you deviated. (Today multi-steep sessions are
-  *never* offered this — the prompt only fires on steep 1.) Manual create/edit still exists.
+  western steep) and `steepOverrides: Map<Int, Duration>`, a JSON text column like `photos`.
+    - Steep 1 is `brewingTime`. Steep N is its override, otherwise steep N−1 + increment, so a plan
+      continues from wherever a deliberate push left it. With no overrides this is
+      `base + (N−1) × increment`.
+    - Time only. Temperature and water are the session's, changed by hand on a steep.
+    - No steep count: you stop when the tea is done, so Next is always offered.
+    - The style lives on the method, not the tea — a tea can have a gaiwan-gongfu method and a
+      mug-western method.
+- **A session resolves its plan; it never stores one.** In order: its method
+  (`usedConfigurationId`); the session Brew Again copied (`planSessionId`, new, parent row only);
+  its own steeps so far. The last gives gongfu by feel: 20s, 25s → next 30s; one steep → the same
+  again.
+    - **Brew Again** sets `planSessionId`, not the method, and so replays the whole session as
+      brewed rather than steep 1.
+    - Editing a method changes the remaining steeps of a session using it. That's intended.
+- **Plans are learned** by one pure `learnPlan(steeps)`, shared by Save as method, Update method,
+  Brew Again and the by-feel fallback.
+    - Each steep's `brewedTime` (actual, else planned), rounded to 1s under 15s and to 5s from 15s,
+      so a late tap doesn't become an override replayed forever.
+    - Base = steep 1. Increment = the most common step between neighbours; none for one steep.
+      An override wherever a steep doesn't follow. Lossless: a learned plan replays every steep
+      it was learned from.
+    - **Save as method** is offered at Finish by a session without a method, at any steep count,
+      unless it was rated under 3★ or an identical method exists for the tea and vessel. Unrated
+      sessions are offered it. (Today multi-steep sessions are never offered it.)
+    - **Update ‹method›** is offered when a session that used a method deviated from it over the
+      steeps brewed. Those steeps become today's; the method's overrides past the last one stay.
+    - The method form edits base and increment, previews the first steeps and marks overrides.
+      Overrides are learned only: the form clears them all, never edits one.
+- **Two ways out of the timer.** Complete Now becomes **"Poured early"** and keeps recording elapsed
+  time as the actual time. **"Already brewed"**, before Start, records the steep at its planned time
+  with no actual time and opens the review — for a forgotten timer, or one kept in the kitchen. A
+  late start is ±adjust.
 - **The timer waits for Start.** Pouring takes time; auto-start was considered and rejected.
-- **Rinse** is recorded, excluded from ratings. See open questions for how.
-- **The slim review** between steeps: stars, carried-forward tags, a collapsed note affordance, and
-  a primary **"Next · 25s"** that goes straight to the timer at the planned time — no parameter
-  dialog; a small "adjust" for when you deviate. "Finish session" is secondary. The full review,
-  including best-brew comparison (previous 2.1), appears once, at session end.
+- **Rinse** is a yes/no, never timed: a switch on the method that a session copies when it starts
+  (`rinsed`), also on Log Tea and Edit Session, shown as "rinsed". No timer state, no steep row.
+- **The slim review** between steeps replaces Steep Complete:
+    - Stars, tags, a collapsed note, and the steep's parameters with the edit sheet, which gains a
+      vessel row.
+    - A primary **"Next · 30s"** straight to the timer at the planned time. "Adjust" opens a sheet
+      with the next steep's time, temperature and water, then goes to the timer. The next-steep
+      dialog is deleted.
+    - "Finish session" is secondary; Discard moves to the overflow. A western plan swaps them:
+      Finish is primary, "Another · 3:00" secondary.
+    - Earlier steeps and photos leave the loop.
+- **The end-of-session review**, its own route after Finish: every steep as a row (time, rating,
+  tags; tap to edit), the session note, photos, "vs your best" (this tea's best-rated other
+  completed session, when there is one), Save or Update method, and Done. Home's Undo is unchanged.
 - **Per-steep tasting tags.**
-    - A curated vocabulary of ~20–25 tags grouped as aroma / taste / body / finish, plus the user's
-      own custom tags (typeahead against existing tags to prevent near-duplicates).
-    - **Carry forward, edit the delta:** steep N+1 starts with steep N's tags pre-selected but
-      *unconfirmed*. Touching a tag confirms it. Unconfirmed tags are stored as such and read as
-      weaker evidence. Zero taps when nothing changed; the record shows how flavour evolved.
-    - Tables: `tasting_tag(id, name, group, isCustom, displayOrder, deletedAt)` and
-      `session_tag(sessionId, tagId, confirmed)`. Included in the F4 export DTOs.
-- **Live Activity and the ongoing notification show the plan** — "Steep 3 · 25s · next 30s". Their
-  Next action opens the app to the slim review (rating capture stays in the loop).
+    - 23 curated tags in one flat list, in a fixed order with aromas first and finishes last:
+      floral, fruity, honey, roasted, smoky, grassy, woody, earthy, spicy, sweet, bitter,
+      astringent, umami, mineral, malty, nutty, light, smooth, full, lingering, short, drying,
+      returning sweetness. No groups.
+    - Custom tags are created from the tag sheet's search ("Create ‹word›"), which matches existing
+      tags first to prevent near-duplicates, and are appended in creation order. Positions never
+      move. Renaming and deleting them is polish-track UI on `deletedAt`.
+    - **Carry forward, edit the delta:** steep N+1 starts with every tag of steep N, faded as
+      unconfirmed. Tapping a faded tag confirms it; tapping a confirmed one removes it. Zero taps
+      when nothing changed, and an untouched carry-over stays unconfirmed — the ratings rule,
+      applied to tags.
+    - Tables: `tasting_tag(id, key, name, isCustom, displayOrder, deletedAt)`, where `key` names a
+      curated tag's string resource and a custom tag stores `name`; `steep_tag(steepId, tagId,
+      confirmed)`, keyed on both ids, cascading from the steep row. `Steep.tags` is read with the
+      aggregate and written through `EditSteep`.
+- **Live Activity and the ongoing notification show the plan:** "Steep 3 · 25s · next 30s" while
+  running, "Steep 3 done · next 30s" when ready, no "next" for western. `TimerState` carries the
+  next steep's time.
+    - The ready alert's tap is the Next action: it opens the slim review. No separate button.
+    - The Live Activity gains a tap target, the Timer.
 - **Quick Timer becomes "timer now, tea later."** The user who starts pouring before remembering to
   set a timer must not be forced through adding a tea — but should be invited to log.
     - It runs on `TimerService` as a timer with no session (`TimerState.sessionId` and `teaId` are
       already nullable), persisted in preferences so it survives process death. It inherits the
       foreground service, notifications, Live Activity, and settings toggles.
     - Same Timer screen, with an optional "What are you brewing?" chip opening `TeaPickerSheet`
-      (recents, quick-add) during the countdown.
-    - On completion: tea attached → it becomes a real session and goes to the slim review. No tea →
-      one prompt: pick a tea to log it, or "Just a timer".
-    - "Next · +5s" works without a tea, for gongfu by feel.
+      (recents, quick-add) during the countdown, or "Log it" at the end.
+    - Attaching asks for the tea only. The vessel is the one last used with it, else the most-used;
+      parameters come from Log Tea's prefill for the pair, else the timer's duration, the tea or
+      type default temperature, the vessel's capacity and the default water type. The review's
+      edit sheet fixes a wrong guess.
+    - The timer keeps each finished steep's start and length, so attaching after three steeps by
+      feel creates the session with all three at their real times, unrated. The session starts
+      when its first steep did.
+    - No tea at completion: "Log it", "Next · +5s" for gongfu by feel, or "Just a timer", which
+      records nothing.
     - Deletes `QuickTimerViewModel`'s engine, the duplicate screen, and the details sheet.
-- **Brew Again** replays the whole plan, not steep 1.
-- The between-steep flow clears the brew-loop audit findings (report 1) for every screen it
-  rewrites.
+- **Audit findings cleared** (Rule 1): Steep Complete and Quick Timer, replaced; Timer, in its own
+  commit first; the notifications — the ready alert outliving its steep (Working items), shared
+  `requestCode`s, taps not checking session status; Home's Finish routing through the Timer and the
+  dead Quick Timer handler. Log Tea and Home only gain small additions, so theirs stay in the
+  polish track.
 
-**Migration:** v8 → v9 — plan columns on `brewing_configurations`, the two tag tables, seeded
-curated vocabulary.
+**Migrations**, one per feature, all `ADD COLUMN` / `CREATE TABLE`: v8 → v9 the plan
+(`steep_increment`, `steep_overrides`, `tea_session.plan_session_id`); v9 → v10 rinse
+(`brewing_configurations.rinse`, `tea_session.rinsed`); v10 → v11 the tag tables, the curated
+vocabulary seeded. The backup becomes version 3 in the first of them; the later ones add fields
+with defaults under it, since no release ships between them. Version 2 backups import with no
+plans, rinses or tags.
 
-**Exit:** a 10-steep gongfu session from a saved plan takes one tap per steep to advance; a western
-brew from a pinned method takes two taps to a running timer; Quick Timer and Timer are one engine
-and one screen; tags carry forward and round-trip through backup; Track B lines for Live Activity
-and the timer-without-tea across process death.
+**Exit:** a 10-steep gongfu session from a saved plan goes review → running timer in two taps per
+steep, Next then Start, with rating and tags optional; a western brew from a pinned method takes two
+taps to a running timer; Quick Timer and Timer are one engine and one screen; tags carry forward and
+round-trip through backup; Track B lines for Live Activity, the timer without a tea across process
+death, and an upgrade over the previous dev build at each migration.
 
-### Open questions
+**Commits.** Each compiles, passes tests and leaves the app working. 4 → 5; 4 → 6 → 7 → 8; 6 → 10;
+4 → 11; 4 and 6 → 12 → 13.
 
-- **Rinse representation.** The parent row is both the `Session` and steep 1. A rinse as a
-  `steepNumber = 0` row breaks that invariant. Recommended: a `rinseDuration: Duration?` on
-  `Session` instead of a row.
-- **Per-steep temperature** in plans (some gongfu raises temperature across steeps). Recommended:
-  overrides may carry temperature; base plan does not.
-- **Curated vocabulary contents** — draft the list before the migration.
-- **Learning from sessions where the timer was adjusted** — use actual brew time (F2) as the
-  observed value.
+1. [ ] `docs: record the Bet 2 design`
+2. [ ] `fix: timer audit findings`: negative pre-start adjust, Reset not saved, the stale edit
+   snapshot (verify first), the ring's hard-coded size, its semantics and live region, the copy,
+   `onCleared`'s `runBlocking`. Nothing beyond the fixes.
+3. [ ] `feat: already brewed and poured early`. Test: Already brewed leaves the actual time null.
+4. [ ] `feat: methods plan their steeps`: the plan, `learnPlan`, `planSessionId`, plan resolution,
+   Brew Again replaying the plan, v9 and backup version 3. The next-steep dialog prefills from the
+   plan until the slim review replaces it. Tests: steep times, learning, resolution, the migration,
+   the backup round trip. Track B: upgrade over the v8 build.
+5. [ ] `feat: edit a plan in the method form`
+6. [ ] `feat: slim review between steeps`
+7. [ ] `feat: end-of-session review`: Save as method at any steep count; Steep Complete's remains go.
+8. [ ] `feat: update a method from today's brew`. Test: the deviation check and the merge.
+9. [ ] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.
+10. [ ] `feat: tasting tags`: v11, the vocabulary, carry-forward, custom tags. Tests: carry-forward,
+    the migration, the backup round trip. Track B: upgrade over the v10 build.
+11. [ ] `feat: the plan on the lock screen`, with the notification findings. Track B: Live Activity,
+    tap routing.
+12. [ ] `refactor: Quick Timer runs on TimerService`: the tealess timer and "Just a timer"; the old
+    engine and screen go. Until 13, a Quick Timer can't become a session. Track B: the tealess
+    timer across process death.
+13. [ ] `feat: attach a tea to a running timer`. Test: attaching after three steeps.
+14. [ ] `chore: release 0.5.0`: audit rows struck.
 
 ---
 
@@ -820,11 +866,18 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **Discarding steep N ≥ 2 finishes the session**                                     | Steeps 1…N−1 happened; only the next one was abandoned. Discarding steep 1 deletes the session. Considered: discarding the whole session from any steep.                                                                                                                                  |
 | **Undo is the only way to re-open a finished session**                              | An accidental Finish needs a way back; re-opening old sessions doesn't. Session Detail's Add Steep records a forgotten steep without a timer instead.                                                                                                                                     |
 | **A brewing style lives on the method, not the tea**                                | A tea brewed both ways needs two methods; the vessel usually implies the style.                                                                                                                                                                                                           |
-| **Plans are base + increment with overrides**                                       | Matches how the author actually brews gongfu.                                                                                                                                                                                                                                             |
+| **Plans are base + increment with overrides**                                       | Matches how the author actually brews gongfu. Each steep follows the previous one, so a deliberate push carries forward. Time only: the author rarely changes temperature mid-session and does it by hand. Considered: overrides carrying temperature.                                    |
 | **Timer waits for Start**                                                           | Pouring takes time. Auto-start considered and rejected.                                                                                                                                                                                                                                   |
 | **Review stays between steeps, slimmed**                                            | Considered: rating during the next countdown (no screen at all) and session-end-only (memory fades by steep 10). A one-screen stars + tags + Next keeps capture high at one tap.                                                                                                          |
-| **Lock-screen Next opens the review**                                               | Considered: advancing from the lock screen with the rating left null. Rejected to keep rating capture in the loop.                                                                                                                                                                        |
+| **The ready alert's tap is Next, and opens the review**                             | Considered: advancing from the lock screen with the rating left null, rejected to keep rating capture in the loop; a separate Next button, which would do what the tap already does.                                                                                                      |
 | **Tags are per steep, carried forward unconfirmed**                                 | Per-steep shows how flavour evolves; carry-forward makes it cost zero taps when nothing changed; "unconfirmed" keeps it honest. Vocabulary is curated plus custom.                                                                                                                        |
+| **A session resolves its plan; it never stores one**                                | From its method, the session Brew Again copied, or its own steeps. Considered: copying the plan onto the session, a second copy that drifts from the method. Brew Again points at its source session, not the method, so it replays what was brewed.                                      |
+| **Plans learn from actual time, rounded**                                           | "Poured early" is real brew time; "Already brewed" records none, so the planned time stands. Rounding stops a late tap becoming an override replayed forever; 1s under 15s keeps flash steeps.                                                                                            |
+| **Overrides are learned, never typed**                                              | Brewing it once and tapping Update does it better than a per-steep editor, which would be the bet's biggest piece of UI. Considered: tap-a-steep editing in the method form.                                                                                                              |
+| **Rinse is a flag, not timed**                                                      | The author rinses some teas and never times it. Considered: a timed rinse before steep 1, which the timer, notifications, Live Activity and review would all have to learn.                                                                                                               |
+| **Tasting tags are one flat list**                                                  | Groups help long lists; 23 tags fit one sheet, and groups make every custom tag ask where it goes. Considered: aroma / taste / body / finish.                                                                                                                                             |
+| **A tealess timer keeps its steeps**                                                | Attaching a tea after three steeps by feel logs all three at their real times. Considered: starting the session at the current steep, which loses brews.                                                                                                                                  |
+| **One migration per feature**                                                       | Each commit carries the schema it uses, and the author installs dev builds between commits. Considered: one v8 → v9 up front, adding columns nothing uses yet.                                                                                                                            |
 | **Quick Timer is "timer now, tea later" on the one engine**                         | Keeps the no-friction entry point the author values, deletes the second timer engine the audit found weak. Considered: nullable-tea draft rows in the database (a migration and nullable tea everywhere) and keeping the separate screen.                                                 |
 | **Teas with sessions are finished, never deleted**                                  | The journal must never lose a name, and deleting caused "Unknown Tea" and unrestorable backups. Delete remains for zero-session teas.                                                                                                                                                     |
 | **`purchasePrice` is deleted, not built**                                           | Cost-per-cup analytics is a feature nobody asked for.                                                                                                                                                                                                                                     |

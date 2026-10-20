@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.carriedForward
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
 import kotlin.time.Clock
@@ -11,7 +12,8 @@ import kotlin.time.Duration
 import kotlin.uuid.Uuid
 
 /**
- * Adds the next steep, which becomes the session's [SessionWithSteeps.currentSteep].
+ * Adds the next steep, which becomes the session's [SessionWithSteeps.currentSteep]. It starts with
+ * the last steep's tags, unconfirmed.
  *
  * A finished session stays finished: the steep was forgotten at the time, so it's stamped as
  * following the last one rather than now.
@@ -42,6 +44,7 @@ class AddSteepUseCase(
                 brewingTime = brewingTime,
                 temperatureCelsius = temperatureCelsius,
                 waterQuantityMl = waterQuantityMl,
+                tags = last.tags.carriedForward(),
                 createdAt = now,
                 updatedAt = now,
             )

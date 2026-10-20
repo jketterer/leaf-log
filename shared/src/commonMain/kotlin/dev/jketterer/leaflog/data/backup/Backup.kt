@@ -33,6 +33,8 @@ data class Backup(
     /** Rows of `tea_session`: a session is its steep 1, the parent of steeps 2…n. */
     val steeps: List<BackupSteep>,
     val methods: List<BackupMethod>,
+    /** Curated and custom; a steep's tags travel on the steep. */
+    val tastingTags: List<BackupTastingTag> = emptyList(),
     /** Null in backups made before settings traveled, version 1 among them. */
     val preferences: BackupPreferences? = null,
 )
@@ -40,7 +42,7 @@ data class Backup(
 const val BACKUP_VERSION = 3
 
 // Field names match the entities, so version 1 (the entities themselves) decodes into these.
-// Defaults cover what version 1 lacked, and what version 2 lacked: plans and rinses.
+// Defaults cover what version 1 lacked, and what version 2 lacked: plans, rinses and tags.
 
 @Serializable
 data class BackupTeaType(
@@ -119,6 +121,13 @@ data class BackupSteep(
     val timerRemainingMs: Long? = null,
     val timerTotalMs: Long? = null,
     val actualBrewingTimeMs: Long? = null,
+    val tags: List<BackupSteepTag> = emptyList(),
+)
+
+@Serializable
+data class BackupSteepTag(
+    val tagId: String,
+    val confirmed: Boolean,
 )
 
 @Serializable
@@ -141,6 +150,16 @@ data class BackupMethod(
     val pinnedSortOrder: Int = 0,
     val createdAt: Instant,
     val updatedAt: Instant,
+    val deletedAt: Instant? = null,
+)
+
+@Serializable
+data class BackupTastingTag(
+    val id: String,
+    val key: String? = null,
+    val name: String? = null,
+    val isCustom: Boolean,
+    val displayOrder: Int,
     val deletedAt: Instant? = null,
 )
 

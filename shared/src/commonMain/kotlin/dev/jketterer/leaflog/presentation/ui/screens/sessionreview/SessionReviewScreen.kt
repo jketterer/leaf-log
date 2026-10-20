@@ -34,6 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import dev.jketterer.leaflog.domain.models.SteepTag
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.usecases.session.BrewDifference
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
@@ -118,6 +120,7 @@ private fun SessionReviewContent(
                     Spacer(Modifier.height(4.dp))
                     SteepRowsSection(
                         session.steeps,
+                        vocabulary = state.vocabulary,
                         rinsed = session.session.rinsed,
                         onSteepClick = { onIntent(SessionReviewIntent.SteepClicked(it)) })
 
@@ -190,12 +193,17 @@ private fun SessionReviewContent(
         }
     }
 
-    if (state.editingSteepId != null) {
+    val editingSteep = state.session?.steeps?.firstOrNull { it.id == state.editingSteepId }
+    if (editingSteep != null) {
         SteepEditSheet(
             rating = state.editRating,
             notes = state.editNotes,
+            tags = editingSteep.tags,
+            vocabulary = state.vocabulary,
             onRatingChange = { onIntent(SessionReviewIntent.SteepRatingChanged(it)) },
             onNotesChange = { onIntent(SessionReviewIntent.SteepNotesChanged(it)) },
+            onTagToggle = { onIntent(SessionReviewIntent.SteepTagToggled(it)) },
+            onTagCreate = { onIntent(SessionReviewIntent.SteepTagCreated(it)) },
             onDismiss = { onIntent(SessionReviewIntent.DismissSteepEdit) },
         )
     }
@@ -205,10 +213,21 @@ private fun SessionReviewContent(
 @Composable
 private fun SessionReviewPreview() {
     val best = previewSession(id = "best", ratings = listOf(5f))
+    val session = previewSession(ratings = listOf(4f, 4f, null))
+    val tags = listOf(
+        listOf(SteepTag("floral", confirmed = true), SteepTag("honey", confirmed = true)),
+        listOf(SteepTag("floral", confirmed = true), SteepTag("honey", confirmed = false), SteepTag("orchid", confirmed = true)),
+        listOf(SteepTag("floral", confirmed = false), SteepTag("orchid", confirmed = false)),
+    )
     LeafLogTheme {
         SessionReviewContent(
             state = SessionReviewState(
-                session = previewSession(ratings = listOf(4f, 4f, null)),
+                session = session.copy(steeps = session.steeps.mapIndexed { i, steep -> steep.copy(tags = tags[i]) }),
+                vocabulary = listOf(
+                    TastingTag("floral", key = "floral", name = null, isCustom = false, displayOrder = 0),
+                    TastingTag("honey", key = "honey", name = null, isCustom = false, displayOrder = 2),
+                    TastingTag("orchid", key = null, name = "Orchid", isCustom = true, displayOrder = 23),
+                ),
                 vsBest = VsBest.Versus(best, listOf(BrewDifference.TEMPERATURE)),
                 offerMethod = true,
                 methodLabel = "5g · 200ml · 2:00",

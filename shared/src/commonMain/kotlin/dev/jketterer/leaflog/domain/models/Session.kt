@@ -35,6 +35,7 @@ data class Steep(
     val rating: Float? = null,
     val notes: String? = null,
     val photos: List<String> = emptyList(),
+    val tags: List<SteepTag> = emptyList(),
 
     val createdAt: Instant,
     val updatedAt: Instant,

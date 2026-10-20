@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,13 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material3.HorizontalDivider
-import compose.icons.feathericons.Award
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -41,13 +40,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Award
 import compose.icons.feathericons.Check
 import compose.icons.feathericons.Droplet
 import dev.jketterer.leaflog.domain.models.BrewingVessel
-import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
-import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.SteepTag
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.usecases.session.BrewDifference
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
@@ -60,11 +60,10 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
+import dev.jketterer.leaflog.presentation.ui.components.session.SteepTagChips
+import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.review_best_from
 import leaf_log.shared.generated.resources.review_best_session
 import leaf_log.shared.generated.resources.review_diff_leaf
 import leaf_log.shared.generated.resources.review_diff_temperature
@@ -94,10 +93,11 @@ import leaf_log.shared.generated.resources.rinsed
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
-/** One row per steep; tap to edit its rating and note. */
+/** One row per steep; tap to edit its rating, tags and note. */
 @Composable
 internal fun SteepRowsSection(
     steeps: List<Steep>,
+    vocabulary: List<TastingTag>,
     rinsed: Boolean,
     onSteepClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -106,7 +106,12 @@ internal fun SteepRowsSection(
         SectionHeader(
             title = stringResource(Res.string.review_steeps_header),
             action = if (rinsed) {
-                { BrewingParamChip(icon = FeatherIcons.Droplet, text = stringResource(Res.string.rinsed)) }
+                {
+                    BrewingParamChip(
+                        icon = FeatherIcons.Droplet,
+                        text = stringResource(Res.string.rinsed)
+                    )
+                }
             } else null,
         )
         steeps.forEach { steep ->
@@ -115,23 +120,25 @@ internal fun SteepRowsSection(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.review_steep_n, steep.number),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = formatBrewingTime(steep.brewedTime.inWholeSeconds.toInt()),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    RatingDisplay(rating = steep.rating, iconsOnly = true)
+                Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.review_steep_n, steep.number),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = formatBrewingTime(steep.brewedTime.inWholeSeconds.toInt()),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f),
+                        )
+                        RatingDisplay(rating = steep.rating, iconsOnly = true)
+                    }
+                    SteepTagChips(steep.tags, vocabulary, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         }
@@ -177,11 +184,20 @@ internal fun VsBestSection(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Spacer(Modifier.weight(1f))
-                        RatingColumn(stringResource(Res.string.review_this_session), session.effectiveRating)
-                        RatingColumn(stringResource(Res.string.review_best_session), vsBest.best.effectiveRating)
+                        RatingColumn(
+                            stringResource(Res.string.review_this_session),
+                            session.effectiveRating
+                        )
+                        RatingColumn(
+                            stringResource(Res.string.review_best_session),
+                            vsBest.best.effectiveRating
+                        )
                     }
                     HorizontalDivider()
                     if (vsBest.differences.isEmpty()) {
@@ -189,7 +205,11 @@ internal fun VsBestSection(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Icon(FeatherIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Icon(
+                                FeatherIcons.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
                             Text(
                                 text = stringResource(Res.string.review_same_as_best),
                                 style = MaterialTheme.typography.bodyLarge,
@@ -207,7 +227,10 @@ internal fun VsBestSection(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1f),
                                 )
-                                DifferenceValue(difference.valueOf(session, vessel), emphasized = true)
+                                DifferenceValue(
+                                    difference.valueOf(session, vessel),
+                                    emphasized = true
+                                )
                                 DifferenceValue(difference.valueOf(vsBest.best, bestVessel))
                             }
                         }
@@ -401,12 +424,25 @@ internal fun UpdateMethodCard(
 internal fun SteepEditSheet(
     rating: Float,
     notes: String,
+    tags: List<SteepTag>,
+    vocabulary: List<TastingTag>,
     onRatingChange: (Float) -> Unit,
     onNotesChange: (String) -> Unit,
+    onTagToggle: (String) -> Unit,
+    onTagCreate: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        SteepEditSheetContent(rating, notes, onRatingChange, onNotesChange)
+        SteepEditSheetContent(
+            rating,
+            notes,
+            tags,
+            vocabulary,
+            onRatingChange,
+            onNotesChange,
+            onTagToggle,
+            onTagCreate,
+        )
     }
 }
 
@@ -414,8 +450,12 @@ internal fun SteepEditSheet(
 private fun SteepEditSheetContent(
     rating: Float,
     notes: String,
+    tags: List<SteepTag>,
+    vocabulary: List<TastingTag>,
     onRatingChange: (Float) -> Unit,
     onNotesChange: (String) -> Unit,
+    onTagToggle: (String) -> Unit,
+    onTagCreate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -432,6 +472,13 @@ private fun SteepEditSheetContent(
             rating = rating,
             onRatingChange = onRatingChange,
             modifier = Modifier.fillMaxWidth()
+        )
+        SteepTags(
+            tags = tags,
+            vocabulary = vocabulary,
+            onToggle = onTagToggle,
+            onCreate = onTagCreate,
+            modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(
             value = notes,
@@ -453,7 +500,18 @@ private fun SteepRowsSectionPreview() {
             steeps = previewSession(
                 ratings = listOf(4f, 4.5f, null),
                 brewingTime = 25.seconds
-            ).steeps,
+            ).steeps.mapIndexed { i, steep ->
+                steep.copy(tags = listOf(SteepTag("floral", confirmed = i == 0)))
+            },
+            vocabulary = listOf(
+                TastingTag(
+                    "floral",
+                    key = "floral",
+                    name = null,
+                    isCustom = false,
+                    displayOrder = 0
+                )
+            ),
             rinsed = true,
             onSteepClick = {},
             modifier = Modifier.padding(16.dp),
@@ -496,7 +554,10 @@ private fun VsBestSectionNewBestPreview() {
 private fun VsBestSectionSamePreview() {
     LeafLogTheme {
         VsBestSection(
-            vsBest = VsBest.Versus(previewSession(id = "best", ratings = listOf(4.5f)), emptyList()),
+            vsBest = VsBest.Versus(
+                previewSession(id = "best", ratings = listOf(4.5f)),
+                emptyList()
+            ),
             session = previewSession(ratings = listOf(3.5f)),
             vessel = null,
             bestVessel = null,
@@ -550,8 +611,21 @@ private fun SteepEditSheetPreview() {
             SteepEditSheetContent(
                 rating = 4f,
                 notes = "Sweet finish",
+                tags = listOf(SteepTag("floral", confirmed = true)),
+                vocabulary = listOf(
+                    TastingTag(
+                        "floral",
+                        key = "floral",
+                        name = null,
+                        isCustom = false,
+                        displayOrder = 0
+                    )
+                ),
                 onRatingChange = {},
-                onNotesChange = {})
+                onNotesChange = {},
+                onTagToggle = {},
+                onTagCreate = {},
+            )
         }
     }
 }

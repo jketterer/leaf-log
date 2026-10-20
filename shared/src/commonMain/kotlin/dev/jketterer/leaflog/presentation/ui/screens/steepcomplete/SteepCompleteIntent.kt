@@ -7,6 +7,8 @@ import kotlin.time.Duration
 sealed interface SteepCompleteIntent {
     data class RatingChanged(val rating: Float) : SteepCompleteIntent
     data class NotesChanged(val notes: String) : SteepCompleteIntent
+    data class TagToggled(val tagId: String) : SteepCompleteIntent
+    data class TagCreated(val name: String) : SteepCompleteIntent
     data object StartNextSteep : SteepCompleteIntent
     data object ShowAdjustSheet : SteepCompleteIntent
     data object DismissAdjustSheet : SteepCompleteIntent

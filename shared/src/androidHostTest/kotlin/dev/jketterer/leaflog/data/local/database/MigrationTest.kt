@@ -208,6 +208,16 @@ class MigrationTest {
         )
         connection.close()
     }
+
+    @Test
+    fun `10 to 11 produces the exported version 11 schema`() {
+        val connection = createFromSchema(10)
+
+        MIGRATION_10_11.migrate(connection)
+
+        assertSchemaMatches(connection, 11)
+        connection.close()
+    }
 }
 
 private fun SQLiteStatement.textOrNull(index: Int) = if (isNull(index)) null else getText(index)

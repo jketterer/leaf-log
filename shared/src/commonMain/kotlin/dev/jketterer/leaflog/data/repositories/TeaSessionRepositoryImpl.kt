@@ -2,7 +2,7 @@ package dev.jketterer.leaflog.data.repositories
 
 import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
 import dev.jketterer.leaflog.data.mappers.toAggregates
-import dev.jketterer.leaflog.data.mappers.toEntity
+import dev.jketterer.leaflog.data.mappers.toRow
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlinx.coroutines.flow.Flow
@@ -51,8 +51,12 @@ class TeaSessionRepositoryImpl(
     override suspend fun getSessionOfSteep(steepId: String): SessionWithSteeps? =
         teaSessionDao.getSessionOfSteep(steepId).toAggregates().singleOrNull()
 
-    override suspend fun saveSession(session: SessionWithSteeps) =
-        teaSessionDao.upsertAll(session.steeps.map { it.toEntity(session.session) })
+    override suspend fun saveSession(session: SessionWithSteeps) {
+        val rows = session.steeps.map { it.toRow(session.session) }
+        teaSessionDao.upsertAll(rows.map { it.steep })
+        teaSessionDao.deleteTags(rows.map { it.steep.id })
+        teaSessionDao.insertTags(rows.flatMap { it.tags })
+    }
 
     override suspend fun deleteSteep(steepId: String) =
         teaSessionDao.softDelete(steepId, Clock.System.now().toEpochMilliseconds())

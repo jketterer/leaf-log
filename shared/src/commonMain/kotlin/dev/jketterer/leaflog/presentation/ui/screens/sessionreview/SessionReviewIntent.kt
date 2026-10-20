@@ -7,6 +7,8 @@ sealed interface SessionReviewIntent {
     data class SteepClicked(val steepId: String) : SessionReviewIntent
     data class SteepRatingChanged(val rating: Float) : SessionReviewIntent
     data class SteepNotesChanged(val notes: String) : SessionReviewIntent
+    data class SteepTagToggled(val tagId: String) : SessionReviewIntent
+    data class SteepTagCreated(val name: String) : SessionReviewIntent
     data object DismissSteepEdit : SessionReviewIntent
     data class MethodLabelChanged(val label: String) : SessionReviewIntent
     data object SaveMethod : SessionReviewIntent

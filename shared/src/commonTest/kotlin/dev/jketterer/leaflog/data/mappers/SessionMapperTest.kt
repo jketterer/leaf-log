@@ -1,5 +1,7 @@
 package dev.jketterer.leaflog.data.mappers
 
+import dev.jketterer.leaflog.data.local.database.entities.SteepRow
+import dev.jketterer.leaflog.data.local.database.entities.SteepTagEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -36,11 +38,16 @@ class SessionMapperTest {
 
     @Test
     fun `steeps written back reproduce the rows they were read from`() {
-        val rows = listOf(row("a", rating = 4f), row("a-2", "a", 2, rating = null))
+        val rows = listOf(
+            row("a", rating = 4f).copy(tags = listOf(SteepTagEntity("a", "floral", confirmed = true))),
+            row("a-2", "a", 2, rating = null).copy(
+                tags = listOf(SteepTagEntity("a-2", "floral", confirmed = false)),
+            ),
+        )
 
         val aggregate = rows.toAggregates().single()
 
-        assertEquals(rows, aggregate.steeps.map { it.toEntity(aggregate.session) })
+        assertEquals(rows, aggregate.steeps.map { it.toRow(aggregate.session) })
     }
 
     @Test
@@ -64,6 +71,13 @@ private fun row(
     parentSessionId: String? = null,
     steepNumber: Int = 1,
     rating: Float? = null,
+) = SteepRow(steep = entity(id, parentSessionId, steepNumber, rating), tags = emptyList())
+
+private fun entity(
+    id: String,
+    parentSessionId: String?,
+    steepNumber: Int,
+    rating: Float?,
 ) = TeaSessionEntity(
     id = id,
     teaId = "tea",

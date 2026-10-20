@@ -9,7 +9,7 @@ import kotlin.time.Clock
 
 /**
  * Applies [edit] to the steep as stored, so callers name only what they change and `null` clears.
- * Only the brew parameters, rating, notes and photos can change.
+ * Only the brew parameters, rating, notes, photos and tags can change.
  */
 class EditSteepUseCase(
     private val transactor: Transactor,
@@ -33,9 +33,10 @@ class EditSteepUseCase(
                 rating = steep.rating,
                 notes = steep.notes,
                 photos = steep.photos,
+                tags = steep.tags,
             )
             require(untouched == steep) {
-                "Only a steep's brew parameters, rating, notes and photos can be edited"
+                "Only a steep's brew parameters, rating, notes, photos and tags can be edited"
             }
             edited.requireValid()
 

@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -14,6 +15,7 @@ data class SteepCompleteState(
     val vessels: List<BrewingVessel> = emptyList(),
     val rating: Float = 0f,
     val notes: String = "",
+    val vocabulary: List<TastingTag> = emptyList(),
     // Next steep: what the primary button starts
     val nextSteepDuration: Duration? = null,
     val nextSteepTemperature: Double? = null,

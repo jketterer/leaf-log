@@ -10,6 +10,7 @@ import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.database.RoomTransactor
 import dev.jketterer.leaflog.data.local.database.at
 import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEntity
+import dev.jketterer.leaflog.data.local.database.entities.SteepTagEntity
 import dev.jketterer.leaflog.data.local.database.inMemoryDatabase
 import dev.jketterer.leaflog.data.local.database.row
 import dev.jketterer.leaflog.data.local.database.seedForeignKeys
@@ -267,7 +268,7 @@ class BackupRepositoryImplTest {
 
         val tea = assertNotNull(fresh.database.teaDao().getById("tea"))
         assertNotNull(tea.finishedAt)
-        assertEquals("tea", fresh.database.teaSessionDao().getAllSessions().first().teaId)
+        assertEquals("tea", fresh.database.teaSessionDao().getAllSessions().first().steep.teaId)
     }
 
     @Test
@@ -373,6 +374,7 @@ class BackupRepositoryImplTest {
             teaDao = database.teaDao(),
             sessionDao = database.teaSessionDao(),
             methodDao = database.brewingConfigurationDao(),
+            tastingTagDao = database.tastingTagDao(),
             transactor = transactor(RoomTransactor(database)),
             imageStorage = storage,
             fileSystem = fileSystem,
@@ -381,7 +383,10 @@ class BackupRepositoryImplTest {
 
         fun read(stored: String) = fileSystem.read(files / stored) { readByteArray() }
 
-        /** A gaiwan session of two steeps with a photo, its method, and a deleted vessel. */
+        /**
+         * A gaiwan session of two steeps with a photo and tags, one of them custom, its method,
+         * and a deleted vessel.
+         */
         suspend fun seedJournal() {
             database.seedForeignKeys()
             fileSystem.createDirectories(files / "session_images")
@@ -397,6 +402,17 @@ class BackupRepositoryImplTest {
                     ),
                 ),
             )
+            TastingTagRepositoryImpl(database.tastingTagDao()).run {
+                initializeDefaults()
+                val custom = createCustom("Orchid")
+                database.teaSessionDao().insertTags(
+                    listOf(
+                        SteepTagEntity("s1", "floral", confirmed = true),
+                        SteepTagEntity("s1", custom.id, confirmed = true),
+                        SteepTagEntity("s2", "floral", confirmed = false),
+                    ),
+                )
+            }
             database.brewingConfigurationDao().upsert(
                 BrewingConfigurationEntity(
                     id = "method",
@@ -431,10 +447,15 @@ class BackupRepositoryImplTest {
                 .sortedBy { it.id },
             teas = database.teaDao().getAllIncludingDeleted().map { it.toBackup() }
                 .sortedBy { it.id },
-            steeps = database.teaSessionDao().getAllIncludingDeleted().map { it.toBackup() }
-                .sortedBy { it.id },
+            steeps = database.teaSessionDao().getAllTags().groupBy { it.steepId }.let { tags ->
+                database.teaSessionDao().getAllIncludingDeleted()
+                    .map { it.toBackup(tags[it.id].orEmpty().sortedBy { tag -> tag.tagId }) }
+                    .sortedBy { it.id }
+            },
             methods = database.brewingConfigurationDao().getAllIncludingDeleted()
                 .map { it.toBackup() }
+                .sortedBy { it.id },
+            tastingTags = database.tastingTagDao().getAllIncludingDeleted().map { it.toBackup() }
                 .sortedBy { it.id },
         )
 

@@ -1,8 +1,8 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
-import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
+import dev.jketterer.leaflog.data.local.database.entities.SteepRow
 import dev.jketterer.leaflog.data.mappers.toAggregates
-import dev.jketterer.leaflog.data.mappers.toEntity
+import dev.jketterer.leaflog.data.mappers.toRow
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
@@ -94,14 +94,18 @@ class FakeBrewingVesselRepository(vessels: List<BrewingVessel> = emptyList()) :
 class FakeTeaSessionRepository(
     sessions: List<SessionWithSteeps> = emptyList(),
 ) : TeaSessionRepository {
-    private val rows = mutableMapOf<String, TeaSessionEntity>()
-    private val liveRows get() = rows.values.filter { it.deletedAt == null }
+    private val rows = mutableMapOf<String, SteepRow>()
+    private val liveRows get() = rows.values.filter { it.steep.deletedAt == null }
 
     init {
-        sessions.forEach { session ->
-            session.steeps.forEach { rows[it.id] = it.toEntity(session.session) }
-        }
+        sessions.forEach { saveRows(it) }
     }
+
+    private fun saveRows(session: SessionWithSteeps) {
+        session.steeps.forEach { rows[it.id] = it.toRow(session.session) }
+    }
+
+    private fun SteepRow.deleted() = copy(steep = steep.copy(deletedAt = DELETED_AT))
 
     override suspend fun getAllSessions(): List<SessionWithSteeps> = liveRows.toAggregates()
 
@@ -111,28 +115,26 @@ class FakeTeaSessionRepository(
     ): List<SessionWithSteeps> = getAllSessions().filter { it.startedAt in start..end }
 
     override suspend fun getSession(id: String): SessionWithSteeps? =
-        liveRows.filter { (it.parentSessionId ?: it.id) == id }.toAggregates().singleOrNull()
+        liveRows.filter { (it.steep.parentSessionId ?: it.steep.id) == id }.toAggregates().singleOrNull()
 
     override suspend fun getSessionOfSteep(steepId: String): SessionWithSteeps? =
-        liveRows.find { it.id == steepId }?.let { getSession(it.parentSessionId ?: it.id) }
+        liveRows.find { it.steep.id == steepId }?.let { getSession(it.steep.parentSessionId ?: it.steep.id) }
 
     override suspend fun getSessionsByTea(teaId: String): List<SessionWithSteeps> =
-        liveRows.filter { it.teaId == teaId }.toAggregates()
+        liveRows.filter { it.steep.teaId == teaId }.toAggregates()
 
     override suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps> =
         getAllSessions().filter { it.session.vesselId == vesselId }
 
-    override suspend fun saveSession(session: SessionWithSteeps) {
-        session.steeps.forEach { rows[it.id] = it.toEntity(session.session) }
-    }
+    override suspend fun saveSession(session: SessionWithSteeps) = saveRows(session)
 
     override suspend fun deleteSteep(steepId: String) {
-        rows[steepId] = rows.getValue(steepId).copy(deletedAt = DELETED_AT)
+        rows[steepId] = rows.getValue(steepId).deleted()
     }
 
     override suspend fun deleteSession(sessionId: String) {
-        rows.values.filter { (it.parentSessionId ?: it.id) == sessionId }
-            .forEach { rows[it.id] = it.copy(deletedAt = DELETED_AT) }
+        rows.values.filter { (it.steep.parentSessionId ?: it.steep.id) == sessionId }
+            .forEach { rows[it.steep.id] = it.deleted() }
     }
 
     override fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")

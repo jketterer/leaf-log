@@ -2,6 +2,8 @@ package dev.jketterer.leaflog.data.backup
 
 import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEntity
 import dev.jketterer.leaflog.data.local.database.entities.BrewingVesselEntity
+import dev.jketterer.leaflog.data.local.database.entities.SteepTagEntity
+import dev.jketterer.leaflog.data.local.database.entities.TastingTagEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
@@ -96,7 +98,7 @@ internal fun BackupTea.toEntity() = TeaEntity(
     deletedAt = deletedAt,
 )
 
-internal fun TeaSessionEntity.toBackup() = BackupSteep(
+internal fun TeaSessionEntity.toBackup(tags: List<SteepTagEntity>) = BackupSteep(
     id = id,
     teaId = teaId,
     parentSessionId = parentSessionId,
@@ -125,6 +127,7 @@ internal fun TeaSessionEntity.toBackup() = BackupSteep(
     timerRemainingMs = timerRemainingMs,
     timerTotalMs = timerTotalMs,
     actualBrewingTimeMs = actualBrewingTimeMs,
+    tags = tags.map { BackupSteepTag(tagId = it.tagId, confirmed = it.confirmed) },
 )
 
 internal fun BackupSteep.toEntity() = TeaSessionEntity(
@@ -228,4 +231,25 @@ internal fun BackupPreferences.toDomain() = UserPreferences(
     timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
     sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
     themeMode = themeMode,
+)
+
+internal fun BackupSteep.tagEntities() =
+    tags.map { SteepTagEntity(steepId = id, tagId = it.tagId, confirmed = it.confirmed) }
+
+internal fun TastingTagEntity.toBackup() = BackupTastingTag(
+    id = id,
+    key = key,
+    name = name,
+    isCustom = isCustom,
+    displayOrder = displayOrder,
+    deletedAt = deletedAt,
+)
+
+internal fun BackupTastingTag.toEntity() = TastingTagEntity(
+    id = id,
+    key = key,
+    name = name,
+    isCustom = isCustom,
+    displayOrder = displayOrder,
+    deletedAt = deletedAt,
 )

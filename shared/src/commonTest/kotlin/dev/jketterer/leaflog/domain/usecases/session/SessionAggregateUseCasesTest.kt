@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.domain.usecases.session
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.SteepTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
@@ -127,6 +128,22 @@ class SessionAggregateUseCasesTest {
         val first = started.steeps.single()
         assertEquals(first.timestamp + first.brewingTime, updated.currentSteep.timestamp)
         assertEquals(SessionStatus.COMPLETED, updated.session.status)
+    }
+
+    @Test
+    fun `the next steep starts with the last one's tags, unconfirmed`() = runTest {
+        val id = start().session.id
+        editSteep(id) {
+            it.copy(tags = listOf(SteepTag("floral", confirmed = true), SteepTag("sweet", confirmed = false)))
+        }.getOrThrow()
+
+        val next = addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow()
+
+        assertEquals(
+            listOf(SteepTag("floral", confirmed = false), SteepTag("sweet", confirmed = false)),
+            next.currentSteep.tags,
+        )
+        assertEquals(next, sessions.getSession(id))
     }
 
     @Test

@@ -286,3 +286,21 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         connection.execSQL("ALTER TABLE `tea_session` ADD COLUMN `rinsed` INTEGER NOT NULL DEFAULT 0")
     }
 }
+
+// The curated tags are seeded at startup, by InitializeDefaultsUseCase, for fresh installs alike
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `tasting_tag` (`id` TEXT NOT NULL, `key` TEXT, `name` TEXT, " +
+                "`isCustom` INTEGER NOT NULL, `displayOrder` INTEGER NOT NULL, `deletedAt` INTEGER, " +
+                "PRIMARY KEY(`id`))",
+        )
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `steep_tag` (`steepId` TEXT NOT NULL, `tagId` TEXT NOT NULL, " +
+                "`confirmed` INTEGER NOT NULL, PRIMARY KEY(`steepId`, `tagId`), " +
+                "FOREIGN KEY(`steepId`) REFERENCES `tea_session`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , " +
+                "FOREIGN KEY(`tagId`) REFERENCES `tasting_tag`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        connection.execSQL("CREATE INDEX IF NOT EXISTS `index_steep_tag_tagId` ON `steep_tag` (`tagId`)")
+    }
+}

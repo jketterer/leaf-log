@@ -101,7 +101,7 @@ di/ (Dependency Injection)
 
 ### Database
 
-**Room Database (Version 10)**
+**Room Database (Version 11)**
 
 - Entities in `data/local/database/entities/`
 - DAOs in `data/local/database/dao/`
@@ -117,6 +117,8 @@ di/ (Dependency Injection)
       NULL on children
 - `TeaTypeEntity`: Tea categories
 - `BrewingVesselEntity`: Brewing vessels
+- `TastingTagEntity`: Curated and custom tasting tags; `SteepTagEntity` puts one on a steep,
+  read with the session through `SteepRow`
 
 ### Dependency Injection (Koin)
 

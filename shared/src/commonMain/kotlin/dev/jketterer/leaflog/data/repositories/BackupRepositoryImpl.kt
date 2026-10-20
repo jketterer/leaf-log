@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.data.backup.decodeBackup
 import dev.jketterer.leaflog.data.backup.encodeBackup
 import dev.jketterer.leaflog.data.backup.mapPhotos
 import dev.jketterer.leaflog.data.backup.planMerge
+import dev.jketterer.leaflog.data.backup.tagEntities
 import dev.jketterer.leaflog.data.backup.summarize
 import dev.jketterer.leaflog.data.backup.toBackup
 import dev.jketterer.leaflog.data.backup.toDomain
@@ -18,6 +19,7 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.ZipWriter
 import dev.jketterer.leaflog.data.local.database.dao.BrewingConfigurationDao
 import dev.jketterer.leaflog.data.local.database.dao.BrewingVesselDao
+import dev.jketterer.leaflog.data.local.database.dao.TastingTagDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaSessionDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaTypeDao
@@ -72,6 +74,7 @@ class BackupRepositoryImpl(
     private val teaDao: TeaDao,
     private val sessionDao: TeaSessionDao,
     private val methodDao: BrewingConfigurationDao,
+    private val tastingTagDao: TastingTagDao,
     private val transactor: Transactor,
     private val imageStorage: ImageStorage,
     private val fileSystem: FileSystem,
@@ -83,14 +86,16 @@ class BackupRepositoryImpl(
             val now = Clock.System.now()
             // One transaction, so a steep saved mid-export can't land half in the snapshot
             val snapshot = transactor {
+                val tags = sessionDao.getAllTags().groupBy { it.steepId }
                 Backup(
                     version = BACKUP_VERSION,
                     exportedAt = now,
                     teaTypes = teaTypeDao.getAllIncludingDeleted().map { it.toBackup() },
                     vessels = vesselDao.getAllIncludingDeleted().map { it.toBackup() },
                     teas = teaDao.getAllIncludingDeleted().map { it.toBackup() },
-                    steeps = sessionDao.getAllIncludingDeleted().map { it.toBackup() },
+                    steeps = sessionDao.getAllIncludingDeleted().map { it.toBackup(tags[it.id].orEmpty()) },
                     methods = methodDao.getAllIncludingDeleted().map { it.toBackup() },
+                    tastingTags = tastingTagDao.getAllIncludingDeleted().map { it.toBackup() },
                     preferences = preferencesRepository.getPreferences().toBackup(),
                 )
             }
@@ -153,8 +158,13 @@ class BackupRepositoryImpl(
                 teaTypeDao.upsertAll(backup.teaTypes.map { it.toEntity() })
                 vesselDao.upsertAll(backup.vessels.map { it.toEntity() })
                 teaDao.upsertAll(backup.teas.map { it.toEntity() })
+                tastingTagDao.insertMissing(backup.tastingTags.map { it.toEntity() })
                 // Parents first: children point at them
                 sessionDao.upsertAll(backup.steeps.sortedBy { it.parentSessionId != null }.map { it.toEntity() })
+                // A steep that's written brings its tags, replacing those it had here
+                // Chunked to stay under SQLite's limit on bound variables
+                backup.steeps.map { it.id }.chunked(1_000).forEach { sessionDao.deleteTags(it) }
+                sessionDao.insertTags(backup.steeps.flatMap { it.tagEntities() })
                 methodDao.upsertAll(backup.methods.map { it.toEntity() })
 
                 sessionDao.restoreTeasWithLiveSessions()

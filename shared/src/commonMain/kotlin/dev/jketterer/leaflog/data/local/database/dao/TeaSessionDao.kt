@@ -1,8 +1,12 @@
 package dev.jketterer.leaflog.data.local.database.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
+import dev.jketterer.leaflog.data.local.database.entities.SteepRow
+import dev.jketterer.leaflog.data.local.database.entities.SteepTagEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -102,7 +106,8 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
-    fun getAllSessionsFlow(): Flow<List<TeaSessionEntity>>
+    @Transaction
+    fun getAllSessionsFlow(): Flow<List<SteepRow>>
 
     @Query(
         """
@@ -111,7 +116,8 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
-    suspend fun getAllSessions(): List<TeaSessionEntity>
+    @Transaction
+    suspend fun getAllSessions(): List<SteepRow>
 
     @Query(
         """
@@ -127,7 +133,8 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
-    fun getRecentSessionsFlow(limit: Int): Flow<List<TeaSessionEntity>>
+    @Transaction
+    fun getRecentSessionsFlow(limit: Int): Flow<List<SteepRow>>
 
     @Query(
         """
@@ -136,7 +143,8 @@ interface TeaSessionDao {
         AND COALESCE(parentSessionId, id) = :id
     """
     )
-    suspend fun getSession(id: String): List<TeaSessionEntity>
+    @Transaction
+    suspend fun getSession(id: String): List<SteepRow>
 
     @Query(
         """
@@ -145,7 +153,8 @@ interface TeaSessionDao {
         AND COALESCE(parentSessionId, id) = :id
     """
     )
-    fun getSessionFlow(id: String): Flow<List<TeaSessionEntity>>
+    @Transaction
+    fun getSessionFlow(id: String): Flow<List<SteepRow>>
 
     @Query(
         """
@@ -160,7 +169,8 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
-    suspend fun getSessionsByTea(teaId: String): List<TeaSessionEntity>
+    @Transaction
+    suspend fun getSessionsByTea(teaId: String): List<SteepRow>
 
     @Query(
         """
@@ -175,7 +185,8 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
-    fun getSessionsByTeaFlow(teaId: String): Flow<List<TeaSessionEntity>>
+    @Transaction
+    fun getSessionsByTeaFlow(teaId: String): Flow<List<SteepRow>>
 
     @Query(
         """
@@ -190,7 +201,8 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
-    suspend fun getSessionsByVessel(vesselId: String): List<TeaSessionEntity>
+    @Transaction
+    suspend fun getSessionsByVessel(vesselId: String): List<SteepRow>
 
     @Query(
         """
@@ -205,7 +217,8 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
-    fun getInProgressSessionsFlow(): Flow<List<TeaSessionEntity>>
+    @Transaction
+    fun getInProgressSessionsFlow(): Flow<List<SteepRow>>
 
     @Query(
         """
@@ -220,10 +233,11 @@ interface TeaSessionDao {
         ORDER BY timestamp DESC
     """
     )
+    @Transaction
     suspend fun getSessionsStartedBetween(
         startTimestamp: Long,
         endTimestamp: Long,
-    ): List<TeaSessionEntity>
+    ): List<SteepRow>
 
     @Query(
         """
@@ -236,7 +250,8 @@ interface TeaSessionDao {
         )
     """
     )
-    suspend fun getSessionOfSteep(steepId: String): List<TeaSessionEntity>
+    @Transaction
+    suspend fun getSessionOfSteep(steepId: String): List<SteepRow>
 
     /** Deleted rows too: a backup carries them. */
     @Query("SELECT * FROM tea_session")
@@ -267,6 +282,18 @@ interface TeaSessionDao {
 
     @Upsert
     suspend fun upsertAll(teaSessions: List<TeaSessionEntity>)
+
+    // A steep's tags are replaced whole: delete then insert, in the caller's transaction
+
+    @Query("DELETE FROM steep_tag WHERE steepId IN (:steepIds)")
+    suspend fun deleteTags(steepIds: List<String>)
+
+    @Insert
+    suspend fun insertTags(tags: List<SteepTagEntity>)
+
+    /** Every steep's tags, deleted steeps' too: a backup carries them. */
+    @Query("SELECT * FROM steep_tag")
+    suspend fun getAllTags(): List<SteepTagEntity>
 
     @Query("UPDATE tea_session SET deletedAt = :timestamp, updatedAt = :timestamp WHERE id = :id")
     suspend fun softDelete(id: String, timestamp: Long)

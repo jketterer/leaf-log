@@ -21,15 +21,25 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a method's plan and rinse and a session's source and rinse survive a round trip`() {
+    fun `a method's plan and rinse and a session's source, rinse and tags survive a round trip`() {
         val backup = decodeBackup(V1).let {
             it.copy(
                 methods = listOf(
                     METHOD.copy(steepIncrement = 5.seconds, steepOverrides = mapOf(4 to 45.seconds), rinse = true),
                 ),
                 steeps = it.steeps.mapIndexed { i, steep ->
-                    if (i == 0) steep.copy(planSessionId = "earlier", rinsed = true) else steep
+                    if (i == 0) {
+                        steep.copy(
+                            planSessionId = "earlier",
+                            rinsed = true,
+                            tags = listOf(BackupSteepTag("floral", confirmed = true)),
+                        )
+                    } else steep
                 },
+                tastingTags = listOf(
+                    BackupTastingTag("floral", key = "floral", isCustom = false, displayOrder = 0),
+                    BackupTastingTag("t1", name = "Orchid", isCustom = true, displayOrder = 23),
+                ),
             )
         }
 
@@ -37,13 +47,15 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a version 2 backup reads with no plans or rinses`() {
+    fun `a version 2 backup reads with no plans, rinses or tags`() {
         val backup = decodeBackup(V1).copy(methods = listOf(METHOD))
         val v2 = encodeBackup(backup).replace("\"version\": 3", "\"version\": 2")
 
         assertEquals(backup.copy(version = 2), decodeBackup(v2))
         assertNull(decodeBackup(v2).methods.single().steepIncrement)
         assertFalse(decodeBackup(v2).methods.single().rinse)
+        assertEquals(emptyList(), decodeBackup(v2).tastingTags)
+        assertEquals(emptyList(), decodeBackup(v2).steeps.flatMap { it.tags })
     }
 
     @Test

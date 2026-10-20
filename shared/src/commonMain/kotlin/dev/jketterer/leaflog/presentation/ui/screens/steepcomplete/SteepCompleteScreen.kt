@@ -55,6 +55,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCar
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
+import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepAdjustSheet
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
@@ -290,6 +291,14 @@ private fun SteepCompleteBody(
                 rating = state.rating,
                 onRatingChange = { onIntent(SteepCompleteIntent.RatingChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        state.session?.let { session ->
+            SteepTags(
+                tags = session.currentSteep.tags,
+                vocabulary = state.vocabulary,
+                onToggle = { onIntent(SteepCompleteIntent.TagToggled(it)) },
+                onCreate = { onIntent(SteepCompleteIntent.TagCreated(it)) },
             )
         }
         HorizontalDivider()

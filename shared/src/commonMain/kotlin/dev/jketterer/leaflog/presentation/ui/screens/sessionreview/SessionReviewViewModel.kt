@@ -6,7 +6,9 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.toggled
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.FindMethodUpdateUseCase
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_create_tag
 import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_save_changes
 import leaf_log.shared.generated.resources.couldnt_save_method
@@ -40,6 +43,7 @@ class SessionReviewViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val tastingTagRepository: TastingTagRepository,
     private val imageStorage: ImageStorage,
     private val editSteepUseCase: EditSteepUseCase,
     private val compareWithBestUseCase: CompareWithBestUseCase,
@@ -89,11 +93,17 @@ class SessionReviewViewModel(
                 editSteep(id) { it.copy(notes = _state.value.editNotes) }
             }
 
+            is SessionReviewIntent.SteepTagToggled -> toggleTag(intent.tagId)
+            is SessionReviewIntent.SteepTagCreated -> createTag(intent.name)
             is SessionReviewIntent.DismissSteepEdit -> _state.update { it.copy(editingSteepId = null) }
             is SessionReviewIntent.MethodLabelChanged -> _state.update { it.copy(methodLabel = intent.label) }
             is SessionReviewIntent.SaveMethod -> saveMethod()
             is SessionReviewIntent.UpdateMethod -> updateMethod()
-            is SessionReviewIntent.Done -> _navigationEvents.trySend(SessionReviewNavEvent.NavigateToHome(route.sessionId))
+            is SessionReviewIntent.Done -> _navigationEvents.trySend(
+                SessionReviewNavEvent.NavigateToHome(
+                    route.sessionId
+                )
+            )
         }
     }
 
@@ -124,6 +134,7 @@ class SessionReviewViewModel(
                         offerMethod = offer,
                         methodToUpdate = methodToUpdate,
                         methodLabel = if (offer) suggestedLabel(session) else "",
+                        vocabulary = tastingTagRepository.getAll(),
                         isLoading = false,
                     )
                 }
@@ -134,7 +145,7 @@ class SessionReviewViewModel(
         }
     }
 
-    private suspend fun suggestedLabel(session: SessionWithSteeps): String =
+    private fun suggestedLabel(session: SessionWithSteeps): String =
         generateConfigurationLabelUseCase(
             teaQuantityGrams = session.session.teaQuantityGrams,
             waterQuantityMl = session.steeps.first().waterQuantityMl,
@@ -149,17 +160,40 @@ class SessionReviewViewModel(
         }
     }
 
+    private fun toggleTag(tagId: String) {
+        val id = _state.value.editingSteepId ?: return
+        editSteep(id) { it.copy(tags = it.tags.toggled(tagId)) }
+    }
+
+    /** Makes the tag and puts it on the steep being edited. */
+    private fun createTag(name: String) {
+        viewModelScope.launch {
+            try {
+                val tag = tastingTagRepository.createCustom(name)
+                _state.update { it.copy(vocabulary = it.vocabulary + tag) }
+                toggleTag(tag.id)
+            } catch (e: Exception) {
+                messages.failure(e, Res.string.couldnt_create_tag)
+            }
+        }
+    }
+
     private fun openSteep(steepId: String) {
         val steep = _state.value.session?.steeps?.firstOrNull { it.id == steepId } ?: return
         _state.update {
-            it.copy(editingSteepId = steepId, editRating = steep.rating ?: 0f, editNotes = steep.notes ?: "")
+            it.copy(
+                editingSteepId = steepId,
+                editRating = steep.rating ?: 0f,
+                editNotes = steep.notes ?: ""
+            )
         }
     }
 
     private fun addPhoto(imageBytes: ByteArray) {
         viewModelScope.launch {
             try {
-                val path = imageStorage.saveImage(imageBytes, "${Uuid.random()}.jpg", "session_images")
+                val path =
+                    imageStorage.saveImage(imageBytes, "${Uuid.random()}.jpg", "session_images")
                 editSteep(firstSteepId()) { it.copy(photos = it.photos + path) }
             } catch (e: Exception) {
                 messages.failure(e, Res.string.couldnt_save_photo)
@@ -183,7 +217,14 @@ class SessionReviewViewModel(
         val method = state.methodToUpdate ?: return
         viewModelScope.launch {
             updateMethodFromSessionUseCase(method.id, session)
-                .onSuccess { _state.update { it.copy(methodToUpdate = null, methodUpdated = true) } }
+                .onSuccess {
+                    _state.update {
+                        it.copy(
+                            methodToUpdate = null,
+                            methodUpdated = true
+                        )
+                    }
+                }
                 .onFailure { messages.failure(it, Res.string.couldnt_update_method) }
         }
     }

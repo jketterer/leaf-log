@@ -1,23 +1,26 @@
 package dev.jketterer.leaflog.data.mappers
 
+import dev.jketterer.leaflog.data.local.database.entities.SteepRow
+import dev.jketterer.leaflog.data.local.database.entities.SteepTagEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.SteepTag
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Groups parent rows with their steeps. Sessions keep the order their parent rows came in;
  * children whose parent isn't in the list are dropped. Callers pass live rows only.
  */
-fun List<TeaSessionEntity>.toAggregates(): List<SessionWithSteeps> {
-    val childrenByParent = filter { it.parentSessionId != null }.groupBy { it.parentSessionId }
-    return filter { it.parentSessionId == null }.map { parent ->
+fun List<SteepRow>.toAggregates(): List<SessionWithSteeps> {
+    val childrenByParent = filter { it.steep.parentSessionId != null }.groupBy { it.steep.parentSessionId }
+    return filter { it.steep.parentSessionId == null }.map { parent ->
         SessionWithSteeps(
-            session = parent.toSession(),
-            steeps = (listOf(parent) + childrenByParent[parent.id].orEmpty())
-                .sortedBy { it.steepNumber }
-                .map { it.toSteep() },
+            session = parent.steep.toSession(),
+            steeps = (listOf(parent) + childrenByParent[parent.steep.id].orEmpty())
+                .sortedBy { it.steep.steepNumber }
+                .map { it.steep.toSteep(it.tags) },
         )
     }
 }
@@ -37,7 +40,7 @@ private fun TeaSessionEntity.toSession() = Session(
     syncStatus = syncStatus,
 )
 
-private fun TeaSessionEntity.toSteep() = Steep(
+private fun TeaSessionEntity.toSteep(tags: List<SteepTagEntity>) = Steep(
     id = id,
     number = steepNumber,
     timestamp = timestamp,
@@ -47,6 +50,7 @@ private fun TeaSessionEntity.toSteep() = Steep(
     rating = rating,
     notes = notes,
     photos = photos,
+    tags = tags.map { SteepTag(it.tagId, it.confirmed) },
     createdAt = createdAt,
     updatedAt = updatedAt,
     timerStatus = timerStatus,
@@ -93,3 +97,9 @@ fun Steep.toEntity(session: Session): TeaSessionEntity {
         actualBrewingTimeMs = actualTime?.inWholeMilliseconds,
     )
 }
+
+/** This steep's row and its tags. */
+fun Steep.toRow(session: Session) = SteepRow(
+    steep = toEntity(session),
+    tags = tags.map { SteepTagEntity(steepId = id, tagId = it.tagId, confirmed = it.confirmed) },
+)

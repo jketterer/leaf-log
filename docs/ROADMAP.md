@@ -694,9 +694,9 @@ Decided 2026-10-19.
 **Migrations**, one per feature, all `ADD COLUMN` / `CREATE TABLE`: v8 → v9 the plan
 (`steep_increment`, `steep_overrides`, `tea_session.plan_session_id`); v9 → v10 rinse
 (`brewing_configurations.rinse`, `tea_session.rinsed`); v10 → v11 the tag tables, the curated
-vocabulary seeded. The backup becomes version 3 in the first of them; the later ones add fields
-with defaults under it, since no release ships between them. Version 2 backups import with no
-plans, rinses or tags.
+vocabulary seeded at startup alongside the default tea types, so fresh installs get it too. The
+backup becomes version 3 in the first of them; the later ones add fields with defaults under it,
+since no release ships between them. Version 2 backups import with no plans, rinses or tags.
 
 **Exit:** a 10-steep gongfu session from a saved plan goes review → running timer in two taps per
 steep, Next then Start, with rating and tags optional; a western brew from a pinned method takes two
@@ -721,7 +721,7 @@ death, and an upgrade over the previous dev build at each migration.
 7. [x] `feat: end-of-session review`: Save as method at any steep count; Steep Complete's remains go.
 8. [x] `feat: update a method from today's brew`. Test: the deviation check and the merge.
 9. [x] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.
-10. [ ] `feat: tasting tags`: v11, the vocabulary, carry-forward, custom tags. Tests: carry-forward,
+10. [x] `feat: tasting tags`: v11, the vocabulary, carry-forward, custom tags. Tests: carry-forward,
     the migration, the backup round trip. Track B: upgrade over the v10 build.
 11. [ ] `feat: the plan on the lock screen`, with the notification findings. Track B: Live Activity,
     tap routing.

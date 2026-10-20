@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.toggled
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.services.TimerService
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.couldnt_create_tag
 import leaf_log.shared.generated.resources.couldnt_discard_steep
 import leaf_log.shared.generated.resources.couldnt_finish_session
 import leaf_log.shared.generated.resources.couldnt_load_session
@@ -41,6 +44,7 @@ class SteepCompleteViewModel(
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val tastingTagRepository: TastingTagRepository,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
     private val resolvePlanUseCase: ResolvePlanUseCase,
@@ -71,6 +75,8 @@ class SteepCompleteViewModel(
         when (intent) {
             is SteepCompleteIntent.RatingChanged -> updateRating(intent.rating)
             is SteepCompleteIntent.NotesChanged -> updateNotes(intent.notes)
+            is SteepCompleteIntent.TagToggled -> toggleTag(intent.tagId)
+            is SteepCompleteIntent.TagCreated -> createTag(intent.name)
             is SteepCompleteIntent.StartNextSteep -> startNextSteep()
             is SteepCompleteIntent.ShowAdjustSheet -> _state.update { it.copy(showAdjustSheet = true) }
             is SteepCompleteIntent.DismissAdjustSheet -> _state.update { it.copy(showAdjustSheet = false) }
@@ -162,6 +168,7 @@ class SteepCompleteViewModel(
                         vessels = vessels,
                         rating = steep.rating ?: 0f,
                         notes = steep.notes ?: "",
+                        vocabulary = tastingTagRepository.getAll(),
                         isLoading = false,
                     )
                 }
@@ -195,6 +202,24 @@ class SteepCompleteViewModel(
         val steep = _state.value.session?.currentSteep ?: return
         _state.update { it.copy(notes = notes) }
         editSteep(steep.id) { it.copy(notes = _state.value.notes) }
+    }
+
+    private fun toggleTag(tagId: String) {
+        val steep = _state.value.session?.currentSteep ?: return
+        editSteep(steep.id) { it.copy(tags = it.tags.toggled(tagId)) }
+    }
+
+    /** Makes the tag and puts it on the steep. */
+    private fun createTag(name: String) {
+        viewModelScope.launch {
+            try {
+                val tag = tastingTagRepository.createCustom(name)
+                _state.update { it.copy(vocabulary = it.vocabulary + tag) }
+                toggleTag(tag.id)
+            } catch (e: Exception) {
+                messages.failure(e, Res.string.couldnt_create_tag)
+            }
+        }
     }
 
     /** What Next starts: the plan's time and the temperature this steep ended with. */

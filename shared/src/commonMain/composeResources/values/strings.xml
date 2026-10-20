@@ -295,6 +295,13 @@
     <string name="review_method_label">Name</string>
     <string name="review_save_method">Save method</string>
     <string name="review_method_saved">Method saved</string>
+    <string name="review_method_saved_detail">Find it under this tea's saved methods.</string>
+    <string name="review_method_updated_detail">Next time it brews the way you did today.</string>
+    <string name="review_update_method_header">Update method</string>
+    <string name="review_update_method_text">Brew %1$s the way you did today from now on.</string>
+    <string name="review_update_method">Update method</string>
+    <string name="review_method_updated">Method updated</string>
+    <string name="couldnt_update_method">Couldn't update the method</string>
     <string name="more_options">More options</string>
     <string name="discard_session_action">Discard session</string>
 </resources>

@@ -55,7 +55,7 @@ data class BrewingPlan(
 private val MIN_STEEP = 1.seconds
 private val ROUND_TO_5S_FROM = 15.seconds
 
-private fun Duration.roundedForPlan(): Duration {
+internal fun Duration.roundedForPlan(): Duration {
     val step = if (this < ROUND_TO_5S_FROM) 1000L else 5000L
     val rounded = (inWholeMilliseconds + step / 2) / step * step
     return rounded.milliseconds.coerceAtLeast(MIN_STEEP)

@@ -14,8 +14,8 @@ import kotlin.time.Clock
  * Saves a brewing configuration from a successful session: its set-up and the plan its steeps
  * followed, at any steep count.
  *
- * The session counts as the method's first use, unless it already used another method, so the
- * method's recomputed `timesUsed` starts at 1.
+ * The session moves to the new method, so its recomputed `timesUsed` starts at 1 and any method the
+ * session used before loses that use.
  */
 class SaveBrewingConfigurationUseCase(
     private val transactor: Transactor,
@@ -70,7 +70,7 @@ class SaveBrewingConfigurationUseCase(
         transactor {
             brewingConfigurationRepository.upsert(configuration)
             val source = teaSessionRepository.getSession(session.session.id)
-            if (source != null && source.session.usedConfigurationId == null) {
+            if (source != null) {
                 teaSessionRepository.saveSession(
                     source.withSession(source.session.copy(usedConfigurationId = configuration.id), now),
                 )

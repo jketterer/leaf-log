@@ -10,5 +10,6 @@ sealed interface SessionReviewIntent {
     data object DismissSteepEdit : SessionReviewIntent
     data class MethodLabelChanged(val label: String) : SessionReviewIntent
     data object SaveMethod : SessionReviewIntent
+    data object UpdateMethod : SessionReviewIntent
     data object Done : SessionReviewIntent
 }

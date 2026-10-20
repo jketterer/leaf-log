@@ -388,15 +388,16 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `a method saved from a session that used another leaves that one's count alone`() = runTest {
+    fun `a method saved from a session that used another takes that use from it`() = runTest {
         val id = startSession(CONFIG).getOrThrow().session.id
         editSteep(id) { it.copy(rating = 4f) }.getOrThrow()
         finishSession(id).getOrThrow()
 
         val saved = saveConfiguration(sessions.getSession(id)!!, customLabel = "Mine").getOrThrow()
 
-        assertEquals(0, saved.timesUsed)
-        assertEquals(1, config().timesUsed)
+        assertEquals(1, saved.timesUsed)
+        assertEquals(0, config().timesUsed)
+        assertEquals(saved.id, sessions.getSession(id)!!.session.usedConfigurationId)
     }
 
     private suspend fun start(

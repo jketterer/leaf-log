@@ -619,8 +619,12 @@ Decided 2026-10-19.
     - **Save as method** is offered at Finish by a session without a method, at any steep count,
       unless it was rated under 3★ or an identical method exists for the tea and vessel. Unrated
       sessions are offered it. (Today multi-steep sessions are never offered it.)
-    - **Update ‹method›** is offered when a session that used a method deviated from it over the
-      steeps brewed. Those steeps become today's; the method's overrides past the last one stay.
+    - **Update ‹method›** is offered when a session that used a method deviated from it, on the
+      same vessel, over the steeps brewed (rounded times; leaf, water and water type exactly;
+      temperature beyond 1 °C), unless rated under 3★. Those steeps become today's, with steep 1's
+      water and temperature and the session's leaf and water type; the method's overrides past the
+      last one stay, and its label and vessel are left alone. A session on a different vessel is
+      offered Save as method instead, which moves the session to the new method.
     - The method form edits base and increment, previews the first steeps and marks overrides.
       Overrides are learned only: the form clears them all, never edits one.
 - **Two ways out of the timer.** Complete Now becomes **"Poured early"** and keeps recording elapsed
@@ -715,7 +719,7 @@ death, and an upgrade over the previous dev build at each migration.
 5. [x] `feat: edit a plan in the method form`
 6. [x] `feat: slim review between steeps`
 7. [x] `feat: end-of-session review`: Save as method at any steep count; Steep Complete's remains go.
-8. [ ] `feat: update a method from today's brew`. Test: the deviation check and the merge.
+8. [x] `feat: update a method from today's brew`. Test: the deviation check and the merge.
 9. [ ] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.
 10. [ ] `feat: tasting tags`: v11, the vocabulary, carry-forward, custom tags. Tests: carry-forward,
     the migration, the backup round trip. Track B: upgrade over the v10 build.

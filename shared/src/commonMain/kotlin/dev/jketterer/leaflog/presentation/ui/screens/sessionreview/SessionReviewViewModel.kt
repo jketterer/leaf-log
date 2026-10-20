@@ -9,9 +9,11 @@ import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.usecases.configuration.FindMethodUpdateUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.ShouldOfferSaveAsMethodUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.UpdateMethodFromSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompareWithBestUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
@@ -29,6 +31,7 @@ import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_save_changes
 import leaf_log.shared.generated.resources.couldnt_save_method
 import leaf_log.shared.generated.resources.couldnt_save_photo
+import leaf_log.shared.generated.resources.couldnt_update_method
 import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.uuid.Uuid
 
@@ -43,6 +46,8 @@ class SessionReviewViewModel(
     private val shouldOfferSaveAsMethodUseCase: ShouldOfferSaveAsMethodUseCase,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
+    private val findMethodUpdateUseCase: FindMethodUpdateUseCase,
+    private val updateMethodFromSessionUseCase: UpdateMethodFromSessionUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionReviewState())
@@ -87,6 +92,7 @@ class SessionReviewViewModel(
             is SessionReviewIntent.DismissSteepEdit -> _state.update { it.copy(editingSteepId = null) }
             is SessionReviewIntent.MethodLabelChanged -> _state.update { it.copy(methodLabel = intent.label) }
             is SessionReviewIntent.SaveMethod -> saveMethod()
+            is SessionReviewIntent.UpdateMethod -> updateMethod()
             is SessionReviewIntent.Done -> _navigationEvents.trySend(SessionReviewNavEvent.NavigateToHome(route.sessionId))
         }
     }
@@ -106,6 +112,7 @@ class SessionReviewViewModel(
                 val bestVesselId = (vsBest as? VsBest.Versus)?.best?.session?.vesselId
                 val offer = shouldOfferSaveAsMethodUseCase(session)
                 val first = session.steeps.first()
+                val methodToUpdate = findMethodUpdateUseCase(session)
                 _state.update {
                     it.copy(
                         session = session,
@@ -115,6 +122,7 @@ class SessionReviewViewModel(
                         vsBest = vsBest,
                         notes = first.notes ?: "",
                         offerMethod = offer,
+                        methodToUpdate = methodToUpdate,
                         methodLabel = if (offer) suggestedLabel(session) else "",
                         isLoading = false,
                     )
@@ -166,6 +174,17 @@ class SessionReviewViewModel(
                 imageStorage.deleteImage(path)
             } catch (_: Exception) {
             }
+        }
+    }
+
+    private fun updateMethod() {
+        val state = _state.value
+        val session = state.session ?: return
+        val method = state.methodToUpdate ?: return
+        viewModelScope.launch {
+            updateMethodFromSessionUseCase(method.id, session)
+                .onSuccess { _state.update { it.copy(methodToUpdate = null, methodUpdated = true) } }
+                .onFailure { messages.failure(it, Res.string.couldnt_update_method) }
         }
     }
 

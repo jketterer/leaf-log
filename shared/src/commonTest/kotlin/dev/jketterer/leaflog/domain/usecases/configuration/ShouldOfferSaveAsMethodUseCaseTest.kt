@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases.configuration
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.FakeBrewingConfigurationRepository
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
@@ -13,9 +14,9 @@ import kotlin.time.Instant
 
 class ShouldOfferSaveAsMethodUseCaseTest {
     private fun offer(vararg saved: BrewingConfiguration) =
-        ShouldOfferSaveAsMethodUseCase(
-            CheckDuplicateConfigurationUseCase(FakeBrewingConfigurationRepository(saved.toList())),
-        )
+        FakeBrewingConfigurationRepository(saved.toList()).let {
+            ShouldOfferSaveAsMethodUseCase(it, CheckDuplicateConfigurationUseCase(it))
+        }
 
     @Test
     fun `an unrated session is offered`() = runTest {
@@ -33,18 +34,26 @@ class ShouldOfferSaveAsMethodUseCaseTest {
     }
 
     @Test
-    fun `a session that used a method is not offered`() = runTest {
-        val session = previewSession(ratings = listOf(5f)).let {
-            it.copy(session = it.session.copy(usedConfigurationId = "method"))
-        }
+    fun `a session that used a method on the same vessel is not offered`() = runTest {
+        val method = matchingMethod().copy(id = "method", brewingTime = 3.minutes)
 
-        assertFalse(offer()(session))
+        assertFalse(offer(method)(previewSession(ratings = listOf(5f)).usingMethod("method")))
+    }
+
+    @Test
+    fun `a session that used a method on another vessel is offered`() = runTest {
+        val method = matchingMethod().copy(id = "method", vesselId = "other", brewingTime = 3.minutes)
+
+        assertTrue(offer(method)(previewSession(ratings = listOf(5f)).usingMethod("method")))
     }
 
     @Test
     fun `a session matching a saved method is not offered`() = runTest {
         assertFalse(offer(matchingMethod())(previewSession(ratings = listOf(5f))))
     }
+
+    private fun SessionWithSteeps.usingMethod(id: String) =
+        copy(session = session.copy(usedConfigurationId = id))
 
     // previewSession: 5 g, 200 ml, 80 °C, 2 min, one steep
     private fun matchingMethod() = BrewingConfiguration(

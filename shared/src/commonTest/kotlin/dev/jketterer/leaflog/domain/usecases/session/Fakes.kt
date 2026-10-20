@@ -172,7 +172,8 @@ class FakeBrewingConfigurationRepository(
     }
 
     override suspend fun getAll(): List<BrewingConfiguration> = TODO("unused by these tests")
-    override suspend fun getByTeaAndVessel(teaId: String, vesselId: String): List<BrewingConfiguration> = TODO("unused by these tests")
+    override suspend fun getByTeaAndVessel(teaId: String, vesselId: String): List<BrewingConfiguration> =
+        configurations.values.filter { it.teaId == teaId && it.vesselId == vesselId && it.deletedAt == null }
     override fun getByTeaIdFlow(teaId: String): Flow<List<BrewingConfiguration>> = TODO("unused by these tests")
     override fun getByIdFlow(id: String): Flow<BrewingConfiguration?> = TODO("unused by these tests")
     override suspend fun delete(id: String) = TODO("unused by these tests")

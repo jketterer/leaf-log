@@ -9,6 +9,7 @@ import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
 import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
+import dev.jketterer.leaflog.domain.usecases.configuration.ShouldOfferSaveAsMethodUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
@@ -38,6 +39,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.RecomputeStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.CompareWithBestUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ReopenSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.SaveTimerStateUseCase
@@ -76,6 +78,7 @@ val useCaseModule = module {
     factoryOf(::StartSessionUseCase)
     factoryOf(::AddSteepUseCase)
     factoryOf(::ResolvePlanUseCase)
+    factoryOf(::CompareWithBestUseCase)
     factoryOf(::EditSteepUseCase)
     factoryOf(::EditSessionUseCase)
     factoryOf(::DeleteSteepUseCase)
@@ -115,6 +118,7 @@ val useCaseModule = module {
 
     // Brewing configuration use cases
     factoryOf(::CheckDuplicateConfigurationUseCase)
+    factoryOf(::ShouldOfferSaveAsMethodUseCase)
     factoryOf(::GenerateConfigurationLabelUseCase)
     factoryOf(::SaveBrewingConfigurationUseCase)
     factoryOf(::CreateBrewingConfigurationUseCase)

@@ -9,9 +9,6 @@ import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.services.TimerService
-import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
@@ -20,7 +17,6 @@ import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
-import dev.jketterer.leaflog.presentation.ui.viewmodel.createConfigurationSaveDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -52,9 +48,6 @@ class SteepCompleteViewModel(
     private val editSessionUseCase: EditSessionUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
-    private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
-    private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
-    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SteepCompleteState())
@@ -64,16 +57,6 @@ class SteepCompleteViewModel(
     val navigationEvents = _navigationEvents.receiveAsFlow()
 
     val messages = UiMessages<Nothing>()
-
-    private val configSaveDelegate = createConfigurationSaveDelegate(
-        saveBrewingConfigurationUseCase = saveBrewingConfigurationUseCase,
-        stateFlow = _state,
-        getSavedSession = { it.savedSession },
-        dismissDialog = { it.copy(showSaveConfigurationDialog = false) },
-        onFailure = messages::failure,
-        createSuccessNavEvent = { SteepCompleteNavEvent.NavigateToHome(it.session.id) },
-        sendNavEvent = { _navigationEvents.trySend(it) },
-    )
 
     init {
         loadPreferences(
@@ -100,12 +83,6 @@ class SteepCompleteViewModel(
             }
 
             is SteepCompleteIntent.FinishSession -> finishSession()
-            is SteepCompleteIntent.SaveConfigurationClicked ->
-                configSaveDelegate.saveConfiguration(intent.customLabel)
-
-            is SteepCompleteIntent.SkipSaveConfiguration ->
-                configSaveDelegate.skipSaveConfiguration()
-
             is SteepCompleteIntent.ShowDiscardConfirmation -> _state.update {
                 it.copy(showDiscardConfirmation = true)
             }
@@ -269,43 +246,13 @@ class SteepCompleteViewModel(
                 .onSuccess { finished ->
                     timerService.onSessionResolved(finished.session.id)
 
-                    val shouldPromptConfig = finished.steeps.size == 1 &&
-                        (finished.effectiveRating ?: 0f) >= 3f &&
-                        finished.session.usedConfigurationId == null
-
-                    if (shouldPromptConfig) {
-                        maybeShowSaveConfigDialog(finished)
-                    } else {
-                        _state.update { it.copy(isLoading = false) }
-                        _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome(finished.session.id))
-                    }
+                    _state.update { it.copy(isLoading = false) }
+                    _navigationEvents.send(SteepCompleteNavEvent.NavigateToReview(finished.session.id))
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isLoading = false) }
                     messages.failure(e, Res.string.couldnt_finish_session)
                 }
-        }
-    }
-
-    private suspend fun maybeShowSaveConfigDialog(session: SessionWithSteeps) {
-        if (checkDuplicateConfigurationUseCase(session)) {
-            _state.update { it.copy(isLoading = false) }
-            _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome(session.session.id))
-            return
-        }
-        val first = session.steeps.first()
-        val label = generateConfigurationLabelUseCase(
-            teaQuantityGrams = session.session.teaQuantityGrams,
-            waterQuantityMl = first.waterQuantityMl,
-            brewingTime = first.brewingTime,
-        )
-        _state.update {
-            it.copy(
-                isLoading = false,
-                showSaveConfigurationDialog = true,
-                suggestedConfigurationLabel = label,
-                savedSession = session,
-            )
         }
     }
 
@@ -385,6 +332,7 @@ class SteepCompleteViewModel(
 
 sealed interface SteepCompleteNavEvent {
     data class NavigateToHome(val finishedSessionId: String? = null) : SteepCompleteNavEvent
+    data class NavigateToReview(val sessionId: String) : SteepCompleteNavEvent
     data class NavigateToTimer(val sessionId: String) : SteepCompleteNavEvent
     data object NavigateBack : SteepCompleteNavEvent
 }

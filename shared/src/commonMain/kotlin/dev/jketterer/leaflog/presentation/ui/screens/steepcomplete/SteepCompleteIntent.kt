@@ -13,8 +13,6 @@ sealed interface SteepCompleteIntent {
     data class NextSteepDurationChanged(val duration: Duration?) : SteepCompleteIntent
     data class NextSteepTemperatureChanged(val temperature: Double?) : SteepCompleteIntent
     data object FinishSession : SteepCompleteIntent
-    data class SaveConfigurationClicked(val customLabel: String?) : SteepCompleteIntent
-    data object SkipSaveConfiguration : SteepCompleteIntent
     data object ShowDiscardConfirmation : SteepCompleteIntent
     data object DismissDiscardConfirmation : SteepCompleteIntent
     data object ConfirmDiscard : SteepCompleteIntent

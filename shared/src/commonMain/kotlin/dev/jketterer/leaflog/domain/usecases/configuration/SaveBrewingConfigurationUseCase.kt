@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases.configuration
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -10,7 +11,8 @@ import dev.jketterer.leaflog.domain.usecases.session.withSession
 import kotlin.time.Clock
 
 /**
- * Saves a brewing configuration from a successful session: its set-up and first steep.
+ * Saves a brewing configuration from a successful session: its set-up and the plan its steeps
+ * followed, at any steep count.
  *
  * The session counts as the method's first use, unless it already used another method, so the
  * method's recomputed `timesUsed` starts at 1.
@@ -31,15 +33,16 @@ class SaveBrewingConfigurationUseCase(
         skipRatingCheck: Boolean = false,
     ): Result<BrewingConfiguration> = runCatching {
         val rating = session.effectiveRating
-        require(skipRatingCheck || (rating != null && rating >= 3f)) {
-            "Session must have a rating of 3+ stars"
+        require(skipRatingCheck || rating == null || rating >= 3f) {
+            "Session must not be rated under 3 stars"
         }
 
         val first = session.steeps.first()
+        val plan = BrewingPlan.learnedFrom(session.steeps)
         val label = customLabel ?: generateConfigurationLabelUseCase(
             teaQuantityGrams = session.session.teaQuantityGrams,
             waterQuantityMl = first.waterQuantityMl,
-            brewingTime = first.brewingTime,
+            brewingTime = plan.base,
         )
 
         val now = Clock.System.now()
@@ -50,7 +53,9 @@ class SaveBrewingConfigurationUseCase(
             teaQuantityGrams = session.session.teaQuantityGrams,
             waterQuantityMl = first.waterQuantityMl,
             temperatureCelsius = first.temperatureCelsius,
-            brewingTime = first.brewingTime,
+            brewingTime = plan.base,
+            steepIncrement = plan.increment,
+            steepOverrides = plan.overrides,
             waterType = session.session.waterType,
             sourceSessionId = session.session.id,
             rating = rating,

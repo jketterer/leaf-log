@@ -19,10 +19,6 @@ data class SteepCompleteState(
     val nextSteepTemperature: Double? = null,
     val finishLeads: Boolean = false,
     val showAdjustSheet: Boolean = false,
-    // Config save dialog
-    val showSaveConfigurationDialog: Boolean = false,
-    val suggestedConfigurationLabel: String = "",
-    val savedSession: SessionWithSteeps? = null,
     // Edit parameters sheet
     val showEditParametersSheet: Boolean = false,
     val editBrewingTime: Duration = Duration.ZERO,

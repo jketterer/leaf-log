@@ -34,6 +34,7 @@ class KoinGraphTest {
                 NavRoute.EditTeaTypeRoute::class,
                 NavRoute.CreateBrewingConfigurationRoute::class,
                 NavRoute.SteepCompleteRoute::class,
+                NavRoute.SessionReviewRoute::class,
             ),
         )
     }

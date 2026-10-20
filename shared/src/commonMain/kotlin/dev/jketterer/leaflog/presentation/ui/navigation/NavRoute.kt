@@ -74,4 +74,7 @@ sealed interface NavRoute : NavKey {
 
     @Serializable
     data class SteepCompleteRoute(val sessionId: String) : NavRoute
+
+    @Serializable
+    data class SessionReviewRoute(val sessionId: String) : NavRoute
 }

@@ -55,6 +55,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListScreen
+import dev.jketterer.leaflog.presentation.ui.screens.sessionreview.SessionReviewScreen
 import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.SteepCompleteScreen
 import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
@@ -371,11 +372,23 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             )
         }
 
+        entry<NavRoute.SessionReviewRoute> { route ->
+            SessionReviewScreen(
+                route = route,
+                onNavigateToHome = { finishedSessionId ->
+                    navigator.resetHome(NavRoute.HomeRoute(finishedSessionId))
+                },
+            )
+        }
+
         entry<NavRoute.SteepCompleteRoute> { route ->
             SteepCompleteScreen(
                 route = route,
                 onNavigateToHome = { finishedSessionId ->
                     navigator.resetHome(NavRoute.HomeRoute(finishedSessionId))
+                },
+                onNavigateToReview = { sessionId ->
+                    navigator.replace(route, NavRoute.SessionReviewRoute(sessionId))
                 },
                 onNavigateToTimer = { sessionId ->
                     navigator.replace(route, NavRoute.TimerRoute(sessionId))
@@ -397,6 +410,7 @@ private fun NavKey.hidesBottomBar() = when (this) {
     is NavRoute.TimerRoute,
     is NavRoute.QuickTimerRoute,
     is NavRoute.SteepCompleteRoute,
+    is NavRoute.SessionReviewRoute,
     -> true
     else -> false
 }

@@ -54,7 +54,6 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
-import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepAdjustSheet
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
@@ -84,6 +83,7 @@ import kotlin.time.Duration.Companion.seconds
 fun SteepCompleteScreen(
     route: NavRoute.SteepCompleteRoute,
     onNavigateToHome: (finishedSessionId: String?) -> Unit,
+    onNavigateToReview: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: SteepCompleteViewModel = koinViewModel { parametersOf(route) },
@@ -96,6 +96,7 @@ fun SteepCompleteScreen(
         viewModel.navigationEvents.collect { event ->
             when (event) {
                 is SteepCompleteNavEvent.NavigateToHome -> onNavigateToHome(event.finishedSessionId)
+                is SteepCompleteNavEvent.NavigateToReview -> onNavigateToReview(event.sessionId)
                 is SteepCompleteNavEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId)
                 is SteepCompleteNavEvent.NavigateBack -> onNavigateBack()
             }
@@ -252,29 +253,6 @@ private fun SteepCompleteContent(
         )
     }
 
-    // Save Configuration Dialog
-    if (state.showSaveConfigurationDialog && state.savedSession != null) {
-        val session = state.savedSession
-        val first = session.steeps.first()
-        val vessel = state.vessel
-        val tea = state.tea
-        if (vessel != null && tea != null) {
-            SaveConfigurationDialog(
-                teaName = tea.name,
-                vesselName = vessel.name,
-                teaQuantityGrams = session.session.teaQuantityGrams,
-                waterQuantityMl = first.waterQuantityMl,
-                temperatureCelsius = first.temperatureCelsius,
-                brewingTimeSeconds = first.brewingTime.inWholeSeconds.toInt(),
-                rating = session.effectiveRating,
-                suggestedLabel = state.suggestedConfigurationLabel,
-                onSave = { label ->
-                    onIntent(SteepCompleteIntent.SaveConfigurationClicked(label.ifBlank { null }))
-                },
-                onDismiss = { onIntent(SteepCompleteIntent.SkipSaveConfiguration) },
-            )
-        }
-    }
 }
 
 @Composable

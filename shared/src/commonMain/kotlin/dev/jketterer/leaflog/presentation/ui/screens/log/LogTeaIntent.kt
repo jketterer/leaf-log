@@ -23,6 +23,7 @@ sealed interface LogTeaIntent {
     data class BrewingTimeChanged(val duration: Duration) : LogTeaIntent
     data class VesselSelected(val vesselId: String?) : LogTeaIntent
     data class WaterTypeSelected(val waterType: WaterType) : LogTeaIntent
+    data class RinsedChanged(val rinsed: Boolean) : LogTeaIntent
     data class LocationChanged(val location: String) : LogTeaIntent
 
     // Photo management

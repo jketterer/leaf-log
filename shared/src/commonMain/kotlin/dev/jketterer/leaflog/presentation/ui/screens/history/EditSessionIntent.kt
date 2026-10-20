@@ -12,6 +12,7 @@ sealed interface EditSessionIntent {
     // Field changes - Session Details (parent only)
     data class VesselSelected(val vessel: BrewingVessel) : EditSessionIntent
     data class WaterTypeSelected(val waterType: WaterType) : EditSessionIntent
+    data class RinsedChanged(val rinsed: Boolean) : EditSessionIntent
     data class WaterQuantityChanged(val milliliters: Double?) : EditSessionIntent
     data class TeaQuantityChanged(val grams: Double?) : EditSessionIntent
     data class TeaBagModeChanged(val isTeaBag: Boolean) : EditSessionIntent

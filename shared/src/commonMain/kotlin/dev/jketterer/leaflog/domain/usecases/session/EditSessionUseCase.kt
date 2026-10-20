@@ -9,7 +9,7 @@ import kotlin.time.Clock
 
 /**
  * Applies [edit] to the session as stored, so callers name only what they change and `null` clears.
- * Only the set-up can change: vessel, water type, leaf and location.
+ * Only the set-up can change: vessel, water type, leaf, location and rinse.
  */
 class EditSessionUseCase(
     private val transactor: Transactor,
@@ -31,9 +31,10 @@ class EditSessionUseCase(
                 waterType = session.waterType,
                 teaQuantityGrams = session.teaQuantityGrams,
                 location = session.location,
+                rinsed = session.rinsed,
             )
             require(untouched == session) {
-                "Only a session's vessel, water type, leaf and location can be edited"
+                "Only a session's vessel, water type, leaf, location and rinse can be edited"
             }
             edited.requireValid()
 

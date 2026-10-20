@@ -78,12 +78,14 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.answer_yes
 import leaf_log.shared.generated.resources.date_at_time
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.delete_steep_text
 import leaf_log.shared.generated.resources.delete_steep_title
+import leaf_log.shared.generated.resources.field_rinse
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -275,6 +277,12 @@ private fun SessionDetailContent(
                                         label = "Water Type",
                                         value = session.waterType.displayName
                                     )
+                                    if (session.rinsed) {
+                                        BrewingParameterDisplay(
+                                            label = stringResource(Res.string.field_rinse),
+                                            value = stringResource(Res.string.answer_yes),
+                                        )
+                                    }
                                     if (session.location != null) {
                                         BrewingParameterDisplay(
                                             label = "Location",

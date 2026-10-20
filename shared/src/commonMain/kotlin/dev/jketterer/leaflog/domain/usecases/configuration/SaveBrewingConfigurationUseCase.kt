@@ -57,6 +57,7 @@ class SaveBrewingConfigurationUseCase(
             steepIncrement = plan.increment,
             steepOverrides = plan.overrides,
             waterType = session.session.waterType,
+            rinse = session.session.rinsed,
             sourceSessionId = session.session.id,
             rating = rating,
             // Recomputed below, from the sessions that used it

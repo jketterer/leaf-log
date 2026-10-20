@@ -17,6 +17,7 @@ data class CreateBrewingConfigurationState(
     val steepIncrement: Duration? = null,
     val steepOverrides: Map<Int, Duration> = emptyMap(),
     val waterType: WaterType = WaterType.SPRING,
+    val rinse: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,

@@ -15,6 +15,7 @@ import kotlin.math.abs
  *  - water volume ±10 ml
  *  - base brewing time ±5 s, and the same increment and overrides
  *  - tea quantity ±0.5 g (or both absent)
+ *  - the same rinse
  */
 class CheckDuplicateConfigurationUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
@@ -38,6 +39,7 @@ class CheckDuplicateConfigurationUseCase(
             else -> false
         }
         return quantityMatch &&
+            rinse == session.session.rinsed &&
             abs(waterQuantityMl - steep.waterQuantityMl) <= 10.0 &&
             abs(temperatureCelsius - steep.temperatureCelsius) <= 1.0 &&
             abs(brewingTime.inWholeSeconds - learned.base.inWholeSeconds) <= 5 &&

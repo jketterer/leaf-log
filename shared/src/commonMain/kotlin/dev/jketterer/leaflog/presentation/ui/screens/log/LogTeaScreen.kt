@@ -55,6 +55,7 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_temperature_required
 import leaf_log.shared.generated.resources.field_water_quantity_required
+import leaf_log.shared.generated.resources.rinsed
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.minutes
@@ -108,6 +109,7 @@ private fun LogTeaContent(
     var showOptionalFields by remember { mutableStateOf(false) }
 
     val hasOptionalData = state.selectedWaterType != state.userPreferences.defaultWaterType ||
+            state.rinsed ||
             state.location.isNotEmpty()
 
     LaunchedEffect(hasOptionalData) {
@@ -118,6 +120,7 @@ private fun LogTeaContent(
 
     val optionalSummaryParts = buildList {
         if (state.selectedWaterType != WaterType.FILTERED) add(state.selectedWaterType.displayName)
+        if (state.rinsed) add(stringResource(Res.string.rinsed))
         if (state.location.isNotEmpty()) add(state.location)
     }
     val optionalSummary = optionalSummaryParts.joinToString(" · ")
@@ -259,7 +262,9 @@ private fun LogTeaContent(
                             onExpandedChange = { showOptionalFields = it },
                             summary = optionalSummary,
                             selectedWaterType = state.selectedWaterType,
+                            rinsed = state.rinsed,
                             location = state.location,
+                            onRinsedChange = { onIntent(LogTeaIntent.RinsedChanged(it)) },
                             onWaterTypeSelected = { waterType ->
                                 onIntent(LogTeaIntent.WaterTypeSelected(waterType))
                             },

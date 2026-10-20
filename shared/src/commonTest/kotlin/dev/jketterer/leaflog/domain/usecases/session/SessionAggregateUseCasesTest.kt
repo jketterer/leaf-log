@@ -12,6 +12,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurat
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
@@ -351,6 +352,27 @@ class SessionAggregateUseCasesTest {
 
         assertNull(started.effectiveRating)
         assertEquals(CONFIG.id, started.session.usedConfigurationId)
+    }
+
+    @Test
+    fun `a session starts rinsed when its method is, and brew again keeps that`() = runTest {
+        val started = startSession(CONFIG.copy(rinse = true)).getOrThrow()
+        assertTrue(started.session.rinsed)
+
+        val again = startSession(sessions.getSession(started.session.id)!!).getOrThrow()
+        assertTrue(again.session.rinsed)
+        assertFalse(start().session.rinsed)
+    }
+
+    @Test
+    fun `a session's rinse can be edited and a method saved from it keeps it`() = runTest {
+        val id = start(status = SessionStatus.COMPLETED).session.id
+
+        editSession(id) { it.copy(rinsed = true) }.getOrThrow()
+        val saved = saveConfiguration(sessions.getSession(id)!!, customLabel = "Mine").getOrThrow()
+
+        assertTrue(sessions.getSession(id)!!.session.rinsed)
+        assertTrue(saved.rinse)
     }
 
     @Test

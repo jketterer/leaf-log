@@ -69,6 +69,9 @@ data class BrewingConfigurationEntity(
     @ColumnInfo(name = "water_type")
     val waterType: WaterType, // TypeConverter: WaterType ↔ String
 
+    @ColumnInfo(defaultValue = "0")
+    val rinse: Boolean = false,
+
     // Metadata
     @ColumnInfo(name = "source_session_id")
     val sourceSessionId: String?, // Session this was learned from (null for manually created)

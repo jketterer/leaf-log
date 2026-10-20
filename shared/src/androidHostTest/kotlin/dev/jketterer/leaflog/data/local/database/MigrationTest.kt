@@ -188,6 +188,26 @@ class MigrationTest {
         )
         connection.close()
     }
+
+    @Test
+    fun `9 to 10 produces the exported version 10 schema and leaves methods and sessions unrinsed`() {
+        val connection = createFromSchema(9)
+        connection.execSQL(
+            "INSERT INTO brewing_configurations (id, tea_id, vessel_id, water_quantity_ml, " +
+                "temperature_celsius, brewing_time, water_type, times_used, is_pinned, " +
+                "pinned_sort_order, created_at, updated_at) " +
+                "VALUES ('m1', 't1', 'v1', 100.0, 95.0, 30000, 'FILTERED', 0, 0, 0, 0, 0)",
+        )
+
+        MIGRATION_9_10.migrate(connection)
+
+        assertSchemaMatches(connection, 10)
+        assertEquals(
+            mapOf("m1" to listOf<String?>("0")),
+            connection.rows("SELECT id, rinse FROM brewing_configurations"),
+        )
+        connection.close()
+    }
 }
 
 private fun SQLiteStatement.textOrNull(index: Int) = if (isNull(index)) null else getText(index)

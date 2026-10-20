@@ -19,6 +19,7 @@ data class BrewingConfiguration(
     val steepIncrement: Duration? = null, // null = a single western steep
     val steepOverrides: Map<Int, Duration> = emptyMap(), // learned from a session, never hand-edited
     val waterType: WaterType,
+    val rinse: Boolean = false, // sessions copy it when they start
 
     // Metadata
     val sourceSessionId: String?, // Session this was learned from (null for manually created)

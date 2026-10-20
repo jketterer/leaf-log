@@ -12,5 +12,6 @@ data class BrewingParametersPrefill(
     val temperatureCelsius: Double?,
     val brewingTime: Duration?,
     val waterType: WaterType?,
+    val rinsed: Boolean = false,
     val source: PrefillSource,
 )

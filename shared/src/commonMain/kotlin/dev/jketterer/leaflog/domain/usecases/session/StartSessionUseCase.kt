@@ -40,6 +40,7 @@ class StartSessionUseCase(
         status: SessionStatus = SessionStatus.IN_PROGRESS,
         usedConfigurationId: String? = null,
         planSessionId: String? = null,
+        rinsed: Boolean = false,
     ): Result<SessionWithSteeps> = runCatching {
         require(teaId.isNotBlank()) { "Tea must be selected" }
 
@@ -56,6 +57,7 @@ class StartSessionUseCase(
                 location = location.blankToNull(),
                 usedConfigurationId = usedConfigurationId,
                 planSessionId = planSessionId,
+                rinsed = rinsed,
                 syncStatus = SyncStatus.LOCAL_ONLY,
             ),
             steeps = listOf(
@@ -95,6 +97,7 @@ class StartSessionUseCase(
         waterQuantityMl = configuration.waterQuantityMl,
         teaQuantityGrams = configuration.teaQuantityGrams,
         usedConfigurationId = configuration.id,
+        rinsed = configuration.rinse,
     )
 
     /**
@@ -113,6 +116,7 @@ class StartSessionUseCase(
             teaQuantityGrams = source.session.teaQuantityGrams,
             location = source.session.location,
             planSessionId = source.session.id,
+            rinsed = source.session.rinsed,
         )
     }
 }

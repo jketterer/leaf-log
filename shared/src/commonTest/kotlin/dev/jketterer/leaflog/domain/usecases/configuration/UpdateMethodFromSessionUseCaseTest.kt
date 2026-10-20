@@ -40,7 +40,7 @@ class UpdateMethodFromSessionUseCaseTest {
         teaQuantityGrams = 7f,
     ).let { s ->
         s.copy(
-            session = s.session.copy(waterType = WaterType.SPRING),
+            session = s.session.copy(waterType = WaterType.SPRING, rinsed = true),
             steeps = s.steeps.mapIndexed { i, steep -> steep.copy(brewingTime = (10 * (i + 1)).seconds) },
         )
     }
@@ -58,6 +58,7 @@ class UpdateMethodFromSessionUseCaseTest {
         assertEquals(120.0, updated.waterQuantityMl)
         assertEquals(90.0, updated.temperatureCelsius)
         assertEquals(WaterType.SPRING, updated.waterType)
+        assertEquals(true, updated.rinse)
         assertEquals("Mine", updated.label)
         assertEquals("vessel-1", updated.vesselId)
         assertEquals(updated, repository.getById("method"))

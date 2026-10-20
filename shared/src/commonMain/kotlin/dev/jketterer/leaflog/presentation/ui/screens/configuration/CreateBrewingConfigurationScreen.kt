@@ -44,6 +44,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.RinseSwitch
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
@@ -248,9 +249,16 @@ private fun CreateBrewingConfigurationContent(
                         },
                         modifier = Modifier.fillMaxWidth(),
                     )
+                }
+
+                item(key = "rinse") {
+                    RinseSwitch(
+                        checked = state.rinse,
+                        onCheckedChange = { onIntent(CreateBrewingConfigurationIntent.SetRinse(it)) },
+                    )
+                }
                     }
                 }
-            }
             }
             Surface(tonalElevation = 3.dp) {
                 Button(

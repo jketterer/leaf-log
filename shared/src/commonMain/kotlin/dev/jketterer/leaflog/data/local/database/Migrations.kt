@@ -279,3 +279,10 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         connection.execSQL("ALTER TABLE `tea_session` ADD COLUMN `planSessionId` TEXT")
     }
 }
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `brewing_configurations` ADD COLUMN `rinse` INTEGER NOT NULL DEFAULT 0")
+        connection.execSQL("ALTER TABLE `tea_session` ADD COLUMN `rinsed` INTEGER NOT NULL DEFAULT 0")
+    }
+}

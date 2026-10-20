@@ -52,19 +52,20 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.RinseSwitch
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_tea_quantity_required
 import leaf_log.shared.generated.resources.header_brewing_parameters
 import leaf_log.shared.generated.resources.header_optional_details
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tea picker row - shows the selected tea, or a button to open the search dialog.
@@ -260,7 +261,7 @@ internal fun BrewingTimeSection(
 }
 
 /**
- * Collapsible section for water type and location, summarising its contents when collapsed.
+ * Collapsible section for water type and location, summarizing its contents when collapsed.
  */
 @Composable
 internal fun OptionalDetailsSection(
@@ -268,7 +269,9 @@ internal fun OptionalDetailsSection(
     onExpandedChange: (Boolean) -> Unit,
     summary: String,
     selectedWaterType: WaterType,
+    rinsed: Boolean,
     location: String,
+    onRinsedChange: (Boolean) -> Unit,
     onWaterTypeSelected: (WaterType) -> Unit,
     onLocationChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -307,6 +310,8 @@ internal fun OptionalDetailsSection(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Spacer(modifier = Modifier.height(0.dp))
+
+                RinseSwitch(checked = rinsed, onCheckedChange = onRinsedChange)
 
                 WaterTypeSelector(
                     selectedWaterType = selectedWaterType,
@@ -434,7 +439,9 @@ private fun OptionalDetailsSectionPreview() {
             onExpandedChange = {},
             summary = "Spring · Kitchen",
             selectedWaterType = WaterType.SPRING,
+            rinsed = true,
             location = "Kitchen",
+            onRinsedChange = {},
             onWaterTypeSelected = {},
             onLocationChanged = {},
         )

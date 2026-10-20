@@ -33,5 +33,6 @@ internal fun BrewingConfiguration.deviatesFrom(session: SessionWithSteeps): Bool
         teaQuantityGrams != session.session.teaQuantityGrams ||
         waterQuantityMl != first.waterQuantityMl ||
         abs(temperatureCelsius - first.temperatureCelsius) > 1.0 ||
-        waterType != session.session.waterType
+        waterType != session.session.waterType ||
+        rinse != session.session.rinsed
 }

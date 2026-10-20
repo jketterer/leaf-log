@@ -126,6 +126,7 @@ class LogTeaViewModel(
             is LogTeaIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
             is LogTeaIntent.VesselSelected -> selectVessel(intent.vesselId)
             is LogTeaIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
+            is LogTeaIntent.RinsedChanged -> selectRinsed(intent.rinsed)
             is LogTeaIntent.LocationChanged -> updateLocation(intent.location)
             is LogTeaIntent.AddPhotoClicked -> {
                 // Photo picker handled by UI
@@ -284,6 +285,7 @@ class LogTeaViewModel(
                     temperatureCelsius = prefill.temperatureCelsius,
                     brewingTime = prefill.brewingTime,
                     selectedWaterType = prefill.waterType ?: state.selectedWaterType,
+                    rinsed = prefill.rinsed,
                     prefillSource = prefill.source,
                     availableConfigurations = configurations,
                     usedConfigurationId = configurations.firstOrNull()?.id,
@@ -331,6 +333,7 @@ class LogTeaViewModel(
                             temperatureCelsius = config.temperatureCelsius,
                             brewingTime = config.brewingTime,
                             selectedWaterType = config.waterType,
+                            rinsed = config.rinse,
                             usedConfigurationId = configurationId,
                             prefillSource = PrefillSource.SavedConfig,
                         )
@@ -389,7 +392,6 @@ class LogTeaViewModel(
                 teaQuantityError = validateQuantity(grams, Res.string.error_tea_quantity_required),
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
-                usedConfigurationId = null
             )
         }
     }
@@ -401,7 +403,6 @@ class LogTeaViewModel(
                 waterQuantityError = validateQuantity(milliliters, Res.string.error_water_quantity_required),
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
-                usedConfigurationId = null
             )
         }
     }
@@ -417,7 +418,6 @@ class LogTeaViewModel(
                 },
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
-                usedConfigurationId = null
             )
         }
     }
@@ -433,7 +433,6 @@ class LogTeaViewModel(
                 brewingTimeError = error,
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
-                usedConfigurationId = null
             )
         }
     }
@@ -472,7 +471,16 @@ class LogTeaViewModel(
                 selectedWaterType = waterType,
                 hasUnsavedChanges = true,
                 prefillSource = PrefillSource.None,
-                usedConfigurationId = null
+            )
+        }
+    }
+
+    private fun selectRinsed(rinsed: Boolean) {
+        _state.update {
+            it.copy(
+                rinsed = rinsed,
+                hasUnsavedChanges = true,
+                prefillSource = PrefillSource.None,
             )
         }
     }
@@ -554,6 +562,7 @@ class LogTeaViewModel(
                 teaQuantityGrams = if (currentState.isTeaBag) null else currentState.teaQuantityGrams?.toFloat(),
                 vesselId = currentState.selectedVessel!!.id,
                 waterType = currentState.selectedWaterType,
+                rinsed = currentState.rinsed,
                 location = currentState.location.takeIf { it.isNotBlank() },
                 brewingTime = currentState.brewingTime!!,
                 temperatureCelsius = temperatureCelsius,

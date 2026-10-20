@@ -92,6 +92,7 @@ class EditSessionViewModel(
             is EditSessionIntent.TemperatureChanged -> updateTemperature(intent.celsius)
             is EditSessionIntent.VesselSelected -> selectVessel(intent.vessel)
             is EditSessionIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
+            is EditSessionIntent.RinsedChanged -> _state.update { it.copy(rinsed = intent.rinsed) }
             is EditSessionIntent.WaterQuantityChanged -> updateWaterQuantity(intent.milliliters)
             is EditSessionIntent.TeaQuantityChanged -> updateTeaQuantity(intent.grams)
             is EditSessionIntent.TeaBagModeChanged -> _state.update {
@@ -186,6 +187,7 @@ class EditSessionViewModel(
                             temperatureCelsius = steep.temperatureCelsius,
                             selectedVessel = vessel,
                             selectedWaterType = session.waterType,
+                            rinsed = session.rinsed,
                             waterQuantityMl = steep.waterQuantityMl,
                             teaQuantityGrams = session.teaQuantityGrams?.toDouble(),
                             isTeaBag = session.teaQuantityGrams == null,
@@ -343,6 +345,7 @@ class EditSessionViewModel(
                         it.copy(
                             vesselId = currentState.selectedVessel?.id ?: it.vesselId,
                             waterType = currentState.selectedWaterType,
+                            rinsed = currentState.rinsed,
                             teaQuantityGrams = if (currentState.isTeaBag) null
                             else currentState.teaQuantityGrams?.toFloat(),
                             location = currentState.location,

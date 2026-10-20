@@ -17,6 +17,7 @@ data class Session(
     val teaQuantityGrams: Float? = null,
     val location: String? = null,
     val usedConfigurationId: String? = null,
+    val rinsed: Boolean = false,
     /** The session Brew Again copied; its steeps are this one's plan when no method is used. */
     val planSessionId: String? = null,
 

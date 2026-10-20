@@ -27,7 +27,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -43,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Check
+import compose.icons.feathericons.Droplet
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
@@ -50,6 +50,7 @@ import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.usecases.session.BrewDifference
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
@@ -89,6 +90,7 @@ import leaf_log.shared.generated.resources.review_update_method
 import leaf_log.shared.generated.resources.review_update_method_header
 import leaf_log.shared.generated.resources.review_update_method_text
 import leaf_log.shared.generated.resources.review_vs_best_header
+import leaf_log.shared.generated.resources.rinsed
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration.Companion.seconds
 
@@ -96,11 +98,17 @@ import kotlin.time.Duration.Companion.seconds
 @Composable
 internal fun SteepRowsSection(
     steeps: List<Steep>,
+    rinsed: Boolean,
     onSteepClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionHeader(stringResource(Res.string.review_steeps_header))
+        SectionHeader(
+            title = stringResource(Res.string.review_steeps_header),
+            action = if (rinsed) {
+                { BrewingParamChip(icon = FeatherIcons.Droplet, text = stringResource(Res.string.rinsed)) }
+            } else null,
+        )
         steeps.forEach { steep ->
             Card(
                 onClick = { onSteepClick(steep.id) },
@@ -294,16 +302,10 @@ internal fun SaveMethodCard(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                // Reachable while the keyboard covers the button below
-                trailingIcon = {
-                    IconButton(onClick = onSave) {
-                        Icon(
-                            FeatherIcons.Check,
-                            contentDescription = stringResource(Res.string.review_save_method)
-                        )
-                    }
-                },
+                keyboardActions = KeyboardActions(onDone = {
+                    focusManager.clearFocus()
+                    onSave()
+                }),
             )
             Button(onClick = onSave, modifier = Modifier.align(Alignment.End)) {
                 Text(stringResource(Res.string.review_save_method))
@@ -452,6 +454,7 @@ private fun SteepRowsSectionPreview() {
                 ratings = listOf(4f, 4.5f, null),
                 brewingTime = 25.seconds
             ).steeps,
+            rinsed = true,
             onSteepClick = {},
             modifier = Modifier.padding(16.dp),
         )

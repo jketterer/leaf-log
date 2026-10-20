@@ -23,6 +23,7 @@ class UpdateBrewingConfigurationUseCase(
      * @param plan Optional new plan; replaces the base time, increment and overrides together, so a
      *   null increment or empty overrides in it clear them
      * @param waterType Optional new water type
+     * @param rinse Optional new rinse
      * @return Result with the updated configuration
      */
     suspend operator fun invoke(
@@ -34,6 +35,7 @@ class UpdateBrewingConfigurationUseCase(
         temperatureCelsius: Double? = null,
         plan: BrewingPlan? = null,
         waterType: WaterType? = null,
+        rinse: Boolean? = null,
     ): Result<BrewingConfiguration> {
         return try {
             val existing = brewingConfigurationRepository.getById(configurationId)
@@ -49,6 +51,7 @@ class UpdateBrewingConfigurationUseCase(
                 steepIncrement = if (plan != null) plan.increment else existing.steepIncrement,
                 steepOverrides = plan?.overrides ?: existing.steepOverrides,
                 waterType = waterType ?: existing.waterType,
+                rinse = rinse ?: existing.rinse,
                 updatedAt = Clock.System.now(),
             )
 

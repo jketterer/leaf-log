@@ -37,6 +37,9 @@
     <string name="field_tea_quantity">Tea Quantity</string>
     <string name="field_tea_quantity_required">Tea Quantity *</string>
     <string name="field_tea_quantity_hint">Optional - leave empty for tea bags</string>
+    <string name="field_rinse">Rinse</string>
+    <string name="answer_yes">Yes</string>
+    <string name="rinsed">Rinsed</string>
     <string name="field_capacity">Capacity</string>
     <string name="field_optional">Optional</string>
     <string name="field_capacity_hint">Optional - auto-fills water quantity when selected</string>

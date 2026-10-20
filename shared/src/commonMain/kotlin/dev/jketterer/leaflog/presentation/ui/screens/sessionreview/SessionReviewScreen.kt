@@ -118,6 +118,7 @@ private fun SessionReviewContent(
                     Spacer(Modifier.height(4.dp))
                     SteepRowsSection(
                         session.steeps,
+                        rinsed = session.session.rinsed,
                         onSteepClick = { onIntent(SessionReviewIntent.SteepClicked(it)) })
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

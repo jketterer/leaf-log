@@ -25,6 +25,7 @@ class CreateBrewingConfigurationUseCase(
      * @param brewingTime Brewing duration of the first steep
      * @param steepIncrement Time added to each further steep, null for a single western steep
      * @param waterType Type of water used
+     * @param rinse Whether sessions from it start rinsed
      * @param customLabel Optional custom label (auto-generated if null)
      * @return Result with the created configuration
      */
@@ -37,6 +38,7 @@ class CreateBrewingConfigurationUseCase(
         brewingTime: Duration,
         steepIncrement: Duration? = null,
         waterType: WaterType,
+        rinse: Boolean = false,
         customLabel: String? = null,
     ): Result<BrewingConfiguration> {
         return try {
@@ -58,6 +60,7 @@ class CreateBrewingConfigurationUseCase(
                 brewingTime = brewingTime,
                 steepIncrement = steepIncrement,
                 waterType = waterType,
+                rinse = rinse,
                 sourceSessionId = null,
                 rating = null,
                 timesUsed = 0,

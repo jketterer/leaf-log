@@ -40,7 +40,7 @@ data class Backup(
 const val BACKUP_VERSION = 3
 
 // Field names match the entities, so version 1 (the entities themselves) decodes into these.
-// Defaults cover what version 1 lacked, and what version 2 lacked: plans.
+// Defaults cover what version 1 lacked, and what version 2 lacked: plans and rinses.
 
 @Serializable
 data class BackupTeaType(
@@ -102,6 +102,7 @@ data class BackupSteep(
     val location: String? = null,
     val usedConfigurationId: String? = null,
     val planSessionId: String? = null,
+    val rinsed: Boolean = false,
     val rating: Float? = null,
     val timestamp: Instant,
     val brewingTime: Duration,
@@ -132,6 +133,7 @@ data class BackupMethod(
     val steepIncrement: Duration? = null,
     val steepOverrides: Map<Int, Duration> = emptyMap(),
     val waterType: WaterType,
+    val rinse: Boolean = false,
     val sourceSessionId: String? = null,
     val rating: Float? = null,
     val label: String? = null,

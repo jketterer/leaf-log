@@ -93,6 +93,10 @@ class CreateBrewingConfigurationViewModel(
                 _state.update { it.copy(waterType = intent.waterType) }
             }
 
+            is CreateBrewingConfigurationIntent.SetRinse -> {
+                _state.update { it.copy(rinse = intent.rinse) }
+            }
+
             is CreateBrewingConfigurationIntent.Save -> save()
             is CreateBrewingConfigurationIntent.NavigateBack -> {
                 _navEvents.trySend(CreateBrewingConfigurationNavigationEvent.NavigateBack)
@@ -122,6 +126,7 @@ class CreateBrewingConfigurationViewModel(
                             steepIncrement = config.steepIncrement,
                             steepOverrides = config.steepOverrides,
                             waterType = config.waterType,
+                            rinse = config.rinse,
                             isEditMode = true,
                             editingConfigId = configurationId,
                             isLoading = false,
@@ -140,6 +145,7 @@ class CreateBrewingConfigurationViewModel(
                 var prefillTime: kotlin.time.Duration? = null
                 var prefillWaterType = null as WaterType?
                 var prefillTeaQty: Double? = null
+                var prefillRinse = false
 
                 if (tea != null && firstVessel != null) {
                     val prefill = getBrewingParametersPrefillUseCase(tea, firstVessel)
@@ -148,6 +154,7 @@ class CreateBrewingConfigurationViewModel(
                     prefillTime = prefill.brewingTime
                     prefillWaterType = prefill.waterType
                     prefillTeaQty = prefill.teaQuantityGrams?.toDouble()
+                    prefillRinse = prefill.rinsed
                 } else if (tea != null) {
                     prefillTemp = tea.defaultTemperatureCelsius
                 }
@@ -161,6 +168,7 @@ class CreateBrewingConfigurationViewModel(
                         brewingTime = prefillTime,
                         waterType = prefillWaterType ?: WaterType.FILTERED,
                         teaQuantityGrams = prefillTeaQty,
+                        rinse = prefillRinse,
                         isEditMode = false,
                         editingConfigId = null,
                         isLoading = false,
@@ -191,6 +199,7 @@ class CreateBrewingConfigurationViewModel(
                     temperatureCelsius = temperatureCelsius,
                     plan = plan,
                     waterType = currentState.waterType,
+                    rinse = currentState.rinse,
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
                 }.onFailure { e ->
@@ -207,6 +216,7 @@ class CreateBrewingConfigurationViewModel(
                     brewingTime = plan.base,
                     steepIncrement = plan.increment,
                     waterType = currentState.waterType,
+                    rinse = currentState.rinse,
                     customLabel = currentState.label.takeIf { it.isNotBlank() },
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)

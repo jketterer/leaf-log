@@ -45,6 +45,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.RinseSwitch
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
@@ -279,6 +280,13 @@ private fun EditSessionContent(
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                        )
+                    }
+
+                    item(key = "rinse") {
+                        RinseSwitch(
+                            checked = state.rinsed,
+                            onCheckedChange = { onIntent(EditSessionIntent.RinsedChanged(it)) },
                         )
                     }
                 }

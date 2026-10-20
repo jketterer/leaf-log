@@ -31,6 +31,7 @@ data class LogTeaState(
     val brewingTime: Duration? = null,
     val selectedVessel: BrewingVessel? = null,
     val selectedWaterType: WaterType = WaterType.FILTERED,
+    val rinsed: Boolean = false,
     val location: String = "",
 
     // Optional details

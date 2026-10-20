@@ -720,7 +720,7 @@ death, and an upgrade over the previous dev build at each migration.
 6. [x] `feat: slim review between steeps`
 7. [x] `feat: end-of-session review`: Save as method at any steep count; Steep Complete's remains go.
 8. [x] `feat: update a method from today's brew`. Test: the deviation check and the merge.
-9. [ ] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.
+9. [x] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.
 10. [ ] `feat: tasting tags`: v11, the vocabulary, carry-forward, custom tags. Tests: carry-forward,
     the migration, the backup round trip. Track B: upgrade over the v10 build.
 11. [ ] `feat: the plan on the lock screen`, with the notification findings. Track B: Live Activity,

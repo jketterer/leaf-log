@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.local.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -62,6 +63,8 @@ data class TeaSessionEntity(
     val location: String?,
     val usedConfigurationId: String?, // Configuration that was used for this session
     val planSessionId: String? = null, // Session Brew Again copied; no FK, it may be gone
+    @ColumnInfo(defaultValue = "0")
+    val rinsed: Boolean = false, // parent row only, false on children
 
     val rating: Float?,
 

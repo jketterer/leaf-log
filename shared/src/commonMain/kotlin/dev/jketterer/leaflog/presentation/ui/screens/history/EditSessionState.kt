@@ -24,6 +24,7 @@ data class EditSessionState(
     // Form fields - Session Details (parent only)
     val selectedVessel: BrewingVessel? = null,
     val selectedWaterType: WaterType = WaterType.FILTERED,
+    val rinsed: Boolean = false,
     val waterQuantityMl: Double? = null,
     val teaQuantityGrams: Double? = null,
     val isTeaBag: Boolean = false,
@@ -62,6 +63,7 @@ data class EditSessionState(
                 // When editing full parent session, only check parent-specific fields
                 selectedVessel?.id != session.vesselId ||
                 selectedWaterType != session.waterType ||
+                rinsed != session.rinsed ||
                 waterQuantityMl != steep.waterQuantityMl ||
                 isTeaBag != (session.teaQuantityGrams == null) ||
                 teaQuantityGrams?.toFloat() != session.teaQuantityGrams ||

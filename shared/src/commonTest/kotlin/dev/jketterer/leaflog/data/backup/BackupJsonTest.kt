@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -20,14 +21,14 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a method's plan and a session's source survive a round trip`() {
+    fun `a method's plan and rinse and a session's source and rinse survive a round trip`() {
         val backup = decodeBackup(V1).let {
             it.copy(
                 methods = listOf(
-                    METHOD.copy(steepIncrement = 5.seconds, steepOverrides = mapOf(4 to 45.seconds)),
+                    METHOD.copy(steepIncrement = 5.seconds, steepOverrides = mapOf(4 to 45.seconds), rinse = true),
                 ),
                 steeps = it.steeps.mapIndexed { i, steep ->
-                    if (i == 0) steep.copy(planSessionId = "earlier") else steep
+                    if (i == 0) steep.copy(planSessionId = "earlier", rinsed = true) else steep
                 },
             )
         }
@@ -36,12 +37,13 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a version 2 backup reads with no plans`() {
+    fun `a version 2 backup reads with no plans or rinses`() {
         val backup = decodeBackup(V1).copy(methods = listOf(METHOD))
         val v2 = encodeBackup(backup).replace("\"version\": 3", "\"version\": 2")
 
         assertEquals(backup.copy(version = 2), decodeBackup(v2))
         assertNull(decodeBackup(v2).methods.single().steepIncrement)
+        assertFalse(decodeBackup(v2).methods.single().rinse)
     }
 
     @Test

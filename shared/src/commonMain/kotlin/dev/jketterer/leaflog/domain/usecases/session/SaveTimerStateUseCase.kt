@@ -5,8 +5,11 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
+import kotlin.math.roundToInt
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 /**
  * Stores the timer on the steep it's timing, [TimerState.steepNumber] of session
@@ -35,7 +38,8 @@ class SaveTimerStateUseCase(
                     timerPausedAt = if (timerState.status == TimerStatus.PAUSED) now else timerState.pausedAt,
                     timerRemainingMs = timerState.remainingDuration.inWholeMilliseconds,
                     timerTotalMs = timerState.totalDuration.inWholeMilliseconds,
-                    actualTime = timerState.elapsed
+                    // Whole seconds: a tap's milliseconds would be copied into the next brew's time
+                    actualTime = timerState.elapsed.toDouble(DurationUnit.SECONDS).roundToInt().seconds
                         .takeIf { timerState.isComplete && it > Duration.ZERO },
                     updatedAt = now,
                 )

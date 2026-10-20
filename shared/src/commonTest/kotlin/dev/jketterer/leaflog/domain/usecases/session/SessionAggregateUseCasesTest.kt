@@ -266,6 +266,18 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
+    fun `a brew time is recorded to the nearest second`() = runTest {
+        val id = start().session.id
+        val timer = TimerState(sessionId = id, totalDuration = 20.seconds, status = TimerStatus.COMPLETE)
+
+        saveTimerState(timer.copy(remainingDuration = 13.6.seconds)).getOrThrow()
+        assertEquals(6.seconds, sessions.getSession(id)!!.currentSteep.actualTime)
+
+        saveTimerState(timer.copy(remainingDuration = 13.4.seconds)).getOrThrow()
+        assertEquals(7.seconds, sessions.getSession(id)!!.currentSteep.actualTime)
+    }
+
+    @Test
     fun `already brewed leaves the actual time null so the planned time stands`() = runTest {
         val id = start().session.id
         val notStarted = TimerState(sessionId = id, totalDuration = 20.seconds, remainingDuration = 20.seconds)

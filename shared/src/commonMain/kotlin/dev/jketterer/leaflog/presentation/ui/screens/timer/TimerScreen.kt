@@ -5,11 +5,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,6 +53,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiv
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
+import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
@@ -157,7 +162,7 @@ private fun TimerContent(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    "Cancel Session",
+                                    stringResource(Res.string.discard),
                                     color = MaterialTheme.colorScheme.error,
                                 )
                             },
@@ -239,7 +244,9 @@ private fun TimerContent(
     // Reset confirmation dialog
     if (state.showResetConfirmation) {
         TimerResetConfirmationDialog(
-            durationText = "${state.session?.currentSteep?.brewingTime}",
+            durationText = formatBrewingTime(
+                state.session?.currentSteep?.brewingTime?.inWholeSeconds?.toInt() ?: 0,
+            ),
             onConfirm = { onIntent(TimerIntent.ConfirmReset) },
             onDismiss = { onIntent(TimerIntent.CancelReset) },
         )
@@ -273,13 +280,15 @@ private fun TimerRunningContent(
     onIntent: (TimerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier.padding(24.dp)) {
-        // Shrink the ring on smaller screens (e.g. iPhone SE) so control buttons stay visible.
-        // 420.dp accounts for the approximate height of all other fixed content + gaps.
-        val ringSize = (maxHeight - 420.dp).coerceIn(100.dp, 240.dp)
-
+    BoxWithConstraints(modifier = modifier) {
+        // At least screen height, so the weights below share what the other content leaves;
+        // it scrolls only if that content alone doesn't fit
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
@@ -298,15 +307,20 @@ private fun TimerRunningContent(
                 )
             }
 
-            // Circular timer ring + quick adjustment buttons
+            // Circular timer ring + quick adjustment buttons. The ring grows into the space left
+            // over, up to 240dp; what it doesn't use falls below the buttons
             Column(
+                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 CircularTimerRing(
                     progress = state.timerState.progress,
                     timeText = state.formattedTime,
-                    modifier = Modifier.size(ringSize),
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .sizeIn(maxWidth = 240.dp, maxHeight = 240.dp)
+                        .aspectRatio(1f),
                 )
                 QuickAdjustButtons(
                     onAdjust = { adjustment ->
@@ -314,8 +328,6 @@ private fun TimerRunningContent(
                     },
                 )
             }
-
-            Spacer(modifier = Modifier.weight(1f))
 
             // Control buttons
             TimerControlButtons(
@@ -352,7 +364,7 @@ private fun NotificationWarningBanner(
                 modifier = Modifier.size(18.dp),
             )
             Text(
-                text = "Notifications are disabled — you won't be alerted when your tea is ready in the background",
+                text = "Notifications are disabled, so you won't be alerted when your tea is ready in the background",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer,
                 modifier = Modifier.weight(1f).padding(horizontal = 8.dp),

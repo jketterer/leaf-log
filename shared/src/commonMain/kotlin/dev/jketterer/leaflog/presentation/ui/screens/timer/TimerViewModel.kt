@@ -29,7 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_adjust_timer
 import leaf_log.shared.generated.resources.couldnt_discard_steep
@@ -77,19 +76,6 @@ class TimerViewModel(
         )
         collectTimerState()
         initialize(route.sessionId)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        // Save timer state if timer is running or paused
-        val currentState = timerService.getCurrentState()
-        if (currentState.status == TimerStatus.RUNNING || currentState.status == TimerStatus.PAUSED) {
-            // Use runBlocking since we need to complete this before ViewModel is destroyed
-            // This is acceptable in onCleared as it's called during cleanup
-            runBlocking {
-                saveTimerStateUseCase(currentState)
-            }
-        }
     }
 
     fun onIntent(intent: TimerIntent) {
@@ -281,6 +267,9 @@ class TimerViewModel(
 
                     // 3. Start countdown
                     timerService.startCountdown()
+
+                    // 4. Persist, so a restore doesn't find the timer still paused
+                    saveTimerStateUseCase(newState)
                 }
                 .onFailure { messages.failure(it, Res.string.couldnt_resume_timer) }
         }

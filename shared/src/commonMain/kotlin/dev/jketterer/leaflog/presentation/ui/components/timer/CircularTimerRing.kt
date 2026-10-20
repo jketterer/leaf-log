@@ -17,17 +17,20 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 
 @Composable
 fun CircularTimerRing(
+    modifier: Modifier = Modifier.size(240.dp),
     progress: Float,
     timeText: String,
-    modifier: Modifier = Modifier.size(240.dp),
     ringColor: Color = MaterialTheme.colorScheme.primary,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
 ) {
@@ -38,11 +41,17 @@ fun CircularTimerRing(
     )
 
     BoxWithConstraints(
-        modifier = modifier,
+        // Read as the time left and how far through the steep it is
+        modifier = modifier.semantics(mergeDescendants = true) {
+            progressBarRangeInfo = ProgressBarRangeInfo(progress, 0f..1f)
+        },
         contentAlignment = Alignment.Center,
     ) {
-        // Scale font proportionally to ring size (57sp at 240dp, minimum 20sp).
-        val fontSize = maxOf(minOf(maxWidth, maxHeight).value * 57f / 240f, 20f).sp
+        // Sized by the ring alone (57sp at 240dp, at least 20dp): the ring already shrinks to
+        // make room for large fonts, and the font scale on top would overflow it
+        val fontSize = with(LocalDensity.current) {
+            (minOf(maxWidth, maxHeight) * (57f / 240f)).coerceAtLeast(20.dp).toSp()
+        }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             val canvasSize = size.minDimension

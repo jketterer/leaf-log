@@ -702,8 +702,8 @@ death, and an upgrade over the previous dev build at each migration.
 **Commits.** Each compiles, passes tests and leaves the app working. 4 → 5; 4 → 6 → 7 → 8; 6 → 10;
 4 → 11; 4 and 6 → 12 → 13.
 
-1. [ ] `docs: record the Bet 2 design`
-2. [ ] `fix: timer audit findings`: negative pre-start adjust, Reset not saved, the stale edit
+1. [x] `docs: record the Bet 2 design`
+2. [x] `fix: timer audit findings`: negative pre-start adjust, Reset not saved, the stale edit
    snapshot (verify first), the ring's hard-coded size, its semantics and live region, the copy,
    `onCleared`'s `runBlocking`. Nothing beyond the fixes.
 3. [ ] `feat: already brewed and poured early`. Test: Already brewed leaves the actual time null.

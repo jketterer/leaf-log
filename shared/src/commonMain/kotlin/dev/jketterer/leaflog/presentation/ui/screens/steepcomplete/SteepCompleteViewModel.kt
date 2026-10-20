@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -35,14 +34,10 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_discard_steep
 import leaf_log.shared.generated.resources.couldnt_finish_session
 import leaf_log.shared.generated.resources.couldnt_load_session
-import leaf_log.shared.generated.resources.couldnt_remove_photo
 import leaf_log.shared.generated.resources.couldnt_save_changes
-import leaf_log.shared.generated.resources.couldnt_save_photo
 import leaf_log.shared.generated.resources.couldnt_start_steep
 import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.time.Duration
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 class SteepCompleteViewModel(
     private val route: NavRoute.SteepCompleteRoute,
@@ -50,7 +45,6 @@ class SteepCompleteViewModel(
     private val teaRepository: TeaRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
-    private val imageStorage: ImageStorage,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
     private val resolvePlanUseCase: ResolvePlanUseCase,
@@ -94,10 +88,9 @@ class SteepCompleteViewModel(
         when (intent) {
             is SteepCompleteIntent.RatingChanged -> updateRating(intent.rating)
             is SteepCompleteIntent.NotesChanged -> updateNotes(intent.notes)
-            is SteepCompleteIntent.PhotoSelected -> addPhoto(intent.imageBytes)
-            is SteepCompleteIntent.PhotoRemoved -> removePhoto(intent.path)
-            is SteepCompleteIntent.ShowNextSteepDialog -> showNextSteepDialog()
-            is SteepCompleteIntent.DismissNextSteepDialog -> dismissNextSteepDialog()
+            is SteepCompleteIntent.StartNextSteep -> startNextSteep()
+            is SteepCompleteIntent.ShowAdjustSheet -> _state.update { it.copy(showAdjustSheet = true) }
+            is SteepCompleteIntent.DismissAdjustSheet -> _state.update { it.copy(showAdjustSheet = false) }
             is SteepCompleteIntent.NextSteepDurationChanged -> _state.update {
                 it.copy(nextSteepDuration = intent.duration)
             }
@@ -106,11 +99,6 @@ class SteepCompleteViewModel(
                 it.copy(nextSteepTemperature = intent.temperature)
             }
 
-            is SteepCompleteIntent.NextSteepWaterQuantityChanged -> _state.update {
-                it.copy(nextSteepWaterQuantity = intent.waterQuantityMl)
-            }
-
-            is SteepCompleteIntent.ConfirmNextSteep -> confirmNextSteep()
             is SteepCompleteIntent.FinishSession -> finishSession()
             is SteepCompleteIntent.SaveConfigurationClicked ->
                 configSaveDelegate.saveConfiguration(intent.customLabel)
@@ -127,20 +115,8 @@ class SteepCompleteViewModel(
             }
 
             is SteepCompleteIntent.ConfirmDiscard -> confirmDiscardSession()
-            is SteepCompleteIntent.PreviousSteepRatingChanged ->
-                updatePreviousSteepRating(intent.steepId, intent.rating)
-
-            is SteepCompleteIntent.PreviousSteepNotesChanged ->
-                updatePreviousSteepNotes(intent.steepId, intent.notes)
-
             is SteepCompleteIntent.BackClicked -> _navigationEvents.trySend(SteepCompleteNavEvent.NavigateBack)
             is SteepCompleteIntent.ShowEditParametersSheet -> openEditParametersSheet()
-            is SteepCompleteIntent.DismissEditParametersSheet -> _state.update {
-                it.copy(
-                    showEditParametersSheet = false
-                )
-            }
-
             is SteepCompleteIntent.EditBrewingTimeChanged -> _state.update { it.copy(editBrewingTime = intent.duration) }
             is SteepCompleteIntent.EditTemperatureChanged -> _state.update {
                 it.copy(
@@ -162,6 +138,13 @@ class SteepCompleteViewModel(
 
             is SteepCompleteIntent.EditTeaBagModeChanged -> _state.update { it.copy(editIsTeaBag = intent.isTeaBag) }
             is SteepCompleteIntent.EditWaterTypeChanged -> _state.update { it.copy(editWaterType = intent.waterType) }
+            is SteepCompleteIntent.EditVesselChanged -> _state.update {
+                it.copy(
+                    editVessel = intent.vessel,
+                    editWaterQuantityMl = waterForVessel(it.editWaterQuantityMl, intent.vessel),
+                )
+            }
+
             is SteepCompleteIntent.ConfirmEditParameters -> confirmEditParameters()
             is SteepCompleteIntent.CancelEditParameters -> _state.update {
                 it.copy(
@@ -190,23 +173,22 @@ class SteepCompleteViewModel(
                 val tea = teaDeferred.await()
                 val vessel = vesselDeferred.await()
                 val steep = session.currentSteep
-                val nextTime = resolvePlanUseCase(session).timeOf(steep.number + 1)
+                val vessels = brewingVesselRepository.getActive().let { active ->
+                    if (vessel == null || active.any { it.id == vessel.id }) active else active + vessel
+                }
 
                 _state.update {
                     it.copy(
                         session = session,
                         tea = tea,
                         vessel = vessel,
+                        vessels = vessels,
                         rating = steep.rating ?: 0f,
                         notes = steep.notes ?: "",
-                        photos = steep.photos,
-                        previousSteeps = session.steeps.dropLast(1),
-                        nextSteepDuration = nextTime,
-                        nextSteepTemperature = steep.temperatureCelsius,
-                        nextSteepWaterQuantity = steep.waterQuantityMl,
                         isLoading = false,
                     )
                 }
+                planNextSteep(session)
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false) }
                 messages.failure(e, Res.string.couldnt_load_session)
@@ -238,61 +220,27 @@ class SteepCompleteViewModel(
         editSteep(steep.id) { it.copy(notes = _state.value.notes) }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    private fun addPhoto(imageBytes: ByteArray) {
-        val steep = _state.value.session?.currentSteep ?: return
-        viewModelScope.launch {
-            try {
-                val fileName = "${Uuid.random()}.jpg"
-                val persistedPath = imageStorage.saveImage(imageBytes, fileName, "session_images")
-                _state.update { it.copy(photos = it.photos + persistedPath) }
-                editSteep(steep.id) { it.copy(photos = _state.value.photos) }
-            } catch (e: Exception) {
-                messages.failure(e, Res.string.couldnt_save_photo)
-            }
-        }
-    }
-
-    private fun removePhoto(path: String) {
-        val steep = _state.value.session?.currentSteep ?: return
-        _state.update { it.copy(photos = it.photos - path) }
-        viewModelScope.launch {
-            editSteepUseCase(steep.id) { it.copy(photos = _state.value.photos) }
-                .onSuccess { updated ->
-                    _state.update { it.copy(session = updated) }
-                    try {
-                        imageStorage.deleteImage(path)
-                    } catch (_: Exception) {
-                    }
-                }
-                .onFailure { messages.failure(it, Res.string.couldnt_remove_photo) }
-        }
-    }
-
-    private fun showNextSteepDialog() {
-        val steep = _state.value.session?.currentSteep ?: return
+    /** What Next starts: the plan's time and the temperature this steep ended with. */
+    private suspend fun planNextSteep(session: SessionWithSteeps) {
+        val steep = session.currentSteep
+        val plan = resolvePlanUseCase(session)
         _state.update {
             it.copy(
-                showNextSteepDialog = true,
-                nextSteepDuration = it.nextSteepDuration ?: steep.brewingTime,
-                nextSteepTemperature = it.nextSteepTemperature ?: steep.temperatureCelsius,
-                nextSteepWaterQuantity = it.nextSteepWaterQuantity ?: steep.waterQuantityMl,
+                nextSteepDuration = plan.timeOf(steep.number + 1),
+                nextSteepTemperature = steep.temperatureCelsius,
+                finishLeads = finishLeads(session, plan),
             )
         }
     }
 
-    private fun dismissNextSteepDialog() {
-        _state.update { it.copy(showNextSteepDialog = false) }
-    }
-
-    private fun confirmNextSteep() {
+    private fun startNextSteep() {
         val session = _state.value.session ?: return
         val steep = session.currentSteep
         val duration = _state.value.nextSteepDuration ?: steep.brewingTime
         val temperature = _state.value.nextSteepTemperature ?: steep.temperatureCelsius
-        val waterQuantity = _state.value.nextSteepWaterQuantity ?: steep.waterQuantityMl
+        val waterQuantity = steep.waterQuantityMl
 
-        _state.update { it.copy(isLoading = true, showNextSteepDialog = false) }
+        _state.update { it.copy(isLoading = true, showAdjustSheet = false) }
 
         viewModelScope.launch {
             addSteepUseCase(
@@ -378,30 +326,6 @@ class SteepCompleteViewModel(
         }
     }
 
-    private fun updatePreviousSteepRating(steepId: String, rating: Float) {
-        _state.update {
-            it.copy(
-                previousSteeps = it.previousSteeps.map { s ->
-                    if (s.id == steepId) s.copy(rating = rating.takeIf { r -> r > 0f }) else s
-                },
-            )
-        }
-        editSteep(steepId) { it.copy(rating = rating.takeIf { r -> r > 0f }) }
-    }
-
-    private fun updatePreviousSteepNotes(steepId: String, notes: String) {
-        _state.update {
-            it.copy(
-                previousSteeps = it.previousSteeps.map { s ->
-                    if (s.id == steepId) s.copy(notes = notes) else s
-                },
-            )
-        }
-        editSteep(steepId) { steep ->
-            steep.copy(notes = _state.value.previousSteeps.find { it.id == steepId }?.notes)
-        }
-    }
-
     private fun openEditParametersSheet() {
         val session = _state.value.session ?: return
         val steep = session.currentSteep
@@ -414,6 +338,7 @@ class SteepCompleteViewModel(
                 editTeaQuantityGrams = session.session.teaQuantityGrams?.toDouble(),
                 editIsTeaBag = session.session.teaQuantityGrams == null,
                 editWaterType = session.session.waterType,
+                editVessel = it.vessel,
             )
         }
     }
@@ -428,6 +353,7 @@ class SteepCompleteViewModel(
         val isTeaBag = currentState.editIsTeaBag
         val teaQuantityGrams = currentState.editTeaQuantityGrams?.toFloat()
         val waterType = currentState.editWaterType
+        val editVessel = currentState.editVessel
 
         _state.update { it.copy(showEditParametersSheet = false) }
         viewModelScope.launch {
@@ -445,9 +371,13 @@ class SteepCompleteViewModel(
                 it.copy(
                     teaQuantityGrams = if (isTeaBag) null else teaQuantityGrams ?: it.teaQuantityGrams,
                     waterType = waterType ?: it.waterType,
+                    vesselId = editVessel?.id ?: it.vesselId,
                 )
             }
-                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+                .onSuccess { updated ->
+                    _state.update { it.copy(session = updated, vessel = editVessel ?: it.vessel) }
+                    planNextSteep(updated)
+                }
                 .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
         }
     }

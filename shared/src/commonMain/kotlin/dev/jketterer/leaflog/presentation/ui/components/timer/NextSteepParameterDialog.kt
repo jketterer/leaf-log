@@ -76,7 +76,7 @@ fun NextSteepParameterDialog(
 }
 
 @Composable
-private fun NextSteepParameterDialogContent(
+internal fun NextSteepParameterDialogContent(
     nextSteepNumber: Int,
     duration: Duration?,
     temperatureCelsius: Double?,

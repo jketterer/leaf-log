@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -55,6 +56,10 @@ fun EditSessionParametersSheet(
     onDismiss: () -> Unit,
     brewingTime: Duration? = null,
     onBrewingTimeChanged: ((Duration) -> Unit)? = null,
+    // The vessel row shows only when [vessels] is given
+    vessels: List<BrewingVessel>? = null,
+    selectedVessel: BrewingVessel? = null,
+    onVesselSelected: (BrewingVessel) -> Unit = {},
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -81,6 +86,9 @@ fun EditSessionParametersSheet(
             onDismiss = onDismiss,
             brewingTime = brewingTime,
             onBrewingTimeChanged = onBrewingTimeChanged,
+            vessels = vessels,
+            selectedVessel = selectedVessel,
+            onVesselSelected = onVesselSelected,
         )
     }
 }
@@ -104,6 +112,10 @@ private fun EditSessionParametersContent(
     onDismiss: () -> Unit,
     brewingTime: Duration? = null,
     onBrewingTimeChanged: ((Duration) -> Unit)? = null,
+    // The vessel row shows only when [vessels] is given
+    vessels: List<BrewingVessel>? = null,
+    selectedVessel: BrewingVessel? = null,
+    onVesselSelected: (BrewingVessel) -> Unit = {},
 ) {
     val isValid = temperatureCelsius != null &&
             waterQuantityMl != null &&
@@ -129,6 +141,17 @@ private fun EditSessionParametersContent(
             DurationPicker(
                 duration = brewingTime.takeIf { it > Duration.ZERO },
                 onDurationChange = { onBrewingTimeChanged?.invoke(it ?: Duration.ZERO) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (vessels != null) {
+            VesselSelector(
+                vessels = vessels,
+                selectedVessel = selectedVessel,
+                onVesselSelected = onVesselSelected,
                 modifier = Modifier.fillMaxWidth(),
             )
 

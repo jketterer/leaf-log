@@ -632,12 +632,13 @@ Decided 2026-10-19.
   (`rinsed`), also on Log Tea and Edit Session, shown as "rinsed". No timer state, no steep row.
 - **The slim review** between steeps replaces Steep Complete:
     - Stars, tags, a collapsed note, and the steep's parameters with the edit sheet, which gains a
-      vessel row.
-    - A primary **"Next · 30s"** straight to the timer at the planned time. "Adjust" opens a sheet
-      with the next steep's time, temperature and water, then goes to the timer. The next-steep
-      dialog is deleted.
+      vessel row; choosing a vessel fills the water with its capacity.
+    - A primary **"Next (30s)"** straight to the timer at the planned time. "Adjust" opens a sheet
+      with the next steep's time and temperature, then goes to the timer. Water is not adjusted
+      between steeps. The review no longer uses the next-steep dialog; Session Detail's add-steep
+      still does.
     - "Finish session" is secondary; Discard moves to the overflow. A western plan swaps them:
-      Finish is primary, "Another · 3:00" secondary.
+      Finish is primary, "Another (3:00)" secondary.
     - Earlier steeps and photos leave the loop.
 - **The end-of-session review**, its own route after Finish: every steep as a row (time, rating,
   tags; tap to edit), the session note, photos, "vs your best" (this tea's best-rated other
@@ -677,7 +678,7 @@ Decided 2026-10-19.
     - The timer keeps each finished steep's start and length, so attaching after three steeps by
       feel creates the session with all three at their real times, unrated. The session starts
       when its first steep did.
-    - No tea at completion: "Log it", "Next · +5s" for gongfu by feel, or "Just a timer", which
+    - No tea at completion: "Log it", "Next (+5s)" for gongfu by feel, or "Just a timer", which
       records nothing.
     - Deletes `QuickTimerViewModel`'s engine, the duplicate screen, and the details sheet.
 - **Audit findings cleared** (Rule 1): Steep Complete and Quick Timer, replaced; Timer, in its own
@@ -712,7 +713,7 @@ death, and an upgrade over the previous dev build at each migration.
    plan until the slim review replaces it. Tests: steep times, learning, resolution, the migration,
    the backup round trip. Track B: upgrade over the v8 build.
 5. [x] `feat: edit a plan in the method form`
-6. [ ] `feat: slim review between steeps`
+6. [x] `feat: slim review between steeps`
 7. [ ] `feat: end-of-session review`: Save as method at any steep count; Steep Complete's remains go.
 8. [ ] `feat: update a method from today's brew`. Test: the deviation check and the merge.
 9. [ ] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.

@@ -91,9 +91,7 @@ class TimerViewModel(
             is TimerIntent.ConfirmStop -> confirmDiscardSession()
             is TimerIntent.CancelStop -> cancelDiscardSession()
             is TimerIntent.RestartTimer -> restartTimer()
-            is TimerIntent.CompleteNow -> _state.update { it.copy(showCompleteNowConfirmation = true) }
-            is TimerIntent.ConfirmCompleteNow -> confirmCompleteNow()
-            is TimerIntent.CancelCompleteNow -> _state.update { it.copy(showCompleteNowConfirmation = false) }
+            is TimerIntent.CompleteNow -> completeNow()
             is TimerIntent.DismissNotificationWarning -> _state.update { it.copy(showNotificationWarning = false) }
             is TimerIntent.BackClicked -> _navigationEvents.trySend(TimerNavEvent.NavigateBack)
 
@@ -407,9 +405,11 @@ class TimerViewModel(
         }
     }
 
-    private fun confirmCompleteNow() {
-        _state.update { it.copy(showCompleteNowConfirmation = false) }
-        handleTimerComplete()
+    // Already brewed before Start, Poured early after. The collector above sees COMPLETE and
+    // finishes the steep, so it isn't finished twice
+    private fun completeNow() {
+        if (_state.value.session == null) return
+        timerService.updateState(timerService.getCurrentState().completedAt(Clock.System.now()))
     }
 
     private fun restartTimer() {

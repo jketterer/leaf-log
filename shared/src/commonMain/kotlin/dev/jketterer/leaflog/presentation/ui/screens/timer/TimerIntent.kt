@@ -18,9 +18,8 @@ sealed interface TimerIntent {
     data object ConfirmStop : TimerIntent
     data object CancelStop : TimerIntent
     data object RestartTimer : TimerIntent
+    /** Already brewed before Start, Poured early after. */
     data object CompleteNow : TimerIntent
-    data object ConfirmCompleteNow : TimerIntent
-    data object CancelCompleteNow : TimerIntent
     data object DismissNotificationWarning : TimerIntent
     data object BackClicked : TimerIntent
 

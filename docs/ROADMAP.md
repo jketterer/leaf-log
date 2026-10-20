@@ -706,7 +706,7 @@ death, and an upgrade over the previous dev build at each migration.
 2. [x] `fix: timer audit findings`: negative pre-start adjust, Reset not saved, the stale edit
    snapshot (verify first), the ring's hard-coded size, its semantics and live region, the copy,
    `onCleared`'s `runBlocking`. Nothing beyond the fixes.
-3. [ ] `feat: already brewed and poured early`. Test: Already brewed leaves the actual time null.
+3. [x] `feat: already brewed and poured early`. Test: Already brewed leaves the actual time null.
 4. [ ] `feat: methods plan their steeps`: the plan, `learnPlan`, `planSessionId`, plan resolution,
    Brew Again replaying the plan, v9 and backup version 3. The next-steep dialog prefills from the
    plan until the slim review replaces it. Tests: steep times, learning, resolution, the migration,

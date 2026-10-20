@@ -266,12 +266,31 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `a timer completed before it started records no brew time`() = runTest {
+    fun `already brewed leaves the actual time null so the planned time stands`() = runTest {
         val id = start().session.id
+        val notStarted = TimerState(sessionId = id, totalDuration = 20.seconds, remainingDuration = 20.seconds)
 
-        saveTimerState(TimerState(sessionId = id, status = TimerStatus.COMPLETE)).getOrThrow()
+        saveTimerState(notStarted.completedAt(EPOCH)).getOrThrow()
 
-        assertNull(sessions.getSession(id)!!.currentSteep.actualTime)
+        val steep = sessions.getSession(id)!!.currentSteep
+        assertNull(steep.actualTime)
+        assertEquals(20.seconds, steep.brewedTime)
+    }
+
+    @Test
+    fun `poured early records the time it brewed`() = runTest {
+        val id = start().session.id
+        val running = TimerState(
+            sessionId = id,
+            totalDuration = 20.seconds,
+            remainingDuration = 20.seconds,
+            status = TimerStatus.RUNNING,
+            startedAt = EPOCH,
+        )
+
+        saveTimerState(running.completedAt(EPOCH + 12.seconds)).getOrThrow()
+
+        assertEquals(12.seconds, sessions.getSession(id)!!.currentSteep.actualTime)
     }
 
     @Test

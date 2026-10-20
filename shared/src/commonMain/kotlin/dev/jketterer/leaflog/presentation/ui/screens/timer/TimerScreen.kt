@@ -59,7 +59,6 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
-import dev.jketterer.leaflog.presentation.ui.components.timer.TimerStopConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -69,6 +68,7 @@ import leaf_log.shared.generated.resources.discard_session_text
 import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
+import leaf_log.shared.generated.resources.poured_early
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
@@ -146,19 +146,22 @@ private fun TimerContent(
                         expanded = showOverflowMenu,
                         onDismissRequest = { showOverflowMenu = false },
                     ) {
-                        DropdownMenuItem(
-                            text = { Text("Complete Now") },
-                            onClick = {
-                                showOverflowMenu = false
-                                onIntent(TimerIntent.CompleteNow)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    FeatherIcons.CheckCircle,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
+                        // Before Start, the way out is Already brewed, under the Start button
+                        if (state.timerState.isRunning || state.timerState.canResume) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.poured_early)) },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    onIntent(TimerIntent.CompleteNow)
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        FeatherIcons.CheckCircle,
+                                        contentDescription = null,
+                                    )
+                                },
+                            )
+                        }
                         DropdownMenuItem(
                             text = {
                                 Text(
@@ -208,17 +211,6 @@ private fun TimerContent(
                 }
             }
         }
-    }
-
-    // Complete now confirmation dialog
-    if (state.showCompleteNowConfirmation) {
-        TimerStopConfirmationDialog(
-            title = "Complete Now?",
-            text = "This will skip the remaining brew time and mark the steep as complete.",
-            confirmText = "Complete",
-            onConfirm = { onIntent(TimerIntent.ConfirmCompleteNow) },
-            onDismiss = { onIntent(TimerIntent.CancelCompleteNow) },
-        )
     }
 
     // Discard session confirmation dialog
@@ -337,6 +329,7 @@ private fun TimerRunningContent(
                 onPauseClick = { onIntent(TimerIntent.PauseTimer) },
                 onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
                 onResetClick = { onIntent(TimerIntent.ResetTimer) },
+                onAlreadyBrewedClick = { onIntent(TimerIntent.CompleteNow) },
             )
         }
     }

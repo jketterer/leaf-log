@@ -6,34 +6,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.cancel
-import org.jetbrains.compose.resources.stringResource
-
-@Composable
-fun TimerStopConfirmationDialog(
-    text: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    title: String,
-    confirmText: String,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(confirmText)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        },
-    )
-}
 
 @Composable
 fun TimerResetConfirmationDialog(
@@ -56,20 +28,6 @@ fun TimerResetConfirmationDialog(
             }
         },
     )
-}
-
-@Preview
-@Composable
-private fun TimerStopConfirmationDialogPreview() {
-    LeafLogTheme {
-        TimerStopConfirmationDialog(
-            title = "Complete Now?",
-            text = "This will skip the remaining brew time and mark the steep as complete.",
-            confirmText = "Complete",
-            onConfirm = {},
-            onDismiss = {},
-        )
-    }
 }
 
 @Preview

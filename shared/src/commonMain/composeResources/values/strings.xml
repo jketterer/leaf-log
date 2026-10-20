@@ -187,6 +187,8 @@
     <string name="stop_timer_title">Stop Timer?</string>
     <string name="stop_timer_text">This session will be discarded. Are you sure?</string>
     <string name="stop">Stop</string>
+    <string name="already_brewed">Already brewed</string>
+    <string name="poured_early">Poured early</string>
     <string name="timer_complete_title">Timer Complete</string>
     <string name="timer_complete_text">Your tea is done! Add session details to save this brew, or discard it.</string>
     <string name="add_details">Add Details</string>

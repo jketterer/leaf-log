@@ -60,10 +60,25 @@ class SessionAggregateUseCasesTest {
 
         val again = startSession(sessions.getSession(source.session.id)!!).getOrThrow()
 
-        assertEquals(source.session.copy(id = again.session.id), again.session)
+        assertEquals(source.session.copy(id = again.session.id, planSessionId = source.session.id), again.session)
         assertEquals(source.steeps.single().brewingTime, again.steeps.single().brewingTime)
         assertNull(again.steeps.single().rating)
         assertNull(again.steeps.single().notes)
+    }
+
+    @Test
+    fun `brew again plans the next steeps from the session it copied`() = runTest {
+        val source = start()
+        val id = source.session.id
+        addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow()
+        addSteep(id, 30.seconds, 95.0, 100.0).getOrThrow()
+
+        val again = startSession(sessions.getSession(id)!!).getOrThrow()
+        val plan = ResolvePlanUseCase(configurations, sessions)(again)
+
+        assertEquals(id, again.session.planSessionId)
+        assertEquals(20.seconds, again.steeps.single().brewingTime)
+        assertEquals(35.seconds, plan.timeOf(4))
     }
 
     @Test

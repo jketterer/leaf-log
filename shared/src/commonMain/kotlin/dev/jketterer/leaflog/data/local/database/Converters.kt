@@ -55,6 +55,16 @@ class Converters {
     }
 
     @TypeConverter
+    fun toStepOverrides(value: String): Map<Int, Duration> {
+        return json.decodeFromString<Map<Int, Long>>(value).mapValues { it.value.milliseconds }
+    }
+
+    @TypeConverter
+    fun fromStepOverrides(overrides: Map<Int, Duration>): String {
+        return json.encodeToString(overrides.mapValues { it.value.inWholeMilliseconds })
+    }
+
+    @TypeConverter
     fun fromWaterType(waterType: WaterType?): String? {
         return waterType?.name
     }

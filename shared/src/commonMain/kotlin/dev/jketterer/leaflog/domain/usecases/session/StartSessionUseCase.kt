@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
@@ -38,6 +39,7 @@ class StartSessionUseCase(
         photos: List<String> = emptyList(),
         status: SessionStatus = SessionStatus.IN_PROGRESS,
         usedConfigurationId: String? = null,
+        planSessionId: String? = null,
     ): Result<SessionWithSteeps> = runCatching {
         require(teaId.isNotBlank()) { "Tea must be selected" }
 
@@ -53,6 +55,7 @@ class StartSessionUseCase(
                 teaQuantityGrams = teaQuantityGrams,
                 location = location.blankToNull(),
                 usedConfigurationId = usedConfigurationId,
+                planSessionId = planSessionId,
                 syncStatus = SyncStatus.LOCAL_ONLY,
             ),
             steeps = listOf(
@@ -94,18 +97,22 @@ class StartSessionUseCase(
         usedConfigurationId = configuration.id,
     )
 
-    /** Brew Again: [source]'s set-up and first steep, with nothing it recorded about how it went. */
+    /**
+     * Brew Again: [source]'s set-up, with nothing it recorded about how it went. Its steeps become
+     * this session's plan, so every steep replays as brewed rather than only the first.
+     */
     suspend operator fun invoke(source: SessionWithSteeps): Result<SessionWithSteeps> {
         val first = source.steeps.first()
         return invoke(
             teaId = source.session.teaId,
             vesselId = source.session.vesselId,
             waterType = source.session.waterType,
-            brewingTime = first.brewedTime,
+            brewingTime = BrewingPlan.learnedFrom(source.steeps).base,
             temperatureCelsius = first.temperatureCelsius,
             waterQuantityMl = first.waterQuantityMl,
             teaQuantityGrams = source.session.teaQuantityGrams,
             location = source.session.location,
+            planSessionId = source.session.id,
         )
     }
 }

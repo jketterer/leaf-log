@@ -60,6 +60,12 @@ data class BrewingConfigurationEntity(
     @ColumnInfo(name = "brewing_time")
     val brewingTime: Duration, // TypeConverter: Duration ↔ Long
 
+    @ColumnInfo(name = "steep_increment")
+    val steepIncrement: Duration? = null, // null = a single western steep
+
+    @ColumnInfo(name = "steep_overrides", defaultValue = "'{}'")
+    val steepOverrides: Map<Int, Duration> = emptyMap(), // TypeConverter: JSON
+
     @ColumnInfo(name = "water_type")
     val waterType: WaterType, // TypeConverter: WaterType ↔ String
 

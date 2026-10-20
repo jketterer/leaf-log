@@ -20,6 +20,31 @@ class BackupJsonTest {
     }
 
     @Test
+    fun `a method's plan and a session's source survive a round trip`() {
+        val backup = decodeBackup(V1).let {
+            it.copy(
+                methods = listOf(
+                    METHOD.copy(steepIncrement = 5.seconds, steepOverrides = mapOf(4 to 45.seconds)),
+                ),
+                steeps = it.steeps.mapIndexed { i, steep ->
+                    if (i == 0) steep.copy(planSessionId = "earlier") else steep
+                },
+            )
+        }
+
+        assertEquals(backup, decodeBackup(encodeBackup(backup)))
+    }
+
+    @Test
+    fun `a version 2 backup reads with no plans`() {
+        val backup = decodeBackup(V1).copy(methods = listOf(METHOD))
+        val v2 = encodeBackup(backup).replace("\"version\": 3", "\"version\": 2")
+
+        assertEquals(backup.copy(version = 2), decodeBackup(v2))
+        assertNull(decodeBackup(v2).methods.single().steepIncrement)
+    }
+
+    @Test
     fun `a backup without a version is version 1 and reads as the current version`() {
         val backup = decodeBackup(V1)
 
@@ -60,6 +85,18 @@ class BackupJsonTest {
 }
 
 /** An export from schema 7, backup version 1: entities as they were, extra fields and all. */
+private val METHOD = BackupMethod(
+    id = "method",
+    teaId = "tieguanyin",
+    vesselId = "gaiwan",
+    waterQuantityMl = 100.0,
+    temperatureCelsius = 95.0,
+    brewingTime = 20.seconds,
+    waterType = WaterType.FILTERED,
+    createdAt = Instant.fromEpochSeconds(0),
+    updatedAt = Instant.fromEpochSeconds(0),
+)
+
 private val V1 = """
 {
   "exportedAt": 1790000000000,

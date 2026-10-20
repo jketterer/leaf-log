@@ -14,6 +14,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigu
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
@@ -52,6 +53,7 @@ class SteepCompleteViewModel(
     private val imageStorage: ImageStorage,
     private val timerService: TimerService,
     private val addSteepUseCase: AddSteepUseCase,
+    private val resolvePlanUseCase: ResolvePlanUseCase,
     private val editSteepUseCase: EditSteepUseCase,
     private val editSessionUseCase: EditSessionUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
@@ -188,6 +190,7 @@ class SteepCompleteViewModel(
                 val tea = teaDeferred.await()
                 val vessel = vesselDeferred.await()
                 val steep = session.currentSteep
+                val nextTime = resolvePlanUseCase(session).timeOf(steep.number + 1)
 
                 _state.update {
                     it.copy(
@@ -198,7 +201,7 @@ class SteepCompleteViewModel(
                         notes = steep.notes ?: "",
                         photos = steep.photos,
                         previousSteeps = session.steeps.dropLast(1),
-                        nextSteepDuration = steep.brewingTime,
+                        nextSteepDuration = nextTime,
                         nextSteepTemperature = steep.temperatureCelsius,
                         nextSteepWaterQuantity = steep.waterQuantityMl,
                         isLoading = false,

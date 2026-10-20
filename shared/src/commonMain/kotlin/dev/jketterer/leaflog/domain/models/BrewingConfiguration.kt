@@ -16,6 +16,8 @@ data class BrewingConfiguration(
     val waterQuantityMl: Double,
     val temperatureCelsius: Double,
     val brewingTime: Duration,
+    val steepIncrement: Duration? = null, // null = a single western steep
+    val steepOverrides: Map<Int, Duration> = emptyMap(), // learned from a session, never hand-edited
     val waterType: WaterType,
 
     // Metadata
@@ -32,4 +34,6 @@ data class BrewingConfiguration(
     val createdAt: Instant,
     val updatedAt: Instant,
     val deletedAt: Instant? = null,
-)
+) {
+    val plan get() = BrewingPlan(brewingTime, steepIncrement, steepOverrides)
+}

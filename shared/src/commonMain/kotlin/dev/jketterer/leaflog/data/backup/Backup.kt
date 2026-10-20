@@ -16,7 +16,7 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 
 /**
- * The backup format, version 2: `data.json` in the archive. Frozen, like a migration: a change
+ * The backup format, version 3: `data.json` in the archive. Frozen, like a migration: a change
  * here is version 3, with a reader for this one.
  *
  * It carries facts only. Stats are recomputed on import, and deleted rows travel so that what
@@ -37,10 +37,10 @@ data class Backup(
     val preferences: BackupPreferences? = null,
 )
 
-const val BACKUP_VERSION = 2
+const val BACKUP_VERSION = 3
 
 // Field names match the entities, so version 1 (the entities themselves) decodes into these.
-// Defaults cover what version 1 lacked.
+// Defaults cover what version 1 lacked, and what version 2 lacked: plans.
 
 @Serializable
 data class BackupTeaType(
@@ -101,6 +101,7 @@ data class BackupSteep(
     val waterType: WaterType? = null,
     val location: String? = null,
     val usedConfigurationId: String? = null,
+    val planSessionId: String? = null,
     val rating: Float? = null,
     val timestamp: Instant,
     val brewingTime: Duration,
@@ -128,6 +129,8 @@ data class BackupMethod(
     val waterQuantityMl: Double,
     val temperatureCelsius: Double,
     val brewingTime: Duration,
+    val steepIncrement: Duration? = null,
+    val steepOverrides: Map<Int, Duration> = emptyMap(),
     val waterType: WaterType,
     val sourceSessionId: String? = null,
     val rating: Float? = null,

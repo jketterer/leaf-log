@@ -38,6 +38,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.RecomputeStatsUseCase
+import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ReopenSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
@@ -74,6 +75,7 @@ val useCaseModule = module {
     factoryOf(::RecomputeStatsUseCase)
     factoryOf(::StartSessionUseCase)
     factoryOf(::AddSteepUseCase)
+    factoryOf(::ResolvePlanUseCase)
     factoryOf(::EditSteepUseCase)
     factoryOf(::EditSessionUseCase)
     factoryOf(::DeleteSteepUseCase)

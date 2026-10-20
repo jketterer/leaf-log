@@ -269,3 +269,13 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         REPAIRS.forEach(connection::execSQL)
     }
 }
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `brewing_configurations` ADD COLUMN `steep_increment` INTEGER")
+        connection.execSQL(
+            "ALTER TABLE `brewing_configurations` ADD COLUMN `steep_overrides` TEXT NOT NULL DEFAULT '{}'"
+        )
+        connection.execSQL("ALTER TABLE `tea_session` ADD COLUMN `planSessionId` TEXT")
+    }
+}

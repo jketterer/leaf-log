@@ -168,6 +168,26 @@ class MigrationTest {
         )
         connection.close()
     }
+
+    @Test
+    fun `8 to 9 produces the exported version 9 schema and leaves methods without a plan`() {
+        val connection = createFromSchema(8)
+        connection.execSQL(
+            "INSERT INTO brewing_configurations (id, tea_id, vessel_id, water_quantity_ml, " +
+                "temperature_celsius, brewing_time, water_type, times_used, is_pinned, " +
+                "pinned_sort_order, created_at, updated_at) " +
+                "VALUES ('m1', 't1', 'v1', 100.0, 95.0, 30000, 'FILTERED', 0, 0, 0, 0, 0)",
+        )
+
+        MIGRATION_8_9.migrate(connection)
+
+        assertSchemaMatches(connection, 9)
+        assertEquals(
+            mapOf("m1" to listOf<String?>(null, "{}")),
+            connection.rows("SELECT id, steep_increment, steep_overrides FROM brewing_configurations"),
+        )
+        connection.close()
+    }
 }
 
 private fun SQLiteStatement.textOrNull(index: Int) = if (isNull(index)) null else getText(index)

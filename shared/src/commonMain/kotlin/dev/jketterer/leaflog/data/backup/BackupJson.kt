@@ -20,7 +20,7 @@ internal fun encodeBackup(backup: Backup): String = json.encodeToString(backup)
 internal fun decodeBackup(text: String): Backup =
     when (val version = json.decodeFromString<Header>(text).version) {
         1 -> json.decodeFromString<BackupV1>(text).toBackup()
-        BACKUP_VERSION -> json.decodeFromString<Backup>(text)
+        2, BACKUP_VERSION -> json.decodeFromString<Backup>(text)
         else -> throw if (version > BACKUP_VERSION) {
             DomainFailure.NewerBackup(version)
         } else {
@@ -33,7 +33,7 @@ private class Header(val version: Int = 1)
 
 /**
  * Version 1: the Room entities serialized as they were, schema 6 (March 2026) to 8. Only the
- * names that differ from version 2 are declared; the rest decode into version 2's types.
+ * names that differ from version 3 are declared; the rest decode into version 3's types.
  */
 @Serializable
 private class BackupV1(

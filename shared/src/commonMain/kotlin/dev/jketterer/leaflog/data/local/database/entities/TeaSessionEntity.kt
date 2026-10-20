@@ -61,6 +61,7 @@ data class TeaSessionEntity(
     val waterType: WaterType?,
     val location: String?,
     val usedConfigurationId: String?, // Configuration that was used for this session
+    val planSessionId: String? = null, // Session Brew Again copied; no FK, it may be gone
 
     val rating: Float?,
 

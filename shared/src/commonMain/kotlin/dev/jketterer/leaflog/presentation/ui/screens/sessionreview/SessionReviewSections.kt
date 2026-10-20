@@ -19,6 +19,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.material3.HorizontalDivider
+import compose.icons.feathericons.Award
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -139,51 +142,66 @@ internal fun VsBestSection(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionHeader(stringResource(Res.string.review_vs_best_header))
         when (vsBest) {
-            is VsBest.NewBest -> Text(
-                text = stringResource(Res.string.review_new_best),
-                style = MaterialTheme.typography.bodyLarge,
-            )
-
-            is VsBest.Versus -> {
-                val date =
-                    vsBest.best.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
+            is VsBest.NewBest -> Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+            ) {
                 Row(
+                    modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(
-                            Res.string.review_best_from,
-                            TimeFormatter.formatDate(date, DateSkeleton.MONTH_DAY_YEAR),
-                        ),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    Icon(
+                        FeatherIcons.Award,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                     )
-                    RatingDisplay(rating = vsBest.best.effectiveRating, iconsOnly = true)
+                    Text(
+                        text = stringResource(Res.string.review_new_best),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
                 }
-                if (vsBest.differences.isEmpty()) {
-                    Text(
-                        text = stringResource(Res.string.review_same_as_best),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                } else {
+            }
+
+            is VsBest.Versus -> Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Spacer(Modifier.weight(1f))
-                        ColumnHeader(stringResource(Res.string.review_this_session))
-                        ColumnHeader(stringResource(Res.string.review_best_session))
+                        RatingColumn(stringResource(Res.string.review_this_session), session.effectiveRating)
+                        RatingColumn(stringResource(Res.string.review_best_session), vsBest.best.effectiveRating)
                     }
-                    vsBest.differences.forEach { difference ->
+                    HorizontalDivider()
+                    if (vsBest.differences.isEmpty()) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
+                            Icon(FeatherIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Text(
-                                text = difference.label(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f),
+                                text = stringResource(Res.string.review_same_as_best),
+                                style = MaterialTheme.typography.bodyLarge,
                             )
-                            DifferenceValue(difference.valueOf(session, vessel))
-                            DifferenceValue(difference.valueOf(vsBest.best, bestVessel))
+                        }
+                    } else {
+                        vsBest.differences.forEach { difference ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = difference.label(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                DifferenceValue(difference.valueOf(session, vessel), emphasized = true)
+                                DifferenceValue(difference.valueOf(vsBest.best, bestVessel))
+                            }
                         }
                     }
                 }
@@ -193,17 +211,24 @@ internal fun VsBestSection(
 }
 
 @Composable
-private fun androidx.compose.foundation.layout.RowScope.ColumnHeader(text: String) = Text(
-    text = text,
-    style = MaterialTheme.typography.labelMedium,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
+private fun RowScope.RatingColumn(title: String, rating: Float?) = Column(
     modifier = Modifier.weight(1f),
-)
+    verticalArrangement = Arrangement.spacedBy(4.dp),
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    RatingDisplay(rating = rating, iconsOnly = true)
+}
 
 @Composable
-private fun androidx.compose.foundation.layout.RowScope.DifferenceValue(text: String) = Text(
+private fun RowScope.DifferenceValue(text: String, emphasized: Boolean = false) = Text(
     text = text,
     style = MaterialTheme.typography.bodyMedium,
+    fontWeight = if (emphasized) FontWeight.Bold else null,
+    color = if (emphasized) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
     modifier = Modifier.weight(1f),
 )
 
@@ -442,6 +467,34 @@ private fun VsBestSectionPreview() {
         VsBestSection(
             vsBest = VsBest.Versus(best, listOf(BrewDifference.TEMPERATURE)),
             session = mine,
+            vessel = null,
+            bestVessel = null,
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VsBestSectionNewBestPreview() {
+    LeafLogTheme {
+        VsBestSection(
+            vsBest = VsBest.NewBest,
+            session = previewSession(ratings = listOf(5f)),
+            vessel = null,
+            bestVessel = null,
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VsBestSectionSamePreview() {
+    LeafLogTheme {
+        VsBestSection(
+            vsBest = VsBest.Versus(previewSession(id = "best", ratings = listOf(4.5f)), emptyList()),
+            session = previewSession(ratings = listOf(3.5f)),
             vessel = null,
             bestVessel = null,
             modifier = Modifier.padding(16.dp),

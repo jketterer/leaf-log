@@ -10,6 +10,8 @@ sealed interface CreateBrewingConfigurationIntent {
     data class UpdateWaterQuantity(val milliliters: Double?) : CreateBrewingConfigurationIntent
     data class UpdateTemperature(val celsius: Double?) : CreateBrewingConfigurationIntent
     data class UpdateBrewingTime(val duration: Duration) : CreateBrewingConfigurationIntent
+    data class UpdateSteepIncrement(val increment: Duration?) : CreateBrewingConfigurationIntent
+    data object ClearSteepOverrides : CreateBrewingConfigurationIntent
     data class SelectWaterType(val waterType: WaterType) : CreateBrewingConfigurationIntent
     data object Save : CreateBrewingConfigurationIntent
     data object NavigateBack : CreateBrewingConfigurationIntent

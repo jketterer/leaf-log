@@ -39,6 +39,7 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
+import dev.jketterer.leaflog.presentation.ui.components.configuration.BrewingPlanSection
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
@@ -180,6 +181,21 @@ private fun CreateBrewingConfigurationContent(
                             presets = brewingTimePresets,
                             currentValue = state.brewingTime,
                             onSelect = { onIntent(CreateBrewingConfigurationIntent.UpdateBrewingTime(it)) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                state.plan?.let { plan ->
+                    item(key = "plan") {
+                        BrewingPlanSection(
+                            plan = plan,
+                            onIncrementChange = {
+                                onIntent(CreateBrewingConfigurationIntent.UpdateSteepIncrement(it))
+                            },
+                            onClearOverrides = {
+                                onIntent(CreateBrewingConfigurationIntent.ClearSteepOverrides)
+                            },
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }

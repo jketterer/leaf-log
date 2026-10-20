@@ -80,6 +80,15 @@ class CreateBrewingConfigurationViewModel(
                 _state.update { it.copy(brewingTime = intent.duration) }
             }
 
+            is CreateBrewingConfigurationIntent.UpdateSteepIncrement -> {
+                // Zero reads as none: a plan can only lengthen, and null is the western steep.
+                _state.update { it.copy(steepIncrement = intent.increment?.takeIf { d -> d.isPositive() }) }
+            }
+
+            is CreateBrewingConfigurationIntent.ClearSteepOverrides -> {
+                _state.update { it.copy(steepOverrides = emptyMap()) }
+            }
+
             is CreateBrewingConfigurationIntent.SelectWaterType -> {
                 _state.update { it.copy(waterType = intent.waterType) }
             }
@@ -110,6 +119,8 @@ class CreateBrewingConfigurationViewModel(
                             waterQuantityMl = config.waterQuantityMl,
                             temperatureCelsius = config.temperatureCelsius,
                             brewingTime = config.brewingTime,
+                            steepIncrement = config.steepIncrement,
+                            steepOverrides = config.steepOverrides,
                             waterType = config.waterType,
                             isEditMode = true,
                             editingConfigId = configurationId,
@@ -165,7 +176,7 @@ class CreateBrewingConfigurationViewModel(
         val teaId = route.teaId
         val temperatureCelsius = currentState.temperatureCelsius ?: return
         val waterQuantityMl = currentState.waterQuantityMl ?: return
-        val brewingTime = currentState.brewingTime ?: return
+        val plan = currentState.plan ?: return
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
@@ -178,7 +189,7 @@ class CreateBrewingConfigurationViewModel(
                     teaQuantityGrams = currentState.teaQuantityGrams?.toFloat(),
                     waterQuantityMl = waterQuantityMl,
                     temperatureCelsius = temperatureCelsius,
-                    brewingTime = brewingTime,
+                    plan = plan,
                     waterType = currentState.waterType,
                 ).onSuccess {
                     _navEvents.send(CreateBrewingConfigurationNavigationEvent.NavigateBack)
@@ -193,7 +204,8 @@ class CreateBrewingConfigurationViewModel(
                     teaQuantityGrams = currentState.teaQuantityGrams?.toFloat(),
                     waterQuantityMl = waterQuantityMl,
                     temperatureCelsius = temperatureCelsius,
-                    brewingTime = brewingTime,
+                    brewingTime = plan.base,
+                    steepIncrement = plan.increment,
                     waterType = currentState.waterType,
                     customLabel = currentState.label.takeIf { it.isNotBlank() },
                 ).onSuccess {

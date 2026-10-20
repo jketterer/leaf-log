@@ -1,10 +1,10 @@
 package dev.jketterer.leaflog.domain.usecases.configuration
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import kotlin.time.Clock
-import kotlin.time.Duration
 
 /**
  * Updates an existing brewing configuration
@@ -20,7 +20,8 @@ class UpdateBrewingConfigurationUseCase(
      * @param teaQuantityGrams Optional new tea quantity
      * @param waterQuantityMl Optional new water quantity
      * @param temperatureCelsius Optional new temperature
-     * @param brewingTime Optional new brewing time
+     * @param plan Optional new plan; replaces the base time, increment and overrides together, so a
+     *   null increment or empty overrides in it clear them
      * @param waterType Optional new water type
      * @return Result with the updated configuration
      */
@@ -31,7 +32,7 @@ class UpdateBrewingConfigurationUseCase(
         teaQuantityGrams: Float? = null,
         waterQuantityMl: Double? = null,
         temperatureCelsius: Double? = null,
-        brewingTime: Duration? = null,
+        plan: BrewingPlan? = null,
         waterType: WaterType? = null,
     ): Result<BrewingConfiguration> {
         return try {
@@ -44,7 +45,9 @@ class UpdateBrewingConfigurationUseCase(
                 teaQuantityGrams = teaQuantityGrams ?: existing.teaQuantityGrams,
                 waterQuantityMl = waterQuantityMl ?: existing.waterQuantityMl,
                 temperatureCelsius = temperatureCelsius ?: existing.temperatureCelsius,
-                brewingTime = brewingTime ?: existing.brewingTime,
+                brewingTime = plan?.base ?: existing.brewingTime,
+                steepIncrement = if (plan != null) plan.increment else existing.steepIncrement,
+                steepOverrides = plan?.overrides ?: existing.steepOverrides,
                 waterType = waterType ?: existing.waterType,
                 updatedAt = Clock.System.now(),
             )

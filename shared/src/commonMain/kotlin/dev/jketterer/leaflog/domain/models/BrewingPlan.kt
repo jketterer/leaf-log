@@ -22,7 +22,12 @@ data class BrewingPlan(
         return time
     }
 
+    /** How many steeps a preview lists: a few, or as far as the last override so none hides. */
+    val previewLength: Int get() = maxOf(PREVIEW_STEEPS, overrides.keys.maxOrNull() ?: 0)
+
     companion object {
+        private const val PREVIEW_STEEPS = 6
+
         /**
          * The plan that replays [steeps] exactly as they brewed, so a late tap doesn't become an override
          * replayed forever: each time is rounded to 1s under 15s and to 5s from there. The increment is

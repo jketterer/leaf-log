@@ -115,6 +115,7 @@
     <string name="header_todays_stats">Today's stats</string>
     <string name="header_recent_sessions">Recent sessions</string>
     <string name="header_brewing_parameters">Brewing parameters</string>
+    <string name="header_steep_plan">Steep plan</string>
     <string name="header_optional_details">Optional details</string>
     <string name="header_previous_steeps">Previous steeps</string>
     <string name="header_steep_parameters">Steep parameters</string>
@@ -240,6 +241,11 @@
     <string name="couldnt_delete_tea">Couldn't delete the tea</string>
     <string name="couldnt_save_photo">Couldn't save the photo</string>
     <string name="couldnt_load_method">Couldn't load the method</string>
+    <string name="field_steep_increment">Added each steep</string>
+    <string name="field_steep_increment_hint">Leave empty for a single steep</string>
+    <string name="plan_steep_label">Steep %1$d</string>
+    <string name="plan_adjusted">Adjusted</string>
+    <string name="plan_clear_adjusted">Clear adjusted steeps</string>
     <string name="couldnt_save_method">Couldn't save the method</string>
     <string name="couldnt_delete_method">Couldn't delete the method</string>
     <string name="couldnt_load_vessels">Couldn't load your vessels</string>

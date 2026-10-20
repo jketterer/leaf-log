@@ -5,7 +5,6 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -23,12 +22,12 @@ class CreateBrewingConfigurationUseCase(
      * @param teaQuantityGrams Optional tea quantity in grams
      * @param waterQuantityMl Water quantity in milliliters
      * @param temperatureCelsius Brewing temperature in Celsius
-     * @param brewingTime Brewing duration
+     * @param brewingTime Brewing duration of the first steep
+     * @param steepIncrement Time added to each further steep, null for a single western steep
      * @param waterType Type of water used
      * @param customLabel Optional custom label (auto-generated if null)
      * @return Result with the created configuration
      */
-    @OptIn(ExperimentalUuidApi::class)
     suspend operator fun invoke(
         teaId: String,
         vesselId: String,
@@ -36,6 +35,7 @@ class CreateBrewingConfigurationUseCase(
         waterQuantityMl: Double,
         temperatureCelsius: Double,
         brewingTime: Duration,
+        steepIncrement: Duration? = null,
         waterType: WaterType,
         customLabel: String? = null,
     ): Result<BrewingConfiguration> {
@@ -56,6 +56,7 @@ class CreateBrewingConfigurationUseCase(
                 waterQuantityMl = waterQuantityMl,
                 temperatureCelsius = temperatureCelsius,
                 brewingTime = brewingTime,
+                steepIncrement = steepIncrement,
                 waterType = waterType,
                 sourceSessionId = null,
                 rating = null,

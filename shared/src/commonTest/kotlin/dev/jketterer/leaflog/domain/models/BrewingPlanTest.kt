@@ -25,6 +25,12 @@ class BrewingPlanTest {
     }
 
     @Test
+    fun `a preview lists six steeps and runs on to the last override`() {
+        assertEquals(6, BrewingPlan(20.seconds, 5.seconds).previewLength)
+        assertEquals(9, BrewingPlan(20.seconds, 5.seconds, mapOf(9 to 60.seconds)).previewLength)
+    }
+
+    @Test
     fun `a plan without an increment brews every steep the same`() {
         assertEquals(3.minutesInSeconds(), BrewingPlan(3.minutesInSeconds()).timeOf(2))
     }

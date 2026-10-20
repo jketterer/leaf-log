@@ -711,7 +711,7 @@ death, and an upgrade over the previous dev build at each migration.
    Brew Again replaying the plan, v9 and backup version 3. The next-steep dialog prefills from the
    plan until the slim review replaces it. Tests: steep times, learning, resolution, the migration,
    the backup round trip. Track B: upgrade over the v8 build.
-5. [ ] `feat: edit a plan in the method form`
+5. [x] `feat: edit a plan in the method form`
 6. [ ] `feat: slim review between steeps`
 7. [ ] `feat: end-of-session review`: Save as method at any steep count; Steep Complete's remains go.
 8. [ ] `feat: update a method from today's brew`. Test: the deviation check and the merge.

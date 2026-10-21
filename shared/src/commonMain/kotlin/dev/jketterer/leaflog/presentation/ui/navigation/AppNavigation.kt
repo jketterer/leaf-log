@@ -364,6 +364,9 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToSteepComplete = { sessionId ->
                     navigator.replace(route, NavRoute.SteepCompleteRoute(sessionId))
                 },
+                onNavigateToSessionTimer = { sessionId ->
+                    navigator.replace(route, NavRoute.TimerRoute(sessionId))
+                },
             )
         }
 

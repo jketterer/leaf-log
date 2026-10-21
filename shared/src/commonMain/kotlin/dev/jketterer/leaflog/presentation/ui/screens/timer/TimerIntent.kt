@@ -23,10 +23,15 @@ sealed interface TimerIntent {
     data object DismissNotificationWarning : TimerIntent
     data object BackClicked : TimerIntent
 
-    // Quick Timer: ending it records nothing
+    // Quick Timer: ending it records nothing; a tea attached makes a session of its steeps
     data object JustATimer : TimerIntent
     data object ConfirmEndTimer : TimerIntent
     data object CancelEndTimer : TimerIntent
+    data object NextByFeel : TimerIntent
+    data object ShowTeaPicker : TimerIntent
+    data object HideTeaPicker : TimerIntent
+    data class TeaPicked(val teaId: String) : TimerIntent
+    data class QuickAddTea(val name: String, val teaTypeId: String) : TimerIntent
 
     // Edit session parameters
     data object EditSession : TimerIntent

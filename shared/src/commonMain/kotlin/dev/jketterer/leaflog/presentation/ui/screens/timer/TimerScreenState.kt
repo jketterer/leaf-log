@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.timer
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
@@ -21,6 +22,10 @@ data class TimerScreenState(
     /** A timer with no session, so nothing it times is recorded. */
     val isQuickTimer: Boolean = false,
     val showEndTimerConfirmation: Boolean = false,
+    val showTeaPicker: Boolean = false,
+    val pickerTeas: List<Tea> = emptyList(),
+    val recentTeas: List<Tea> = emptyList(),
+    val teaTypes: List<TeaType> = emptyList(),
     val showDiscardSessionConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
     val showEditSheet: Boolean = false,

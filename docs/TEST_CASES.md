@@ -191,3 +191,8 @@ the Activity is portrait-locked.
 - [ ] Back, by the arrow, system back or the edge swipe, while running or paused asks before
       stopping. Stopping withdraws its notifications.
 - [ ] "Just a timer" returns Home with nothing recorded.
+- [ ] Three steeps by "Next", then "Log it" with a tea → the review of steep 3, with steeps 1 and 2
+      at their real times, unrated. The session starts when steep 1 did.
+- [ ] "What are you brewing?" while running → the session's Timer, still counting, its ongoing
+      notification and ready alert now naming the tea. Quick-add from the picker does the same.
+- [ ] Two steeps by "Next" → let the process die → reopen → attach. Both steeps are logged.

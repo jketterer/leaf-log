@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
+import dev.jketterer.leaflog.domain.models.TimedSteep
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -140,6 +141,7 @@ private data class StoredQuickTimer(
     val status: TimerStatus,
     val startedAtMs: Long?,
     val pausedAtMs: Long?,
+    val finished: List<StoredSteep> = emptyList(),
 ) {
     fun toTimerState() = TimerState(
         steepNumber = steepNumber,
@@ -148,6 +150,9 @@ private data class StoredQuickTimer(
         status = status,
         startedAt = startedAtMs?.let(Instant::fromEpochMilliseconds),
         pausedAt = pausedAtMs?.let(Instant::fromEpochMilliseconds),
+        finishedSteeps = finished.map {
+            TimedSteep(Instant.fromEpochMilliseconds(it.startedAtMs), it.lengthMs.milliseconds)
+        },
     )
 
     companion object {
@@ -158,6 +163,12 @@ private data class StoredQuickTimer(
             status = timer.status,
             startedAtMs = timer.startedAt?.toEpochMilliseconds(),
             pausedAtMs = timer.pausedAt?.toEpochMilliseconds(),
+            finished = timer.finishedSteeps.map {
+                StoredSteep(it.startedAt.toEpochMilliseconds(), it.length.inWholeMilliseconds)
+            },
         )
     }
 }
+
+@Serializable
+private data class StoredSteep(val startedAtMs: Long, val lengthMs: Long)

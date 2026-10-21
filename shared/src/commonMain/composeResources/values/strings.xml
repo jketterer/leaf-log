@@ -194,6 +194,8 @@
     <string name="poured_early">Poured early</string>
     <string name="quick_timer">Quick timer</string>
     <string name="just_a_timer">Just a timer</string>
+    <string name="what_are_you_brewing">What are you brewing?</string>
+    <string name="log_it">Log it</string>
 
     <!-- Why an operation failed -->
     <string name="failure_not_found">That no longer exists</string>

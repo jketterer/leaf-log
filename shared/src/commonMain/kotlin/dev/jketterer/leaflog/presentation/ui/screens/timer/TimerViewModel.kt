@@ -2,14 +2,18 @@ package dev.jketterer.leaflog.presentation.ui.screens.timer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerNotificationService
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
+import dev.jketterer.leaflog.domain.usecases.session.AttachTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
@@ -28,6 +32,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,6 +43,8 @@ import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_pause_timer
 import leaf_log.shared.generated.resources.couldnt_resume_timer
 import leaf_log.shared.generated.resources.couldnt_save_changes
+import leaf_log.shared.generated.resources.couldnt_save_session
+import leaf_log.shared.generated.resources.couldnt_save_tea
 import leaf_log.shared.generated.resources.couldnt_start_timer
 import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.time.Clock
@@ -47,6 +54,7 @@ class TimerViewModel(
     private val route: NavRoute.TimerRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
+    private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val notificationService: TimerNotificationService,
@@ -61,6 +69,8 @@ class TimerViewModel(
     private val editSessionUseCase: EditSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
     private val resolvePlanUseCase: ResolvePlanUseCase,
+    private val attachTeaUseCase: AttachTeaUseCase,
+    private val createTeaUseCase: CreateTeaUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -103,6 +113,11 @@ class TimerViewModel(
             is TimerIntent.JustATimer -> endQuickTimer()
             is TimerIntent.ConfirmEndTimer -> endQuickTimer()
             is TimerIntent.CancelEndTimer -> _state.update { it.copy(showEndTimerConfirmation = false) }
+            is TimerIntent.NextByFeel -> nextByFeel()
+            is TimerIntent.ShowTeaPicker -> _state.update { it.copy(showTeaPicker = true) }
+            is TimerIntent.HideTeaPicker -> _state.update { it.copy(showTeaPicker = false) }
+            is TimerIntent.TeaPicked -> attachTea(intent.teaId)
+            is TimerIntent.QuickAddTea -> quickAddTea(intent.name, intent.teaTypeId)
 
             is TimerIntent.EditSession -> openEditSheet()
             is TimerIntent.EditTemperatureChanged -> _state.update { it.copy(editTemperatureCelsius = intent.celsius) }
@@ -227,6 +242,16 @@ class TimerViewModel(
     // Live when Home has just started it or a notification brought the user back; stored when
     // the process has died since
     private fun initializeQuickTimer() {
+        viewModelScope.launch {
+            combine(
+                teaRepository.getAllFlow(),
+                teaRepository.getRecentlyBrewedFlow(5),
+                teaTypeRepository.getAllFlow(),
+            ) { teas, recent, types -> Triple(teas, recent, types) }
+                .collect { (teas, recent, types) ->
+                    _state.update { it.copy(pickerTeas = teas, recentTeas = recent, teaTypes = types) }
+                }
+        }
         viewModelScope.launch {
             val live = timerService.getCurrentState()
                 .takeIf { it.sessionId == null && it.totalDuration > Duration.ZERO }
@@ -499,6 +524,54 @@ class TimerViewModel(
         }
     }
 
+    // The steep this timer finished moves into its record, and the next waits for Start
+    private fun nextByFeel() {
+        val next = timerService.getCurrentState().nextByFeel()
+        timerService.onNextSteep()
+        timerService.updateState(next)
+        viewModelScope.launch { persist(next) }
+    }
+
+    private fun quickAddTea(name: String, teaTypeId: String) {
+        _state.update { it.copy(showTeaPicker = false) }
+        viewModelScope.launch {
+            createTeaUseCase(name = name, teaTypeId = teaTypeId)
+                .onSuccess { attachTea(it.id) }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_tea) }
+        }
+    }
+
+    private fun attachTea(teaId: String) {
+        _state.update { it.copy(showTeaPicker = false) }
+        viewModelScope.launch {
+            val timer = timerService.getCurrentState().resolvedAt(Clock.System.now())
+            attachTeaUseCase(teaId, timer, _state.value.userPreferences.defaultWaterType)
+                .onSuccess { handOver(it, timer) }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_session) }
+        }
+    }
+
+    // A finished steep goes to its review; one still brewing carries on in the session's Timer,
+    // which picks the live timer up by its session
+    private suspend fun handOver(session: SessionWithSteeps, timer: TimerState) {
+        preferencesRepository.updateQuickTimer(null)
+        val sessionId = session.session.id
+        if (timer.isComplete) {
+            timerService.onNextSteep()
+            _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(sessionId))
+        } else {
+            timerService.updateState(
+                timer.copy(
+                    sessionId = sessionId,
+                    teaId = session.session.teaId,
+                    brewingTemperatureCelsius = session.currentSteep.temperatureCelsius,
+                    finishedSteeps = emptyList(),
+                ),
+            )
+            _navigationEvents.send(TimerNavEvent.NavigateToSessionTimer(sessionId))
+        }
+    }
+
     private fun restartTimer() {
         val session = _state.value.session ?: return
 
@@ -522,4 +595,5 @@ class TimerViewModel(
 sealed interface TimerNavEvent {
     data object NavigateBack : TimerNavEvent
     data class NavigateToSteepComplete(val sessionId: String) : TimerNavEvent
+    data class NavigateToSessionTimer(val sessionId: String) : TimerNavEvent
 }

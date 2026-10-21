@@ -728,7 +728,7 @@ death, and an upgrade over the previous dev build at each migration.
 12. [x] `refactor: Quick Timer runs on TimerService`: the tealess timer and "Just a timer"; the old
     engine and screen go. Until 13, a Quick Timer can't become a session. Track B: the tealess
     timer across process death.
-13. [ ] `feat: attach a tea to a running timer`. Test: attaching after three steeps.
+13. [x] `feat: attach a tea to a running timer`. Test: attaching after three steeps.
 14. [ ] `chore: release 0.5.0`: audit rows struck.
 
 ---

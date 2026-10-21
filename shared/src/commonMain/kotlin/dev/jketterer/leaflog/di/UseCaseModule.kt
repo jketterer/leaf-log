@@ -19,6 +19,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurat
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateMethodFromSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.AttachTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
@@ -79,6 +80,7 @@ val useCaseModule = module {
     factoryOf(::RecomputeStatsUseCase)
     factoryOf(::StartSessionUseCase)
     factoryOf(::AddSteepUseCase)
+    factoryOf(::AttachTeaUseCase)
     factoryOf(::ResolvePlanUseCase)
     factoryOf(::CompareWithBestUseCase)
     factoryOf(::EditSteepUseCase)

@@ -88,7 +88,8 @@ class FakeBrewingVesselRepository(vessels: List<BrewingVessel> = emptyList()) :
     override suspend fun upsert(vessel: BrewingVessel) = TODO("unused by these tests")
     override suspend fun initializeDefaults() = TODO("unused by these tests")
     override fun getActiveFlow(): Flow<List<BrewingVessel>> = TODO("unused by these tests")
-    override suspend fun getActive(): List<BrewingVessel> = TODO("unused by these tests")
+    override suspend fun getActive(): List<BrewingVessel> =
+        vessels.values.filter { it.deletedAt == null && !it.isArchived }
 }
 
 class FakeTeaSessionRepository(

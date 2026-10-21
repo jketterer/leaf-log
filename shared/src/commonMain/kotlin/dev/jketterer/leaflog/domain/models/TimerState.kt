@@ -1,6 +1,9 @@
 package dev.jketterer.leaflog.domain.models
 
+import kotlin.math.roundToInt
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 import kotlin.time.Instant
 
 data class TimerState(
@@ -17,6 +20,8 @@ data class TimerState(
     val brewingTemperatureCelsius: Double? = null,
     // The plan's next steep, shown on the lock screen. Null when there is no next to offer
     val nextSteepDuration: Duration? = null,
+    // A timer with no session keeps the steeps it has finished, so attaching a tea records them
+    val finishedSteeps: List<TimedSteep> = emptyList(),
 ) {
     /** Time brewed so far: adjustments count, pauses don't. */
     val elapsed: Duration
@@ -63,6 +68,28 @@ data class TimerState(
         }
     }
 
+    /** The steep a completed timer brewed, in whole seconds so a late tap isn't replayed. */
+    val brewed: TimedSteep?
+        get() = startedAt?.takeIf { isComplete }?.let { start ->
+            val seconds = totalDuration.toDouble(DurationUnit.SECONDS).roundToInt().coerceAtLeast(1)
+            TimedSteep(start, seconds.seconds)
+        }
+
+    /**
+     * Gongfu by feel, for a completed timer with no session: the next steep brews 5s longer than
+     * this one did, and waits for Start.
+     */
+    fun nextByFeel(): TimerState {
+        val brewed = brewed ?: return this
+        val length = brewed.length + 5.seconds
+        return TimerState(
+            steepNumber = steepNumber + 1,
+            totalDuration = length,
+            remainingDuration = length,
+            finishedSteeps = finishedSteeps + brewed,
+        )
+    }
+
     /** Completes the timer at [now]. One stopped early ran for what had [elapsed], not its total. */
     fun completedAt(now: Instant): TimerState {
         val resolved = resolvedAt(now)
@@ -73,6 +100,9 @@ data class TimerState(
         )
     }
 }
+
+/** A steep a timer with no session finished: when it started and how long it brewed. */
+data class TimedSteep(val startedAt: Instant, val length: Duration)
 
 /**
  * Timer status enum.

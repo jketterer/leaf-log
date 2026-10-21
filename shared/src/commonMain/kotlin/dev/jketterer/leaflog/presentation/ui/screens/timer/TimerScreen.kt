@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,10 +25,12 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +50,7 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.AlertTriangle
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.CheckCircle
+import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
 import compose.icons.feathericons.X
@@ -53,6 +58,8 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
+import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
@@ -73,16 +80,20 @@ import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
 import leaf_log.shared.generated.resources.just_a_timer
+import leaf_log.shared.generated.resources.log_it
 import leaf_log.shared.generated.resources.poured_early
 import leaf_log.shared.generated.resources.quick_timer
+import leaf_log.shared.generated.resources.review_next_in
 import leaf_log.shared.generated.resources.stop
 import leaf_log.shared.generated.resources.stop_timer_text
 import leaf_log.shared.generated.resources.stop_timer_title
+import leaf_log.shared.generated.resources.what_are_you_brewing
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import org.koin.core.parameter.parametersOf
 
 /**
  * Timer Screen - brewing countdown timer.
@@ -92,6 +103,7 @@ fun TimerScreen(
     route: NavRoute.TimerRoute,
     onNavigateBack: () -> Unit,
     onNavigateToSteepComplete: (String) -> Unit,
+    onNavigateToSessionTimer: (String) -> Unit,
     viewModel: TimerViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -104,6 +116,8 @@ fun TimerScreen(
                 is TimerNavEvent.NavigateToSteepComplete -> {
                     onNavigateToSteepComplete(event.sessionId)
                 }
+
+                is TimerNavEvent.NavigateToSessionTimer -> onNavigateToSessionTimer(event.sessionId)
 
                 is TimerNavEvent.NavigateBack -> {
                     onNavigateBack()
@@ -281,6 +295,24 @@ private fun TimerContent(
         )
     }
 
+    if (state.showTeaPicker) {
+        var query by remember { mutableStateOf("") }
+        var filter by remember { mutableStateOf<TeaPickerFilter>(TeaPickerFilter.All) }
+        TeaPickerSheet(
+            teas = state.pickerTeas,
+            recentTeas = state.recentTeas,
+            teaTypes = state.teaTypes,
+            query = query,
+            filter = filter,
+            selectedTeaId = null,
+            onQueryChanged = { query = it },
+            onFilterChanged = { filter = it },
+            onTeaSelected = { onIntent(TimerIntent.TeaPicked(it.id)) },
+            onTeaCreated = { name, teaTypeId -> onIntent(TimerIntent.QuickAddTea(name, teaTypeId)) },
+            onDismiss = { onIntent(TimerIntent.HideTeaPicker) },
+        )
+    }
+
     // Edit session parameters sheet
     if (state.showEditSheet && state.editWaterType != null) {
         EditSessionParametersSheet(
@@ -334,6 +366,18 @@ private fun TimerRunningContent(
                     session = state.session,
                     onEditClick = { onIntent(TimerIntent.EditSession) },
                 )
+            } else if (state.isQuickTimer && !state.timerState.isComplete) {
+                AssistChip(
+                    onClick = { onIntent(TimerIntent.ShowTeaPicker) },
+                    label = { Text(stringResource(Res.string.what_are_you_brewing)) },
+                    leadingIcon = {
+                        Icon(
+                            FeatherIcons.Coffee,
+                            contentDescription = null,
+                            modifier = Modifier.size(AssistChipDefaults.IconSize),
+                        )
+                    },
+                )
             }
 
             // Circular timer ring + quick adjustment buttons. The ring grows into the space left
@@ -362,12 +406,10 @@ private fun TimerRunningContent(
 
             // Only a Quick Timer stays here once done: a session's steep moves on to its review
             if (state.timerState.isComplete) {
-                Button(
-                    onClick = { onIntent(TimerIntent.JustATimer) },
-                    modifier = Modifier.fillMaxWidth(0.7f),
-                ) {
-                    Text(stringResource(Res.string.just_a_timer))
-                }
+                QuickTimerDoneButtons(
+                    nextTime = state.timerState.nextByFeel().totalDuration,
+                    onIntent = onIntent,
+                )
             } else {
                 TimerControlButtons(
                     isRunning = state.timerState.isRunning,
@@ -381,6 +423,41 @@ private fun TimerRunningContent(
                         .takeUnless { state.isQuickTimer },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun QuickTimerDoneButtons(
+    nextTime: Duration,
+    onIntent: (TimerIntent) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(0.7f),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Button(
+            onClick = { onIntent(TimerIntent.ShowTeaPicker) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(Res.string.log_it))
+        }
+        OutlinedButton(
+            onClick = { onIntent(TimerIntent.NextByFeel) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                stringResource(
+                    Res.string.review_next_in,
+                    formatBrewingTime(nextTime.inWholeSeconds.toInt()),
+                ),
+            )
+        }
+        TextButton(
+            onClick = { onIntent(TimerIntent.JustATimer) },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(Res.string.just_a_timer))
         }
     }
 }
@@ -488,6 +565,25 @@ private fun TimerScreenPausedPreview() {
                     createdAt = PreviewInstant,
                     updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
+                ),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TimerScreenQuickTimerRunningPreview() {
+    LeafLogTheme {
+        TimerContent(
+            state = TimerScreenState(
+                isQuickTimer = true,
+                timerState = TimerState(
+                    totalDuration = 30.seconds,
+                    remainingDuration = 12.seconds,
+                    status = TimerStatus.RUNNING,
+                    startedAt = PreviewInstant,
                 ),
             ),
             onIntent = {},

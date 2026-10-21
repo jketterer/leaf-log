@@ -325,6 +325,9 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                     navigator.navigateUp(route)
                     navigator.openOnHome(NavRoute.TimerRoute(sessionId))
                 },
+                onNavigateToReview = { sessionId ->
+                    navigator.replace(route, NavRoute.SessionReviewRoute(sessionId, logged = true))
+                },
             )
         }
 
@@ -374,7 +377,8 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             SessionReviewScreen(
                 route = route,
                 onNavigateToHome = { finishedSessionId ->
-                    navigator.resetHome(NavRoute.HomeRoute(finishedSessionId))
+                    if (route.logged) navigator.navigateUp(route)
+                    else navigator.resetHome(NavRoute.HomeRoute(finishedSessionId))
                 },
             )
         }

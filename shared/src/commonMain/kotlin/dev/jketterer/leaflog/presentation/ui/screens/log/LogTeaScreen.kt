@@ -47,7 +47,6 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
-import dev.jketterer.leaflog.presentation.ui.components.session.CompleteSessionDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
@@ -71,6 +70,7 @@ fun LogTeaScreen(
     route: NavRoute.LogTeaRoute,
     onNavigateBack: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
+    onNavigateToReview: (String) -> Unit,
     viewModel: LogTeaViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -82,6 +82,10 @@ fun LogTeaScreen(
             when (event) {
                 is LogTeaNavigationEvent.NavigateToTimer -> {
                     onNavigateToTimer(event.sessionId)
+                }
+
+                is LogTeaNavigationEvent.NavigateToReview -> {
+                    onNavigateToReview(event.sessionId)
                 }
 
                 is LogTeaNavigationEvent.NavigateBack -> {
@@ -359,18 +363,6 @@ private fun LogTeaDialogs(
             onDismiss = {
                 onIntent(LogTeaIntent.DismissChooseMethodDialog)
             },
-        )
-    }
-
-    if (state.showCompleteSessionDialog) {
-        CompleteSessionDialog(
-            notes = state.completionDialogNotes,
-            rating = state.completionRating,
-            isSaving = state.isSaving,
-            onNotesChanged = { onIntent(LogTeaIntent.CompletionDialogNotesChanged(it)) },
-            onRatingChanged = { onIntent(LogTeaIntent.CompletionRatingChanged(it)) },
-            onConfirm = { onIntent(LogTeaIntent.ConfirmCompleteSession) },
-            onDismiss = { onIntent(LogTeaIntent.DismissCompleteSessionDialog) },
         )
     }
 }

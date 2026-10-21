@@ -859,7 +859,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 2. [x] `feat: a session note of its own`: v12, backup version 4. The review and Log Tea write it;
    the card and Session Detail read it. Tests: the migration, a version 3 import moving the note,
    the round trip. Track B: upgrade over the v11 build.
-3. [ ] `feat: tags on a logged brew`: Save as completed opens the review; `CompleteSessionDialog`
+3. [x] `feat: tags on a logged brew`: Save as completed opens the review; `CompleteSessionDialog`
    goes.
 4. [ ] `feat: last time, before you brew`: `dominantTags`, the Log Tea card, the quick-brew line,
    `PrefillBanner`'s strings. Test: dominant tags.

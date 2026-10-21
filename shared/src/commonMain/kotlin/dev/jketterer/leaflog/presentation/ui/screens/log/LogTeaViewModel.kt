@@ -71,7 +71,6 @@ class LogTeaViewModel(
 
     private sealed interface PendingAction {
         data object StartTimer : PendingAction
-        data class SaveAsCompleted(val notes: String?, val rating: Float?) : PendingAction
     }
 
     private val inProgressDelegate = createInProgressSessionDelegate<LogTeaState, PendingAction>(
@@ -88,17 +87,7 @@ class LogTeaViewModel(
         },
         executePendingAction = { action ->
             when (action) {
-                is PendingAction.StartTimer -> saveSession(
-                    status = SessionStatus.IN_PROGRESS,
-                    startTimer = true,
-                )
-
-                is PendingAction.SaveAsCompleted -> saveSession(
-                    status = SessionStatus.COMPLETED,
-                    startTimer = false,
-                    overrideNotes = action.notes,
-                    rating = action.rating,
-                )
+                is PendingAction.StartTimer -> saveSession(SessionStatus.IN_PROGRESS)
             }
         },
     )
@@ -134,29 +123,7 @@ class LogTeaViewModel(
 
             is LogTeaIntent.PhotoSelected -> addPhoto(intent.photoUri)
             is LogTeaIntent.PhotoRemoved -> removePhoto(intent.photoUri)
-            is LogTeaIntent.SaveAsCompleted -> showCompleteSessionDialog()
-            is LogTeaIntent.CompletionDialogNotesChanged -> _state.update {
-                it.copy(completionDialogNotes = intent.notes)
-            }
-
-            is LogTeaIntent.CompletionRatingChanged -> _state.update {
-                it.copy(completionRating = intent.rating)
-            }
-
-            is LogTeaIntent.ConfirmCompleteSession -> {
-                val current = _state.value
-                saveSession(
-                    status = SessionStatus.COMPLETED,
-                    startTimer = false,
-                    overrideNotes = current.completionDialogNotes.takeIf { it.isNotBlank() },
-                    rating = current.completionRating.takeIf { it > 0f },
-                )
-            }
-
-            is LogTeaIntent.DismissCompleteSessionDialog -> _state.update {
-                it.copy(showCompleteSessionDialog = false)
-            }
-
+            is LogTeaIntent.SaveAsCompleted -> saveSession(SessionStatus.COMPLETED)
             is LogTeaIntent.StartTimerClicked -> inProgressDelegate.checkAndProceed(PendingAction.StartTimer)
 
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
@@ -507,21 +474,8 @@ class LogTeaViewModel(
         }
     }
 
-    private fun showCompleteSessionDialog() {
-        _state.update {
-            it.copy(
-                showCompleteSessionDialog = true,
-                completionDialogNotes = "",
-            )
-        }
-    }
-
-    private fun saveSession(
-        status: SessionStatus,
-        startTimer: Boolean,
-        overrideNotes: String? = null,
-        rating: Float? = null,
-    ) {
+    /** In progress goes to the timer; completed goes to the review, for its ratings and tags. */
+    private fun saveSession(status: SessionStatus) {
         val currentState = _state.value
 
         if (!currentState.isValid) {
@@ -567,26 +521,19 @@ class LogTeaViewModel(
                 brewingTime = currentState.brewingTime!!,
                 temperatureCelsius = temperatureCelsius,
                 waterQuantityMl = waterQuantityMl,
-                notes = overrideNotes?.takeIf { it.isNotBlank() },
-                rating = rating,
                 photos = currentState.photos,
                 status = status,
                 usedConfigurationId = currentState.usedConfigurationId,
             )
                 .onSuccess {
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            hasUnsavedChanges = false,
-                            showCompleteSessionDialog = false,
-                        )
-                    }
-
-                    if (startTimer) {
-                        _navEvents.send(LogTeaNavigationEvent.NavigateToTimer(it.session.id))
-                    } else {
-                        _navEvents.send(LogTeaNavigationEvent.NavigateBack)
-                    }
+                    _state.update { state -> state.copy(isSaving = false, hasUnsavedChanges = false) }
+                    _navEvents.send(
+                        if (status == SessionStatus.IN_PROGRESS) {
+                            LogTeaNavigationEvent.NavigateToTimer(it.session.id)
+                        } else {
+                            LogTeaNavigationEvent.NavigateToReview(it.session.id)
+                        }
+                    )
                 }
                 .onFailure { e ->
                     _state.update { it.copy(isSaving = false) }
@@ -603,4 +550,5 @@ class LogTeaViewModel(
 sealed interface LogTeaNavigationEvent {
     data object NavigateBack : LogTeaNavigationEvent
     data class NavigateToTimer(val sessionId: String) : LogTeaNavigationEvent
+    data class NavigateToReview(val sessionId: String) : LogTeaNavigationEvent
 }

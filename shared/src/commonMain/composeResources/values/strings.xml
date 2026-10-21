@@ -270,7 +270,7 @@
     <string name="review_rate_steep">Rate this steep</string>
     <string name="review_next_in">Next (%1$s)</string>
     <string name="review_another_in">Another (%1$s)</string>
-    <string name="review_adjust">Adjust</string>
+    <string name="review_change_steep_n">Change steep %1$d</string>
     <string name="review_finish_session">Finish session</string>
     <string name="review_add_note">Add a note</string>
     <string name="review_note_label">Note</string>

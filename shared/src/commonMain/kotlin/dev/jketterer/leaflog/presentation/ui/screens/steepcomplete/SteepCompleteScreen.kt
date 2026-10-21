@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -38,13 +40,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.Clock
+import compose.icons.feathericons.Edit
 import compose.icons.feathericons.MoreVertical
+import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
@@ -53,6 +61,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParame
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
@@ -69,12 +78,14 @@ import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
 import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.review_add_note
-import leaf_log.shared.generated.resources.review_adjust
 import leaf_log.shared.generated.resources.review_another_in
+import leaf_log.shared.generated.resources.review_change_steep_n
 import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_next_in
 import leaf_log.shared.generated.resources.review_note_label
 import leaf_log.shared.generated.resources.review_rate_steep
+import leaf_log.shared.generated.resources.review_steep_n
+import leaf_log.shared.generated.resources.start_steep_n
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -187,7 +198,9 @@ private fun SteepCompleteContent(
         if (!state.isLoading && state.session != null) {
             SteepCompleteBottomBar(
                 finishLeads = state.finishLeads,
+                nextSteepNumber = state.session.currentSteep.number + 1,
                 nextTime = state.nextSteepDuration?.inWholeSeconds?.toInt()?.let(::formatBrewingTime),
+                nextTemperature = state.nextSteepTemperature?.let { formatTemperature(it) },
                 onNext = { onIntent(SteepCompleteIntent.StartNextSteep) },
                 onAdjust = { onIntent(SteepCompleteIntent.ShowAdjustSheet) },
                 onFinishSession = { onIntent(SteepCompleteIntent.FinishSession) },
@@ -294,6 +307,7 @@ private fun SteepCompleteBody(
             )
         }
         state.session?.let { session ->
+            HorizontalDivider()
             SteepTags(
                 tags = session.currentSteep.tags,
                 vocabulary = state.vocabulary,
@@ -330,15 +344,15 @@ private fun SteepCompleteBody(
 @Composable
 private fun SteepCompleteBottomBar(
     finishLeads: Boolean,
+    nextSteepNumber: Int,
     nextTime: String?,
+    nextTemperature: String?,
     onNext: () -> Unit,
     onAdjust: () -> Unit,
     onFinishSession: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val nextLabel = nextTime?.let {
-        stringResource(if (finishLeads) Res.string.review_another_in else Res.string.review_next_in, it)
-    } ?: stringResource(Res.string.review_adjust)
+    val nextLabel = stringResource(Res.string.start_steep_n, nextSteepNumber)
     val finish = stringResource(Res.string.review_finish_session)
 
     Surface(modifier = modifier, shadowElevation = 8.dp) {
@@ -348,6 +362,12 @@ private fun SteepCompleteBottomBar(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            NextSteepRow(
+                steepNumber = nextSteepNumber,
+                time = nextTime,
+                temperature = nextTemperature,
+                onClick = onAdjust,
+            )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -360,10 +380,63 @@ private fun SteepCompleteBottomBar(
                     OutlinedButton(onClick = onFinishSession, modifier = Modifier.weight(1f)) { Text(finish) }
                 }
             }
-            TextButton(onClick = onAdjust, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-                Text(stringResource(Res.string.review_adjust))
-            }
         }
+    }
+}
+
+/** The steep the buttons start, tapped to change its time and temperature first. */
+@Composable
+private fun NextSteepRow(
+    steepNumber: Int,
+    time: String?,
+    temperature: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .padding(start = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.review_steep_n, steepNumber),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        time?.let { NextSteepValue(FeatherIcons.Clock, it) }
+        temperature?.let { NextSteepValue(FeatherIcons.Thermometer, it) }
+        Spacer(modifier = Modifier.weight(1f))
+        Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                FeatherIcons.Edit,
+                contentDescription = stringResource(Res.string.review_change_steep_n, steepNumber),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NextSteepValue(icon: ImageVector, value: String) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -392,6 +465,7 @@ private fun SteepCompleteScreenWesternPreview() {
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 nextSteepDuration = 180.seconds,
+                nextSteepTemperature = 95.0,
                 finishLeads = true,
                 isLoading = false,
             ),
@@ -430,6 +504,7 @@ private fun SteepCompleteScreenGongfuPreview() {
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 nextSteepDuration = 55.seconds,
+                nextSteepTemperature = 76.4,
                 isLoading = false,
             ),
             onIntent = {},

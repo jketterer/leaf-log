@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-19 (Bet 1 released as 0.4.0; Bet 2 designed)
+> **Last updated:** 2026-10-21 (Bet 2 released as 0.5.0)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -583,6 +583,8 @@ state across rotation and process death.
 
 ## Bet 2 — Brewing plans
 
+**Done, released as 0.5.0.**
+
 **Outcome:** the app knows how each tea is brewed, and a gongfu session costs two taps per steep —
 Next, then Start — plus whatever you choose to record.
 
@@ -729,7 +731,7 @@ death, and an upgrade over the previous dev build at each migration.
     engine and screen go. Until 13, a Quick Timer can't become a session. Track B: the tealess
     timer across process death.
 13. [x] `feat: attach a tea to a running timer`. Test: attaching after three steeps.
-14. [ ] `chore: release 0.5.0`: audit rows struck.
+14. [x] `chore: release 0.5.0`: audit rows struck.
 
 ---
 

@@ -102,7 +102,7 @@ Path prefixes: `L/` = `shared/src/commonMain/kotlin/dev/jketterer/leaflog/`, `UI
 
 ### Add / Edit Brewing Method (`UI/screens/configuration/CreateBrewingConfigurationScreen.kt` + ViewModel; components `ConfigurationCard`, `SavedMethodsSection`, `SaveConfigurationDialog`)
 
-- **Purpose / verdict:** You define a reusable recipe for a tea and vessel pair by hand, or save one from a session through `SaveConfigurationDialog`. The idea is right, but the form is the weakest in the slice. It has no validation at all, fields cannot be cleared on edit, errors are never shown, there is no unsaved-changes guard, and the prefill ignores the vessel you actually pick. The model holds only one brew time, so it cannot represent a gongfu method.
+- **Purpose / verdict:** You define a reusable recipe for a tea and vessel pair by hand, or save one from a session through `SaveConfigurationDialog`. The idea is right, but the form is the weakest in the slice. It has no validation at all, fields cannot be cleared on edit, errors are never shown, there is no unsaved-changes guard, and the prefill ignores the vessel you actually pick. ~~The model holds only one brew time, so it cannot represent a gongfu method.~~
 - **Findings:**
 
 | Sev | Category | Location | Finding | Evidence/why |
@@ -127,10 +127,10 @@ Path prefixes: `L/` = `shared/src/commonMain/kotlin/dev/jketterer/leaflog/`, `UI
 | arch | indentation | `CreateBrewingConfigurationScreen.kt:100-316` | The LazyColumn items are indented inconsistently. | Readability for anyone reading the code. |
 
 - **Opportunities:**
-  - **Model multi-steep schedules.** `BrewingConfiguration.brewingTime` is a single `Duration`, so a gongfu method is really only its first infusion. Sessions already record per-steep `brewingTime` with `steepNumber`, so a schedule (base + increment, or an explicit list) can be *learned* from the best-rated parent session's child steeps, then fed to the timer to pre-set steep N.
+  - ~~**Model multi-steep schedules.** `BrewingConfiguration.brewingTime` is a single `Duration`, so a gongfu method is really only its first infusion. Sessions already record per-steep `brewingTime` with `steepNumber`, so a schedule (base + increment, or an explicit list) can be *learned* from the best-rated parent session's child steeps, then fed to the timer to pre-set steep N.~~
   - **Link a method to where it came from.** `sourceSessionId` is stored but never shown. "From your 12 Mar brew, ★4.5" could open that session. On edit, drop the rating or mark it "modified".
   - **Make saved methods the main way to brew a tea you know:** a "Brew" button on the card, and re-running the prefill when the vessel changes.
-  - **Structured tasting vocabulary** (tags such as floral, roasty, astringent, per steep), grouped per tea. Today there is only free-text `description` and `notes`, and no tag model anywhere. This would make ratings explainable and methods comparable.
+  - ~~**Structured tasting vocabulary** (tags such as floral, roasty, astringent, per steep), grouped per tea. Today there is only free-text `description` and `notes`, and no tag model anywhere. This would make ratings explainable and methods comparable.~~
 
 ---
 

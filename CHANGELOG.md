@@ -16,6 +16,57 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-21
+
+A saved method knows every steep, so a gongfu session is Next, then Start, for as long as the tea
+lasts.
+
+### Added
+
+- A method plans its steeps: the first steep's time and how much to add each steep after. The
+  method form previews the first steeps and marks any adjusted by a brew.
+- Brew Again replays the whole session as brewed, every steep at its time, not just the first.
+- A session with no method plans by feel from its own steeps: 20s then 25s leads to 30s.
+- After each steep, a short review: stars, tasting tags, a note, and "Next (30s)" straight to the
+  timer at the planned time. "Adjust" changes the next steep's time and temperature first. A
+  single-steep method leads with Finish and offers "Another".
+- After Finish, a review of the whole session: every steep, the note, photos, and how it compares
+  with your best session of that tea.
+- "Save as method" for a session of any number of steeps, and "Update method" when you brewed a
+  method differently and liked it.
+- Tasting tags on each steep: 23 to choose from, or create your own. The next steep starts with
+  the last one's tags, faded until you confirm them.
+- Record a rinse on a method, a session, Log Tea and Edit Session.
+- "Already brewed", before Start, records the steep at its planned time and opens the review.
+- Change the vessel from a steep's parameters; the water fills to its capacity.
+- The ready alert names the next steep: "Steep 3 done, next 30s". Tapping it opens the review.
+- Tap the Live Activity to open the Timer.
+- Quick Timer can become a session. "What are you brewing?" attaches a tea while it runs, and "Log
+  it" when it's done. Steeps timed before then are kept at their real times.
+- When a Quick Timer finishes with no tea, "Next (+5s)" starts another, and "Just a timer" leaves
+  without recording anything.
+
+### Changed
+
+- Quick Timer is the same timer and screen as a session's. It keeps running in the background,
+  survives the app being closed, and follows the notification settings.
+- "Complete Now" is "Finish early", and records how long the tea actually brewed.
+- Steep Complete is replaced by the two reviews above.
+- Finish on Home's in-progress banner goes straight to the review.
+
+### Fixed
+
+- The ready alert no longer stays in the notification shade after you've moved on.
+- A notification for a session already finished or discarded opens the app on Home instead of
+  that session.
+- Notifications on Android open the screen they announce, not whichever was posted last.
+- Quick Timer no longer leaves a notification that can't be dismissed, or alerts twice.
+- Taking time off a timer before starting it no longer takes it below one second.
+- Reset on a paused timer stays reset after leaving the screen or closing the app.
+- Editing parameters mid-steep no longer loses the timer's progress.
+- The timer ring fits large font sizes and small screens, and a screen reader reads its time and
+  progress.
+
 ## [0.4.0] - 2026-10-19
 
 One look across the app, one way of telling you something went wrong, and units that stay the way

@@ -129,6 +129,11 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Upgrade from `v0.1.2` (schema 7). Before installing over it, delete a tea that has sessions.
       After: it is back in Collection, faded, last and marked Finished, and its sessions in History
       show its name.
+- [ ] Upgrade from `v0.4.0` (schema 8). Before installing over it, save a method, brew a gongfu
+      session from it and leave another mid-steep. After: the app opens, the mid-steep session is
+      still in progress, the method plans a single steep, Brew Again on the gongfu session replays
+      every steep, and the tag sheet lists the 23 tags.
+- [ ] Import a backup exported by `v0.4.0`. It imports with no plans, rinses or tags.
 - [ ] Import a backup exported by `v0.1.1`. It imports, and tea and method stats match the
       sessions that arrived.
 - [ ] Import picker → cancel. Nothing changes, no error shown.

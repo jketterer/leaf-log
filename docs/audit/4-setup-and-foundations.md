@@ -245,8 +245,8 @@ Counts: 41 `.onFailure`, 14 `catchError`, 85 sites that put `e.message` or `erro
 |---|---|---|---|
 | arch | CLAUDE.md violation | domain/usecases/DeleteTeaUseCase.kt, configuration/DeleteBrewingConfigurationUseCase.kt | Single repo call plus try/catch. EditTeaType deletes its type directly in the VM, which is the correct pattern, so the two approaches now sit side by side. |
 | arch | CLAUDE.md violation (borderline) | ToggleFavoriteUseCase.kt (copy + upsert), SearchTeasUseCase.kt (blank guard + trim + `search`) | Near-wrappers. |
-| arch | pointless | timer/CancelTimerUseCase.kt | A pure `copy()` wrapped in a try/catch that can't throw, returning Result. It could be a `TimerState` method. |
-| arch | suspicious | timer/CompleteTimerUseCase.kt:17-20 | Upserts the session with `status = IN_PROGRESS`, which it already is. *Likely a redundant write; unverified.* |
+| ~~arch~~ | ~~pointless~~ | ~~timer/CancelTimerUseCase.kt~~ | ~~A pure `copy()` wrapped in a try/catch that can't throw, returning Result. It could be a `TimerState` method.~~ |
+| ~~arch~~ | ~~suspicious~~ | ~~timer/CompleteTimerUseCase.kt:17-20~~ | ~~Upserts the session with `status = IN_PROGRESS`, which it already is. *Likely a redundant write; unverified.*~~ |
 | consistency | docs drift | di/RepositoryModule.kt | Repositories are `singleOf` (correct), but CLAUDE.md says `factoryOf` for repositories. Fix the doc. |
 | arch | duplication | di/PlatformModule.android.kt / .ios.kt | The Room builder, migrations list and 5 DAO registrations are duplicated. Only the path and driver context differ. |
 | verified **[ROADMAP+]** | migrations | both PlatformModules | All five migrations (`MIGRATION_1_2…5_6`) **are** registered on both builders, which answers the roadmap 1.1 question. |

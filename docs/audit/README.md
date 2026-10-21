@@ -55,7 +55,7 @@ Ordered by damage. None of these needs design; all are small.
 | 13 | ~~**Analytics "This Week" excludes today on Sundays.** ✔~~ | `AnalyticsViewModel.kt:369-370` | 2 |
 | 14 | ~~**Donut taps open the wrong segment** (90° offset); trend taps pick the left neighbour.~~ | `TeaTypeDistributionChart.kt:185`, `BrewingTrendsChart.kt:142` | 2 |
 | 15 | ~~**Timer edit sheet wipes persisted timer state** (saves stale row with `timerStatus = null`); reset while paused is never persisted.~~ | `TimerViewModel.kt:321-334,454-490` | 1 |
-| 16 | **Quick Timer leaves an undismissable ongoing notification** and ignores the completion-notification setting. *(device)* | `QuickTimerViewModel.kt:160-221,314-331` | 1 |
+| 16 | ~~**Quick Timer leaves an undismissable ongoing notification** and ignores the completion-notification setting. *(device)*~~ | `QuickTimerViewModel.kt:160-221,314-331` | 1 |
 | 17 | ~~**Steep Complete discard doesn't withdraw the reminder**; the reminder then reopens the deleted session as reviewable.~~ | `SteepCompleteViewModel.kt:434-474` | 1 |
 | 18 | ~~**iOS Live Activity extension requires iOS 26.2**, app requires 18.2. ✔~~ | `project.pbxproj:312,345` | 4 |
 | 19 | ~~**Errors that can never be seen**: inline `Snackbar` after a `fillMaxSize` sibling (Collection, History); `state.error` never rendered (Timer, Brewing Method, Edit Session, Vessels); export/import failures mapped to "completed"/"cancelled".~~ | see §3E | 3, 4 |
@@ -83,16 +83,16 @@ These are where the roadmap should spend its first real effort. Each deletes a *
   and tea stats recompute in exactly one place.
 
 ### B. Honest data — the record only holds what actually happened
-- **Ratings the user didn't give** — four sources: Steep Complete guess, Quick Brew copy, Log
-  Session dialog prefill, `SaveConfigurationDialog` `?: 5f`.
-- **Planned vs actual time** — no flow records how long tea actually brewed (±adjust, Complete Now,
-  Quick Timer). The prefill replays the plan, not the brew.
-- **Timestamps** — steeps added to past sessions are stamped "now"; Quick Timer stamps end, others
-  stamp start; session time is never editable.
+- ~~**Ratings the user didn't give** — four sources: Steep Complete guess, Quick Brew copy, Log
+  Session dialog prefill, `SaveConfigurationDialog` `?: 5f`.~~
+- ~~**Planned vs actual time** — no flow records how long tea actually brewed (±adjust, Complete Now,
+  Quick Timer). The prefill replays the plan, not the brew.~~
+- **Timestamps** — steeps added to past sessions are stamped "now"; ~~Quick Timer stamps end, others
+  stamp start;~~ session time is never editable.
 - **Unit round-trips lose precision** — every edit sheet converts through whole display units
   (150 ml → 147.9 ml for fl-oz users on a no-op save).
 - **`null` means "unchanged"** in update use cases, so "cleared" is inexpressible.
-- **Whole-row upserts from stale snapshots** — Timer, Steep Complete, Edit Tea, Toggle Favorite,
+- **Whole-row upserts from stale snapshots** — ~~Timer, Steep Complete,~~ Edit Tea, Toggle Favorite,
   search results. Field-level updates or read-modify-write inside use cases.
 
 ### C. Soft-delete semantics
@@ -112,8 +112,8 @@ These are where the roadmap should spend its first real effort. Each deletes a *
   restarts on recreation. Fix once: route args into the ViewModel, load in `init`.~~
 - ~~Tabs `clear()` the back stack: back from any tab exits the app, every tab rebuilds on return
   (spinner, lost scroll/search/filters), pushed tab screens have no Up arrow.~~
-- Deep link replays on every `onCreate`; notification taps don't check session status;
-  `PendingIntent` requestCode 0 shared across notifications *(device)*.
+- Deep link replays on every `onCreate`; ~~notification taps don't check session status;
+  `PendingIntent` requestCode 0 shared across notifications *(device)*.~~
 - No `SavedStateHandle` anywhere; form state dies with the process (photo picker is the classic
   trigger).
 
@@ -126,10 +126,10 @@ These are where the roadmap should spend its first real effort. Each deletes a *
   failures (`NotFound`, `InUse(n)`, `LastRemaining`, `Io`) mapped to copy in the UI. This pulls
   Phase 4's "user-facing errors" forward: the invisible/unrendered cases are bugs now.
 
-### F. Two timer engines
-Quick Timer runs its own countdown in `viewModelScope`: no foreground service, no persistence, no
+### ~~F. Two timer engines~~
+~~Quick Timer runs its own countdown in `viewModelScope`: no foreground service, no persistence, no
 settings toggles, no reminder, no notification cleanup, no alarm cancel. One engine
-(`TimerService`) for both, via a nullable-tea draft or a session-less persisted `TimerState`.
+(`TimerService`) for both, via a nullable-tea draft or a session-less persisted `TimerState`.~~
 
 ### G. Backup integrity
 Beyond "version never read" (roadmap 1.2): wire format *is* the Room entities (5 migrations changed
@@ -148,11 +148,11 @@ though export is the only backup under the no-sync decision.
   tea-type colours never adjusted for dark mode (White `#FFFDE7` invisible on light surfaces), white
   splash in dark mode, two icon families (Feather + FontAwesome).~~
 - **Duplication:** ~~4 discard dialogs, 4 delete-session dialogs (11 inline delete dialogs total),
-  5 section-header variants, Temperature/Volume/Capacity inputs,~~ preset tables (with *different*
-  brew-time presets in Log Tea vs Quick Timer), `catchError` ×3~~, `formatBrewingTime` ×2~~.
+  5 section-header variants, Temperature/Volume/Capacity inputs,~~ preset tables~~ (with *different*
+  brew-time presets in Log Tea vs Quick Timer)~~, `catchError` ×3~~, `formatBrewingTime` ×2~~.
 - ~~**Unit suffix toggles in forms silently change a global preference** (6+ places, ~24–28 dp
   touch targets).~~
-- **Hardcoded layout offsets** (60/80/88 dp FAB clearance, `maxHeight − 420.dp` timer ring) and
+- **Hardcoded layout offsets** (60/80/88 dp FAB clearance~~, `maxHeight − 420.dp` timer ring~~) and
   non-scrolling containers; hidden on phones by the portrait lock, exposed on iPad/tablets —
   which Android 16 no longer lets you lock.
 
@@ -181,7 +181,7 @@ About/version anywhere in the UI, `allowBackup` without extraction rules.
 | 2.7 weight-unit row is "discoverability only" | Weight unit is honoured by one Analytics card only |
 | Decisions: No streaks | A streak insight ships |
 | CLAUDE.md: `factoryOf` for repositories | Repositories are `singleOf` (correctly) — fix the doc |
-| Dead-code list | Also: `BrewingConfiguration.isActive`, `RecentSessionsCard`, `CompleteDraftDialog`, `NavRoute.MoreRoute`, Log Tea photo intents, Quick Timer dead state, `CompleteTimerUseCase`, 4 single-call use cases, 3 unreferenced drawables |
+| Dead-code list | Also: `BrewingConfiguration.isActive`, `RecentSessionsCard`, `CompleteDraftDialog`, `NavRoute.MoreRoute`, Log Tea photo intents, ~~Quick Timer dead state, `CompleteTimerUseCase`,~~ 4 single-call use cases, 3 unreferenced drawables |
 
 ---
 
@@ -193,9 +193,9 @@ One line each; detail in the linked reports.
 |---|---|
 | Home | Right layout; quick-brew doesn't count usage, full reload on every tab switch, stat tiles do three unrelated things (one silently changes a setting) |
 | Log Tea | Picker is the best component in the app; buttons appear only when valid with no reason shown; water type resets on any prefs emit |
-| Timer | Engine sound; screen never shows errors, discards actual brew time, edit sheet corrupts timer state |
-| Quick Timer | Good idea on a second, weaker engine — loses every lifecycle guarantee the main timer earned |
-| Steep Complete | Right shape; guesses ratings, auto-saves clobber each other, one error hides the form, business flows live in the VM, gongfu sessions never offered "save method" |
+| ~~Timer~~ | ~~Engine sound; screen never shows errors, discards actual brew time, edit sheet corrupts timer state~~ |
+| ~~Quick Timer~~ | ~~Good idea on a second, weaker engine — loses every lifecycle guarantee the main timer earned~~ |
+| ~~Steep Complete~~ | ~~Right shape; guesses ratings, auto-saves clobber each other, one error hides the form, business flows live in the VM, gongfu sessions never offered "save method"~~ |
 | History | Still a parameter list, not a journal; child steeps look like brews; invisible search keeps filtering; route filters re-apply |
 | Session Detail | Reads like a form printout; stacking collectors; Add Steep skips in-progress guard and stamps "now" |
 | Edit Session | Can't clear fields; no errors shown; no back guard; edits don't reach child steeps |
@@ -203,7 +203,7 @@ One line each; detail in the linked reports.
 | Collection | Works small; search is name-only, a stale snapshot, and can't combine with filters; error display invisible |
 | Tea Detail | A property sheet (roadmap 2.2); delete broken, average wrong, collectors leak, recents filled by child steeps |
 | Edit Tea | Best form in the app; double-submit creates duplicates, edit skips trimming, lands on list not the new tea |
-| Brewing Method | Weakest form: no validation, no errors, can't clear, prefill ignores chosen vessel, can't represent gongfu |
+| Brewing Method | Weakest form: no validation, ~~no errors,~~ can't clear, prefill ignores chosen vessel~~, can't represent gongfu~~ |
 | Vessels / Vessel Detail | Thin; delete rules in UI disagree with use case; red "Cannot Delete" card on every used vessel |
 | Edit Vessel | Most carefully built; photo deleted before save, double-submit, re-seed on recreation |
 | Settings | Honest and clear; data section swallows failures, no confirmation, no import preview, no About |
@@ -217,14 +217,14 @@ Deduplicated across all four reports. Grounded in what the model already stores 
 This is the raw material for choosing big bets in the vision interview — not a commitment.
 
 **Brewing depth**
-- **Steep schedules.** `BrewingConfiguration.brewingTime` is one `Duration`; child steeps already
+- ~~**Steep schedules.** `BrewingConfiguration.brewingTime` is one `Duration`; child steeps already
   store per-steep time/temp/rating. Learn a schedule (base + increment or explicit list) from the
   best-rated session, show "Steep 3 · next 25s", auto-advance. Save-as-method saves the schedule.
-  Brew Again replays the whole curve. Surfaced independently by three of four audits.
-- **One-tap brewing.** Pinned method → session + running timer in one tap; "Same +5s" next steep
-  that skips the dialog; auto-start preference. Today a gongfu steep costs ~3 taps and 2 screens.
-- **Actual brew time** recorded alongside planned; "actual vs planned" on review.
-- **Rinse/preheat as steep 0.**
+  Brew Again replays the whole curve. Surfaced independently by three of four audits.~~
+- ~~**One-tap brewing.** Pinned method → session + running timer in one tap; "Same +5s" next steep
+  that skips the dialog;~~ auto-start preference~~. Today a gongfu steep costs ~3 taps and 2 screens.~~
+- ~~**Actual brew time** recorded alongside planned;~~ "actual vs planned" on review.
+- ~~**Rinse/preheat as steep 0.**~~
 - **Per-type default time and leaf ratio**, and prefill scaled to vessel capacity.
 - **In-app completion moment** (haptic, chime, "Pour now") independent of notification settings.
 
@@ -239,8 +239,8 @@ This is the raw material for choosing big bets in the vision interview — not a
   with this tea".
 - **Location** as a journal dimension (stored and edited, never shown or searched).
 - **Photo hero** and captions in the fullscreen viewer; camera capture; choose cover photo.
-- **Structured tasting vocabulary** (aroma/body/astringency tags per steep) — makes ratings
-  explainable, the journal searchable, and "teas like this" possible. No tag model exists.
+- ~~**Structured tasting vocabulary** (aroma/body/astringency tags per steep) — makes ratings
+  explainable, the journal searchable, and "teas like this" possible. No tag model exists.~~
 
 **The library**
 - **Cellar/aging**: `purchaseDate` is collected and never displayed; add harvest year/vintage.
@@ -270,8 +270,8 @@ This is the raw material for choosing big bets in the vision interview — not a
 
 ## 7. Needs a device to confirm
 
-Shared `PendingIntent` requestCode routing · Quick Timer ongoing
-notification and double alert · Quick Timer and edit-form behaviour on dark-mode/font-scale
-recreation · deep-link replay after process death · Quick Brew card width with long names · Timer
-ring and Quick Timer step 2 at large font scale · iOS back-swipe on pushed tab screens ·
+~~Shared `PendingIntent` requestCode routing · Quick Timer ongoing
+notification and double alert~~ · ~~Quick Timer and~~ edit-form behaviour on dark-mode/font-scale
+recreation · deep-link replay after process death · Quick Brew card width with long names · ~~Timer
+ring and Quick Timer step 2 at large font scale~~ · iOS back-swipe on pushed tab screens ·
 ~~`FileOperations` `pendingFilePath` null after recreation~~ · Auto Backup quota with photos.

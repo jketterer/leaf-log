@@ -204,7 +204,7 @@ class BackupRepositoryImplTest {
 
         val kept = assertNotNull(brewing.database.teaSessionDao().getById("s1"))
         assertEquals(SessionStatus.IN_PROGRESS, kept.status)
-        assertNull(kept.notes)
+        assertEquals("Floral", kept.notes)
     }
 
     @Test
@@ -385,8 +385,8 @@ class BackupRepositoryImplTest {
         fun read(stored: String) = fileSystem.read(files / stored) { readByteArray() }
 
         /**
-         * A gaiwan session of two steeps with a photo and tags, one of them custom, its method,
-         * and a deleted vessel.
+         * A gaiwan session of two steeps with a photo, notes on the session and each steep, and
+         * tags, one of them custom; its method, and a deleted vessel.
          */
         suspend fun seedJournal() {
             database.seedForeignKeys()
@@ -395,11 +395,17 @@ class BackupRepositoryImplTest {
             database.teaSessionDao().upsertAll(
                 listOf(
                     row("s1", null, 1, SessionStatus.COMPLETED, "gaiwan", at(0))
-                        .copy(photos = listOf("session_images/a.jpg"), usedConfigurationId = "method"),
+                        .copy(
+                            photos = listOf("session_images/a.jpg"),
+                            usedConfigurationId = "method",
+                            sessionNotes = "Rainy morning",
+                            notes = "Floral",
+                        ),
                     row("s2", "s1", 2, SessionStatus.COMPLETED, "gaiwan", at(1)).copy(
                         teaQuantityGrams = null,
                         vesselId = null,
                         waterType = null,
+                        notes = "Bitter",
                     ),
                 ),
             )

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingPlan
+import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.toggled
@@ -17,6 +18,7 @@ import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurat
 import dev.jketterer.leaflog.domain.usecases.configuration.ShouldOfferSaveAsMethodUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.UpdateMethodFromSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompareWithBestUseCase
+import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
@@ -45,6 +47,7 @@ class SessionReviewViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val tastingTagRepository: TastingTagRepository,
     private val imageStorage: ImageStorage,
+    private val editSessionUseCase: EditSessionUseCase,
     private val editSteepUseCase: EditSteepUseCase,
     private val compareWithBestUseCase: CompareWithBestUseCase,
     private val shouldOfferSaveAsMethodUseCase: ShouldOfferSaveAsMethodUseCase,
@@ -70,7 +73,7 @@ class SessionReviewViewModel(
         when (intent) {
             is SessionReviewIntent.NotesChanged -> {
                 _state.update { it.copy(notes = intent.notes) }
-                editSteep(firstSteepId()) { it.copy(notes = _state.value.notes) }
+                editSession { it.copy(notes = _state.value.notes) }
             }
 
             is SessionReviewIntent.PhotoAdded -> addPhoto(intent.imageBytes)
@@ -84,12 +87,7 @@ class SessionReviewViewModel(
 
             is SessionReviewIntent.SteepNotesChanged -> {
                 val id = _state.value.editingSteepId ?: return
-                _state.update {
-                    it.copy(
-                        editNotes = intent.notes,
-                        notes = if (id == firstSteepId()) intent.notes else it.notes,
-                    )
-                }
+                _state.update { it.copy(editNotes = intent.notes) }
                 editSteep(id) { it.copy(notes = _state.value.editNotes) }
             }
 
@@ -121,7 +119,6 @@ class SessionReviewViewModel(
                 val vsBest = compareWithBestUseCase(session)
                 val bestVesselId = (vsBest as? VsBest.Versus)?.best?.session?.vesselId
                 val offer = shouldOfferSaveAsMethodUseCase(session)
-                val first = session.steeps.first()
                 val methodToUpdate = findMethodUpdateUseCase(session)
                 _state.update {
                     it.copy(
@@ -130,7 +127,7 @@ class SessionReviewViewModel(
                         vessel = brewingVesselRepository.getById(session.session.vesselId),
                         bestVessel = bestVesselId?.let { id -> brewingVesselRepository.getById(id) },
                         vsBest = vsBest,
-                        notes = first.notes ?: "",
+                        notes = session.session.notes ?: "",
                         offerMethod = offer,
                         methodToUpdate = methodToUpdate,
                         methodLabel = if (offer) suggestedLabel(session) else "",
@@ -151,6 +148,14 @@ class SessionReviewViewModel(
             waterQuantityMl = session.steeps.first().waterQuantityMl,
             brewingTime = BrewingPlan.learnedFrom(session.steeps).base,
         )
+
+    private fun editSession(edit: (Session) -> Session) {
+        viewModelScope.launch {
+            editSessionUseCase(route.sessionId, edit)
+                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
+        }
+    }
 
     private fun editSteep(steepId: String, edit: (Steep) -> Steep) {
         viewModelScope.launch {

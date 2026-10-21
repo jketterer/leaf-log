@@ -193,7 +193,7 @@ class EditSessionViewModel(
                             isTeaBag = session.teaQuantityGrams == null,
                             location = session.location ?: "",
                             rating = steep.rating ?: 0f,
-                            notes = steep.notes ?: "",
+                            notes = (if (isParent) session.notes else steep.notes) ?: "",
                             photos = steep.photos,
                             isLoading = false,
                         )
@@ -349,6 +349,7 @@ class EditSessionViewModel(
                             teaQuantityGrams = if (currentState.isTeaBag) null
                             else currentState.teaQuantityGrams?.toFloat(),
                             location = currentState.location,
+                            notes = currentState.notes,
                         )
                     }.getOrThrow()
                 } else {

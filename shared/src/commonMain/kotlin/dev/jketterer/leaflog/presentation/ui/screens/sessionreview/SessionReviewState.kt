@@ -15,7 +15,7 @@ data class SessionReviewState(
     val bestVessel: BrewingVessel? = null,
     val vsBest: VsBest? = null,
     val vocabulary: List<TastingTag> = emptyList(),
-    // Steep 1's note, which is the session's
+    // The session's note, apart from each steep's
     val notes: String = "",
     // Save as method: offered until saved
     val offerMethod: Boolean = false,

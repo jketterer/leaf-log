@@ -9,7 +9,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
-/** A session for @Preview functions, with one steep per entry of [ratings]. Steep 1 gets [notes] and [photos]. */
+/** A session for @Preview functions, with one steep per entry of [ratings]. Steep 1 gets [photos]. */
 internal fun previewSession(
     id: String = "session-1",
     ratings: List<Float?> = listOf(null),
@@ -30,6 +30,7 @@ internal fun previewSession(
             vesselId = "vessel-1",
             waterType = WaterType.FILTERED,
             teaQuantityGrams = teaQuantityGrams,
+            notes = notes,
             syncStatus = SyncStatus.LOCAL_ONLY,
         ),
         steeps = ratings.mapIndexed { index, rating ->
@@ -42,7 +43,6 @@ internal fun previewSession(
                 temperatureCelsius = temperatureCelsius,
                 waterQuantityMl = waterQuantityMl,
                 rating = rating,
-                notes = notes.takeIf { index == 0 },
                 photos = if (index == 0) photos else emptyList(),
                 createdAt = timestamp,
                 updatedAt = timestamp,

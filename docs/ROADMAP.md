@@ -856,7 +856,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 8; 5 → 14; 10 → 11 → 12, 13.
 
 1. [x] `docs: record the Bet 3 design`
-2. [ ] `feat: a session note of its own`: v12, backup version 4. The review and Log Tea write it;
+2. [x] `feat: a session note of its own`: v12, backup version 4. The review and Log Tea write it;
    the card and Session Detail read it. Tests: the migration, a version 3 import moving the note,
    the round trip. Track B: upgrade over the v11 build.
 3. [ ] `feat: tags on a logged brew`: Save as completed opens the review; `CompleteSessionDialog`

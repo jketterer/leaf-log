@@ -19,8 +19,9 @@ internal fun encodeBackup(backup: Backup): String = json.encodeToString(backup)
 /** Reads any version this app knows, as the current one. */
 internal fun decodeBackup(text: String): Backup =
     when (val version = json.decodeFromString<Header>(text).version) {
-        1 -> json.decodeFromString<BackupV1>(text).toBackup()
-        2, BACKUP_VERSION -> json.decodeFromString<Backup>(text)
+        1 -> json.decodeFromString<BackupV1>(text).toBackup().withSessionNotes()
+        2, 3 -> json.decodeFromString<Backup>(text).withSessionNotes()
+        BACKUP_VERSION -> json.decodeFromString<Backup>(text)
         else -> throw if (version > BACKUP_VERSION) {
             DomainFailure.NewerBackup(version)
         } else {
@@ -33,7 +34,7 @@ private class Header(val version: Int = 1)
 
 /**
  * Version 1: the Room entities serialized as they were, schema 6 (March 2026) to 8. Only the
- * names that differ from version 3 are declared; the rest decode into version 3's types.
+ * names that differ from version 4 are declared; the rest decode into version 4's types.
  */
 @Serializable
 private class BackupV1(
@@ -71,5 +72,12 @@ private fun BackupV1.toBackup() = Backup(
         val isActive = raw["isActive"]?.jsonPrimitive?.booleanOrNull ?: true
         // The v8 migration's mapping
         if (isActive || method.deletedAt != null) method else method.copy(deletedAt = method.updatedAt)
+    },
+)
+
+/** Before version 4, steep 1's note was the session's. The v12 migration's move. */
+private fun Backup.withSessionNotes() = copy(
+    steeps = steeps.map {
+        if (it.parentSessionId == null) it.copy(sessionNotes = it.notes, notes = null) else it
     },
 )

@@ -14,6 +14,7 @@ import dev.jketterer.leaflog.data.local.database.MIGRATION_7_8
 import dev.jketterer.leaflog.data.local.database.MIGRATION_8_9
 import dev.jketterer.leaflog.data.local.database.MIGRATION_9_10
 import dev.jketterer.leaflog.data.local.database.MIGRATION_10_11
+import dev.jketterer.leaflog.data.local.database.MIGRATION_11_12
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
@@ -42,6 +43,7 @@ actual fun platformModule() = module {
                 MIGRATION_8_9,
                 MIGRATION_9_10,
                 MIGRATION_10_11,
+                MIGRATION_11_12,
             )
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)

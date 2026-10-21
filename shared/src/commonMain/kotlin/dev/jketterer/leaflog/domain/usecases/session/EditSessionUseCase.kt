@@ -9,7 +9,7 @@ import kotlin.time.Clock
 
 /**
  * Applies [edit] to the session as stored, so callers name only what they change and `null` clears.
- * Only the set-up can change: vessel, water type, leaf, location and rinse.
+ * Only the set-up and the note can change: vessel, water type, leaf, location, rinse and notes.
  */
 class EditSessionUseCase(
     private val transactor: Transactor,
@@ -24,7 +24,9 @@ class EditSessionUseCase(
             val current = teaSessionRepository.getSession(sessionId)
                 ?: throw DomainFailure.NotFound("session $sessionId")
             val session = current.session
-            val edited = edit(session).let { it.copy(location = it.location.blankToNull()) }
+            val edited = edit(session).let {
+                it.copy(location = it.location.blankToNull(), notes = it.notes.blankToNull())
+            }
 
             val untouched = edited.copy(
                 vesselId = session.vesselId,
@@ -32,9 +34,10 @@ class EditSessionUseCase(
                 teaQuantityGrams = session.teaQuantityGrams,
                 location = session.location,
                 rinsed = session.rinsed,
+                notes = session.notes,
             )
             require(untouched == session) {
-                "Only a session's vessel, water type, leaf, location and rinse can be edited"
+                "Only a session's vessel, water type, leaf, location, rinse and notes can be edited"
             }
             edited.requireValid()
 

@@ -216,6 +216,7 @@ class HistoryViewModel(
             filtered = filtered.filter { session ->
                 val teaName = teasMap[session.session.teaId]?.name?.lowercase() ?: ""
                 teaName.contains(query) ||
+                    session.session.notes?.lowercase()?.contains(query) == true ||
                     session.steeps.any { it.notes?.lowercase()?.contains(query) == true }
             }
         }

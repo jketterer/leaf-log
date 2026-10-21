@@ -218,6 +218,35 @@ class MigrationTest {
         assertSchemaMatches(connection, 11)
         connection.close()
     }
+
+    @Test
+    fun `11 to 12 produces the exported version 12 schema and moves steep 1's note to the session`() {
+        val connection = createFromSchema(11)
+        connection.execSQL(
+            "INSERT INTO tea_session (id, teaId, parentSessionId, steepNumber, status, timestamp, " +
+                "brewingTime, temperatureCelsius, waterQuantityMl, notes, photos, syncStatus, " +
+                "createdAt, updatedAt) VALUES " +
+                "('s1', 't1', NULL, 1, 'COMPLETED', 0, 30000, 95.0, 100.0, 'Lovely', '[]', " +
+                "'LOCAL_ONLY', 0, 0), " +
+                "('s1-2', 't1', 's1', 2, 'COMPLETED', 0, 30000, 95.0, 100.0, 'Bitter', '[]', " +
+                "'LOCAL_ONLY', 0, 0), " +
+                "('quiet', 't1', NULL, 1, 'COMPLETED', 0, 30000, 95.0, 100.0, NULL, '[]', " +
+                "'LOCAL_ONLY', 0, 0)",
+        )
+
+        MIGRATION_11_12.migrate(connection)
+
+        assertSchemaMatches(connection, 12)
+        assertEquals(
+            mapOf(
+                "quiet" to listOf(null, null),
+                "s1" to listOf("Lovely", null),
+                "s1-2" to listOf(null, "Bitter"),
+            ),
+            connection.rows("SELECT id, sessionNotes, notes FROM tea_session"),
+        )
+        connection.close()
+    }
 }
 
 private fun SQLiteStatement.textOrNull(index: Int) = if (isNull(index)) null else getText(index)

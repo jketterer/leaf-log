@@ -101,7 +101,7 @@ di/ (Dependency Injection)
 
 ### Database
 
-**Room Database (Version 11)**
+**Room Database (Version 12)**
 
 - Entities in `data/local/database/entities/`
 - DAOs in `data/local/database/dao/`
@@ -113,8 +113,8 @@ di/ (Dependency Injection)
     - `parentSessionId`: Links child steeps to parent session
     - `steepNumber`: Order of steeps (1 = parent/first steep)
     - `rating`: Individual steep rating
-    - Session fields (vessel, water type, leaf, location, `usedConfigurationId`): parent row only,
-      NULL on children
+    - Session fields (vessel, water type, leaf, location, `usedConfigurationId`, `sessionNotes`):
+      parent row only, NULL on children. `notes` is each steep's own, steep 1 included
 - `TeaTypeEntity`: Tea categories
 - `BrewingVesselEntity`: Brewing vessels
 - `TastingTagEntity`: Curated and custom tasting tags; `SteepTagEntity` puts one on a steep,

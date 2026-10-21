@@ -17,6 +17,7 @@ import kotlin.uuid.Uuid
 
 /**
  * Creates a session and its first steep. Pass [SessionStatus.COMPLETED] to log one after the fact.
+ * [notes] is the session's note; [rating] and [photos] go on steep 1.
  * Brewing a finished tea puts it back in stock.
  */
 class StartSessionUseCase(
@@ -58,6 +59,7 @@ class StartSessionUseCase(
                 usedConfigurationId = usedConfigurationId,
                 planSessionId = planSessionId,
                 rinsed = rinsed,
+                notes = notes.blankToNull(),
                 syncStatus = SyncStatus.LOCAL_ONLY,
             ),
             steeps = listOf(
@@ -69,7 +71,6 @@ class StartSessionUseCase(
                     temperatureCelsius = temperatureCelsius,
                     waterQuantityMl = waterQuantityMl,
                     rating = rating,
-                    notes = notes.blankToNull(),
                     photos = photos,
                     createdAt = now,
                     updatedAt = now,

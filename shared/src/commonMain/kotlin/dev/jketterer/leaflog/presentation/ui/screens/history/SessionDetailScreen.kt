@@ -232,6 +232,13 @@ private fun SessionDetailContent(
                                     )
 
                                     RatingDisplay(state.session.effectiveRating)
+
+                                    if (session.notes != null) {
+                                        Text(
+                                            text = session.notes,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -304,3 +304,14 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
         connection.execSQL("CREATE INDEX IF NOT EXISTS `index_steep_tag_tagId` ON `steep_tag` (`tagId`)")
     }
 }
+
+// Steep 1's note doubled as the session's; it becomes the session's own
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `tea_session` ADD COLUMN `sessionNotes` TEXT")
+        connection.execSQL(
+            "UPDATE `tea_session` SET `sessionNotes` = `notes`, `notes` = NULL " +
+                "WHERE `parentSessionId` IS NULL",
+        )
+    }
+}

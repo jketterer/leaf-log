@@ -133,6 +133,11 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       session from it and leave another mid-steep. After: the app opens, the mid-steep session is
       still in progress, the method plans a single steep, Brew Again on the gongfu session replays
       every steep, and the tag sheet lists the 23 tags.
+- [ ] Upgrade from `v0.5.0` (schema 11). Before installing over it, finish a gongfu session with
+      a review note and a note on steep 2. After: History's card and Session Detail show the review
+      note as the session's, steep 1 has no note, steep 2 keeps its own, and the review note edits
+      from Edit Session.
+- [ ] Import a backup exported by `v0.5.0`. Steep 1's notes arrive as the sessions' notes.
 - [ ] Import a backup exported by `v0.4.0`. It imports with no plans, rinses or tags.
 - [ ] Import a backup exported by `v0.1.1`. It imports, and tea and method stats match the
       sessions that arrived.

@@ -148,8 +148,8 @@ class SessionAggregateUseCasesTest {
 
     @Test
     fun `an edit changes only what it names and null clears`() = runTest {
-        val started = start(notes = "First sip")
-        editSteep(started.session.id) { it.copy(rating = 4f) }.getOrThrow()
+        val started = start()
+        editSteep(started.session.id) { it.copy(rating = 4f, notes = "First sip") }.getOrThrow()
 
         val updated = editSteep(started.session.id) { it.copy(notes = null) }.getOrThrow()
 
@@ -182,6 +182,21 @@ class SessionAggregateUseCasesTest {
         assertNull(updated.session.location)
         assertTrue(finished.exceptionOrNull() is IllegalArgumentException)
         assertEquals(SessionStatus.IN_PROGRESS, sessions.getSession(id)!!.session.status)
+    }
+
+    @Test
+    fun `a session's note is its own, apart from steep 1's`() = runTest {
+        val started = start(notes = "Cosy afternoon")
+        val id = started.session.id
+        editSteep(id) { it.copy(notes = "Floral") }.getOrThrow()
+
+        val updated = editSession(id) { it.copy(notes = "  ") }.getOrThrow()
+
+        assertEquals("Cosy afternoon", started.session.notes)
+        assertNull(started.steeps.single().notes)
+        assertEquals("Floral", updated.steeps.single().notes)
+        assertNull(updated.session.notes)
+        assertEquals(updated, sessions.getSession(id))
     }
 
     @Test

@@ -65,6 +65,7 @@ data class TeaSessionEntity(
     val planSessionId: String? = null, // Session Brew Again copied; no FK, it may be gone
     @ColumnInfo(defaultValue = "0")
     val rinsed: Boolean = false, // parent row only, false on children
+    val sessionNotes: String? = null, // the session's note; `notes` is this steep's
 
     val rating: Float?,
 

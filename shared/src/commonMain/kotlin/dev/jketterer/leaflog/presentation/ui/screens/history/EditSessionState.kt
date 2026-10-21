@@ -31,7 +31,7 @@ data class EditSessionState(
     val location: String = "",
     val rating: Float = 0f,
 
-    // Form fields - Notes & Photos (all sessions)
+    // Form fields - Notes (the session's or the steep's) & Photos (steeps only)
     val notes: String = "",
     val photos: List<String> = emptyList(),
 
@@ -67,7 +67,8 @@ data class EditSessionState(
                 waterQuantityMl != steep.waterQuantityMl ||
                 isTeaBag != (session.teaQuantityGrams == null) ||
                 teaQuantityGrams?.toFloat() != session.teaQuantityGrams ||
-                location != (session.location ?: "")
+                location != (session.location ?: "") ||
+                notes != (session.notes ?: "")
             } else {
                 // When editing steep, check steep-specific fields
                 brewingTime != steep.brewingTime ||

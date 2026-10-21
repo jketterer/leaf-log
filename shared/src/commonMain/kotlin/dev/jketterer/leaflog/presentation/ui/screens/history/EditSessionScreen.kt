@@ -313,31 +313,31 @@ private fun EditSessionContent(
                     }
                 }
 
-                // Notes Section (only when NOT editing full parent session)
+                // Notes: the session's when editing the full session, else the steep's
+                item(key = "notes_header") {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        SectionHeader(stringResource(Res.string.header_notes))
+                    }
+                }
+
+                item(key = "notes") {
+                    OutlinedTextField(
+                        value = state.notes,
+                        onValueChange = { onIntent(EditSessionIntent.NotesChanged(it)) },
+                        label = { Text("Notes (optional)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 5,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    )
+                }
+
+                // Photos Section (only when NOT editing full parent session)
                 if (!state.isParentSession) {
-                    item(key = "notes_header") {
-                        Column {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            HorizontalDivider()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            SectionHeader(stringResource(Res.string.header_notes))
-                        }
-                    }
-
-                    item(key = "notes") {
-                        OutlinedTextField(
-                            value = state.notes,
-                            onValueChange = { onIntent(EditSessionIntent.NotesChanged(it)) },
-                            label = { Text("Notes (optional)") },
-                            modifier = Modifier.fillMaxWidth(),
-                            minLines = 3,
-                            maxLines = 5,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                        )
-                    }
-
-                    // Photos Section (only when NOT editing full parent session)
                     item(key = "photos_header") {
                         Column {
                             Spacer(modifier = Modifier.height(8.dp))

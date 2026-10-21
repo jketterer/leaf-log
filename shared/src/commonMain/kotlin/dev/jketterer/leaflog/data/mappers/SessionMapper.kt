@@ -36,6 +36,7 @@ private fun TeaSessionEntity.toSession() = Session(
     usedConfigurationId = usedConfigurationId,
     planSessionId = planSessionId,
     rinsed = rinsed,
+    notes = sessionNotes,
     userId = userId,
     syncStatus = syncStatus,
 )
@@ -77,6 +78,7 @@ fun Steep.toEntity(session: Session): TeaSessionEntity {
         usedConfigurationId = session.usedConfigurationId.takeIf { isFirst },
         planSessionId = session.planSessionId.takeIf { isFirst },
         rinsed = session.rinsed && isFirst,
+        sessionNotes = session.notes.takeIf { isFirst },
         rating = rating,
         timestamp = timestamp,
         brewingTime = brewingTime,

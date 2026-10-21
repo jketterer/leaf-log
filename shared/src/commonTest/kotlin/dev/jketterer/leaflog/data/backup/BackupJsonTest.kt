@@ -21,7 +21,7 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a method's plan and rinse and a session's source, rinse and tags survive a round trip`() {
+    fun `a method's plan and rinse and a session's source, rinse, note and tags survive a round trip`() {
         val backup = decodeBackup(V1).let {
             it.copy(
                 methods = listOf(
@@ -32,6 +32,8 @@ class BackupJsonTest {
                         steep.copy(
                             planSessionId = "earlier",
                             rinsed = true,
+                            sessionNotes = "Rainy morning",
+                            notes = "Floral",
                             tags = listOf(BackupSteepTag("floral", confirmed = true)),
                         )
                     } else steep
@@ -49,13 +51,28 @@ class BackupJsonTest {
     @Test
     fun `a version 2 backup reads with no plans, rinses or tags`() {
         val backup = decodeBackup(V1).copy(methods = listOf(METHOD))
-        val v2 = encodeBackup(backup).replace("\"version\": 3", "\"version\": 2")
+        val v2 = encodeBackup(backup).replace("\"version\": $BACKUP_VERSION", "\"version\": 2")
 
         assertEquals(backup.copy(version = 2), decodeBackup(v2))
         assertNull(decodeBackup(v2).methods.single().steepIncrement)
         assertFalse(decodeBackup(v2).methods.single().rinse)
         assertEquals(emptyList(), decodeBackup(v2).tastingTags)
         assertEquals(emptyList(), decodeBackup(v2).steeps.flatMap { it.tags })
+    }
+
+    @Test
+    fun `a version 3 backup reads steep 1's note as the session's`() {
+        val backup = decodeBackup(V1).let {
+            it.copy(steeps = it.steeps.mapIndexed { i, steep -> steep.copy(notes = "note ${i + 1}") })
+        }
+        val v3 = encodeBackup(backup).replace("\"version\": $BACKUP_VERSION", "\"version\": 3")
+
+        val (parent, child) = decodeBackup(v3).steeps
+
+        assertEquals("note 1", parent.sessionNotes)
+        assertNull(parent.notes)
+        assertNull(child.sessionNotes)
+        assertEquals("note 2", child.notes)
     }
 
     @Test

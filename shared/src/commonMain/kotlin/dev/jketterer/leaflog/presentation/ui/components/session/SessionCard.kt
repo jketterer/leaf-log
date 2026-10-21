@@ -84,7 +84,7 @@ fun SessionCard(
     var showPhotoViewer by remember { mutableStateOf(false) }
     val first = session.steeps.first()
     val photos = session.steeps.flatMap { it.photos }
-    val notes = session.steeps.firstNotNullOfOrNull { it.notes }
+    val notes = session.session.notes
     val rating = session.effectiveRating
 
     Card(

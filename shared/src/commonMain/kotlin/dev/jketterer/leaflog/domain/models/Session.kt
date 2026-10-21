@@ -20,6 +20,8 @@ data class Session(
     val rinsed: Boolean = false,
     /** The session Brew Again copied; its steeps are this one's plan when no method is used. */
     val planSessionId: String? = null,
+    /** The note on the session as a whole; each steep has its own. */
+    val notes: String? = null,
 
     val userId: String? = null,
     val syncStatus: SyncStatus,

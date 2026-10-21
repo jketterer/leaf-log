@@ -53,6 +53,10 @@ data class Steep(
     /** What to repeat to brew this steep again: how long it actually brewed, if known. */
     val brewedTime: Duration get() = actualTime ?: brewingTime
 
+    /** Corrects how long this steep brewed, in whichever field [brewedTime] reads. */
+    fun withBrewedTime(time: Duration): Steep =
+        if (actualTime != null) copy(actualTime = time) else copy(brewingTime = time)
+
     /**
      * The timer status as of [now], rather than as of the last time it was written.
      *

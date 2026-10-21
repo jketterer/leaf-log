@@ -323,7 +323,7 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `poured early records the time it brewed`() = runTest {
+    fun `finish early records the time it brewed`() = runTest {
         val id = start().session.id
         val running = TimerState(
             sessionId = id,
@@ -336,6 +336,25 @@ class SessionAggregateUseCasesTest {
         saveTimerState(running.completedAt(EPOCH + 12.seconds)).getOrThrow()
 
         assertEquals(12.seconds, sessions.getSession(id)!!.currentSteep.actualTime)
+    }
+
+    @Test
+    fun `correcting a brew time changes the time it brewed, timed or not`() = runTest {
+        val untimed = start().session.id
+        val timed = start().session.id
+        val running = TimerState(
+            sessionId = timed,
+            totalDuration = 20.seconds,
+            remainingDuration = 20.seconds,
+            status = TimerStatus.RUNNING,
+            startedAt = EPOCH,
+        )
+        saveTimerState(running.completedAt(EPOCH + 12.seconds)).getOrThrow()
+
+        for (id in listOf(untimed, timed)) {
+            val steep = editSteep(id) { it.withBrewedTime(15.seconds) }.getOrThrow().currentSteep
+            assertEquals(15.seconds, steep.brewedTime)
+        }
     }
 
     @Test

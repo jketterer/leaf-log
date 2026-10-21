@@ -45,7 +45,7 @@ fun compareWithBest(session: SessionWithSteeps, teaSessions: List<SessionWithSte
             ) add(BrewDifference.LEAF)
             if (abs(mine.waterQuantityMl - theirs.waterQuantityMl) > 10.0) add(BrewDifference.WATER)
             if (abs(mine.temperatureCelsius - theirs.temperatureCelsius) > 1.0) add(BrewDifference.TEMPERATURE)
-            if (abs(mine.brewingTime.inWholeSeconds - theirs.brewingTime.inWholeSeconds) > 5) add(BrewDifference.TIME)
+            if (abs(mine.brewedTime.inWholeSeconds - theirs.brewedTime.inWholeSeconds) > 5) add(BrewDifference.TIME)
             if (session.session.vesselId != best.session.vesselId) add(BrewDifference.VESSEL)
             if (session.session.waterType != best.session.waterType) add(BrewDifference.WATER_TYPE)
         },

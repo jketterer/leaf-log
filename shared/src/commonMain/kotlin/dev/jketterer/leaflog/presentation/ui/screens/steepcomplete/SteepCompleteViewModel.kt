@@ -304,7 +304,7 @@ class SteepCompleteViewModel(
         _state.update {
             it.copy(
                 showEditParametersSheet = true,
-                editBrewingTime = steep.brewingTime,
+                editBrewingTime = steep.brewedTime,
                 editTemperatureCelsius = steep.temperatureCelsius,
                 editWaterQuantityMl = steep.waterQuantityMl,
                 editTeaQuantityGrams = session.session.teaQuantityGrams?.toDouble(),
@@ -330,8 +330,7 @@ class SteepCompleteViewModel(
         _state.update { it.copy(showEditParametersSheet = false) }
         viewModelScope.launch {
             editSteepUseCase(steep.id) {
-                it.copy(
-                    brewingTime = brewingTime ?: it.brewingTime,
+                it.withBrewedTime(brewingTime ?: it.brewedTime).copy(
                     temperatureCelsius = temperatureCelsius ?: it.temperatureCelsius,
                     waterQuantityMl = waterQuantityMl ?: it.waterQuantityMl,
                 )

@@ -350,7 +350,7 @@ class SessionDetailViewModel(
             val label = generateConfigurationLabelUseCase(
                 teaQuantityGrams = session.session.teaQuantityGrams,
                 waterQuantityMl = first.waterQuantityMl,
-                brewingTime = first.brewingTime,
+                brewingTime = first.brewedTime,
             )
             _state.update {
                 it.copy(

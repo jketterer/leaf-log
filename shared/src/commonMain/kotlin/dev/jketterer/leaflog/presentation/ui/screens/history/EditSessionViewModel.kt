@@ -183,7 +183,7 @@ class EditSessionViewModel(
                             isParentSession = isParent,
                             steepNumber = steep.number,
                             teaName = tea?.name,
-                            brewingTime = steep.brewingTime,
+                            brewingTime = steep.brewedTime,
                             temperatureCelsius = steep.temperatureCelsius,
                             selectedVessel = vessel,
                             selectedWaterType = session.waterType,
@@ -353,8 +353,7 @@ class EditSessionViewModel(
                     }.getOrThrow()
                 } else {
                     editSteepUseCase(steep.id) {
-                        it.copy(
-                            brewingTime = currentState.brewingTime ?: it.brewingTime,
+                        it.withBrewedTime(currentState.brewingTime ?: it.brewedTime).copy(
                             temperatureCelsius = currentState.temperatureCelsius
                                 ?: it.temperatureCelsius,
                             rating = currentState.rating.takeIf { r -> r > 0f },
@@ -404,7 +403,7 @@ class EditSessionViewModel(
         val label = generateConfigurationLabelUseCase(
             teaQuantityGrams = session.session.teaQuantityGrams,
             waterQuantityMl = first.waterQuantityMl,
-            brewingTime = first.brewingTime,
+            brewingTime = first.brewedTime,
         )
         _state.update {
             it.copy(

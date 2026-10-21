@@ -79,9 +79,9 @@ import leaf_log.shared.generated.resources.discard_session_text
 import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
+import leaf_log.shared.generated.resources.finish_early
 import leaf_log.shared.generated.resources.just_a_timer
 import leaf_log.shared.generated.resources.log_it
-import leaf_log.shared.generated.resources.poured_early
 import leaf_log.shared.generated.resources.quick_timer
 import leaf_log.shared.generated.resources.review_next_in
 import leaf_log.shared.generated.resources.stop
@@ -140,7 +140,7 @@ private fun TimerContent(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showOverflowMenu by remember { mutableStateOf(false) }
-    val canPourEarly = state.timerState.isRunning || state.timerState.canResume
+    val canFinishEarly = state.timerState.isRunning || state.timerState.canResume
 
     // System back asks before ending a Quick Timer, as the toolbar arrow does
     NavigationBackHandler(
@@ -177,7 +177,7 @@ private fun TimerContent(
                 },
                 actions = {
                     // A Quick Timer has nothing to discard
-                    if (!state.isQuickTimer || canPourEarly) {
+                    if (!state.isQuickTimer || canFinishEarly) {
                         IconButton(onClick = { showOverflowMenu = true }) {
                             Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
                         }
@@ -186,9 +186,9 @@ private fun TimerContent(
                             onDismissRequest = { showOverflowMenu = false },
                         ) {
                             // Before Start, the way out is Already brewed, under the Start button
-                            if (canPourEarly) {
+                            if (canFinishEarly) {
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(Res.string.poured_early)) },
+                                    text = { Text(stringResource(Res.string.finish_early)) },
                                     onClick = {
                                         showOverflowMenu = false
                                         onIntent(TimerIntent.CompleteNow)

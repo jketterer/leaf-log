@@ -284,7 +284,7 @@ private fun BrewDifference.valueOf(session: SessionWithSteeps, vessel: BrewingVe
 
         BrewDifference.WATER -> formatVolume(first.waterQuantityMl)
         BrewDifference.TEMPERATURE -> formatTemperature(first.temperatureCelsius)
-        BrewDifference.TIME -> formatBrewingTime(first.brewingTime.inWholeSeconds.toInt())
+        BrewDifference.TIME -> formatBrewingTime(first.brewedTime.inWholeSeconds.toInt())
         BrewDifference.VESSEL -> vessel?.name ?: "-"
         BrewDifference.WATER_TYPE -> session.session.waterType.name.lowercase()
             .replaceFirstChar { it.uppercase() }

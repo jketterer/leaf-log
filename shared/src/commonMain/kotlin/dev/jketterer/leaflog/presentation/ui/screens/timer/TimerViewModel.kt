@@ -490,7 +490,7 @@ class TimerViewModel(
         }
     }
 
-    // Already brewed before Start, Poured early after. The collector above sees COMPLETE and
+    // Already brewed before Start, Finish early after. The collector above sees COMPLETE and
     // finishes the steep, so it isn't finished twice. A Quick Timer has no steep, so it just stops
     private fun completeNow() {
         val isQuickTimer = _state.value.isQuickTimer

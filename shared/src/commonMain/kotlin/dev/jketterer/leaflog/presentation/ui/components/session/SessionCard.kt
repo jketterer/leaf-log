@@ -167,7 +167,7 @@ fun SessionCard(
                     )
                     BrewingParamChip(
                         FeatherIcons.Clock,
-                        formatBrewingTime(first.brewingTime.inWholeSeconds.toInt()),
+                        formatBrewingTime(first.brewedTime.inWholeSeconds.toInt()),
                     )
                     BrewingParamChip(
                         FeatherIcons.Droplet,

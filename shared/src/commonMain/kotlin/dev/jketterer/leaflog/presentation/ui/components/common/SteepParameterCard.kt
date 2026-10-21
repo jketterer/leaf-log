@@ -44,7 +44,7 @@ fun SteepParameterCard(
         teaQuantity = session.session.teaQuantityGrams?.let { formatWeight(it) },
         waterQuantity = formatVolume(steep.waterQuantityMl),
         temperature = formatTemperature(steep.temperatureCelsius),
-        brewingTime = formatBrewingTime(steep.brewingTime.inWholeSeconds.toInt()),
+        brewingTime = formatBrewingTime(steep.brewedTime.inWholeSeconds.toInt()),
         onEditClick = onEditClick,
         modifier = modifier,
     )

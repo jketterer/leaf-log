@@ -28,6 +28,7 @@ class EditSteepUseCase(
 
             val untouched = edited.copy(
                 brewingTime = steep.brewingTime,
+                actualTime = steep.actualTime,
                 temperatureCelsius = steep.temperatureCelsius,
                 waterQuantityMl = steep.waterQuantityMl,
                 rating = steep.rating,

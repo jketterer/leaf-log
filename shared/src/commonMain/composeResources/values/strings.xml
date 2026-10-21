@@ -191,7 +191,7 @@
     <string name="stop_timer_text">The timer ends and nothing is recorded.</string>
     <string name="stop">Stop</string>
     <string name="already_brewed">Already brewed</string>
-    <string name="poured_early">Poured early</string>
+    <string name="finish_early">Finish early</string>
     <string name="quick_timer">Quick timer</string>
     <string name="just_a_timer">Just a timer</string>
     <string name="what_are_you_brewing">What are you brewing?</string>

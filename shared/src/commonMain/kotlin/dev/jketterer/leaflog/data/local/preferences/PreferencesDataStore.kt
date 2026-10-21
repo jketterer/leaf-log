@@ -23,4 +23,8 @@ expect class PreferencesDataStore {
     suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean)
     suspend fun updateThemeMode(mode: ThemeMode)
     suspend fun updateLastBackupAt(at: Instant)
+
+    // The Quick Timer, encoded by the repository. Not a preference, so not in [UserPreferences]
+    suspend fun getQuickTimer(): String?
+    suspend fun updateQuickTimer(encoded: String?)
 }

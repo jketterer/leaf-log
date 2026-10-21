@@ -725,7 +725,7 @@ death, and an upgrade over the previous dev build at each migration.
     the migration, the backup round trip. Track B: upgrade over the v10 build.
 11. [x] `feat: the plan on the lock screen`, with the notification findings. Track B: Live Activity,
     tap routing.
-12. [ ] `refactor: Quick Timer runs on TimerService`: the tealess timer and "Just a timer"; the old
+12. [x] `refactor: Quick Timer runs on TimerService`: the tealess timer and "Just a timer"; the old
     engine and screen go. Until 13, a Quick Timer can't become a session. Track B: the tealess
     timer across process death.
 13. [ ] `feat: attach a tea to a running timer`. Test: attaching after three steeps.

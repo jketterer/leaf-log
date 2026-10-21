@@ -30,6 +30,7 @@ actual class PreferencesDataStore {
         private const val SESSION_REMINDER_NOTIFICATIONS_KEY = "session_reminder_notifications_enabled"
         private const val THEME_MODE_KEY = "theme_mode"
         private const val LAST_BACKUP_AT_KEY = "last_backup_at"
+        private const val QUICK_TIMER_KEY = "quick_timer"
     }
 
     private val _preferencesFlow = MutableStateFlow(loadPreferences())
@@ -96,6 +97,17 @@ actual class PreferencesDataStore {
         userDefaults.setInteger(at.toEpochMilliseconds(), LAST_BACKUP_AT_KEY)
         userDefaults.synchronize()
         _preferencesFlow.update { it.copy(lastBackupAt = at) }
+    }
+
+    actual suspend fun getQuickTimer(): String? = userDefaults.stringForKey(QUICK_TIMER_KEY)
+
+    actual suspend fun updateQuickTimer(encoded: String?) {
+        if (encoded == null) {
+            userDefaults.removeObjectForKey(QUICK_TIMER_KEY)
+        } else {
+            userDefaults.setObject(encoded, QUICK_TIMER_KEY)
+        }
+        userDefaults.synchronize()
     }
 
     /**

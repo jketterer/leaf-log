@@ -5,6 +5,8 @@ import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
+import dev.jketterer.leaflog.domain.models.TimerState
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -12,6 +14,9 @@ import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 class PreferencesRepositoryImpl(
@@ -114,5 +119,45 @@ class PreferencesRepositoryImpl(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun getQuickTimer(): TimerState? {
+        val encoded = preferencesDataStore.getQuickTimer() ?: return null
+        // Unreadable means stored by a build that wrote it differently: there's no timer to restore
+        return runCatching { Json.decodeFromString<StoredQuickTimer>(encoded).toTimerState() }.getOrNull()
+    }
+
+    override suspend fun updateQuickTimer(timer: TimerState?): Result<Unit> = runCatching {
+        preferencesDataStore.updateQuickTimer(timer?.let { Json.encodeToString(StoredQuickTimer.of(it)) })
+    }
+}
+
+@Serializable
+private data class StoredQuickTimer(
+    val steepNumber: Int,
+    val totalMs: Long,
+    val remainingMs: Long,
+    val status: TimerStatus,
+    val startedAtMs: Long?,
+    val pausedAtMs: Long?,
+) {
+    fun toTimerState() = TimerState(
+        steepNumber = steepNumber,
+        totalDuration = totalMs.milliseconds,
+        remainingDuration = remainingMs.milliseconds,
+        status = status,
+        startedAt = startedAtMs?.let(Instant::fromEpochMilliseconds),
+        pausedAt = pausedAtMs?.let(Instant::fromEpochMilliseconds),
+    )
+
+    companion object {
+        fun of(timer: TimerState) = StoredQuickTimer(
+            steepNumber = timer.steepNumber,
+            totalMs = timer.totalDuration.inWholeMilliseconds,
+            remainingMs = timer.remainingDuration.inWholeMilliseconds,
+            status = timer.status,
+            startedAtMs = timer.startedAt?.toEpochMilliseconds(),
+            pausedAtMs = timer.pausedAt?.toEpochMilliseconds(),
+        )
     }
 }

@@ -23,6 +23,11 @@ sealed interface TimerIntent {
     data object DismissNotificationWarning : TimerIntent
     data object BackClicked : TimerIntent
 
+    // Quick Timer: ending it records nothing
+    data object JustATimer : TimerIntent
+    data object ConfirmEndTimer : TimerIntent
+    data object CancelEndTimer : TimerIntent
+
     // Edit session parameters
     data object EditSession : TimerIntent
     data class EditTemperatureChanged(val celsius: Double?) : TimerIntent

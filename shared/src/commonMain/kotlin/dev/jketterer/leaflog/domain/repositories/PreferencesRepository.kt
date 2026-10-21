@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
+import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -24,4 +25,8 @@ interface PreferencesRepository {
     suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean): Result<Unit>
     suspend fun updateThemeMode(mode: ThemeMode): Result<Unit>
     suspend fun updateLastBackupAt(at: Instant): Result<Unit>
+
+    /** The timer with no session, kept so it survives process death. Null when there is none. */
+    suspend fun getQuickTimer(): TimerState?
+    suspend fun updateQuickTimer(timer: TimerState?): Result<Unit>
 }

@@ -50,10 +50,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleDeepLink(intent: Intent?) {
-        val sessionId = intent?.getStringExtra("sessionId") ?: return
-        when (intent.getStringExtra("destination")) {
-            "timer" -> DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
-            "steep_complete" -> DeepLinkHandler.setRoute(NavRoute.SteepCompleteRoute(sessionId))
+        val destination = intent?.getStringExtra("destination") ?: return
+        val sessionId = intent.getStringExtra("sessionId")
+        when {
+            // The Quick Timer has no review, so its ready alert opens the Timer too
+            sessionId == null -> DeepLinkHandler.setRoute(NavRoute.TimerRoute())
+            destination == "timer" -> DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
+            destination == "steep_complete" ->
+                DeepLinkHandler.setRoute(NavRoute.SteepCompleteRoute(sessionId))
         }
     }
 }

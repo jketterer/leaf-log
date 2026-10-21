@@ -90,7 +90,7 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToSteepComplete: (String) -> Unit,
-    onNavigateToQuickTimer: (Int) -> Unit,
+    onNavigateToQuickTimer: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToEditBrewingMethod: (String, String) -> Unit,
     viewModel: HomeViewModel = koinViewModel { parametersOf(route) },
@@ -132,7 +132,7 @@ fun HomeScreen(
                 }
 
                 is HomeNavEvent.NavigateToQuickTimer -> {
-                    onNavigateToQuickTimer(event.durationSeconds)
+                    onNavigateToQuickTimer()
                 }
 
                 is HomeNavEvent.NavigateToAnalytics -> {

@@ -20,6 +20,7 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
+import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -499,6 +500,8 @@ private class InMemoryPreferences : PreferencesRepository {
         set { copy(sessionReminderNotificationsEnabled = enabled) }
     override suspend fun updateThemeMode(mode: ThemeMode) = set { copy(themeMode = mode) }
     override suspend fun updateLastBackupAt(at: Instant) = set { copy(lastBackupAt = at) }
+    override suspend fun getQuickTimer(): TimerState? = null
+    override suspend fun updateQuickTimer(timer: TimerState?) = Result.success(Unit)
 }
 
 /** Sessions for the seeded tea, and one for a tea in neither this backup nor the app. */

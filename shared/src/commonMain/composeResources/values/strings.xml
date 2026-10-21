@@ -188,15 +188,12 @@
     <string name="discard_steep_title">Discard Steep %1$d?</string>
     <string name="discard_steep_text">Steep %1$d will be deleted and the session finished with the steeps before it.</string>
     <string name="stop_timer_title">Stop Timer?</string>
-    <string name="stop_timer_text">This session will be discarded. Are you sure?</string>
+    <string name="stop_timer_text">The timer ends and nothing is recorded.</string>
     <string name="stop">Stop</string>
     <string name="already_brewed">Already brewed</string>
     <string name="poured_early">Poured early</string>
-    <string name="timer_complete_title">Timer Complete</string>
-    <string name="timer_complete_text">Your tea is done! Add session details to save this brew, or discard it.</string>
-    <string name="add_details">Add Details</string>
-    <string name="discard_unsaved_session_text">The timer is complete but your session hasn't been saved. Your brewing data will be lost.</string>
-    <string name="stay">Stay</string>
+    <string name="quick_timer">Quick timer</string>
+    <string name="just_a_timer">Just a timer</string>
 
     <!-- Why an operation failed -->
     <string name="failure_not_found">That no longer exists</string>

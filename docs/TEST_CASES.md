@@ -181,8 +181,13 @@ the Activity is portrait-locked.
 
 ## 9. Quick Timer
 
-Until Bet 2 merges it into the Timer engine.
-
-- [ ] Start → background → complete. Exactly one completion alert, not two.
-- [ ] **[A]** Ongoing notification appears, counts down, and clears on completion or stop.
-- [ ] Complete with details → the session is saved; tap routing lands on the right screen.
+- [ ] Start → background → complete. Exactly one ready alert; its tap opens the Quick Timer, done,
+      offering "Just a timer".
+- [ ] **[A]** Ongoing notification appears, counts down, opens the Quick Timer on tap, and clears on
+      completion, Poured early or stop.
+- [ ] **[iOS]** The Live Activity appears and its tap opens the Quick Timer.
+- [ ] Running → let the process die in the background → reopen. The Quick Timer is back, still
+      counting, or done if its time has passed.
+- [ ] Back, by the arrow, system back or the edge swipe, while running or paused asks before
+      stopping. Stopping withdraws its notifications.
+- [ ] "Just a timer" returns Home with nothing recorded.

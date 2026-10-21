@@ -53,7 +53,6 @@ import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
-import dev.jketterer.leaflog.presentation.ui.screens.quicktimer.QuickTimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListScreen
@@ -154,9 +153,7 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                     navigator.replace(route, NavRoute.HomeRoute())
                     navigator.openOnHome(NavRoute.SteepCompleteRoute(sessionId))
                 },
-                onNavigateToQuickTimer = { durationSeconds ->
-                    navigator.openOnHome(NavRoute.QuickTimerRoute(durationSeconds))
-                },
+                onNavigateToQuickTimer = { navigator.openOnHome(NavRoute.TimerRoute()) },
                 onNavigateToAnalytics = { navigator.navigate(NavRoute.AnalyticsRoute) },
                 onNavigateToEditBrewingMethod = { teaId, configId ->
                     navigator.navigate(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
@@ -370,20 +367,6 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             )
         }
 
-        entry<NavRoute.QuickTimerRoute> { route ->
-            QuickTimerScreen(
-                route = route,
-                onNavigateBack = { navigator.navigateUp(route) },
-                onNavigateToSteepComplete = { sessionId ->
-                    navigator.replace(route, NavRoute.SteepCompleteRoute(sessionId))
-                },
-                onNavigateToTimer = { sessionId ->
-                    // Replace quick timer with the full timer for the next steep
-                    navigator.replace(route, NavRoute.TimerRoute(sessionId))
-                },
-            )
-        }
-
         entry<NavRoute.SessionReviewRoute> { route ->
             SessionReviewScreen(
                 route = route,
@@ -420,7 +403,6 @@ private fun NavKey.hidesBottomBar() = when (this) {
     is NavRoute.EditTeaTypeRoute,
     is NavRoute.CreateBrewingConfigurationRoute,
     is NavRoute.TimerRoute,
-    is NavRoute.QuickTimerRoute,
     is NavRoute.SteepCompleteRoute,
     is NavRoute.SessionReviewRoute,
     -> true

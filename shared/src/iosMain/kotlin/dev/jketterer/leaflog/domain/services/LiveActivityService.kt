@@ -13,7 +13,7 @@ object LiveActivityServiceHolder {
     var instance: LiveActivityService? = null
 }
 
-/** The Live Activity's tap: it opens the Timer for its session. */
-fun openTimerFromLiveActivity(sessionId: String) {
+/** The Live Activity's tap: it opens the Timer for its session, or the Quick Timer without one. */
+fun openTimerFromLiveActivity(sessionId: String?) {
     DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
 }

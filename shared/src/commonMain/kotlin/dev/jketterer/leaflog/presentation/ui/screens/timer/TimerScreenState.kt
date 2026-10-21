@@ -18,6 +18,9 @@ data class TimerScreenState(
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
     val vessel: BrewingVessel? = null,
+    /** A timer with no session, so nothing it times is recorded. */
+    val isQuickTimer: Boolean = false,
+    val showEndTimerConfirmation: Boolean = false,
     val showDiscardSessionConfirmation: Boolean = false,
     val showResetConfirmation: Boolean = false,
     val showEditSheet: Boolean = false,

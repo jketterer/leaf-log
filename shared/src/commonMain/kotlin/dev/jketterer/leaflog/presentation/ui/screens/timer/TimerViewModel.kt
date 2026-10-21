@@ -63,7 +63,9 @@ class TimerViewModel(
     private val resolvePlanUseCase: ResolvePlanUseCase,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(TimerScreenState())
+    private val _state = MutableStateFlow(
+        TimerScreenState(isQuickTimer = route.sessionId == null, isLoading = true),
+    )
     val state: StateFlow<TimerScreenState> = _state.asStateFlow()
 
     private val _navigationEvents = Channel<TimerNavEvent>()
@@ -78,7 +80,8 @@ class TimerViewModel(
             updateState = { state, prefs -> state.copy(userPreferences = prefs) },
         )
         collectTimerState()
-        initialize(route.sessionId)
+        val sessionId = route.sessionId
+        if (sessionId == null) initializeQuickTimer() else initialize(sessionId)
     }
 
     fun onIntent(intent: TimerIntent) {
@@ -96,7 +99,10 @@ class TimerViewModel(
             is TimerIntent.RestartTimer -> restartTimer()
             is TimerIntent.CompleteNow -> completeNow()
             is TimerIntent.DismissNotificationWarning -> _state.update { it.copy(showNotificationWarning = false) }
-            is TimerIntent.BackClicked -> _navigationEvents.trySend(TimerNavEvent.NavigateBack)
+            is TimerIntent.BackClicked -> onBack()
+            is TimerIntent.JustATimer -> endQuickTimer()
+            is TimerIntent.ConfirmEndTimer -> endQuickTimer()
+            is TimerIntent.CancelEndTimer -> _state.update { it.copy(showEndTimerConfirmation = false) }
 
             is TimerIntent.EditSession -> openEditSheet()
             is TimerIntent.EditTemperatureChanged -> _state.update { it.copy(editTemperatureCelsius = intent.celsius) }
@@ -218,15 +224,62 @@ class TimerViewModel(
         }
     }
 
+    // Live when Home has just started it or a notification brought the user back; stored when
+    // the process has died since
+    private fun initializeQuickTimer() {
+        viewModelScope.launch {
+            val live = timerService.getCurrentState()
+                .takeIf { it.sessionId == null && it.totalDuration > Duration.ZERO }
+            val timer = (live ?: preferencesRepository.getQuickTimer())
+                ?.resolvedAt(Clock.System.now())
+            if (timer == null) {
+                // A notification left over from a timer since ended
+                _navigationEvents.send(TimerNavEvent.NavigateBack)
+                return@launch
+            }
+
+            timerService.updateState(timer)
+            if (timer.isRunning) timerService.startCountdown()
+            persist(timer)
+
+            _state.update {
+                it.copy(
+                    timerState = timer,
+                    showNotificationWarning = !notificationService.hasNotificationPermission(),
+                    isLoading = false,
+                )
+            }
+        }
+    }
+
+    /** A session's timer is kept on its steep, the Quick Timer in preferences. */
+    private suspend fun persist(timer: TimerState) {
+        if (timer.sessionId != null) {
+            saveTimerStateUseCase(timer)
+        } else {
+            preferencesRepository.updateQuickTimer(timer)
+        }
+    }
+
     private fun startTimer() {
-        val session = _state.value.session ?: return
-        val brewingTime = _state.value.timerState.totalDuration
+        val session = _state.value.session
+        if (session == null && !_state.value.isQuickTimer) return
+        val timer = _state.value.timerState
 
         viewModelScope.launch {
-            startTimerUseCase(
-                session = session,
-                duration = brewingTime,
-            )
+            val started = if (session != null) {
+                startTimerUseCase(session = session, duration = timer.totalDuration)
+            } else {
+                Result.success(
+                    timer.copy(
+                        status = TimerStatus.RUNNING,
+                        remainingDuration = timer.totalDuration,
+                        startedAt = Clock.System.now(),
+                        pausedAt = null,
+                    ),
+                )
+            }
+            started
                 .onSuccess { timerState ->
                     val updatedState = timerState.copy(
                         teaName = _state.value.tea?.name ?: "",
@@ -237,7 +290,7 @@ class TimerViewModel(
                     timerService.startCountdown()
 
                     // Persist running state for restoration
-                    saveTimerStateUseCase(updatedState)
+                    persist(updatedState)
                 }
                 .onFailure { messages.failure(it, Res.string.couldnt_start_timer) }
         }
@@ -255,7 +308,7 @@ class TimerViewModel(
                     timerService.cancelCountdown()
 
                     // 4. Persist timer state for later restoration
-                    saveTimerStateUseCase(newState)
+                    persist(newState)
                 }
                 .onFailure { messages.failure(it, Res.string.couldnt_pause_timer) }
         }
@@ -273,7 +326,7 @@ class TimerViewModel(
                     timerService.startCountdown()
 
                     // 4. Persist, so a restore doesn't find the timer still paused
-                    saveTimerStateUseCase(newState)
+                    persist(newState)
                 }
                 .onFailure { messages.failure(it, Res.string.couldnt_resume_timer) }
         }
@@ -291,7 +344,7 @@ class TimerViewModel(
                     timerService.onTimeAdjusted(newState)
 
                     // 4. Persist adjusted state so it survives process death
-                    saveTimerStateUseCase(newState)
+                    persist(newState)
                 }
                 .onFailure { messages.failure(it, Res.string.couldnt_adjust_timer) }
         }
@@ -306,12 +359,13 @@ class TimerViewModel(
     }
 
     private fun confirmReset() {
-        val session = _state.value.session ?: return
         _state.update { it.copy(showResetConfirmation = false) }
 
-        // Reset is simple state change - no use case needed
-        val brewingTime = session.currentSteep.brewingTime
-        val resetState = timerService.getCurrentState().copy(
+        // Reset is simple state change - no use case needed. A Quick Timer has no planned time,
+        // so it goes back to its length
+        val current = timerService.getCurrentState()
+        val brewingTime = _state.value.session?.currentSteep?.brewingTime ?: current.totalDuration
+        val resetState = current.copy(
             totalDuration = brewingTime,
             remainingDuration = brewingTime,
             status = TimerStatus.NOT_STARTED,
@@ -321,7 +375,7 @@ class TimerViewModel(
         timerService.updateState(resetState)
 
         // Persist so leaving the screen or losing the process doesn't restore the paused timer
-        viewModelScope.launch { saveTimerStateUseCase(resetState) }
+        viewModelScope.launch { persist(resetState) }
     }
 
     private fun showDiscardSessionConfirmation() {
@@ -412,10 +466,37 @@ class TimerViewModel(
     }
 
     // Already brewed before Start, Poured early after. The collector above sees COMPLETE and
-    // finishes the steep, so it isn't finished twice
+    // finishes the steep, so it isn't finished twice. A Quick Timer has no steep, so it just stops
     private fun completeNow() {
-        if (_state.value.session == null) return
-        timerService.updateState(timerService.getCurrentState().completedAt(Clock.System.now()))
+        val isQuickTimer = _state.value.isQuickTimer
+        if (_state.value.session == null && !isQuickTimer) return
+        val completed = timerService.getCurrentState().completedAt(Clock.System.now())
+        timerService.updateState(completed)
+        if (isQuickTimer) {
+            notificationService.onTimerStopped()
+            viewModelScope.launch { persist(completed) }
+        }
+    }
+
+    // The Quick Timer lives on its screen alone, since Home has nowhere to show it
+    private fun onBack() {
+        val state = _state.value
+        when {
+            !state.isQuickTimer -> _navigationEvents.trySend(TimerNavEvent.NavigateBack)
+            state.timerState.isRunning || state.timerState.canResume ->
+                _state.update { it.copy(showEndTimerConfirmation = true) }
+            else -> endQuickTimer()
+        }
+    }
+
+    private fun endQuickTimer() {
+        _state.update { it.copy(showEndTimerConfirmation = false) }
+        timerService.stop()
+        notificationService.cancelTimerComplete()
+        viewModelScope.launch {
+            preferencesRepository.updateQuickTimer(null)
+            _navigationEvents.send(TimerNavEvent.NavigateBack)
+        }
     }
 
     private fun restartTimer() {

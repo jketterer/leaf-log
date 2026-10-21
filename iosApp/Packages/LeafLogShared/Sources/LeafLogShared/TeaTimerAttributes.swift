@@ -29,13 +29,15 @@ public struct TeaTimerAttributes: ActivityAttributes {
         self.sessionId = sessionId
     }
 
-    /// Opens the Timer for this activity's session when the activity is tapped.
+    /// Opens the Timer for this activity's session when the activity is tapped, or the Quick
+    /// Timer when it has none.
     public var timerURL: URL? {
-        guard let sessionId else { return nil }
         var components = URLComponents()
         components.scheme = "leaflog"
         components.host = "timer"
-        components.queryItems = [URLQueryItem(name: "session", value: sessionId)]
+        if let sessionId {
+            components.queryItems = [URLQueryItem(name: "session", value: sessionId)]
+        }
         return components.url
     }
 }

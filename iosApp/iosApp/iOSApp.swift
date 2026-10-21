@@ -28,11 +28,11 @@ struct iOSApp: App {
         WindowGroup {
             ContentView()
                 .onOpenURL { url in
-                    // The Live Activity's tap: leaflog://timer?session=<id>
-                    guard url.scheme == "leaflog", url.host == "timer",
-                          let sessionId = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                              .queryItems?.first(where: { $0.name == "session" })?.value
-                    else { return }
+                    // The Live Activity's tap: leaflog://timer?session=<id>, no session for the
+                    // Quick Timer
+                    guard url.scheme == "leaflog", url.host == "timer" else { return }
+                    let sessionId = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                        .queryItems?.first(where: { $0.name == "session" })?.value
                     LiveActivityServiceKt.openTimerFromLiveActivity(sessionId: sessionId)
                 }
         }

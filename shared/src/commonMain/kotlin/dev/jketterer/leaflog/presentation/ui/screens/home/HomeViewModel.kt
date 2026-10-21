@@ -11,6 +11,7 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -54,6 +55,7 @@ import leaf_log.shared.generated.resources.session_finished
 import leaf_log.shared.generated.resources.undo
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Pending actions that can be deferred when an in-progress session conflict is detected.
@@ -174,7 +176,18 @@ class HomeViewModel(
 
             is HomeIntent.StartQuickTimer -> {
                 _state.update { it.copy(showDurationSheet = false) }
-                _navEvents.trySend(HomeNavEvent.NavigateToQuickTimer(intent.durationSeconds))
+                // Running already: the tea is poured by the time a timer is remembered. The Timer
+                // takes it from here
+                val duration = intent.durationSeconds.seconds
+                timerService.updateState(
+                    TimerState(
+                        totalDuration = duration,
+                        remainingDuration = duration,
+                        status = TimerStatus.RUNNING,
+                        startedAt = Clock.System.now(),
+                    ),
+                )
+                _navEvents.trySend(HomeNavEvent.NavigateToQuickTimer)
             }
 
             is HomeIntent.DismissDurationSheet -> {
@@ -556,7 +569,7 @@ sealed interface HomeNavEvent {
     data object NavigateToSettings : HomeNavEvent
     data class CompleteSession(val sessionId: String) : HomeNavEvent
     data class NavigateToTimer(val sessionId: String) : HomeNavEvent
-    data class NavigateToQuickTimer(val durationSeconds: Int) : HomeNavEvent
+    data object NavigateToQuickTimer : HomeNavEvent
     data object NavigateToAnalytics : HomeNavEvent
     data class NavigateToEditBrewingMethod(val teaId: String, val configurationId: String) :
         HomeNavEvent

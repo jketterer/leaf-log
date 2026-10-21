@@ -207,14 +207,15 @@ class TimerNotificationServiceImpl : NSObject(),
         endLiveActivity()
         val userInfo = didReceiveNotificationResponse.notification.request.content.userInfo
         val sessionId = userInfo["sessionId"] as? String
-        if (sessionId != null) {
-            // Mirrors the destination extras Android reads in MainActivity. The completion
-            // alarm is the only notification iOS posts, so a missing or unknown destination
-            // resolves to steep complete.
-            when (userInfo["destination"] as? String) {
-                DESTINATION_TIMER -> DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
-                else -> DeepLinkHandler.setRoute(NavRoute.SteepCompleteRoute(sessionId))
-            }
+        // Mirrors the destination extras Android reads in MainActivity. The completion alarm is
+        // the only notification iOS posts, so a missing or unknown destination resolves to steep
+        // complete. The Quick Timer has no review, so its alarm opens the Timer
+        when {
+            userInfo["destination"] == null -> Unit
+            sessionId == null -> DeepLinkHandler.setRoute(NavRoute.TimerRoute())
+            userInfo["destination"] == DESTINATION_TIMER ->
+                DeepLinkHandler.setRoute(NavRoute.TimerRoute(sessionId))
+            else -> DeepLinkHandler.setRoute(NavRoute.SteepCompleteRoute(sessionId))
         }
         withCompletionHandler()
     }
@@ -225,16 +226,11 @@ class TimerNotificationServiceImpl : NSObject(),
         }
     }
 
-    private fun buildUserInfo(sessionId: String?, destination: String): Map<Any?, Any?> {
-        return if (sessionId != null) {
-            mapOf(
-                "sessionId" to sessionId,
-                "destination" to destination,
-            )
-        } else {
-            emptyMap()
+    private fun buildUserInfo(sessionId: String?, destination: String): Map<Any?, Any?> =
+        buildMap {
+            put("destination", destination)
+            sessionId?.let { put("sessionId", it) }
         }
-    }
 
 }
 

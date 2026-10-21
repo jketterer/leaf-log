@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -38,6 +39,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.AlertTriangle
 import compose.icons.feathericons.ArrowLeft
@@ -68,7 +72,12 @@ import leaf_log.shared.generated.resources.discard_session_text
 import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
+import leaf_log.shared.generated.resources.just_a_timer
 import leaf_log.shared.generated.resources.poured_early
+import leaf_log.shared.generated.resources.quick_timer
+import leaf_log.shared.generated.resources.stop
+import leaf_log.shared.generated.resources.stop_timer_text
+import leaf_log.shared.generated.resources.stop_timer_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
@@ -117,13 +126,27 @@ private fun TimerContent(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showOverflowMenu by remember { mutableStateOf(false) }
+    val canPourEarly = state.timerState.isRunning || state.timerState.canResume
+
+    // System back asks before ending a Quick Timer, as the toolbar arrow does
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = state.isQuickTimer,
+        onBackCompleted = { onIntent(TimerIntent.BackClicked) },
+    )
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text(state.tea?.name ?: "")
+                        Text(
+                            if (state.isQuickTimer) {
+                                stringResource(Res.string.quick_timer)
+                            } else {
+                                state.tea?.name ?: ""
+                            },
+                        )
                         state.vessel?.name?.let {
                             Text(
                                 text = it,
@@ -139,48 +162,53 @@ private fun TimerContent(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showOverflowMenu = true }) {
-                        Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
-                    }
-                    DropdownMenu(
-                        expanded = showOverflowMenu,
-                        onDismissRequest = { showOverflowMenu = false },
-                    ) {
-                        // Before Start, the way out is Already brewed, under the Start button
-                        if (state.timerState.isRunning || state.timerState.canResume) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Res.string.poured_early)) },
-                                onClick = {
-                                    showOverflowMenu = false
-                                    onIntent(TimerIntent.CompleteNow)
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        FeatherIcons.CheckCircle,
-                                        contentDescription = null,
-                                    )
-                                },
-                            )
+                    // A Quick Timer has nothing to discard
+                    if (!state.isQuickTimer || canPourEarly) {
+                        IconButton(onClick = { showOverflowMenu = true }) {
+                            Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
                         }
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    stringResource(Res.string.discard),
-                                    color = MaterialTheme.colorScheme.error,
+                        DropdownMenu(
+                            expanded = showOverflowMenu,
+                            onDismissRequest = { showOverflowMenu = false },
+                        ) {
+                            // Before Start, the way out is Already brewed, under the Start button
+                            if (canPourEarly) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(Res.string.poured_early)) },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        onIntent(TimerIntent.CompleteNow)
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            FeatherIcons.CheckCircle,
+                                            contentDescription = null,
+                                        )
+                                    },
                                 )
-                            },
-                            onClick = {
-                                showOverflowMenu = false
-                                onIntent(TimerIntent.DiscardSession)
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    FeatherIcons.Trash2,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
+                            }
+                            if (!state.isQuickTimer) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            stringResource(Res.string.discard),
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    },
+                                    onClick = {
+                                        showOverflowMenu = false
+                                        onIntent(TimerIntent.DiscardSession)
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            FeatherIcons.Trash2,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    },
                                 )
-                            },
-                        )
+                            }
+                        }
                     }
                 },
             )
@@ -233,12 +261,21 @@ private fun TimerContent(
         )
     }
 
+    if (state.showEndTimerConfirmation) {
+        ConfirmDestructiveDialog(
+            title = stringResource(Res.string.stop_timer_title),
+            text = stringResource(Res.string.stop_timer_text),
+            confirmLabel = stringResource(Res.string.stop),
+            onConfirm = { onIntent(TimerIntent.ConfirmEndTimer) },
+            onDismiss = { onIntent(TimerIntent.CancelEndTimer) },
+        )
+    }
+
     // Reset confirmation dialog
     if (state.showResetConfirmation) {
+        val resetTo = state.session?.currentSteep?.brewingTime ?: state.timerState.totalDuration
         TimerResetConfirmationDialog(
-            durationText = formatBrewingTime(
-                state.session?.currentSteep?.brewingTime?.inWholeSeconds?.toInt() ?: 0,
-            ),
+            durationText = formatBrewingTime(resetTo.inWholeSeconds.toInt()),
             onConfirm = { onIntent(TimerIntent.ConfirmReset) },
             onDismiss = { onIntent(TimerIntent.CancelReset) },
         )
@@ -314,23 +351,36 @@ private fun TimerRunningContent(
                         .sizeIn(maxWidth = 240.dp, maxHeight = 240.dp)
                         .aspectRatio(1f),
                 )
-                QuickAdjustButtons(
-                    onAdjust = { adjustment ->
-                        onIntent(TimerIntent.AdjustTime(adjustment))
-                    },
-                )
+                if (!state.timerState.isComplete) {
+                    QuickAdjustButtons(
+                        onAdjust = { adjustment ->
+                            onIntent(TimerIntent.AdjustTime(adjustment))
+                        },
+                    )
+                }
             }
 
-            // Control buttons
-            TimerControlButtons(
-                isRunning = state.timerState.isRunning,
-                isPaused = state.timerState.status == TimerStatus.PAUSED,
-                onStartClick = { onIntent(TimerIntent.StartTimer) },
-                onPauseClick = { onIntent(TimerIntent.PauseTimer) },
-                onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
-                onResetClick = { onIntent(TimerIntent.ResetTimer) },
-                onAlreadyBrewedClick = { onIntent(TimerIntent.CompleteNow) },
-            )
+            // Only a Quick Timer stays here once done: a session's steep moves on to its review
+            if (state.timerState.isComplete) {
+                Button(
+                    onClick = { onIntent(TimerIntent.JustATimer) },
+                    modifier = Modifier.fillMaxWidth(0.7f),
+                ) {
+                    Text(stringResource(Res.string.just_a_timer))
+                }
+            } else {
+                TimerControlButtons(
+                    isRunning = state.timerState.isRunning,
+                    isPaused = state.timerState.status == TimerStatus.PAUSED,
+                    onStartClick = { onIntent(TimerIntent.StartTimer) },
+                    onPauseClick = { onIntent(TimerIntent.PauseTimer) },
+                    onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
+                    onResetClick = { onIntent(TimerIntent.ResetTimer) },
+                    // A Quick Timer has no steep to record
+                    onAlreadyBrewedClick = { onIntent(TimerIntent.CompleteNow) }
+                        .takeUnless { state.isQuickTimer },
+                )
+            }
         }
     }
 }
@@ -445,3 +495,20 @@ private fun TimerScreenPausedPreview() {
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+private fun TimerScreenQuickTimerDonePreview() {
+    LeafLogTheme {
+        TimerContent(
+            state = TimerScreenState(
+                isQuickTimer = true,
+                timerState = TimerState(
+                    totalDuration = 2.minutes,
+                    status = TimerStatus.COMPLETE,
+                    startedAt = PreviewInstant,
+                ),
+            ),
+            onIntent = {},
+        )
+    }
+}

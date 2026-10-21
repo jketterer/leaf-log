@@ -42,8 +42,9 @@ sealed interface NavRoute : NavKey {
         val editFullSession: Boolean = false
     ) : NavRoute
 
+    /** No [sessionId]: the Quick Timer, timing a tea not yet named. */
     @Serializable
-    data class TimerRoute(val sessionId: String) : NavRoute
+    data class TimerRoute(val sessionId: String? = null) : NavRoute
 
     @Serializable
     data object AnalyticsRoute : NavRoute
@@ -56,9 +57,6 @@ sealed interface NavRoute : NavKey {
 
     @Serializable
     data class EditVesselRoute(val vesselId: String? = null) : NavRoute
-
-    @Serializable
-    data class QuickTimerRoute(val durationSeconds: Int) : NavRoute
 
     @Serializable
     data object TeaTypeListRoute : NavRoute

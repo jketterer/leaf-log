@@ -41,12 +41,15 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 
 ## 2. Notifications
 
-- [ ] **[A]** Running timer: ongoing notification shows tea name, "Steep N", a countdown that counts
-      down, and a draining progress bar. Expanded view matches.
-- [ ] **[A]** Pause: the notification switches to "Paused · m:ss" and stops ticking. Resume restarts
-      it.
-- [ ] Completion alert shows "<tea> is ready!" with sound. On [iOS] it also appears while the app
-      is in the foreground.
+- [ ] **[A]** Running timer: ongoing notification shows tea name, "Steep 3", a countdown that
+      counts down, and a draining progress bar. Expanded view matches. No next steep while brewing.
+- [ ] **[A]** Pause: the text reads "Steep 3 paused", the header shows a static m:ss, and nothing
+      ticks. Resume restarts it.
+- [ ] Completion alert from a gongfu method shows "<tea> is ready!" and "Steep 3 done, next 30s"
+      with sound. A western method shows "Steep 1 done". On [iOS] it also appears while the app is in the foreground.
+- [ ] **[A]** Force-stop mid-steep and let the backup alarm post the alert. Same text.
+- [ ] Leave the completion alert in the shade, then Next, Finish or Discard from the review. The
+      alert is withdrawn each time.
 - [ ] **[A]** Completion alert survives the ongoing notification being cleared when the foreground
       service stops.
 - [ ] Settings → turn off completion notifications. No completion alert; the timer still completes
@@ -74,13 +77,17 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       earlier ones under Previous Steeps.
 - [ ] Tap a notification, then rotate or switch dark mode. The route is not replayed a second
       time.
-- [ ] Two sessions with posted notifications → tap the older one. It opens the older session,
-      not the newer (requestCode-0 routing suspected broken on [A]; see audit §7).
+- [ ] **[A]** Steep 2 running with a reminder for steep 1 still posted → tap each. The ongoing
+      notification opens the Timer, the reminder the review; neither opens the other's screen.
+- [ ] Tap a reminder for a session already finished or discarded. The app opens on Home, not a
+      review or timer for it.
 
 ## 4. Live Activity [iOS]
 
 - [ ] Start a timer. Live Activity appears on the lock screen and Dynamic Island with tea name,
-      steep, and a countdown.
+      "Steep 3", and a countdown; paused, it reads "Steep 3 paused".
+- [ ] Tap the Live Activity on the lock screen, and the expanded Dynamic Island → the Timer for that
+      session.
 - [ ] Countdown stops at 0:00 and never counts up past it.
 - [ ] Pause → the activity shows paused with static time. Resume → it counts down again.
 - [ ] ±adjust → the activity's end time moves. Cancelling and rescheduling the alarm does not

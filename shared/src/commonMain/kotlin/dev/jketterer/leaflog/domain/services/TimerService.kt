@@ -63,11 +63,7 @@ class TimerService(
         if (!prefs.timerCompletionNotificationsEnabled) {
             notificationService.cancelCompletionAlarm()
         } else if (isRunning) {
-            notificationService.scheduleCompletionAlarm(
-                teaName = state.teaName,
-                remainingSeconds = state.remainingDuration.inWholeMilliseconds / 1000.0,
-                sessionId = state.sessionId,
-            )
+            notificationService.scheduleCompletionAlarm(state)
         }
 
         if (!prefs.sessionReminderNotificationsEnabled) {
@@ -92,11 +88,7 @@ class TimerService(
         val current = _timerState.value
         lifecycleHandler.onTimerStarted()
         if (notificationPreferences.value.timerCompletionNotificationsEnabled) {
-            notificationService.scheduleCompletionAlarm(
-                teaName = current.teaName,
-                remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
-                sessionId = current.sessionId,
-            )
+            notificationService.scheduleCompletionAlarm(current)
         }
         scheduleSessionReminder(current)
 
@@ -136,7 +128,7 @@ class TimerService(
                     _timerState.update { completedState }
                     lifecycleHandler.onTimerStopped()
                     if (notificationPreferences.value.timerCompletionNotificationsEnabled) {
-                        notificationService.showTimerComplete(state.teaName, state.sessionId)
+                        notificationService.showTimerComplete(completedState)
                     }
                     notificationService.cancelCompletionAlarm()
                     // Persist completion so HomeScreen banner reflects correct state
@@ -172,15 +164,22 @@ class TimerService(
         _timerState.value = TimerState()
     }
 
+    /** The review moved on to the next steep, so the ready alert for the last one is stale. */
+    fun onNextSteep() {
+        stop()
+        notificationService.cancelTimerComplete()
+    }
+
     /**
      * The session has been finished or discarded, so stop its timer if it has one running and
-     * withdraw its finish-your-session reminder. A different session's live timer is left alone,
-     * along with its reminder, which that brew is still owed.
+     * withdraw its ready alert and finish-your-session reminder. A different session's live timer
+     * is left alone, along with its alerts, which that brew is still owed.
      */
     fun onSessionResolved(sessionId: String) {
         val activeSessionId = _timerState.value.sessionId
         if (activeSessionId == sessionId) stop()
         if (activeSessionId == null || activeSessionId == sessionId) {
+            notificationService.cancelTimerComplete()
             notificationService.cancelSessionReminder()
         }
     }
@@ -209,11 +208,7 @@ class TimerService(
      */
     fun onTimeAdjusted(state: TimerState) {
         if (state.status == TimerStatus.RUNNING) {
-            notificationService.scheduleCompletionAlarm(
-                teaName = state.teaName,
-                remainingSeconds = state.remainingDuration.inWholeMilliseconds / 1000.0,
-                sessionId = state.sessionId,
-            )
+            notificationService.scheduleCompletionAlarm(state)
             scheduleSessionReminder(state)
         }
     }

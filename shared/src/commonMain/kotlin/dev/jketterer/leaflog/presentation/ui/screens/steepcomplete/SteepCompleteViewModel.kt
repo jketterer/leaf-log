@@ -253,7 +253,7 @@ class SteepCompleteViewModel(
             ).onSuccess { updated ->
                 _state.update { it.copy(isLoading = false) }
                 // Reset TimerService singleton state before the next Timer screen starts
-                timerService.stop()
+                timerService.onNextSteep()
                 _navigationEvents.send(SteepCompleteNavEvent.NavigateToTimer(updated.session.id))
             }.onFailure { e ->
                 _state.update { it.copy(isLoading = false) }

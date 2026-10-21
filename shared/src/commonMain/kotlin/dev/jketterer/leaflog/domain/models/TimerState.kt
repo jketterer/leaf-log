@@ -15,6 +15,8 @@ data class TimerState(
     val pausedAt: Instant? = null,
     // Drives how long after the steep to remind the user to finish the session
     val brewingTemperatureCelsius: Double? = null,
+    // The plan's next steep, shown on the lock screen. Null when there is no next to offer
+    val nextSteepDuration: Duration? = null,
 ) {
     /** Time brewed so far: adjustments count, pauses don't. */
     val elapsed: Duration

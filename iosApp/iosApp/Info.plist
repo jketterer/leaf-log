@@ -13,5 +13,16 @@
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.jketterer.leaflog</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>leaflog</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

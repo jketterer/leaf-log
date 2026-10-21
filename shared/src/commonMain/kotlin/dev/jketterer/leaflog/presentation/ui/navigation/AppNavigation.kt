@@ -36,6 +36,8 @@ import compose.icons.feathericons.BarChart2
 import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Home
+import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsScreen
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.tab_analytics
@@ -61,16 +63,26 @@ import dev.jketterer.leaflog.presentation.ui.screens.timer.TimerScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 @Composable
 fun AppNavigation() {
     val navigator = rememberNavigator()
 
-    // Handle deep links from notification taps
+    // Handle deep links from notification taps. A tap on one left over from a session since
+    // finished or discarded just opens the app
+    val sessions: TeaSessionRepository = koinInject()
     val pendingRoute by DeepLinkHandler.pendingRoute.collectAsState()
     LaunchedEffect(pendingRoute) {
         val route = pendingRoute ?: return@LaunchedEffect
-        navigator.openOnHome(route)
+        val sessionId = when (route) {
+            is NavRoute.TimerRoute -> route.sessionId
+            is NavRoute.SteepCompleteRoute -> route.sessionId
+            else -> null
+        }
+        val inProgress = sessionId == null ||
+            sessions.getSessionOfSteep(sessionId)?.session?.status == SessionStatus.IN_PROGRESS
+        if (inProgress) navigator.openOnHome(route)
         DeepLinkHandler.consume()
     }
 

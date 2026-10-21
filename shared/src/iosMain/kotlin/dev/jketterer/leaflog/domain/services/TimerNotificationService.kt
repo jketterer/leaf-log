@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.domain.services
 
 import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.TimerState
+import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.navigation.DeepLinkHandler
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -78,10 +79,14 @@ class TimerNotificationServiceImpl : NSObject(),
         }
     }
 
-    fun showTimerComplete(teaName: String, sessionId: String?) {
+    fun showTimerComplete() {
         // The UNTimeIntervalNotificationTrigger scheduled in scheduleCompletionAlarm()
         // fires independently and is shown via willPresentNotification (even in foreground).
         endLiveActivity()
+    }
+
+    fun cancelTimerComplete() {
+        center.removeDeliveredNotificationsWithIdentifiers(listOf(SCHEDULED_COMPLETION_ID))
     }
 
     fun onTimerStopped() {
@@ -100,20 +105,22 @@ class TimerNotificationServiceImpl : NSObject(),
     /**
      * Schedule a local notification that iOS will fire even if the app is suspended.
      */
-    fun scheduleCompletionAlarm(
-        teaName: String,
-        remainingSeconds: Double,
-        sessionId: String?,
-    ) {
+    fun scheduleCompletionAlarm(state: TimerState) {
         cancelCompletionAlarm()
 
+        val remainingSeconds = state.remainingDuration.inWholeMilliseconds / 1000.0
         if (remainingSeconds <= 0) return
 
+        val done = "Steep ${state.steepNumber} done"
         val content = UNMutableNotificationContent().apply {
-            setTitle("${teaName.ifEmpty { "Your tea" }} is ready!")
-            setBody("Time to enjoy your tea")
+            setTitle("${state.teaName.ifEmpty { "Your tea" }} is ready!")
+            setBody(
+                state.nextSteepDuration
+                    ?.let { "$done, next ${formatBrewingTime(it.inWholeSeconds.toInt())}" }
+                    ?: done,
+            )
             setSound(UNNotificationSound.defaultSound())
-            setUserInfo(buildUserInfo(sessionId, DESTINATION_STEEP_COMPLETE))
+            setUserInfo(buildUserInfo(state.sessionId, DESTINATION_STEEP_COMPLETE))
         }
 
         val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(

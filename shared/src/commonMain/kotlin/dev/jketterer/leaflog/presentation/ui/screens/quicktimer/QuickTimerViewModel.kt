@@ -158,11 +158,7 @@ class QuickTimerViewModel(
             )
         }
         val current = _state.value
-        notificationService.scheduleCompletionAlarm(
-            teaName = effectiveTeaName(),
-            remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
-            sessionId = current.inProgressSessionId,
-        )
+        notificationService.scheduleCompletionAlarm(buildTimerState(current))
         startCountdown()
     }
 
@@ -187,11 +183,7 @@ class QuickTimerViewModel(
             it.copy(status = TimerStatus.RUNNING)
         }
         val current = _state.value
-        notificationService.scheduleCompletionAlarm(
-            teaName = effectiveTeaName(),
-            remainingSeconds = current.remainingDuration.inWholeMilliseconds / 1000.0,
-            sessionId = current.inProgressSessionId,
-        )
+        notificationService.scheduleCompletionAlarm(buildTimerState(current))
         startCountdown()
     }
 
@@ -215,11 +207,7 @@ class QuickTimerViewModel(
 
         // Reschedule completion alarm so notification fires at the correct (adjusted) time
         if (current.status == TimerStatus.RUNNING) {
-            notificationService.scheduleCompletionAlarm(
-                teaName = effectiveTeaName(),
-                remainingSeconds = newRemaining.inWholeMilliseconds / 1000.0,
-                sessionId = current.inProgressSessionId,
-            )
+            notificationService.scheduleCompletionAlarm(buildTimerState(_state.value))
         }
     }
 
@@ -326,10 +314,7 @@ class QuickTimerViewModel(
                             remainingDuration = Duration.ZERO,
                         )
                     }
-                    notificationService.showTimerComplete(
-                        teaName = effectiveTeaName(),
-                        sessionId = current.inProgressSessionId,
-                    )
+                    notificationService.showTimerComplete(buildTimerState(_state.value))
                     // Auto-save as IN_PROGRESS if we have the required details
                     if (_state.value.hasRequiredDetails) {
                         autoSaveCompleted()

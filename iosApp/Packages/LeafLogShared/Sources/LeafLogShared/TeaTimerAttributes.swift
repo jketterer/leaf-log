@@ -28,4 +28,14 @@ public struct TeaTimerAttributes: ActivityAttributes {
         self.totalSeconds = totalSeconds
         self.sessionId = sessionId
     }
+
+    /// Opens the Timer for this activity's session when the activity is tapped.
+    public var timerURL: URL? {
+        guard let sessionId else { return nil }
+        var components = URLComponents()
+        components.scheme = "leaflog"
+        components.host = "timer"
+        components.queryItems = [URLQueryItem(name: "session", value: sessionId)]
+        return components.url
+    }
 }

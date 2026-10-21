@@ -39,7 +39,8 @@ struct LeafLogLiveActivityWidget: Widget {
                         Text(context.attributes.teaName)
                             .font(.headline)
                             .lineLimit(1)
-                        Text("Steep \(context.attributes.steepNumber)")
+                        Text(steepText(context.attributes, isPaused: context.state.isPaused,
+                                       isComplete: isComplete))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -72,6 +73,7 @@ struct LeafLogLiveActivityWidget: Widget {
                     : context.state.isPaused ? "pause.circle.fill" : "leaf.fill")
                     .foregroundStyle(.green)
             }
+            .widgetURL(context.attributes.timerURL)
         }
     }
 }
@@ -86,23 +88,13 @@ struct LockScreenLiveActivityView: View {
         state.remainingSeconds <= 0 || (!state.isPaused && state.endDate <= Date.now)
     }
 
-    private var statusText: String {
-        if isComplete {
-            return "Complete"
-        } else if state.isPaused {
-            return "Paused"
-        } else {
-            return "Steeping"
-        }
-    }
-
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(attributes.teaName)
                     .font(.headline)
                     .lineLimit(1)
-                Text("Steep \(attributes.steepNumber) · \(statusText)")
+                Text(steepText(attributes, isPaused: state.isPaused, isComplete: isComplete))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -135,10 +127,16 @@ struct LockScreenLiveActivityView: View {
         .padding(.vertical, 14)
         .activityBackgroundTint(.black)
         .activitySystemActionForegroundColor(.white)
+        .widgetURL(attributes.timerURL)
     }
 }
 
 // MARK: - Helpers
+
+private func steepText(_ attributes: TeaTimerAttributes, isPaused: Bool, isComplete: Bool) -> String {
+    if isComplete { return "Steep \(attributes.steepNumber) done" }
+    return isPaused ? "Steep \(attributes.steepNumber) paused" : "Steep \(attributes.steepNumber)"
+}
 
 private func formatTime(_ seconds: Double) -> String {
     let total = max(0, Int(ceil(seconds)))

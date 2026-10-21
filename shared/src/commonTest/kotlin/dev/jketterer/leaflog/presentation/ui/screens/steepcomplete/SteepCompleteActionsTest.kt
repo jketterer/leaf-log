@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -47,6 +48,22 @@ class SteepCompleteActionsTest {
     @Test
     fun `next leads a gongfu method`() {
         assertFalse(finishLeads(withMethod(methodId = "m"), gongfu))
+    }
+
+    @Test
+    fun `the next steep follows the plan from the current one`() {
+        val second = withMethod(methodId = "m").let { it.copy(steeps = previewSession(ratings = listOf(null, null)).steeps) }
+        assertEquals(30.seconds, nextSteepTime(second, gongfu))
+    }
+
+    @Test
+    fun `a single steep method offers no next steep`() {
+        assertNull(nextSteepTime(withMethod(methodId = "m"), single))
+    }
+
+    @Test
+    fun `a session with no plan offers the same steep again`() {
+        assertEquals(180.seconds, nextSteepTime(withMethod(), single))
     }
 
     @Test

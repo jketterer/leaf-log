@@ -18,6 +18,7 @@ import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.R
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 
 /**
  * Manages timer notifications for Android.
@@ -60,9 +61,14 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         }
     }
 
+    /**
+     * Each notification passes its own id as [requestCode]: PendingIntent identity ignores extras,
+     * so notifications sharing one would all open wherever the last one built points.
+     */
     private fun createTimerPendingIntent(
-        sessionId: String? = null,
-        destination: String = "timer",
+        sessionId: String?,
+        destination: String,
+        requestCode: Int,
     ): PendingIntent {
         val openIntent = Intent().setClassName(context.packageName, "dev.jketterer.leaflog.MainActivity").apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -71,7 +77,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         }
         return PendingIntent.getActivity(
             context,
-            0,
+            requestCode,
             openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
@@ -88,15 +94,10 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         val isRunning = state.status == TimerStatus.RUNNING
         val remainingMillis = state.remainingDuration.inWholeMilliseconds
         val totalMillis = state.totalDuration.inWholeMilliseconds
-        val steepLabel = "Steep ${state.steepNumber}"
-
         val views = RemoteViews(context.packageName, R.layout.notification_timer_running)
 
         views.setTextViewText(R.id.tv_tea_name, state.teaName)
-        views.setTextViewText(
-            R.id.tv_steep_label,
-            if (isRunning) steepLabel else "Paused · $steepLabel",
-        )
+        views.setTextViewText(R.id.tv_steep_label, runningText(state))
 
         if (isRunning) {
             // Chronometer counts down automatically — no per-second update needed
@@ -145,11 +146,11 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID_RUNNING)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(state.teaName.ifEmpty { "Your tea" })
-            .setSubText("Steep ${state.steepNumber}")
+            .setContentTitle(teaName(state))
+            .setContentText(runningText(state))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
-            .setContentIntent(createTimerPendingIntent(state.sessionId))
+            .setContentIntent(createTimerPendingIntent(state.sessionId, DESTINATION_TIMER, NOTIFICATION_ID))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setCustomBigContentView(buildExpandedView(state))
@@ -165,7 +166,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
             val minutes = state.remainingDuration.inWholeMinutes
             val seconds = state.remainingDuration.inWholeSeconds % 60
             builder
-                .setContentText("Paused · %d:%02d".format(minutes, seconds))
+                .setSubText("%d:%02d".format(minutes, seconds))
                 .setShowWhen(false)
         }
 
@@ -197,13 +198,15 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
     /**
      * Show completion notification when timer finishes.
      */
-    override fun showTimerComplete(teaName: String, sessionId: String?) {
+    override fun showTimerComplete(state: TimerState) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_COMPLETE)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("${teaName.ifEmpty { "Your tea" }} is ready!")
-            .setContentText("Time to enjoy your tea")
+            .setContentTitle(context.getString(R.string.notification_tea_ready, teaName(state)))
+            .setContentText(doneText(state))
             .setAutoCancel(true)
-            .setContentIntent(createTimerPendingIntent(sessionId, destination = "steep_complete"))
+            .setContentIntent(
+                createTimerPendingIntent(state.sessionId, DESTINATION_REVIEW, COMPLETION_NOTIFICATION_ID),
+            )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .build()
@@ -215,20 +218,39 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         notificationManager.notify(COMPLETION_NOTIFICATION_ID, notification)
     }
 
+    override fun cancelTimerComplete() {
+        notificationManager.cancel(COMPLETION_NOTIFICATION_ID)
+    }
+
+    private fun teaName(state: TimerState) =
+        state.teaName.ifEmpty { context.getString(R.string.notification_your_tea) }
+
+    private fun runningText(state: TimerState): String = context.getString(
+        if (state.status == TimerStatus.RUNNING) R.string.notification_steep else R.string.notification_steep_paused,
+        state.steepNumber,
+    )
+
+    /** The next steep waits until this one is done: while it brews, the countdown is the news. */
+    private fun doneText(state: TimerState): String {
+        val next = state.nextSteepDuration
+            ?: return context.getString(R.string.notification_steep_done, state.steepNumber)
+        return context.getString(
+            R.string.notification_steep_done_next,
+            state.steepNumber,
+            formatBrewingTime(next.inWholeSeconds.toInt()),
+        )
+    }
+
     /**
      * Schedule a backup alarm via AlarmManager. If the foreground service survives
      * (normal case), [cancelCompletionAlarm] cancels this before it fires. If the
      * process is killed by aggressive battery optimization, the alarm fires
      * independently and [TimerCompletionReceiver] posts the completion notification.
      */
-    override fun scheduleCompletionAlarm(
-        teaName: String,
-        remainingSeconds: Double,
-        sessionId: String?,
-    ) {
+    override fun scheduleCompletionAlarm(state: TimerState) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val pendingIntent = buildAlarmPendingIntent(teaName, sessionId)
-        val triggerAtMillis = SystemClock.elapsedRealtime() + (remainingSeconds * 1000).toLong()
+        val pendingIntent = buildAlarmPendingIntent(state)
+        val triggerAtMillis = SystemClock.elapsedRealtime() + state.remainingDuration.inWholeMilliseconds
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
             // Exact alarm permission not granted — use inexact (may be delayed by a few minutes)
@@ -281,7 +303,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
             .setContentTitle("How was your ${teaName.ifEmpty { "tea" }}?")
             .setContentText("Tap to rate and finish this session")
             .setAutoCancel(true)
-            .setContentIntent(createTimerPendingIntent(sessionId, destination = "steep_complete"))
+            .setContentIntent(createTimerPendingIntent(sessionId, DESTINATION_REVIEW, REMINDER_NOTIFICATION_ID))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
 
@@ -291,8 +313,8 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
     override fun cancelCompletionAlarm() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         // AlarmManager.cancel() matches by component + requestCode, not by extras,
-        // so the tea name and sessionId here are irrelevant for cancellation.
-        val pendingIntent = buildAlarmPendingIntent(teaName = "", sessionId = null)
+        // so the state here is irrelevant for cancellation.
+        val pendingIntent = buildAlarmPendingIntent(TimerState())
         alarmManager.cancel(pendingIntent)
     }
 
@@ -312,13 +334,15 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         }
     }
 
-    private fun buildAlarmPendingIntent(teaName: String, sessionId: String?): PendingIntent {
+    private fun buildAlarmPendingIntent(state: TimerState): PendingIntent {
         val intent = Intent().setClassName(
             context.packageName,
             "dev.jketterer.leaflog.services.TimerCompletionReceiver",
         ).apply {
-            putExtra("tea_name", teaName)
-            sessionId?.let { putExtra("session_id", it) }
+            putExtra("tea_name", state.teaName)
+            putExtra("steep_number", state.steepNumber)
+            state.sessionId?.let { putExtra("session_id", it) }
+            state.nextSteepDuration?.let { putExtra("next_steep_ms", it.inWholeMilliseconds) }
         }
         return PendingIntent.getBroadcast(
             context,
@@ -353,5 +377,7 @@ class TimerNotificationServiceImpl(private val context: Context) : TimerNotifica
         const val REMINDER_NOTIFICATION_ID = 1003
         private const val ALARM_REQUEST_CODE = 2001
         private const val REMINDER_REQUEST_CODE = 2002
+        private const val DESTINATION_TIMER = "timer"
+        private const val DESTINATION_REVIEW = "steep_complete"
     }
 }

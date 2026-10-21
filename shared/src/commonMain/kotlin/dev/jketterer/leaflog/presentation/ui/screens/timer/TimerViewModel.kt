@@ -13,6 +13,7 @@ import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.domain.usecases.session.SaveTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.AdjustTimeUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
@@ -21,6 +22,7 @@ import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.nextSteepTime
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +60,7 @@ class TimerViewModel(
     private val editSteepUseCase: EditSteepUseCase,
     private val editSessionUseCase: EditSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
+    private val resolvePlanUseCase: ResolvePlanUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TimerScreenState())
@@ -152,6 +155,7 @@ class TimerViewModel(
                 val tea = teaRepository.getById(session.session.teaId)
                 val vessel = brewingVesselRepository.getById(session.session.vesselId)
                 val hasNotificationPermission = notificationService.hasNotificationPermission()
+                val nextSteep = nextSteepTime(session, resolvePlanUseCase(session))
 
                 // Prefer live TimerService state if it's already tracking this steep
                 // (e.g., navigating back while timer is still running)
@@ -179,6 +183,7 @@ class TimerViewModel(
                 // advancing while the app is backgrounded), so re-derive against the clock
                 // before deciding whether the timer has finished.
                 val resolvedTimerState = initialTimerState.resolvedAt(Clock.System.now())
+                    .copy(nextSteepDuration = nextSteep)
 
                 // If timer was already complete (e.g., app killed during SteepComplete),
                 // redirect to SteepComplete immediately
@@ -225,6 +230,7 @@ class TimerViewModel(
                 .onSuccess { timerState ->
                     val updatedState = timerState.copy(
                         teaName = _state.value.tea?.name ?: "",
+                        nextSteepDuration = _state.value.timerState.nextSteepDuration,
                     )
 
                     timerService.updateState(updatedState)

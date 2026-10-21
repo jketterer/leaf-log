@@ -27,6 +27,14 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in
+                    // The Live Activity's tap: leaflog://timer?session=<id>
+                    guard url.scheme == "leaflog", url.host == "timer",
+                          let sessionId = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+                              .queryItems?.first(where: { $0.name == "session" })?.value
+                    else { return }
+                    LiveActivityServiceKt.openTimerFromLiveActivity(sessionId: sessionId)
+                }
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {

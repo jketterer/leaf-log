@@ -64,8 +64,9 @@ actual fun platformModule() = module {
         object : TimerNotificationService {
             override fun showTimerRunning(state: TimerState) = impl.showTimerRunning(state)
             override fun showTimerPaused(state: TimerState) = impl.showTimerPaused(state)
-            override fun showTimerComplete(teaName: String, sessionId: String?) = impl.showTimerComplete(teaName, sessionId)
-            override fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?) = impl.scheduleCompletionAlarm(teaName, remainingSeconds, sessionId)
+            override fun showTimerComplete(state: TimerState) = impl.showTimerComplete()
+            override fun cancelTimerComplete() = impl.cancelTimerComplete()
+            override fun scheduleCompletionAlarm(state: TimerState) = impl.scheduleCompletionAlarm(state)
             override fun cancelCompletionAlarm() = impl.cancelCompletionAlarm()
             override fun scheduleSessionReminder(teaName: String, sessionId: String, delaySeconds: Double) = impl.scheduleSessionReminder(teaName, sessionId, delaySeconds)
             override fun cancelSessionReminder() = impl.cancelSessionReminder()

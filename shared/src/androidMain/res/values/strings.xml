@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_your_tea">Your tea</string>
+    <string name="notification_tea_ready">%1$s is ready!</string>
+    <string name="notification_steep">Steep %1$d</string>
+    <string name="notification_steep_paused">Steep %1$d paused</string>
+    <string name="notification_steep_done">Steep %1$d done</string>
+    <string name="notification_steep_done_next">Steep %1$d done, next %2$s</string>
+</resources>

@@ -663,9 +663,9 @@ Decided 2026-10-19.
       curated tag's string resource and a custom tag stores `name`; `steep_tag(steepId, tagId,
       confirmed)`, keyed on both ids, cascading from the steep row. `Steep.tags` is read with the
       aggregate and written through `EditSteep`.
-- **Live Activity and the ongoing notification show the plan:** "Steep 3 · 25s · next 30s" while
-  running, "Steep 3 done · next 30s" when ready, no "next" for western. `TimerState` carries the
-  next steep's time.
+- **The ready alert shows the plan:** "Steep 3 done, next 30s", no "next" for western. The next
+  steep waits until this one is done, so the Live Activity and the ongoing notification say only
+  "Steep 3" or "Steep 3 paused". `TimerState` carries the next steep's time.
     - The ready alert's tap is the Next action: it opens the slim review. No separate button.
     - The Live Activity gains a tap target, the Timer.
 - **Quick Timer becomes "timer now, tea later."** The user who starts pouring before remembering to
@@ -723,7 +723,7 @@ death, and an upgrade over the previous dev build at each migration.
 9. [x] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.
 10. [x] `feat: tasting tags`: v11, the vocabulary, carry-forward, custom tags. Tests: carry-forward,
     the migration, the backup round trip. Track B: upgrade over the v10 build.
-11. [ ] `feat: the plan on the lock screen`, with the notification findings. Track B: Live Activity,
+11. [x] `feat: the plan on the lock screen`, with the notification findings. Track B: Live Activity,
     tap routing.
 12. [ ] `refactor: Quick Timer runs on TimerService`: the tealess timer and "Just a timer"; the old
     engine and screen go. Until 13, a Quick Timer can't become a session. Track B: the tealess
@@ -977,7 +977,7 @@ Working an item: take the first unchecked one, check it off when it's done.
 
 - [ ] Device pass notes from the 2026-09-23 audit — **Should:** be dumped here as they're found,
   then triaged into F1, a bet, or the polish track.
-- [ ] "Tea is ready!" outlives its steep — the completion alert (`COMPLETION_NOTIFICATION_ID`)
+- [x] "Tea is ready!" outlives its steep — the completion alert (`COMPLETION_NOTIFICATION_ID`)
   stays in the shade after Next, Finish or Discard; nothing in code ever cancels it, only a tap
   (`AUTO_CANCEL`) clears it. **Should:** be withdrawn once the steep it announced is resolved.
     - found on the emulator 2026-10-13; predates F2, present at `5cb87a1`

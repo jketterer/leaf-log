@@ -11,8 +11,13 @@ interface TimerNotificationService {
      */
     fun showTimerPaused(state: TimerState)
 
-    fun showTimerComplete(teaName: String, sessionId: String?)
-    fun scheduleCompletionAlarm(teaName: String, remainingSeconds: Double, sessionId: String?)
+    fun showTimerComplete(state: TimerState)
+
+    /** Withdraw the ready alert once the steep it announced is behind the user. */
+    fun cancelTimerComplete()
+
+    /** Schedule the ready alert for when [state]'s remaining time runs out. */
+    fun scheduleCompletionAlarm(state: TimerState)
     fun cancelCompletionAlarm()
 
     /**

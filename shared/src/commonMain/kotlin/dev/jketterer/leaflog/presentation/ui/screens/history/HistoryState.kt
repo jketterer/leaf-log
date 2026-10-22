@@ -11,11 +11,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 
 data class HistoryState(
     val allSessions: List<SessionWithSteeps> = emptyList(),  // Unfiltered sessions from repository
-    val groupedSessions: Map<String, List<SessionWithSteeps>> = emptyMap(),  // Filtered & grouped
+    val groups: List<HistoryGroup> = emptyList(),  // Filtered & grouped
     val teas: Map<String, Tea> = emptyMap(),  // teaId -> Tea (for display)
     val brewedTeas: List<Tea> = emptyList(),  // Teas with a session, most recently brewed first
     val teaTypes: Map<String, TeaType> = emptyMap(),  // teaTypeId -> TeaType
@@ -55,22 +54,34 @@ data class HistoryFilters(
     val isActive: Boolean get() = activeCount > 0
 }
 
-/**
- * Helper to group sessions by time period.
- */
-fun List<SessionWithSteeps>.groupByTimePeriod(): Map<String, List<SessionWithSteeps>> {
-    val now = Clock.System.now()
-    val today = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val yesterday = today.minus(1, DateTimeUnit.DAY)
+/** A run of History's sessions under one heading; a null [period] is the flat list of a search or filter. */
+data class HistoryGroup(
+    val period: HistoryPeriod?,
+    val sessions: List<SessionWithSteeps>,
+)
 
+sealed interface HistoryPeriod {
+    data class Day(val date: LocalDate) : HistoryPeriod
+
+    /** [firstDay] is the 1st of the month. */
+    data class Month(val firstDay: LocalDate) : HistoryPeriod
+}
+
+/** How many days, today included, History heads by day before it heads by month. */
+internal const val DAYS_HEADED_BY_DAY = 30
+
+/**
+ * Groups newest-first sessions under the day each started on, for the last [DAYS_HEADED_BY_DAY]
+ * days counting [today], and under its month before that.
+ */
+fun List<SessionWithSteeps>.groupByDay(today: LocalDate, tz: TimeZone): List<HistoryGroup> {
+    val firstDayHeaded = today.minus(DAYS_HEADED_BY_DAY - 1, DateTimeUnit.DAY)
     return groupBy { session ->
-        val sessionDate = session.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        when {
-            sessionDate == today -> "Today"
-            sessionDate == yesterday -> "Yesterday"
-            sessionDate >= today.minus(7, DateTimeUnit.DAY) -> "This Week"
-            sessionDate >= today.minus(30, DateTimeUnit.DAY) -> "This Month"
-            else -> sessionDate.year.toString()
+        val date = session.startedAt.toLocalDateTime(tz).date
+        if (date >= firstDayHeaded) {
+            HistoryPeriod.Day(date)
+        } else {
+            HistoryPeriod.Month(LocalDate(date.year, date.month, 1))
         }
-    }
+    }.map { (period, sessions) -> HistoryGroup(period, sessions) }
 }

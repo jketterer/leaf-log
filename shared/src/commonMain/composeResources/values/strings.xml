@@ -53,6 +53,8 @@
     <!-- Dates -->
     <!-- A date, then a clock time: "Jan 15, 2024 at 2:30 PM" -->
     <string name="date_at_time">%1$s at %2$s</string>
+    <!-- From one clock time to another: "9:10 AM – 4:30 PM" -->
+    <string name="time_range">%1$s – %2$s</string>
 
     <!-- Relative time -->
     <string name="today">today</string>
@@ -156,6 +158,14 @@
     </plurals>
     <string name="log_tea">Log Tea</string>
     <string name="log_a_brew">Log a brew</string>
+    <string name="history_today">Today</string>
+    <string name="history_yesterday">Yesterday</string>
+    <string name="history_last_7_days">Last 7 days</string>
+    <string name="history_last_30_days">Last 30 days</string>
+    <plurals name="history_tea_count">
+        <item quantity="one">%1$d tea</item>
+        <item quantity="other">%1$d teas</item>
+    </plurals>
     <string name="history_empty">No sessions logged yet</string>
     <string name="history_no_filter_match">No sessions match your filters</string>
     <string name="history_no_search_match">No sessions match “%1$s”</string>

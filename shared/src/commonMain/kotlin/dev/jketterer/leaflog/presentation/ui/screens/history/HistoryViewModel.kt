@@ -44,6 +44,7 @@ import leaf_log.shared.generated.resources.couldnt_load_sessions
 import leaf_log.shared.generated.resources.couldnt_start_session
 import leaf_log.shared.generated.resources.failure_not_found
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 
 class HistoryViewModel(
     route: NavRoute.HistoryRoute,
@@ -149,12 +150,17 @@ class HistoryViewModel(
         loadDataJob = combine(data, criteria) { data, (filters, query) ->
             val teasMap = data.teas.associateBy { tea -> tea.id }
             val filteredSessions = data.sessions.filteredBy(filters, query, teasMap)
-            val groupedSessions = filteredSessions.groupByTimePeriod()
+            val tz = TimeZone.currentSystemDefault()
+            val groups = if (filters.isActive || query.isNotBlank()) {
+                listOf(HistoryGroup(period = null, sessions = filteredSessions))
+            } else {
+                filteredSessions.groupByDay(Clock.System.now().toLocalDateTime(tz).date, tz)
+            }
             val brewedTeas = data.sessions.map { it.session.teaId }.distinct().mapNotNull(teasMap::get)
             _state.update {
                 it.copy(
                     allSessions = data.sessions,
-                    groupedSessions = groupedSessions,
+                    groups = groups,
                     teas = teasMap,
                     brewedTeas = brewedTeas,
                     teaTypes = data.types.associateBy { type -> type.id },

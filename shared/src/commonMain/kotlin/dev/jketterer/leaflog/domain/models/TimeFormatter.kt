@@ -45,6 +45,12 @@ enum class DateSkeleton(val pattern: String) {
     WEEKDAY_MONTH_DAY("EEEEMMMMd"),
 }
 
+/** [instant]'s clock time in the device's time zone: "2:30 PM". */
+fun TimeFormatter.formatClockTime(instant: Instant): String {
+    val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+    return formatClockTime(local.hour, local.minute)
+}
+
 /**
  * Formats a timestamp relative to [now]:
  * - Today: "2:30 PM"

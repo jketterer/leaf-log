@@ -43,6 +43,7 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.formatClockTime
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
@@ -70,7 +71,8 @@ import kotlin.time.Duration.Companion.seconds
 
 /**
  * One session, for reading back: the tea and how it rated, when and how long, each steep's rating,
- * its dominant [tags] and note, then steep 1's parameters, quieter.
+ * its dominant [tags] and note, then steep 1's parameters, quieter. [timeOnly] shows when it started
+ * as a clock time, for a list already headed by its day.
  */
 @Composable
 fun SessionCard(
@@ -82,6 +84,7 @@ fun SessionCard(
     onBrewAgainClick: () -> Unit,
     onDeleteClick: () -> Unit,
     canBrewAgain: Boolean = true,
+    timeOnly: Boolean = false,
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val first = session.steeps.first()
@@ -128,7 +131,11 @@ fun SessionCard(
                     itemVerticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = TimeFormatter.formatRelativeTimestamp(session.startedAt, currentInstant()),
+                        text = if (timeOnly) {
+                            TimeFormatter.formatClockTime(session.startedAt)
+                        } else {
+                            TimeFormatter.formatRelativeTimestamp(session.startedAt, currentInstant())
+                        },
                         style = metaStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

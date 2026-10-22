@@ -55,6 +55,7 @@ import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
@@ -74,6 +75,8 @@ import leaf_log.shared.generated.resources.navigate_up
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.core.parameter.parametersOf
 
 /**
@@ -272,20 +275,20 @@ private fun HistoryContent(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        state.groupedSessions.forEach { (period, sessions) ->
-                            // Period header
-                            item(key = "header_$period") {
-                                Text(
-                                    text = period,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.padding(vertical = 8.dp)
-                                )
+                        state.groups.forEach { group ->
+                            group.period?.let { period ->
+                                item(key = "header_$period") {
+                                    HistoryGroupHeader(
+                                        period = period,
+                                        sessions = group.sessions,
+                                        modifier = Modifier.animateItem(),
+                                    )
+                                }
                             }
 
                             // Sessions in this period
                             items(
-                                items = sessions,
+                                items = group.sessions,
                                 key = { it.session.id }
                             ) { session ->
                                 val sessionId = session.session.id
@@ -308,6 +311,7 @@ private fun HistoryContent(
                                     onDeleteClick = {
                                         onIntent(HistoryIntent.DeleteSession(sessionId))
                                     },
+                                    timeOnly = group.period is HistoryPeriod.Day,
                                     modifier = Modifier.animateItem(),
                                 )
                             }
@@ -372,20 +376,25 @@ private fun HistoryScreenPreview() {
                         updatedAt = Instant.fromEpochMilliseconds(1),
                     ),
                 ),
-                groupedSessions = mapOf(
-                    "Today" to listOf(
-                        previewSession(
-                            id = "0",
-                            ratings = listOf(4f, 4.5f, null),
-                            status = SessionStatus.COMPLETED,
-                            temperatureCelsius = 95.0,
-                            waterQuantityMl = 400.0,
+                groups = listOf(
+                    HistoryGroup(
+                        period = HistoryPeriod.Day(
+                            PreviewInstant.toLocalDateTime(TimeZone.currentSystemDefault()).date,
                         ),
-                        previewSession(
-                            id = "1",
-                            status = SessionStatus.COMPLETED,
-                            temperatureCelsius = 95.0,
-                            waterQuantityMl = 400.0,
+                        sessions = listOf(
+                            previewSession(
+                                id = "0",
+                                ratings = listOf(4f, 4.5f, null),
+                                status = SessionStatus.COMPLETED,
+                                temperatureCelsius = 95.0,
+                                waterQuantityMl = 400.0,
+                            ),
+                            previewSession(
+                                id = "1",
+                                status = SessionStatus.COMPLETED,
+                                temperatureCelsius = 95.0,
+                                waterQuantityMl = 400.0,
+                            ),
                         ),
                     ),
                 ),

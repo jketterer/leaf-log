@@ -66,12 +66,16 @@ import leaf_log.shared.generated.resources.header_tea_type
 import leaf_log.shared.generated.resources.header_vessel
 import leaf_log.shared.generated.resources.history_filter_choose_tea
 import leaf_log.shared.generated.resources.history_filters
+import leaf_log.shared.generated.resources.history_last_30_days
+import leaf_log.shared.generated.resources.history_last_7_days
+import leaf_log.shared.generated.resources.history_today
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-private enum class DateRangePreset(val label: String) {
-    TODAY("Today"),
-    LAST_7_DAYS("Last 7 Days"),
-    THIS_MONTH("This Month"),
+private enum class DateRangePreset(val label: StringResource) {
+    TODAY(Res.string.history_today),
+    LAST_7_DAYS(Res.string.history_last_7_days),
+    LAST_30_DAYS(Res.string.history_last_30_days),
     ;
 
     fun toDateRange(): Pair<LocalDate, LocalDate> {
@@ -80,7 +84,7 @@ private enum class DateRangePreset(val label: String) {
         return when (this) {
             TODAY -> today to today
             LAST_7_DAYS -> today.minus(6, DateTimeUnit.DAY) to today
-            THIS_MONTH -> today.minus(29, DateTimeUnit.DAY) to today
+            LAST_30_DAYS -> today.minus(29, DateTimeUnit.DAY) to today
         }
     }
 }
@@ -271,7 +275,7 @@ private fun HistoryFilterSheetContent(
                             ),
                         )
                     },
-                    label = { Text(preset.label) },
+                    label = { Text(stringResource(preset.label)) },
                 )
             }
             FilterChip(

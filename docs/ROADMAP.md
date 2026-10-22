@@ -872,7 +872,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 7. [x] `feat: filter by several tea types or vessels`. Test: a session in any chosen type or
    vessel passes.
 8. [x] `feat: history reads by day`. Test: grouping across midnight, the 30-day edge, months.
-9. [ ] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
+9. [x] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
 10. [ ] `feat: search the collection`
 11. [ ] `refactor: one steep sheet`: a move plus the parameters row.
 12. [ ] `feat: session detail as a steep timeline`: Edit Session's steep mode goes. Test: deltas and

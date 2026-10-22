@@ -1,16 +1,21 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.SteepTag
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.search.matchesQuery
 import kotlinx.datetime.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -65,17 +70,44 @@ class HistoryViewModelTest {
             session("4", teaId = "sencha", vesselId = "mug"),
         )
 
-        val byType = sessions.filteredBy(HistoryFilters(teaTypeIds = setOf("green", "oolong")), "", teas)
-        val byVessel = sessions.filteredBy(HistoryFilters(vesselIds = setOf("kyusu", "mug")), "", teas)
+        val byType = sessions.filteredBy(HistoryFilters(teaTypeIds = setOf("green", "oolong")), teas)
+        val byVessel = sessions.filteredBy(HistoryFilters(vesselIds = setOf("kyusu", "mug")), teas)
         val byBoth = sessions.filteredBy(
             HistoryFilters(teaTypeIds = setOf("green", "oolong"), vesselIds = setOf("gaiwan", "mug")),
-            "",
             teas,
         )
 
         assertEquals(listOf("1", "2", "4"), byType.map { it.session.id })
         assertEquals(listOf("1", "4"), byVessel.map { it.session.id })
         assertEquals(listOf("2", "4"), byBoth.map { it.session.id })
+    }
+
+    @Test
+    fun `search finds a session by a carried-over tag on a later steep`() {
+        val teas = listOf(tea("sencha", type = "green")).associateBy { it.id }
+        val base = session("1", teaId = "sencha", vesselId = "kyusu")
+        val carried = base.copy(
+            steeps = base.steeps + base.steeps.first().copy(
+                id = "1b",
+                number = 2,
+                tags = listOf(SteepTag("grassy", confirmed = false)),
+            ),
+        )
+        val vessels = mapOf(
+            "kyusu" to BrewingVessel(
+                id = "kyusu",
+                name = "Tokoname kyusu",
+                iconName = null,
+                isSystemDefault = false,
+                displayOrder = 0,
+                createdAt = Instant.fromEpochSeconds(0),
+                updatedAt = Instant.fromEpochSeconds(0),
+            ),
+        )
+        val labels = mapOf("grassy" to "Grassy")
+
+        assertTrue(matchesQuery("grassy tokoname", carried.searchFields(teas, vessels, labels)))
+        assertFalse(matchesQuery("grassy", base.searchFields(teas, vessels, labels)))
     }
 
     private fun tea(id: String, type: String) = Tea(

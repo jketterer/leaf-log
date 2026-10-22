@@ -67,6 +67,7 @@ import leaf_log.shared.generated.resources.tags_carried_over
 import leaf_log.shared.generated.resources.tags_create
 import leaf_log.shared.generated.resources.tags_search
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 /** Each curated tag's name, by its key. */
@@ -100,6 +101,10 @@ internal val CURATED_TAG_NAMES: Map<String, StringResource> = mapOf(
 @Composable
 fun TastingTag.label(): String =
     key?.let { CURATED_TAG_NAMES[it] }?.let { stringResource(it) } ?: name.orEmpty()
+
+/** [label], outside composition. */
+suspend fun TastingTag.loadLabel(): String =
+    key?.let { CURATED_TAG_NAMES[it] }?.let { getString(it) } ?: name.orEmpty()
 
 /**
  * The tags whose label contains [query], in order, and whether [query] can be created: it isn't

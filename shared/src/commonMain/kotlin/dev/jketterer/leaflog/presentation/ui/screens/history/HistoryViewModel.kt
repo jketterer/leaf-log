@@ -18,10 +18,13 @@ import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
+import dev.jketterer.leaflog.presentation.ui.components.session.loadLabel
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.search.matchesQuery
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -38,13 +42,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_load_sessions
 import leaf_log.shared.generated.resources.couldnt_start_session
 import leaf_log.shared.generated.resources.failure_not_found
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class HistoryViewModel(
     route: NavRoute.HistoryRoute,
@@ -108,10 +114,16 @@ class HistoryViewModel(
             is HistoryIntent.ClearFilters -> _state.update {
                 it.copy(searchQuery = "", filters = HistoryFilters())
             }
+
             is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is HistoryIntent.ConfirmDeleteSession -> confirmDeleteSession()
             is HistoryIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
-            is HistoryIntent.BrewAgain -> inProgressDelegate.checkAndProceed(PendingAction.BrewAgain(intent.sessionId))
+            is HistoryIntent.BrewAgain -> inProgressDelegate.checkAndProceed(
+                PendingAction.BrewAgain(
+                    intent.sessionId
+                )
+            )
+
             is HistoryIntent.CompleteInProgress -> _navEvents.trySend(
                 HistoryNavEvent.NavigateToTimer(
                     intent.sessionId
@@ -132,6 +144,7 @@ class HistoryViewModel(
         }
     }
 
+    @OptIn(FlowPreview::class)
     private fun loadData() {
         loadDataJob?.cancel()
         _state.update { it.copy(isLoading = true) }
@@ -143,20 +156,32 @@ class HistoryViewModel(
             ::HistoryData,
         )
             // Read again on each emission, so a tag made since shows by name
-            .map { it.copy(vocabulary = tastingTagRepository.getAll()) }
-        val criteria = _state.map { it.filters to it.searchQuery }.distinctUntilChanged()
+            .map { data ->
+                val vocabulary = tastingTagRepository.getAll()
+                data.copy(
+                    vocabulary = vocabulary,
+                    tagLabels = vocabulary.associate { it.id to it.loadLabel() })
+            }
+        val filters = _state.map { it.filters }.distinctUntilChanged()
+        // Typing settles before the search runs; clearing it shows everything at once
+        val query = _state.map { it.searchQuery }.distinctUntilChanged()
+            .debounce { if (it.isBlank()) Duration.ZERO else SEARCH_DEBOUNCE }
 
-        // Filtering and grouping read every session, so they run off Main
-        loadDataJob = combine(data, criteria) { data, (filters, query) ->
+        // Filtering, searching and grouping read every session, so they run off Main
+        loadDataJob = combine(data, filters, query) { data, filters, query ->
             val teasMap = data.teas.associateBy { tea -> tea.id }
-            val filteredSessions = data.sessions.filteredBy(filters, query, teasMap)
+            val vesselsMap = data.vessels.associateBy { vessel -> vessel.id }
+            val filteredSessions = data.sessions.filteredBy(filters, teasMap).filter { session ->
+                matchesQuery(query, session.searchFields(teasMap, vesselsMap, data.tagLabels))
+            }
             val tz = TimeZone.currentSystemDefault()
             val groups = if (filters.isActive || query.isNotBlank()) {
                 listOf(HistoryGroup(period = null, sessions = filteredSessions))
             } else {
                 filteredSessions.groupByDay(Clock.System.now().toLocalDateTime(tz).date, tz)
             }
-            val brewedTeas = data.sessions.map { it.session.teaId }.distinct().mapNotNull(teasMap::get)
+            val brewedTeas =
+                data.sessions.map { it.session.teaId }.distinct().mapNotNull(teasMap::get)
             _state.update {
                 it.copy(
                     allSessions = data.sessions,
@@ -164,7 +189,7 @@ class HistoryViewModel(
                     teas = teasMap,
                     brewedTeas = brewedTeas,
                     teaTypes = data.types.associateBy { type -> type.id },
-                    vessels = data.vessels.associateBy { vessel -> vessel.id },
+                    vessels = vesselsMap,
                     tagVocabulary = data.vocabulary,
                     isLoading = false,
                     isEmpty = filteredSessions.isEmpty(),
@@ -218,7 +243,6 @@ internal fun initialHistoryState(route: NavRoute.HistoryRoute) = HistoryState(
 
 internal fun List<SessionWithSteeps>.filteredBy(
     filters: HistoryFilters,
-    query: String,
     teas: Map<String, Tea>,
 ): List<SessionWithSteeps> {
     var filtered = this
@@ -235,7 +259,8 @@ internal fun List<SessionWithSteeps>.filteredBy(
 
     if (filters.dateRangeStart != null || filters.dateRangeEnd != null) {
         filtered = filtered.filter { session ->
-            val sessionDate = session.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
+            val sessionDate =
+                session.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
 
             val afterStart = filters.dateRangeStart?.let { sessionDate >= it } ?: true
             val beforeEnd = filters.dateRangeEnd?.let { sessionDate <= it } ?: true
@@ -254,18 +279,32 @@ internal fun List<SessionWithSteeps>.filteredBy(
         filtered = filtered.filter { it.session.vesselId in filters.vesselIds }
     }
 
-    if (query.isNotBlank()) {
-        val lowercaseQuery = query.lowercase()
-        filtered = filtered.filter { session ->
-            val teaName = teas[session.session.teaId]?.name?.lowercase() ?: ""
-            teaName.contains(lowercaseQuery) ||
-                session.session.notes?.lowercase()?.contains(lowercaseQuery) == true ||
-                session.steeps.any { it.notes?.lowercase()?.contains(lowercaseQuery) == true }
-        }
-    }
-
     return filtered
 }
+
+/**
+ * What History's search reads. Carried-over tags count: search looks for the word, not a
+ * judgment. [tagLabels] are the names shown, by tag id.
+ */
+internal fun SessionWithSteeps.searchFields(
+    teas: Map<String, Tea>,
+    vessels: Map<String, BrewingVessel>,
+    tagLabels: Map<String, String>,
+): List<String?> {
+    val tea = teas[session.teaId]
+    val tagIds = steeps.flatMap { steep -> steep.tags.map { it.tagId } }.distinct()
+    return listOf(
+        tea?.name,
+        tea?.producer,
+        session.notes,
+        session.location,
+        vessels[session.vesselId]?.name
+    ) +
+            steeps.map { it.notes } +
+            tagIds.map { tagLabels[it] }
+}
+
+private val SEARCH_DEBOUNCE = 300.milliseconds
 
 sealed interface HistoryNavEvent {
     data class NavigateToSession(val sessionId: String) : HistoryNavEvent
@@ -278,4 +317,5 @@ private data class HistoryData(
     val types: List<TeaType>,
     val vessels: List<BrewingVessel>,
     val vocabulary: List<TastingTag> = emptyList(),
+    val tagLabels: Map<String, String> = emptyMap(),
 )

@@ -187,6 +187,9 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToTimer = { sessionId ->
                     navigator.openOnHome(NavRoute.TimerRoute(sessionId))
                 },
+                onNavigateToLogTea = {
+                    navigator.navigate(NavRoute.LogTeaRoute())
+                },
                 onNavigateUp = if (route == Tab.HISTORY.root) null else ({ navigator.navigateUp(route) }),
             )
         }

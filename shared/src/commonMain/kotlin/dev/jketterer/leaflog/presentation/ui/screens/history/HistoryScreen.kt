@@ -26,8 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,9 +61,15 @@ import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgres
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.clear_filters
+import leaf_log.shared.generated.resources.clear_search
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
+import leaf_log.shared.generated.resources.history_empty
+import leaf_log.shared.generated.resources.history_no_filter_match
+import leaf_log.shared.generated.resources.history_no_search_match
+import leaf_log.shared.generated.resources.log_a_brew
 import leaf_log.shared.generated.resources.navigate_up
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -80,6 +84,7 @@ fun HistoryScreen(
     route: NavRoute.HistoryRoute,
     onNavigateToSession: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
+    onNavigateToLogTea: () -> Unit,
     /** Null at the History tab's root; set when pushed with a filter from elsewhere. */
     onNavigateUp: (() -> Unit)?,
     viewModel: HistoryViewModel = koinViewModel { parametersOf(route) },
@@ -105,6 +110,7 @@ fun HistoryScreen(
         state = state,
         onIntent = viewModel::onIntent,
         snackbarHostState = snackbarHostState,
+        onNavigateToLogTea = onNavigateToLogTea,
         onNavigateUp = onNavigateUp,
     )
 }
@@ -114,15 +120,12 @@ fun HistoryScreen(
 private fun HistoryContent(
     state: HistoryState,
     onIntent: (HistoryIntent) -> Unit,
+    onNavigateToLogTea: () -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     // Saveable: the query lives in the ViewModel, which outlives this composition on a tab switch
     var showSearchBar by rememberSaveable { mutableStateOf(false) }
-    val filterSheetState = rememberBottomSheetState(
-        initialValue = SheetValue.Hidden,
-        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
-    )
     val keyboardController = LocalSoftwareKeyboardController.current
     val searchFocusRequester = remember { FocusRequester() }
 
@@ -212,8 +215,8 @@ private fun HistoryContent(
                         IconButton(onClick = { onIntent(HistoryIntent.ShowFilterSheet) }) {
                             BadgedBox(
                                 badge = {
-                                    if (state.activeFilterCount > 0) {
-                                        Badge { Text(state.activeFilterCount.toString()) }
+                                    if (state.filters.isActive) {
+                                        Badge { Text(state.filters.activeCount.toString()) }
                                     }
                                 }
                             ) {
@@ -245,26 +248,23 @@ private fun HistoryContent(
                     }
                 }
 
-                state.isEmpty -> {
-                    val (message, actionText, onAction) = when {
-                        state.hasActiveFilters -> Triple(
-                            "No sessions match filters",
-                            "Clear Filters",
-                        ) { onIntent(HistoryIntent.ClearFilters) }
+                state.isEmpty && state.filters.isActive -> EmptyState(
+                    message = stringResource(Res.string.history_no_filter_match),
+                    actionText = stringResource(Res.string.clear_filters),
+                    onActionClick = { onIntent(HistoryIntent.ClearFilters) },
+                )
 
-                        else -> Triple(
-                            "No sessions logged yet",
-                            null,
-                            null,
-                        )
-                    }
-                    EmptyState(
-                        message = message,
-                        actionText = actionText,
-                        onActionClick = onAction,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+                state.isEmpty && state.searchQuery.isNotBlank() -> EmptyState(
+                    message = stringResource(Res.string.history_no_search_match, state.searchQuery.trim()),
+                    actionText = stringResource(Res.string.clear_search),
+                    onActionClick = { onIntent(HistoryIntent.SearchQueryChanged("")) },
+                )
+
+                state.isEmpty -> EmptyState(
+                    message = stringResource(Res.string.history_empty),
+                    actionText = stringResource(Res.string.log_a_brew),
+                    onActionClick = onNavigateToLogTea,
+                )
 
                 else -> {
                     LazyColumn(
@@ -345,9 +345,13 @@ private fun HistoryContent(
         // Filter bottom sheet
         if (state.showFilterSheet) {
             HistoryFilterSheet(
-                state = state,
-                onIntent = onIntent,
-                sheetState = filterSheetState,
+                filters = state.filters,
+                teaTypes = state.teaTypes.values.toList(),
+                brewedTeas = state.brewedTeas,
+                vessels = state.vessels.values.toList(),
+                onFiltersChange = { onIntent(HistoryIntent.FiltersChanged(it)) },
+                onClear = { onIntent(HistoryIntent.ClearFilters) },
+                onDismiss = { onIntent(HistoryIntent.HideFilterSheet) },
             )
         }
     }

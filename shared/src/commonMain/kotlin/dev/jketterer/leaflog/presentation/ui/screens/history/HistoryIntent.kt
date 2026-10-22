@@ -1,7 +1,5 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
-import kotlinx.datetime.LocalDate
-
 sealed interface HistoryIntent {
     data object LoadData : HistoryIntent
 
@@ -9,11 +7,9 @@ sealed interface HistoryIntent {
     data class SearchQueryChanged(val query: String) : HistoryIntent
     data object ShowFilterSheet : HistoryIntent
     data object HideFilterSheet : HistoryIntent
-    data class FilterByTeaType(val teaTypeId: String?) : HistoryIntent
-    data class FilterByTea(val teaId: String?) : HistoryIntent
-    data class FilterByDateRange(val start: LocalDate?, val end: LocalDate?) : HistoryIntent
-    data class FilterByMinRating(val minRating: Float?) : HistoryIntent
-    data class FilterByVessel(val vesselId: String?) : HistoryIntent
+    data class FiltersChanged(val filters: HistoryFilters) : HistoryIntent
+
+    /** Clears the search too. */
     data object ClearFilters : HistoryIntent
 
     // Actions

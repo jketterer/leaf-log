@@ -148,7 +148,8 @@ private fun Tea.matchesQuery(query: String): Boolean {
 }
 
 /**
- * Bottom sheet for picking a tea, with an option to quick-add a new one.
+ * Bottom sheet for picking a tea, with an option to quick-add a new one unless [onTeaCreated] is
+ * null.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -162,7 +163,7 @@ fun TeaPickerSheet(
     onQueryChanged: (String) -> Unit,
     onFilterChanged: (TeaPickerFilter) -> Unit,
     onTeaSelected: (Tea) -> Unit,
-    onTeaCreated: (name: String, teaTypeId: String) -> Unit,
+    onTeaCreated: ((name: String, teaTypeId: String) -> Unit)?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -190,7 +191,7 @@ fun TeaPickerSheet(
             onBackCompleted = { addingTea = false },
         )
 
-        if (addingTea) {
+        if (addingTea && onTeaCreated != null) {
             QuickAddTeaForm(
                 teaTypes = teaTypes,
                 initialName = query.trim(),
@@ -208,7 +209,7 @@ fun TeaPickerSheet(
                 onQueryChanged = onQueryChanged,
                 onFilterChanged = onFilterChanged,
                 onTeaSelected = { tea -> hideThen { onTeaSelected(tea) } },
-                onAddTeaClicked = { addingTea = true },
+                onAddTeaClicked = onTeaCreated?.let { { addingTea = true } },
                 modifier = Modifier.fillMaxHeight(),
             )
         }
@@ -227,7 +228,7 @@ fun TeaPickerContent(
     onQueryChanged: (String) -> Unit,
     onFilterChanged: (TeaPickerFilter) -> Unit,
     onTeaSelected: (Tea) -> Unit,
-    onAddTeaClicked: () -> Unit,
+    onAddTeaClicked: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
@@ -267,7 +268,7 @@ fun TeaPickerContent(
             when {
                 teas.isEmpty() -> EmptyState(
                     message = "Your collection is empty",
-                    actionText = "Add your first tea",
+                    actionText = onAddTeaClicked?.let { "Add your first tea" },
                     onActionClick = onAddTeaClicked,
                 )
 
@@ -307,28 +308,30 @@ fun TeaPickerContent(
             }
         }
 
-        HorizontalDivider()
-        TextButton(
-            onClick = onAddTeaClicked,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-        ) {
-            Icon(
-                imageVector = FeatherIcons.Plus,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                text = if (query.isBlank()) {
-                    "Add new tea"
-                } else {
-                    "Add “${query.trim()}”"
-                },
-                modifier = Modifier.padding(start = 8.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        if (onAddTeaClicked != null) {
+            HorizontalDivider()
+            TextButton(
+                onClick = onAddTeaClicked,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+            ) {
+                Icon(
+                    imageVector = FeatherIcons.Plus,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = if (query.isBlank()) {
+                        "Add new tea"
+                    } else {
+                        "Add “${query.trim()}”"
+                    },
+                    modifier = Modifier.padding(start = 8.dp),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

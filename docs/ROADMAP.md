@@ -866,7 +866,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 4. [x] `feat: last time, before you brew`: `dominantTags`, the Log Tea card, the quick-brew line,
    `PrefillBanner`'s strings. Test: dominant tags.
 5. [x] `feat: a session card for reading`
-6. [ ] `fix: history audit findings`. Nothing beyond the fixes.
+6. [x] `fix: history audit findings`. Nothing beyond the fixes.
 7. [ ] `feat: history reads by day`. Test: grouping across midnight, the 30-day edge, months.
 8. [ ] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
 9. [ ] `feat: search the collection`

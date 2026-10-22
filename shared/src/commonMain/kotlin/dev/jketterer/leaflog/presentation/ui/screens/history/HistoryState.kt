@@ -17,18 +17,13 @@ data class HistoryState(
     val allSessions: List<SessionWithSteeps> = emptyList(),  // Unfiltered sessions from repository
     val groupedSessions: Map<String, List<SessionWithSteeps>> = emptyMap(),  // Filtered & grouped
     val teas: Map<String, Tea> = emptyMap(),  // teaId -> Tea (for display)
+    val brewedTeas: List<Tea> = emptyList(),  // Teas with a session, most recently brewed first
     val teaTypes: Map<String, TeaType> = emptyMap(),  // teaTypeId -> TeaType
     val vessels: Map<String, BrewingVessel> = emptyMap(),  // vesselId -> BrewingVessel
     val tagVocabulary: List<TastingTag> = emptyList(),
 
-    // Filters
     val searchQuery: String = "",
-    val selectedTeaTypeId: String? = null,
-    val selectedTeaId: String? = null,
-    val dateRangeStart: LocalDate? = null,
-    val dateRangeEnd: LocalDate? = null,
-    val minRating: Float? = null,
-    val selectedVesselId: String? = null,
+    val filters: HistoryFilters = HistoryFilters(),
 
     // UI state
     val isLoading: Boolean = false,
@@ -36,23 +31,27 @@ data class HistoryState(
     val showFilterSheet: Boolean = false,
     val sessionPendingDelete: String? = null,
     val inProgressDialogState: InProgressDialogState? = null,
-) {
-    val hasActiveFilters: Boolean
-        get() = selectedTeaTypeId != null ||
-                selectedTeaId != null ||
-                dateRangeStart != null ||
-                dateRangeEnd != null ||
-                minRating != null ||
-                selectedVesselId != null
+)
 
-    val activeFilterCount: Int
+data class HistoryFilters(
+    val teaTypeId: String? = null,
+    val teaId: String? = null,
+    val dateRangeStart: LocalDate? = null,
+    val dateRangeEnd: LocalDate? = null,
+    val minRating: Float? = null,
+    val vesselId: String? = null,
+) {
+    /** A date range counts once, however many of its ends are set. */
+    val activeCount: Int
         get() = listOf(
-            selectedTeaTypeId != null,
-            selectedTeaId != null,
+            teaTypeId != null,
+            teaId != null,
             dateRangeStart != null || dateRangeEnd != null,
             minRating != null,
-            selectedVesselId != null,
+            vesselId != null,
         ).count { it }
+
+    val isActive: Boolean get() = activeCount > 0
 }
 
 /**

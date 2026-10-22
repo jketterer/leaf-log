@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -20,6 +21,7 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,10 +29,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_load_sessions
@@ -93,15 +100,13 @@ class HistoryViewModel(
     fun onIntent(intent: HistoryIntent) {
         when (intent) {
             is HistoryIntent.LoadData -> loadData()
-            is HistoryIntent.SearchQueryChanged -> updateSearchQuery(intent.query)
-            is HistoryIntent.ShowFilterSheet -> showFilterSheet()
-            is HistoryIntent.HideFilterSheet -> hideFilterSheet()
-            is HistoryIntent.FilterByTeaType -> filterByTeaType(intent.teaTypeId)
-            is HistoryIntent.FilterByTea -> filterByTea(intent.teaId)
-            is HistoryIntent.FilterByDateRange -> filterByDateRange(intent.start, intent.end)
-            is HistoryIntent.FilterByMinRating -> filterByMinRating(intent.minRating)
-            is HistoryIntent.FilterByVessel -> filterByVessel(intent.vesselId)
-            is HistoryIntent.ClearFilters -> clearFilters()
+            is HistoryIntent.SearchQueryChanged -> _state.update { it.copy(searchQuery = intent.query) }
+            is HistoryIntent.ShowFilterSheet -> _state.update { it.copy(showFilterSheet = true) }
+            is HistoryIntent.HideFilterSheet -> _state.update { it.copy(showFilterSheet = false) }
+            is HistoryIntent.FiltersChanged -> _state.update { it.copy(filters = intent.filters) }
+            is HistoryIntent.ClearFilters -> _state.update {
+                it.copy(searchQuery = "", filters = HistoryFilters())
+            }
             is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is HistoryIntent.ConfirmDeleteSession -> confirmDeleteSession()
             is HistoryIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
@@ -128,178 +133,44 @@ class HistoryViewModel(
 
     private fun loadData() {
         loadDataJob?.cancel()
-        loadDataJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+        _state.update { it.copy(isLoading = true) }
+        val data = combine(
+            teaSessionRepository.getAllSessionsFlow(),
+            teaRepository.getAllFlow(),
+            teaTypeRepository.getAllFlow(),
+            brewingVesselRepository.getAllFlow(),
+            ::HistoryData,
+        )
+            // Read again on each emission, so a tag made since shows by name
+            .map { it.copy(vocabulary = tastingTagRepository.getAll()) }
+        val criteria = _state.map { it.filters to it.searchQuery }.distinctUntilChanged()
 
-            try {
-                combine(
-                    teaSessionRepository.getAllSessionsFlow(),
-                    teaRepository.getAllFlow(),
-                    teaTypeRepository.getAllFlow(),
-                    brewingVesselRepository.getAllFlow(),
-                    ::HistoryData,
+        // Filtering and grouping read every session, so they run off Main
+        loadDataJob = combine(data, criteria) { data, (filters, query) ->
+            val teasMap = data.teas.associateBy { tea -> tea.id }
+            val filteredSessions = data.sessions.filteredBy(filters, query, teasMap)
+            val groupedSessions = filteredSessions.groupByTimePeriod()
+            val brewedTeas = data.sessions.map { it.session.teaId }.distinct().mapNotNull(teasMap::get)
+            _state.update {
+                it.copy(
+                    allSessions = data.sessions,
+                    groupedSessions = groupedSessions,
+                    teas = teasMap,
+                    brewedTeas = brewedTeas,
+                    teaTypes = data.types.associateBy { type -> type.id },
+                    vessels = data.vessels.associateBy { vessel -> vessel.id },
+                    tagVocabulary = data.vocabulary,
+                    isLoading = false,
+                    isEmpty = filteredSessions.isEmpty(),
                 )
-                    .catch { e ->
-                        _state.update { it.copy(isLoading = false) }
-                        messages.failure(e, Res.string.couldnt_load_sessions)
-                    }
-                    .collect { (sessions, teas, types, vessels) ->
-                        val teasMap = teas.associateBy { tea -> tea.id }
-                        val filteredSessions = applyFilters(sessions, teasMap)
-                        // Read again on each emission, so a tag made since shows by name
-                        val vocabulary = tastingTagRepository.getAll()
-
-                        _state.update {
-                            it.copy(
-                                allSessions = sessions,
-                                groupedSessions = filteredSessions.groupByTimePeriod(),
-                                teas = teasMap,
-                                teaTypes = types.associateBy { type -> type.id },
-                                vessels = vessels.associateBy { vessel -> vessel.id },
-                                tagVocabulary = vocabulary,
-                                isLoading = false,
-                                isEmpty = filteredSessions.isEmpty(),
-                            )
-                        }
-                    }
-            } catch (e: Exception) {
+            }
+        }
+            .flowOn(Dispatchers.Default)
+            .catch { e ->
                 _state.update { it.copy(isLoading = false) }
                 messages.failure(e, Res.string.couldnt_load_sessions)
             }
-        }
-    }
-
-    private fun applyFilters(
-        sessions: List<SessionWithSteeps>,
-        teasMap: Map<String, Tea>,
-    ): List<SessionWithSteeps> {
-        var filtered = sessions
-
-        val currentState = _state.value
-
-        // Filter by tea type
-        if (currentState.selectedTeaTypeId != null) {
-            filtered = filtered.filter { session ->
-                teasMap[session.session.teaId]?.teaTypeId == currentState.selectedTeaTypeId
-            }
-        }
-
-        // Filter by specific tea
-        if (currentState.selectedTeaId != null) {
-            filtered = filtered.filter { it.session.teaId == currentState.selectedTeaId }
-        }
-
-        // Filter by date range
-        if (currentState.dateRangeStart != null || currentState.dateRangeEnd != null) {
-            filtered = filtered.filter { session ->
-                val sessionDate = session.startedAt.toLocalDateTime(
-                    kotlinx.datetime.TimeZone.currentSystemDefault()
-                ).date
-
-                val afterStart = currentState.dateRangeStart?.let { sessionDate >= it } ?: true
-                val beforeEnd = currentState.dateRangeEnd?.let { sessionDate <= it } ?: true
-
-                afterStart && beforeEnd
-            }
-        }
-
-        // Filter by minimum rating
-        if (currentState.minRating != null) {
-            filtered = filtered.filter { session ->
-                session.effectiveRating?.let { it >= currentState.minRating } ?: false
-            }
-        }
-
-        // Filter by vessel
-        if (currentState.selectedVesselId != null) {
-            filtered = filtered.filter { it.session.vesselId == currentState.selectedVesselId }
-        }
-
-        // Filter by search query
-        if (currentState.searchQuery.isNotBlank()) {
-            val query = currentState.searchQuery.lowercase()
-            filtered = filtered.filter { session ->
-                val teaName = teasMap[session.session.teaId]?.name?.lowercase() ?: ""
-                teaName.contains(query) ||
-                    session.session.notes?.lowercase()?.contains(query) == true ||
-                    session.steeps.any { it.notes?.lowercase()?.contains(query) == true }
-            }
-        }
-
-        return filtered
-    }
-
-    private fun updateSearchQuery(query: String) {
-        _state.update { it.copy(searchQuery = query) }
-        reapplyFilters()
-    }
-
-    /**
-     * Reapplies filters without showing loading indicator.
-     * Used for search and filter changes where we're just filtering in-memory data.
-     */
-    private fun reapplyFilters() {
-        val currentState = _state.value
-        val filteredSessions = applyFilters(currentState.allSessions, currentState.teas)
-        _state.update {
-            it.copy(
-                groupedSessions = filteredSessions.groupByTimePeriod(),
-                isEmpty = filteredSessions.isEmpty(),
-            )
-        }
-    }
-
-    private fun showFilterSheet() {
-        _state.update { it.copy(showFilterSheet = true) }
-    }
-
-    private fun hideFilterSheet() {
-        _state.update { it.copy(showFilterSheet = false) }
-    }
-
-    private fun filterByTeaType(teaTypeId: String?) {
-        _state.update { it.copy(selectedTeaTypeId = teaTypeId) }
-        reapplyFilters()
-    }
-
-    private fun filterByTea(teaId: String?) {
-        _state.update { it.copy(selectedTeaId = teaId) }
-        reapplyFilters()
-    }
-
-    private fun filterByDateRange(start: LocalDate?, end: LocalDate?) {
-        _state.update {
-            it.copy(
-                dateRangeStart = start,
-                dateRangeEnd = end
-            )
-        }
-        reapplyFilters()
-    }
-
-    private fun filterByMinRating(minRating: Float?) {
-        _state.update { it.copy(minRating = minRating) }
-        reapplyFilters()
-    }
-
-    private fun filterByVessel(vesselId: String?) {
-        _state.update { it.copy(selectedVesselId = vesselId) }
-        reapplyFilters()
-    }
-
-    private fun clearFilters() {
-        _state.update {
-            it.copy(
-                searchQuery = "",
-                selectedTeaTypeId = null,
-                selectedTeaId = null,
-                dateRangeStart = null,
-                dateRangeEnd = null,
-                minRating = null,
-                selectedVesselId = null,
-            )
-        }
-        reapplyFilters()
+            .launchIn(viewModelScope)
     }
 
     private fun confirmDeleteSession() {
@@ -331,11 +202,64 @@ class HistoryViewModel(
 
 /** Opened from elsewhere, History starts filtered the way the route asks. */
 internal fun initialHistoryState(route: NavRoute.HistoryRoute) = HistoryState(
-    selectedTeaTypeId = route.filterTeaTypeId,
-    selectedTeaId = route.filterTeaId,
-    dateRangeStart = route.filterDateStart?.let(LocalDate::parse),
-    dateRangeEnd = route.filterDateEnd?.let(LocalDate::parse),
+    filters = HistoryFilters(
+        teaTypeId = route.filterTeaTypeId,
+        teaId = route.filterTeaId,
+        dateRangeStart = route.filterDateStart?.let(LocalDate::parse),
+        dateRangeEnd = route.filterDateEnd?.let(LocalDate::parse),
+    ),
 )
+
+private fun List<SessionWithSteeps>.filteredBy(
+    filters: HistoryFilters,
+    query: String,
+    teas: Map<String, Tea>,
+): List<SessionWithSteeps> {
+    var filtered = this
+
+    if (filters.teaTypeId != null) {
+        filtered = filtered.filter { session ->
+            teas[session.session.teaId]?.teaTypeId == filters.teaTypeId
+        }
+    }
+
+    if (filters.teaId != null) {
+        filtered = filtered.filter { it.session.teaId == filters.teaId }
+    }
+
+    if (filters.dateRangeStart != null || filters.dateRangeEnd != null) {
+        filtered = filtered.filter { session ->
+            val sessionDate = session.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+            val afterStart = filters.dateRangeStart?.let { sessionDate >= it } ?: true
+            val beforeEnd = filters.dateRangeEnd?.let { sessionDate <= it } ?: true
+
+            afterStart && beforeEnd
+        }
+    }
+
+    if (filters.minRating != null) {
+        filtered = filtered.filter { session ->
+            session.effectiveRating?.let { it >= filters.minRating } ?: false
+        }
+    }
+
+    if (filters.vesselId != null) {
+        filtered = filtered.filter { it.session.vesselId == filters.vesselId }
+    }
+
+    if (query.isNotBlank()) {
+        val lowercaseQuery = query.lowercase()
+        filtered = filtered.filter { session ->
+            val teaName = teas[session.session.teaId]?.name?.lowercase() ?: ""
+            teaName.contains(lowercaseQuery) ||
+                session.session.notes?.lowercase()?.contains(lowercaseQuery) == true ||
+                session.steeps.any { it.notes?.lowercase()?.contains(lowercaseQuery) == true }
+        }
+    }
+
+    return filtered
+}
 
 sealed interface HistoryNavEvent {
     data class NavigateToSession(val sessionId: String) : HistoryNavEvent
@@ -347,4 +271,5 @@ private data class HistoryData(
     val teas: List<Tea>,
     val types: List<TeaType>,
     val vessels: List<BrewingVessel>,
+    val vocabulary: List<TastingTag> = emptyList(),
 )

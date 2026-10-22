@@ -23,17 +23,22 @@ class HistoryViewModelTest {
             ),
         )
 
-        assertEquals("oolong", state.selectedTeaTypeId)
-        assertEquals("tie-guan-yin", state.selectedTeaId)
-        assertEquals(LocalDate(2026, 10, 1), state.dateRangeStart)
-        assertEquals(LocalDate(2026, 10, 18), state.dateRangeEnd)
+        assertEquals(
+            HistoryFilters(
+                teaTypeId = "oolong",
+                teaId = "tie-guan-yin",
+                dateRangeStart = LocalDate(2026, 10, 1),
+                dateRangeEnd = LocalDate(2026, 10, 18),
+            ),
+            state.filters,
+        )
     }
 
     @Test
     fun `an open-ended date range keeps its open end`() {
         val state = initialHistoryState(NavRoute.HistoryRoute(filterDateStart = "2026-10-01"))
 
-        assertEquals(LocalDate(2026, 10, 1), state.dateRangeStart)
-        assertEquals(null, state.dateRangeEnd)
+        assertEquals(LocalDate(2026, 10, 1), state.filters.dateRangeStart)
+        assertEquals(null, state.filters.dateRangeEnd)
     }
 }

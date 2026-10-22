@@ -139,6 +139,9 @@
     <string name="header_vessel">Vessel</string>
     <string name="header_date_range">Date range</string>
     <string name="header_minimum_rating">Minimum rating</string>
+    <string name="history_filters">Filters</string>
+    <string name="history_filter_choose_tea">Choose a tea</string>
+    <string name="clear_all">Clear all</string>
     <string name="view_all">View All</string>
     <string name="manage">Manage</string>
 
@@ -152,6 +155,12 @@
         <item quantity="other">%1$d of %2$d sessions completed. Log more to unlock analytics and insights about your brewing habits.</item>
     </plurals>
     <string name="log_tea">Log Tea</string>
+    <string name="log_a_brew">Log a brew</string>
+    <string name="history_empty">No sessions logged yet</string>
+    <string name="history_no_filter_match">No sessions match your filters</string>
+    <string name="history_no_search_match">No sessions match “%1$s”</string>
+    <string name="clear_filters">Clear filters</string>
+    <string name="clear_search">Clear search</string>
     <string name="tea_not_found">Tea not found</string>
     <string name="vessel_not_found">Vessel not found</string>
     <string name="no_tea_types">No tea types yet</string>

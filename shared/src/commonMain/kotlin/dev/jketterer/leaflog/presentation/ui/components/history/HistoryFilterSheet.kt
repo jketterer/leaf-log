@@ -12,21 +12,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,14 +37,17 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
+import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
-import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryIntent
-import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryState
+import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryFilters
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -59,11 +58,14 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Instant
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.clear_all
 import leaf_log.shared.generated.resources.header_date_range
 import leaf_log.shared.generated.resources.header_minimum_rating
 import leaf_log.shared.generated.resources.header_tea
 import leaf_log.shared.generated.resources.header_tea_type
 import leaf_log.shared.generated.resources.header_vessel
+import leaf_log.shared.generated.resources.history_filter_choose_tea
+import leaf_log.shared.generated.resources.history_filters
 import org.jetbrains.compose.resources.stringResource
 
 private enum class DateRangePreset(val label: String) {
@@ -93,31 +95,52 @@ private fun isCustomDateRange(start: LocalDate?, end: LocalDate?): Boolean {
 private fun LocalDate.formatDisplay(): String =
     TimeFormatter.formatDate(this, DateSkeleton.MONTH_DAY_YEAR)
 
+/**
+ * History's filters. [brewedTeas] are the teas the Tea filter offers, most recently brewed first.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryFilterSheet(
-    state: HistoryState,
-    onIntent: (HistoryIntent) -> Unit,
-    sheetState: SheetState,
+    filters: HistoryFilters,
+    teaTypes: List<TeaType>,
+    brewedTeas: List<Tea>,
+    vessels: List<BrewingVessel>,
+    onFiltersChange: (HistoryFilters) -> Unit,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     ModalBottomSheet(
-        onDismissRequest = { onIntent(HistoryIntent.HideFilterSheet) },
-        sheetState = sheetState,
+        onDismissRequest = onDismiss,
+        modifier = modifier,
+        sheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        ),
     ) {
         HistoryFilterSheetContent(
-            state = state,
-            onIntent = onIntent,
+            filters = filters,
+            teaTypes = teaTypes,
+            brewedTeas = brewedTeas,
+            vessels = vessels,
+            onFiltersChange = onFiltersChange,
+            onClear = onClear,
         )
     }
 }
 
 @Composable
-fun HistoryFilterSheetContent(
-    state: HistoryState,
-    onIntent: (HistoryIntent) -> Unit,
+private fun HistoryFilterSheetContent(
+    filters: HistoryFilters,
+    teaTypes: List<TeaType>,
+    brewedTeas: List<Tea>,
+    vessels: List<BrewingVessel>,
+    onFiltersChange: (HistoryFilters) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
@@ -130,12 +153,12 @@ fun HistoryFilterSheetContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "Filters",
+                text = stringResource(Res.string.history_filters),
                 style = MaterialTheme.typography.titleLarge,
             )
-            if (state.hasActiveFilters) {
-                TextButton(onClick = { onIntent(HistoryIntent.ClearFilters) }) {
-                    Text("Clear All")
+            if (filters.isActive) {
+                TextButton(onClick = onClear) {
+                    Text(stringResource(Res.string.clear_all))
                 }
             }
         }
@@ -149,22 +172,26 @@ fun HistoryFilterSheetContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            state.teaTypes.values
+            teaTypes
                 .sortedBy { it.displayOrder }
                 .forEach { teaType ->
-                    val selected = state.selectedTeaTypeId == teaType.id
+                    val selected = filters.teaTypeId == teaType.id
                     FilterChip(
                         selected = selected,
                         onClick = {
                             if (selected) {
-                                onIntent(HistoryIntent.FilterByTeaType(null))
+                                onFiltersChange(filters.copy(teaTypeId = null))
                             } else {
-                                onIntent(HistoryIntent.FilterByTeaType(teaType.id))
                                 // Clear tea selection if it doesn't belong to the new type
-                                val currentTea = state.selectedTeaId?.let { state.teas[it] }
-                                if (currentTea != null && currentTea.teaTypeId != teaType.id) {
-                                    onIntent(HistoryIntent.FilterByTea(null))
-                                }
+                                val currentTea = brewedTeas.find { it.id == filters.teaId }
+                                onFiltersChange(
+                                    filters.copy(
+                                        teaTypeId = teaType.id,
+                                        teaId = filters.teaId.takeIf {
+                                            currentTea == null || currentTea.teaTypeId == teaType.id
+                                        },
+                                    ),
+                                )
                             }
                         },
                         label = { Text(teaType.name) },
@@ -177,11 +204,11 @@ fun HistoryFilterSheetContent(
         // Tea section
         SectionHeader(stringResource(Res.string.header_tea))
         Spacer(modifier = Modifier.height(8.dp))
-        TeaDropdownFilter(
-            teas = state.teas.values.toList(),
-            selectedTeaId = state.selectedTeaId,
-            selectedTeaTypeId = state.selectedTeaTypeId,
-            onTeaSelected = { teaId -> onIntent(HistoryIntent.FilterByTea(teaId)) },
+        TeaFilterChip(
+            filters = filters,
+            teaTypes = teaTypes,
+            brewedTeas = brewedTeas,
+            onFiltersChange = onFiltersChange,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -193,18 +220,14 @@ fun HistoryFilterSheetContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            state.vessels.values
+            vessels
                 .sortedBy { it.displayOrder }
                 .forEach { vessel ->
-                    val selected = state.selectedVesselId == vessel.id
+                    val selected = filters.vesselId == vessel.id
                     FilterChip(
                         selected = selected,
                         onClick = {
-                            if (selected) {
-                                onIntent(HistoryIntent.FilterByVessel(null))
-                            } else {
-                                onIntent(HistoryIntent.FilterByVessel(vessel.id))
-                            }
+                            onFiltersChange(filters.copy(vesselId = vessel.id.takeUnless { selected }))
                         },
                         label = { Text(vessel.name) },
                     )
@@ -217,7 +240,7 @@ fun HistoryFilterSheetContent(
         SectionHeader(stringResource(Res.string.header_date_range))
         Spacer(modifier = Modifier.height(8.dp))
 
-        val isCustom = isCustomDateRange(state.dateRangeStart, state.dateRangeEnd)
+        val isCustom = isCustomDateRange(filters.dateRangeStart, filters.dateRangeEnd)
         var showDateRangePicker by remember { mutableStateOf(false) }
 
         FlowRow(
@@ -227,15 +250,16 @@ fun HistoryFilterSheetContent(
             DateRangePreset.entries.forEach { preset ->
                 val (presetStart, presetEnd) = preset.toDateRange()
                 val selected =
-                    state.dateRangeStart == presetStart && state.dateRangeEnd == presetEnd
+                    filters.dateRangeStart == presetStart && filters.dateRangeEnd == presetEnd
                 FilterChip(
                     selected = selected,
                     onClick = {
-                        if (selected) {
-                            onIntent(HistoryIntent.FilterByDateRange(null, null))
-                        } else {
-                            onIntent(HistoryIntent.FilterByDateRange(presetStart, presetEnd))
-                        }
+                        onFiltersChange(
+                            filters.copy(
+                                dateRangeStart = presetStart.takeUnless { selected },
+                                dateRangeEnd = presetEnd.takeUnless { selected },
+                            ),
+                        )
                     },
                     label = { Text(preset.label) },
                 )
@@ -244,15 +268,15 @@ fun HistoryFilterSheetContent(
                 selected = isCustom,
                 onClick = {
                     if (isCustom) {
-                        onIntent(HistoryIntent.FilterByDateRange(null, null))
+                        onFiltersChange(filters.copy(dateRangeStart = null, dateRangeEnd = null))
                     } else {
                         showDateRangePicker = true
                     }
                 },
                 label = {
                     if (isCustom) {
-                        val start = state.dateRangeStart?.formatDisplay() ?: ""
-                        val end = state.dateRangeEnd?.formatDisplay() ?: ""
+                        val start = filters.dateRangeStart?.formatDisplay() ?: ""
+                        val end = filters.dateRangeEnd?.formatDisplay() ?: ""
                         Text("$start – $end")
                     } else {
                         Text("Custom")
@@ -263,10 +287,10 @@ fun HistoryFilterSheetContent(
 
         if (showDateRangePicker) {
             val dateRangePickerState = rememberDateRangePickerState(
-                initialSelectedStartDateMillis = state.dateRangeStart
+                initialSelectedStartDateMillis = filters.dateRangeStart
                     ?.atStartOfDayIn(TimeZone.UTC)
                     ?.toEpochMilliseconds(),
-                initialSelectedEndDateMillis = state.dateRangeEnd
+                initialSelectedEndDateMillis = filters.dateRangeEnd
                     ?.atStartOfDayIn(TimeZone.UTC)
                     ?.toEpochMilliseconds(),
             )
@@ -301,7 +325,9 @@ fun HistoryFilterSheetContent(
                                             .toLocalDateTime(TimeZone.UTC).date
                                         val end = Instant.fromEpochMilliseconds(endMillis)
                                             .toLocalDateTime(TimeZone.UTC).date
-                                        onIntent(HistoryIntent.FilterByDateRange(start, end))
+                                        onFiltersChange(
+                                            filters.copy(dateRangeStart = start, dateRangeEnd = end),
+                                        )
                                     }
                                     showDateRangePicker = false
                                 },
@@ -327,9 +353,9 @@ fun HistoryFilterSheetContent(
         SectionHeader(stringResource(Res.string.header_minimum_rating))
         Spacer(modifier = Modifier.height(8.dp))
         RatingSelector(
-            rating = state.minRating ?: 0f,
+            rating = filters.minRating ?: 0f,
             onRatingChange = { rating ->
-                onIntent(HistoryIntent.FilterByMinRating(if (rating == 0f) null else rating))
+                onFiltersChange(filters.copy(minRating = rating.takeUnless { it == 0f }))
             },
             modifier = Modifier.fillMaxWidth(),
         )
@@ -338,103 +364,106 @@ fun HistoryFilterSheetContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Unset, it opens [TeaPickerSheet]; set, a tap clears it, as the custom date range does. */
 @Composable
-private fun TeaDropdownFilter(
-    teas: List<Tea>,
-    selectedTeaId: String?,
-    selectedTeaTypeId: String?,
-    onTeaSelected: (String?) -> Unit,
+private fun TeaFilterChip(
+    filters: HistoryFilters,
+    teaTypes: List<TeaType>,
+    brewedTeas: List<Tea>,
+    onFiltersChange: (HistoryFilters) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showPicker by remember { mutableStateOf(false) }
+    val selectedTea = brewedTeas.find { it.id == filters.teaId }
 
-    val filteredTeas = remember(teas, selectedTeaTypeId) {
-        if (selectedTeaTypeId != null) {
-            teas.filter { it.teaTypeId == selectedTeaTypeId }
-        } else {
-            teas
-        }.sortedBy { it.name }
-    }
-
-    val selectedTeaName = selectedTeaId?.let { id -> teas.find { it.id == id }?.name } ?: "All Teas"
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
-    ) {
-        OutlinedTextField(
-            value = selectedTeaName,
-            onValueChange = {},
-            readOnly = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            DropdownMenuItem(
-                text = { Text("All Teas") },
-                onClick = {
-                    onTeaSelected(null)
-                    expanded = false
-                },
-            )
-            filteredTeas.forEach { tea ->
-                DropdownMenuItem(
-                    text = { Text(tea.name) },
-                    onClick = {
-                        onTeaSelected(tea.id)
-                        expanded = false
-                    },
-                )
+    FilterChip(
+        selected = filters.teaId != null,
+        onClick = {
+            if (filters.teaId != null) {
+                onFiltersChange(filters.copy(teaId = null))
+            } else {
+                showPicker = true
             }
+        },
+        label = { Text(selectedTea?.name ?: stringResource(Res.string.history_filter_choose_tea)) },
+        modifier = modifier,
+    )
+
+    if (showPicker) {
+        var query by remember { mutableStateOf("") }
+        var pickerFilter by remember {
+            mutableStateOf(filters.teaTypeId?.let(TeaPickerFilter::Type) ?: TeaPickerFilter.All)
         }
+        TeaPickerSheet(
+            teas = brewedTeas,
+            recentTeas = brewedTeas,
+            teaTypes = teaTypes,
+            query = query,
+            filter = pickerFilter,
+            selectedTeaId = filters.teaId,
+            onQueryChanged = { query = it },
+            onFilterChanged = { pickerFilter = it },
+            onTeaSelected = { tea ->
+                showPicker = false
+                // A tea of another type would match nothing, so the type gives way
+                onFiltersChange(
+                    filters.copy(
+                        teaId = tea.id,
+                        teaTypeId = filters.teaTypeId?.takeIf { it == tea.teaTypeId },
+                    ),
+                )
+            },
+            onTeaCreated = null,
+            onDismiss = { showPicker = false },
+        )
     }
 }
+
+private val previewTeaTypes = listOf(
+    TeaType(
+        id = "1",
+        name = "Green",
+        displayOrder = 0,
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
+    ),
+    TeaType(
+        id = "2",
+        name = "Black",
+        displayOrder = 1,
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
+    ),
+    TeaType(
+        id = "3",
+        name = "Oolong",
+        displayOrder = 2,
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
+    ),
+)
+
+private val previewBrewedTeas = listOf(
+    Tea(
+        id = "t1",
+        name = "Dragon Well",
+        teaTypeId = "1",
+        createdAt = PreviewInstant,
+        updatedAt = PreviewInstant,
+    ),
+)
 
 @Preview
 @Composable
 private fun HistoryFilterSheetContentPreview() {
     LeafLogTheme {
         HistoryFilterSheetContent(
-            state = HistoryState(
-                teaTypes = mapOf(
-                    "1" to TeaType(
-                        id = "1",
-                        name = "Green",
-                        displayOrder = 0,
-                        createdAt = Instant.fromEpochMilliseconds(0),
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
-                    "2" to TeaType(
-                        id = "2",
-                        name = "Black",
-                        displayOrder = 1,
-                        createdAt = Instant.fromEpochMilliseconds(0),
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
-                    "3" to TeaType(
-                        id = "3",
-                        name = "Oolong",
-                        displayOrder = 2,
-                        createdAt = Instant.fromEpochMilliseconds(0),
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
-                ),
-                teas = mapOf(
-                    "t1" to Tea(
-                        id = "t1",
-                        name = "Dragon Well",
-                        teaTypeId = "1",
-                        createdAt = Instant.fromEpochMilliseconds(0),
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
-                ),
-            ),
-            onIntent = {},
+            filters = HistoryFilters(),
+            teaTypes = previewTeaTypes,
+            brewedTeas = previewBrewedTeas,
+            vessels = emptyList(),
+            onFiltersChange = {},
+            onClear = {},
         )
     }
 }
@@ -444,11 +473,15 @@ private fun HistoryFilterSheetContentPreview() {
 private fun HistoryFilterSheetContentCustomDateRangePreview() {
     LeafLogTheme {
         HistoryFilterSheetContent(
-            state = HistoryState(
+            filters = HistoryFilters(
                 dateRangeStart = LocalDate(2026, 1, 1),
                 dateRangeEnd = LocalDate(2026, 3, 15),
             ),
-            onIntent = {},
+            teaTypes = emptyList(),
+            brewedTeas = emptyList(),
+            vessels = emptyList(),
+            onFiltersChange = {},
+            onClear = {},
         )
     }
 }
@@ -458,27 +491,12 @@ private fun HistoryFilterSheetContentCustomDateRangePreview() {
 private fun HistoryFilterSheetContentActiveFiltersPreview() {
     LeafLogTheme {
         HistoryFilterSheetContent(
-            state = HistoryState(
-                selectedTeaTypeId = "1",
-                minRating = 3f,
-                teaTypes = mapOf(
-                    "1" to TeaType(
-                        id = "1",
-                        name = "Green",
-                        displayOrder = 0,
-                        createdAt = Instant.fromEpochMilliseconds(0),
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
-                    "2" to TeaType(
-                        id = "2",
-                        name = "Black",
-                        displayOrder = 1,
-                        createdAt = Instant.fromEpochMilliseconds(0),
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
-                ),
-            ),
-            onIntent = {},
+            filters = HistoryFilters(teaTypeId = "1", teaId = "t1", minRating = 3f),
+            teaTypes = previewTeaTypes,
+            brewedTeas = previewBrewedTeas,
+            vessels = emptyList(),
+            onFiltersChange = {},
+            onClear = {},
         )
     }
 }

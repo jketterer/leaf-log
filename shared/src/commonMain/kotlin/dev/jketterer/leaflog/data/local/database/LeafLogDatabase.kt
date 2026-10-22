@@ -21,7 +21,9 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
 
 // Room KSP generates the actual implementations for each platform.
 @Suppress("NO_ACTUAL_FOR_EXPECT")
-expect object LeafLogDatabaseConstructor : RoomDatabaseConstructor<LeafLogDatabase>
+expect object LeafLogDatabaseConstructor : RoomDatabaseConstructor<LeafLogDatabase> {
+    override fun initialize(): LeafLogDatabase
+}
 
 @Database(
     entities = [

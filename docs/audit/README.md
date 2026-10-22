@@ -87,8 +87,8 @@ These are where the roadmap should spend its first real effort. Each deletes a *
   Session dialog prefill, `SaveConfigurationDialog` `?: 5f`.~~
 - ~~**Planned vs actual time** — no flow records how long tea actually brewed (±adjust, Complete Now,
   Quick Timer). The prefill replays the plan, not the brew.~~
-- **Timestamps** — steeps added to past sessions are stamped "now"; ~~Quick Timer stamps end, others
-  stamp start;~~ session time is never editable.
+- ~~**Timestamps** — steeps added to past sessions are stamped "now"; Quick Timer stamps end, others
+  stamp start; session time is never editable.~~
 - **Unit round-trips lose precision** — every edit sheet converts through whole display units
   (150 ml → 147.9 ml for fl-oz users on a no-op save).
 - **`null` means "unchanged"** in update use cases, so "cleared" is inexpressible.
@@ -99,7 +99,7 @@ These are where the roadmap should spend its first real effort. Each deletes a *
 - By-id queries return deleted rows; list queries don't. Result: History says "Unknown Tea",
   Session Detail names it and links to it, Analytics counts it in totals but not breakdowns,
   export writes orphaned children.
-- Photos are hard-deleted on a soft delete (Session Detail, Edit Vessel before save) — **Undo (2.4)
+- Photos are hard-deleted on a soft delete (~~Session Detail,~~ Edit Vessel before save) — **Undo (2.4)
   would restore sessions with missing photos.** Brewing configurations are hard-deleted with no
   `deletedAt` column at all.
 - Needs one decision: does the journal ever hide a deleted tea's name? `finishedAt` (2.3) is the
@@ -172,7 +172,7 @@ About/version anywhere in the UI, `allowBackup` without extraction rules.
 | Header: superseded docs "all deleted" | All eight still in `docs/`, none committed |
 | 1.1 "verify all five migrations are registered" | They are, on both platforms — answered |
 | 1.2 import "merges rather than clobbers. Correct default; keep it" | It clobbers whole rows, reverts newer edits, un-deletes. Not a safe default |
-| 2.2 zero sessions and zero configs "both render nothing" | Zero configs shows "No saved methods yet"; zero sessions renders nothing |
+| ~~2.2 zero sessions and zero configs "both render nothing"~~ | ~~Zero configs shows "No saved methods yet"; zero sessions renders nothing~~ |
 | 2.4 "soft-delete infrastructure in place everywhere … mostly UI" | Configurations hard-delete (no column); photos are hard-deleted on soft delete |
 | 2.5 "nothing signals completion when the app is open" | The system notification does, in foreground — weakly, and not at all when the in-app toggle is off |
 | 2.7 FAB hidden during in-progress session | Always visible since 558d194; conflict dialog replaced it |
@@ -196,12 +196,12 @@ One line each; detail in the linked reports.
 | ~~Timer~~ | ~~Engine sound; screen never shows errors, discards actual brew time, edit sheet corrupts timer state~~ |
 | ~~Quick Timer~~ | ~~Good idea on a second, weaker engine — loses every lifecycle guarantee the main timer earned~~ |
 | ~~Steep Complete~~ | ~~Right shape; guesses ratings, auto-saves clobber each other, one error hides the form, business flows live in the VM, gongfu sessions never offered "save method"~~ |
-| History | Still a parameter list, not a journal; child steeps look like brews; invisible search keeps filtering; route filters re-apply |
-| Session Detail | Reads like a form printout; stacking collectors; Add Steep skips in-progress guard and stamps "now" |
-| Edit Session | Can't clear fields; no errors shown; no back guard; edits don't reach child steeps |
+| ~~History~~ | ~~Still a parameter list, not a journal; child steeps look like brews; invisible search keeps filtering; route filters re-apply~~ |
+| ~~Session Detail~~ | ~~Reads like a form printout; stacking collectors; Add Steep skips in-progress guard and stamps "now"~~ |
+| ~~Edit Session~~ | ~~Can't clear fields; no errors shown; no back guard; edits don't reach child steeps~~ |
 | Analytics | Mostly-correct multi-steep aggregation; date-boundary bugs, broken chart taps, loads once and goes stale, ~14 sequential full-table queries on All Time |
-| Collection | Works small; search is name-only, a stale snapshot, and can't combine with filters; error display invisible |
-| Tea Detail | A property sheet (roadmap 2.2); delete broken, average wrong, collectors leak, recents filled by child steeps |
+| ~~Collection~~ | ~~Works small; search is name-only, a stale snapshot, and can't combine with filters; error display invisible~~ |
+| ~~Tea Detail~~ | ~~A property sheet (roadmap 2.2); delete broken, average wrong, collectors leak, recents filled by child steeps~~ |
 | Edit Tea | Best form in the app; double-submit creates duplicates, edit skips trimming, lands on list not the new tea |
 | Brewing Method | Weakest form: no validation, ~~no errors,~~ can't clear, prefill ignores chosen vessel~~, can't represent gongfu~~ |
 | Vessels / Vessel Detail | Thin; delete rules in UI disagree with use case; red "Cannot Delete" card on every used vessel |
@@ -229,25 +229,25 @@ This is the raw material for choosing big bets in the vision interview — not a
 - **In-app completion moment** (haptic, chime, "Pour now") independent of notification settings.
 
 **The journal**
-- **One card per session** with steep count, span, per-steep rating dots. Kills the child-card bug
-  class as a side effect.
-- **Reading layout**: photo strip and notes lead, parameter chips recede.
-- **Steep timeline** in Session Detail: clock time, interval since previous steep, changes,
-  inline rating/notes.
+- ~~**One card per session** with steep count, span, per-steep rating dots. Kills the child-card bug
+  class as a side effect.~~
+- **Reading layout**: photo strip ~~and notes lead, parameter chips recede~~.
+- ~~**Steep timeline** in Session Detail: clock time, interval since previous steep, changes,
+  inline rating/notes.~~
 - **Calendar navigator** atop History (reuse heatmap canvas); heatmap day → History day.
-- **Session-level note**, editable date/time, previous/next session navigation, "previous time
-  with this tea".
-- **Location** as a journal dimension (stored and edited, never shown or searched).
+- ~~**Session-level note**, editable date/time, previous/next session navigation, "previous time
+  with this tea".~~
+- ~~**Location** as a journal dimension (stored and edited, never shown or searched).~~
 - **Photo hero** and captions in the fullscreen viewer; camera capture; choose cover photo.
 - ~~**Structured tasting vocabulary** (aroma/body/astringency tags per steep) — makes ratings
   explainable, the journal searchable, and "teas like this" possible. No tag model exists.~~
 
 **The library**
-- **Cellar/aging**: `purchaseDate` is collected and never displayed; add harvest year/vintage.
-  "Bought Mar 2023 · 2y 6m in your cupboard".
-- **Method provenance**: `sourceSessionId` stored, never shown — "From your 12 Mar brew ★4.5".
-- **Per-tea evolution**: parameters vs rating over time, steep curve ("peaks at steep 4").
-- **FTS search** across name/producer/origin/description, combinable with filters; producer and
+- **Cellar/aging**: ~~`purchaseDate` is collected and never displayed;~~ add harvest year/vintage.
+  ~~"Bought Mar 2023 · 2y 6m in your cupboard".~~
+- ~~**Method provenance**: `sourceSessionId` stored, never shown — "From your 12 Mar brew ★4.5".~~
+- ~~**Per-tea evolution**: parameters vs rating over time, steep curve ("peaks at steep 4").~~
+- ~~**FTS search** across name/producer/origin/description, combinable with filters;~~ producer and
   origin facets.
 - **Vessel as a lens**: "what this vessel is best for", typical fill vs capacity, methods using it.
 - Drag-reorder for vessels and tea types (`displayOrder` exists, no UI); merge tea types.

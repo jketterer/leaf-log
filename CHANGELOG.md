@@ -16,6 +16,57 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-22
+
+The journal reads like one: History by day, a session as a timeline of its steeps, and a tea page
+that tells you how it brews best.
+
+### Added
+
+- A note for the whole session, apart from each steep's own. Notes written on a first steep move
+  into it, in the app and in older backups.
+- "Last time" on Log Tea: once you pick a tea, how its last session went, with the date, rating,
+  parameters, top tags and your note. Tap it to open the session. Quick-brew cards on Home say when
+  you last brewed the tea and how you rated it.
+- Logging a brew you already made opens the session review, so it gets ratings, tags, a note and
+  photos like any other, and can be saved as a method.
+- History groups sessions by day: "Today", "Yesterday", then dates, and months beyond 30 days. A
+  busy day shows how many teas and how long you were brewing.
+- Filter History by several tea types or vessels at once.
+- Search History by tea, producer, notes, tags, location or vessel, and the collection by name,
+  producer, origin or description. Case and accents don't matter, and the collection's search works
+  together with its filter.
+- Session Detail shows the session as a timeline: each steep at its clock time with its rating and
+  tags, only what changed from the steep before, and any break between steeps.
+- Edit a session's tea, date, time and note. Changing the date moves every steep with it.
+- Up and down arrows on Session Detail step to the next or previous session.
+- Tea Detail tells the tea's story: your best brew with Brew Again, a flavor profile of the tags you
+  confirm most, and a steep curve showing which steep you rate highest.
+- A saved method shows the brew it came from ("From your 12 Mar brew, ★4.5"). Tap it to open that
+  session.
+- A tea's details show how long you've had it, from its purchase date.
+
+### Changed
+
+- The session card leads with the rating, a dot per steep's rating, the top tags and the note.
+  Parameters sit below, smaller.
+- One sheet edits a steep everywhere: rating, tags, note, time, temperature and water, each saved as
+  you change it.
+- The review after each steep asks how it was, with big stars, tags ready to tap and an open note.
+- Edit Session edits the session only, with Save at the bottom. Steeps are edited from Session
+  Detail.
+- History's Tea filter is a searchable list. "This Week" and "This Month" read "Last 7 days" and
+  "Last 30 days", which is what they meant.
+- A tea with no sessions offers "Log a brew".
+
+### Fixed
+
+- A History search with no results says so and offers to clear it, and an empty journal offers "Log
+  a brew".
+- A session brewed in an archived vessel can be edited.
+- Session Detail shows brew times like the rest of the app, and a screen reader announces its tea
+  name as a button.
+
 ## [0.5.0] - 2026-10-21
 
 A saved method knows every steep, so a gongfu session is Next, then Start, for as long as the tea

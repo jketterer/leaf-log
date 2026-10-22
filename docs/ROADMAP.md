@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-22 (Bet 3: tea detail tells the story)
+> **Last updated:** 2026-10-22 (Bet 3 released as 0.6.0)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -743,6 +743,8 @@ death, and an upgrade over the previous dev build at each migration.
 
 ## Bet 3 — The journal
 
+**Done, released as 0.6.0.**
+
 **Outcome:** looking back is pleasant and useful in the three ways the author actually rereads.
 Needs Bet 2's tag data to have something to show.
 
@@ -897,7 +899,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
     Tests: the profile counts per session; the curve's peak and minimum data.
 17. [x] `feat: where a method came from`
 18. [x] `feat: cellar age`
-19. [ ] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
+19. [x] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
     Session sections deleted, Analytics kept for Bet 4.
 
 ---

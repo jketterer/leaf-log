@@ -796,6 +796,8 @@ a chip, its own line).
       no "standout brew". A session past midnight belongs to the day it started.
     - Filters or search active → a flat list, no headers. No sticky headers.
     - The filter sheet's rolling windows are labelled "Last 7 days" / "Last 30 days".
+    - Tea type and vessel take several choices, a session passing on any of them; the other
+      filters stay single. Choosing a tea outside the chosen types clears the types.
 - **Search**, in memory: both screens already hold every row. One pure `matchesQuery`: case- and
   accent-insensitive, every word must match some field. Debounced, off Main.
     - History: tea name, producer, session note, steep notes, tag labels (carry-overs included —
@@ -854,8 +856,8 @@ backup becomes version 4; versions 1–3 read with the same move.
 where you'd want it; the journal audit findings (report 2) for History, Session Detail and Edit
 Session are cleared; Track B line for an upgrade over the v11 build.
 
-**Commits.** Each compiles, passes tests and leaves the app working. 2 → 3; 2 → 4 → 5 → 7; 6 → 7 →
-8; 5 → 14; 10 → 11 → 12, 13.
+**Commits.** Each compiles, passes tests and leaves the app working. 2 → 3; 2 → 4 → 5 → 8; 6 → 7 →
+8 → 9; 5 → 15; 11 → 12 → 13, 14.
 
 1. [x] `docs: record the Bet 3 design`
 2. [x] `feat: a session note of its own`: v12, backup version 4. The review and Log Tea write it;
@@ -867,20 +869,22 @@ Session are cleared; Track B line for an upgrade over the v11 build.
    `PrefillBanner`'s strings. Test: dominant tags.
 5. [x] `feat: a session card for reading`
 6. [x] `fix: history audit findings`. Nothing beyond the fixes.
-7. [ ] `feat: history reads by day`. Test: grouping across midnight, the 30-day edge, months.
-8. [ ] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
-9. [ ] `feat: search the collection`
-10. [ ] `refactor: one steep sheet`: a move plus the parameters row.
-11. [ ] `feat: session detail as a steep timeline`: Edit Session's steep mode goes. Test: deltas and
+7. [x] `feat: filter by several tea types or vessels`. Test: a session in any chosen type or
+   vessel passes.
+8. [ ] `feat: history reads by day`. Test: grouping across midnight, the 30-day edge, months.
+9. [ ] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
+10. [ ] `feat: search the collection`
+11. [ ] `refactor: one steep sheet`: a move plus the parameters row.
+12. [ ] `feat: session detail as a steep timeline`: Edit Session's steep mode goes. Test: deltas and
     breaks.
-12. [ ] `feat: edit a session's tea, date and note`, with Edit Session's findings. Tests: the date
+13. [ ] `feat: edit a session's tea, date and note`, with Edit Session's findings. Tests: the date
     shift keeps intervals; a tea change recomputes both teas and clears the method links.
-13. [ ] `feat: step through sessions`
-14. [ ] `feat: tea detail tells the story`: best brew, flavour profile, steep curve, empty state.
+14. [ ] `feat: step through sessions`
+15. [ ] `feat: tea detail tells the story`: best brew, flavour profile, steep curve, empty state.
     Tests: the profile counts per session; the curve's peak and minimum data.
-15. [ ] `feat: where a method came from`
-16. [ ] `feat: cellar age`
-17. [ ] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
+16. [ ] `feat: where a method came from`
+17. [ ] `feat: cellar age`
+18. [ ] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
     Session sections deleted, Analytics kept for Bet 4.
 
 ---

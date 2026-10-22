@@ -203,23 +203,23 @@ class HistoryViewModel(
 /** Opened from elsewhere, History starts filtered the way the route asks. */
 internal fun initialHistoryState(route: NavRoute.HistoryRoute) = HistoryState(
     filters = HistoryFilters(
-        teaTypeId = route.filterTeaTypeId,
+        teaTypeIds = setOfNotNull(route.filterTeaTypeId),
         teaId = route.filterTeaId,
         dateRangeStart = route.filterDateStart?.let(LocalDate::parse),
         dateRangeEnd = route.filterDateEnd?.let(LocalDate::parse),
     ),
 )
 
-private fun List<SessionWithSteeps>.filteredBy(
+internal fun List<SessionWithSteeps>.filteredBy(
     filters: HistoryFilters,
     query: String,
     teas: Map<String, Tea>,
 ): List<SessionWithSteeps> {
     var filtered = this
 
-    if (filters.teaTypeId != null) {
+    if (filters.teaTypeIds.isNotEmpty()) {
         filtered = filtered.filter { session ->
-            teas[session.session.teaId]?.teaTypeId == filters.teaTypeId
+            teas[session.session.teaId]?.teaTypeId in filters.teaTypeIds
         }
     }
 
@@ -244,8 +244,8 @@ private fun List<SessionWithSteeps>.filteredBy(
         }
     }
 
-    if (filters.vesselId != null) {
-        filtered = filtered.filter { it.session.vesselId == filters.vesselId }
+    if (filters.vesselIds.isNotEmpty()) {
+        filtered = filtered.filter { it.session.vesselId in filters.vesselIds }
     }
 
     if (query.isNotBlank()) {

@@ -175,24 +175,26 @@ private fun HistoryFilterSheetContent(
             teaTypes
                 .sortedBy { it.displayOrder }
                 .forEach { teaType ->
-                    val selected = filters.teaTypeId == teaType.id
+                    val selected = teaType.id in filters.teaTypeIds
                     FilterChip(
                         selected = selected,
                         onClick = {
-                            if (selected) {
-                                onFiltersChange(filters.copy(teaTypeId = null))
+                            val teaTypeIds = if (selected) {
+                                filters.teaTypeIds - teaType.id
                             } else {
-                                // Clear tea selection if it doesn't belong to the new type
-                                val currentTea = brewedTeas.find { it.id == filters.teaId }
-                                onFiltersChange(
-                                    filters.copy(
-                                        teaTypeId = teaType.id,
-                                        teaId = filters.teaId.takeIf {
-                                            currentTea == null || currentTea.teaTypeId == teaType.id
-                                        },
-                                    ),
-                                )
+                                filters.teaTypeIds + teaType.id
                             }
+                            // Clear tea selection if it doesn't belong to the chosen types
+                            val currentTea = brewedTeas.find { it.id == filters.teaId }
+                            val teaFits = currentTea == null ||
+                                teaTypeIds.isEmpty() ||
+                                currentTea.teaTypeId in teaTypeIds
+                            onFiltersChange(
+                                filters.copy(
+                                    teaTypeIds = teaTypeIds,
+                                    teaId = filters.teaId.takeIf { teaFits },
+                                ),
+                            )
                         },
                         label = { Text(teaType.name) },
                     )
@@ -223,11 +225,19 @@ private fun HistoryFilterSheetContent(
             vessels
                 .sortedBy { it.displayOrder }
                 .forEach { vessel ->
-                    val selected = filters.vesselId == vessel.id
+                    val selected = vessel.id in filters.vesselIds
                     FilterChip(
                         selected = selected,
                         onClick = {
-                            onFiltersChange(filters.copy(vesselId = vessel.id.takeUnless { selected }))
+                            onFiltersChange(
+                                filters.copy(
+                                    vesselIds = if (selected) {
+                                        filters.vesselIds - vessel.id
+                                    } else {
+                                        filters.vesselIds + vessel.id
+                                    },
+                                ),
+                            )
                         },
                         label = { Text(vessel.name) },
                     )
@@ -392,7 +402,9 @@ private fun TeaFilterChip(
     if (showPicker) {
         var query by remember { mutableStateOf("") }
         var pickerFilter by remember {
-            mutableStateOf(filters.teaTypeId?.let(TeaPickerFilter::Type) ?: TeaPickerFilter.All)
+            mutableStateOf(
+                filters.teaTypeIds.singleOrNull()?.let(TeaPickerFilter::Type) ?: TeaPickerFilter.All,
+            )
         }
         TeaPickerSheet(
             teas = brewedTeas,
@@ -405,11 +417,11 @@ private fun TeaFilterChip(
             onFilterChanged = { pickerFilter = it },
             onTeaSelected = { tea ->
                 showPicker = false
-                // A tea of another type would match nothing, so the type gives way
+                // A tea outside the chosen types would match nothing, so the types give way
                 onFiltersChange(
                     filters.copy(
                         teaId = tea.id,
-                        teaTypeId = filters.teaTypeId?.takeIf { it == tea.teaTypeId },
+                        teaTypeIds = filters.teaTypeIds.takeIf { tea.teaTypeId in it }.orEmpty(),
                     ),
                 )
             },
@@ -491,7 +503,7 @@ private fun HistoryFilterSheetContentCustomDateRangePreview() {
 private fun HistoryFilterSheetContentActiveFiltersPreview() {
     LeafLogTheme {
         HistoryFilterSheetContent(
-            filters = HistoryFilters(teaTypeId = "1", teaId = "t1", minRating = 3f),
+            filters = HistoryFilters(teaTypeIds = setOf("1", "2"), teaId = "t1", minRating = 3f),
             teaTypes = previewTeaTypes,
             brewedTeas = previewBrewedTeas,
             vessels = emptyList(),

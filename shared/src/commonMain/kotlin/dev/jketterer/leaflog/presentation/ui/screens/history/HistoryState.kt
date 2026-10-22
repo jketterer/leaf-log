@@ -33,22 +33,23 @@ data class HistoryState(
     val inProgressDialogState: InProgressDialogState? = null,
 )
 
+/** A session passes when it matches any of the chosen tea types and any of the chosen vessels. */
 data class HistoryFilters(
-    val teaTypeId: String? = null,
+    val teaTypeIds: Set<String> = emptySet(),
     val teaId: String? = null,
     val dateRangeStart: LocalDate? = null,
     val dateRangeEnd: LocalDate? = null,
     val minRating: Float? = null,
-    val vesselId: String? = null,
+    val vesselIds: Set<String> = emptySet(),
 ) {
-    /** A date range counts once, however many of its ends are set. */
+    /** Counts each kind of filter once: two tea types, or both ends of a date range, are one. */
     val activeCount: Int
         get() = listOf(
-            teaTypeId != null,
+            teaTypeIds.isNotEmpty(),
             teaId != null,
             dateRangeStart != null || dateRangeEnd != null,
             minRating != null,
-            vesselId != null,
+            vesselIds.isNotEmpty(),
         ).count { it }
 
     val isActive: Boolean get() = activeCount > 0

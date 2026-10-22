@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
@@ -18,6 +19,7 @@ data class HistoryState(
     val teas: Map<String, Tea> = emptyMap(),  // teaId -> Tea (for display)
     val teaTypes: Map<String, TeaType> = emptyMap(),  // teaTypeId -> TeaType
     val vessels: Map<String, BrewingVessel> = emptyMap(),  // vesselId -> BrewingVessel
+    val tagVocabulary: List<TastingTag> = emptyList(),
 
     // Filters
     val searchQuery: String = "",

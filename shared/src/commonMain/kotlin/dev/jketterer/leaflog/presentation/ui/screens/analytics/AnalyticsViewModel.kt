@@ -19,6 +19,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetTimeInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
+import dev.jketterer.leaflog.presentation.ui.components.common.formatDuration
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -36,7 +37,6 @@ import kotlinx.datetime.plus
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_analytics
 import kotlin.time.Clock
-import kotlin.time.Duration
 
 class AnalyticsViewModel(
     private val teaSessionRepository: TeaSessionRepository,
@@ -258,21 +258,6 @@ class AnalyticsViewModel(
             } catch (e: Exception) {
                 _state.update { it.copy(isLoading = false) }
                 messages.failure(e, Res.string.couldnt_load_analytics)
-            }
-        }
-    }
-
-    companion object {
-        fun formatDuration(duration: Duration): String {
-            val totalMinutes = duration.inWholeMinutes
-            return when {
-                totalMinutes < 1 -> "${duration.inWholeSeconds}s"
-                totalMinutes < 60 -> "${totalMinutes}m"
-                else -> {
-                    val hours = totalMinutes / 60
-                    val minutes = totalMinutes % 60
-                    if (minutes == 0L) "${hours}h" else "${hours}h ${minutes}m"
-                }
             }
         }
     }

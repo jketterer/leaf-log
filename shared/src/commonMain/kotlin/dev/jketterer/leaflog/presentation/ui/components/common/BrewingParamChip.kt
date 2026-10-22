@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import kotlin.time.Duration
 
 @Composable
 fun BrewingParamChip(icon: ImageVector, text: String) {
@@ -50,6 +51,20 @@ fun formatBrewingTime(seconds: Int): String {
         seconds < 60 -> "${seconds}s"
         seconds % 60 == 0 -> "${seconds / 60}m"
         else -> "${seconds / 60}m ${seconds % 60}s"
+    }
+}
+
+/** A longer span, to the minute: "45s", "25m", "1h 5m". */
+fun formatDuration(duration: Duration): String {
+    val totalMinutes = duration.inWholeMinutes
+    return when {
+        totalMinutes < 1 -> "${duration.inWholeSeconds}s"
+        totalMinutes < 60 -> "${totalMinutes}m"
+        else -> {
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+            if (minutes == 0L) "${hours}h" else "${hours}h ${minutes}m"
+        }
     }
 }
 

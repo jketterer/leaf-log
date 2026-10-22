@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -43,6 +44,7 @@ class HistoryViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val tastingTagRepository: TastingTagRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
@@ -144,6 +146,8 @@ class HistoryViewModel(
                     .collect { (sessions, teas, types, vessels) ->
                         val teasMap = teas.associateBy { tea -> tea.id }
                         val filteredSessions = applyFilters(sessions, teasMap)
+                        // Read again on each emission, so a tag made since shows by name
+                        val vocabulary = tastingTagRepository.getAll()
 
                         _state.update {
                             it.copy(
@@ -152,6 +156,7 @@ class HistoryViewModel(
                                 teas = teasMap,
                                 teaTypes = types.associateBy { type -> type.id },
                                 vessels = vessels.associateBy { vessel -> vessel.id },
+                                tagVocabulary = vocabulary,
                                 isLoading = false,
                                 isEmpty = filteredSessions.isEmpty(),
                             )

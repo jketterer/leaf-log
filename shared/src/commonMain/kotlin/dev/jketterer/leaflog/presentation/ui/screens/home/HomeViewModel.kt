@@ -5,17 +5,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.domain.models.lastCompleted
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -79,6 +80,7 @@ class HomeViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val vesselRepository: BrewingVesselRepository,
+    private val tastingTagRepository: TastingTagRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
     private val startSessionUseCase: StartSessionUseCase,
@@ -355,33 +357,25 @@ class HomeViewModel(
         combine(
             teaSessionRepository.getRecentSessionsFlow(limit = 5),
             teaRepository.getAllFlow(),
-            teaTypeRepository.getAllFlow(),
-            vesselRepository.getAllFlow(),
-        ) { sessions, teas, types, vessels ->
-            HomeSessionData(sessions, teas, types, vessels)
+        ) { sessions, teas ->
+            // The vocabulary is read again each time, so a tag made since shows by name
+            Triple(sessions, teas, tastingTagRepository.getAll())
         }
             .catch { e ->
                 messages.failure(e, Res.string.couldnt_load)
                 loaded.value = true
             }
-            .collect { (sessions, teas, types, vessels) ->
-                // Create lookup maps for efficient access
+            .collect { (sessions, teas, vocabulary) ->
                 val teaMap = teas.associateBy { it.id }
-                val typeMap = types.associateBy { it.id }
-                val vesselMap = vessels.associateBy { it.id }
 
                 _state.update {
                     it.copy(
                         recentSessionsWithTea = sessions.map { session ->
                             val tea = teaMap[session.session.teaId]
-                            val type = tea?.let { t -> typeMap[t.teaTypeId] }
-                            val vessel = vesselMap[session.session.vesselId]
                             SessionWithTeaData(
                                 session = session,
                                 teaName = tea?.name ?: "Unknown Tea",
-                                teaTypeName = type?.name ?: "Unknown Type",
-                                teaPhotoUrl = tea?.photos?.firstOrNull(),
-                                vesselName = vessel?.name ?: "Unknown Vessel",
+                                tags = session.dominantTags(vocabulary),
                             )
                         },
                         isEmpty = sessions.isEmpty(),
@@ -543,9 +537,7 @@ class HomeViewModel(
 data class SessionWithTeaData(
     val session: SessionWithSteeps,
     val teaName: String = "Unknown Tea",
-    val teaTypeName: String = "Unknown Type",
-    val teaPhotoUrl: String? = null,
-    val vesselName: String = "Unknown Vessel",
+    val tags: List<TastingTag> = emptyList(),
 )
 
 data class QuickBrewCardData(
@@ -582,12 +574,5 @@ sealed interface HomeNavEvent {
     data class NavigateToEditBrewingMethod(val teaId: String, val configurationId: String) :
         HomeNavEvent
 }
-
-private data class HomeSessionData(
-    val sessions: List<SessionWithSteeps>,
-    val teas: List<Tea>,
-    val types: List<TeaType>,
-    val vessels: List<BrewingVessel>,
-)
 
 private const val UNDO_OFFERED_KEY = "undoOffered"

@@ -67,6 +67,7 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
@@ -440,15 +441,10 @@ private fun TeaDetailContent(
                                 key = { it.session.id },
                             ) { session ->
                                 val sessionId = session.session.id
-                                val vesselName = state.vessels
-                                    .firstOrNull { it.id == session.session.vesselId }
-                                    ?.name ?: "Unknown"
                                 SessionCard(
                                     session = session,
                                     teaName = state.tea.name,
-                                    teaTypeName = state.teaType?.name ?: "",
-                                    vesselName = vesselName,
-                                    teaPhotoUrl = state.tea.photos.firstOrNull(),
+                                    tags = session.dominantTags(state.tagVocabulary),
                                     onSessionClick = {
                                         onIntent(TeaDetailIntent.SessionClicked(sessionId))
                                     },
@@ -459,7 +455,6 @@ private fun TeaDetailContent(
                                         onIntent(TeaDetailIntent.DeleteSessionClicked(sessionId))
                                     },
                                     modifier = Modifier.animateItem(),
-                                    imageStorage = imageStorage,
                                 )
                             }
                         }

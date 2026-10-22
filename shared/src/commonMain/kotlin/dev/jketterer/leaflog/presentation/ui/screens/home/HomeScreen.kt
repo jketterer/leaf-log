@@ -35,7 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Settings
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
@@ -71,7 +70,6 @@ import leaf_log.shared.generated.resources.ic_tea_leaf
 import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -153,7 +151,6 @@ fun HomeScreen(
         state = state,
         onIntent = viewModel::onIntent,
         snackbarHostState = snackbarHostState,
-        imageStorage = koinInject()
     )
 }
 
@@ -163,7 +160,6 @@ private fun HomeContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
-    imageStorage: ImageStorage? = null,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -308,10 +304,8 @@ private fun HomeContent(
                         ) { sessionData ->
                             SessionCard(
                                 teaName = sessionData.teaName,
-                                teaTypeName = sessionData.teaTypeName,
-                                vesselName = sessionData.vesselName,
+                                tags = sessionData.tags,
                                 session = sessionData.session,
-                                teaPhotoUrl = sessionData.teaPhotoUrl,
                                 onSessionClick = {
                                     onIntent(HomeIntent.SessionClicked(sessionData.session.session.id))
                                 },
@@ -325,7 +319,6 @@ private fun HomeContent(
                                 modifier = Modifier
                                     .animateItem()
                                     .padding(horizontal = 16.dp),
-                                imageStorage = imageStorage,
                             )
                         }
 

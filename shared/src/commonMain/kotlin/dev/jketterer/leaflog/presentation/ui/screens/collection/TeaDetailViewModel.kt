@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -17,12 +18,12 @@ import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
+import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateBack
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToSession
-import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
-import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -39,7 +40,6 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_delete_method
 import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_delete_tea
-import leaf_log.shared.generated.resources.couldnt_load
 import leaf_log.shared.generated.resources.couldnt_load_tea
 import leaf_log.shared.generated.resources.couldnt_start_session
 import leaf_log.shared.generated.resources.couldnt_update_favorite
@@ -54,6 +54,7 @@ class TeaDetailViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val tastingTagRepository: TastingTagRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val deleteTeaUseCase: DeleteTeaUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
@@ -224,10 +225,11 @@ class TeaDetailViewModel(
     private fun loadRecentSessions(teaId: String) {
         viewModelScope.launch {
             teaSessionRepository.getSessionsByTeaFlow(teaId)
+                // The vocabulary is read again each time, so a tag made since shows by name
+                .map { it.take(5) to tastingTagRepository.getAll() }
                 .catchError(Res.string.couldnt_load_tea)
-                .map { it.take(5) }
-                .collect { sessions ->
-                    _state.update { it.copy(recentSessions = sessions) }
+                .collect { (sessions, vocabulary) ->
+                    _state.update { it.copy(recentSessions = sessions, tagVocabulary = vocabulary) }
                 }
         }
     }

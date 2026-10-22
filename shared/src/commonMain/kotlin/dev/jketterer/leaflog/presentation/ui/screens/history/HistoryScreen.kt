@@ -50,10 +50,10 @@ import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Filter
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.X
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
@@ -68,7 +68,6 @@ import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.navigate_up
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Instant
 import org.koin.core.parameter.parametersOf
@@ -105,7 +104,6 @@ fun HistoryScreen(
     HistoryContent(
         state = state,
         onIntent = viewModel::onIntent,
-        imageStorage = koinInject(),
         snackbarHostState = snackbarHostState,
         onNavigateUp = onNavigateUp,
     )
@@ -117,7 +115,6 @@ private fun HistoryContent(
     state: HistoryState,
     onIntent: (HistoryIntent) -> Unit,
     onNavigateUp: (() -> Unit)? = null,
-    imageStorage: ImageStorage? = null,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     // Saveable: the query lives in the ViewModel, which outlives this composition on a tab switch
@@ -293,15 +290,11 @@ private fun HistoryContent(
                             ) { session ->
                                 val sessionId = session.session.id
                                 val tea = state.teas[session.session.teaId]
-                                val teaType = tea?.let { state.teaTypes[it.teaTypeId] }
-                                val vessel = state.vessels[session.session.vesselId]
 
                                 SessionCard(
                                     session = session,
                                     teaName = tea?.name ?: "Unknown Tea",
-                                    teaTypeName = teaType?.name ?: "Unknown Type",
-                                    vesselName = vessel?.name ?: "Unknown Vessel",
-                                    teaPhotoUrl = tea?.photos?.firstOrNull(),
+                                    tags = session.dominantTags(state.tagVocabulary),
                                     onSessionClick = {
                                         if (session.session.status == SessionStatus.IN_PROGRESS) {
                                             onIntent(HistoryIntent.CompleteInProgress(sessionId))
@@ -315,7 +308,6 @@ private fun HistoryContent(
                                     onDeleteClick = {
                                         onIntent(HistoryIntent.DeleteSession(sessionId))
                                     },
-                                    imageStorage = imageStorage,
                                     modifier = Modifier.animateItem(),
                                 )
                             }

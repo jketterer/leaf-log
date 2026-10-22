@@ -778,15 +778,16 @@ a chip, its own line).
   `CompleteSessionDialog` goes.
 - **The session card**, one for History and Tea Detail:
     - Tea name and `RatingDisplay`; when it started (clock time in a day group, the date in a flat
-      list), steep count and first-to-last span as icon-and-value pairs; a one-steep session shows
-      only the time.
-    - Rating dots, one per steep, only with 2+ steeps: fill by rating, a ring for unrated, one
-      semantic summary ("Steep ratings: 4, 4, 3, unrated").
+      list), steep count and first-to-last span; a one-steep session shows only the time.
+    - Rating dots, one per steep, only with 2+ steeps, in front of the steep count rather than
+      beside the stars, where two rating marks crowded each other: fill by rating, a ring for
+      unrated, one semantic summary ("Steep ratings: 4, 4, 3, unrated").
     - Up to 3 dominant tags as non-interactive tonal chips; the session note, 2 lines.
     - Parameters recede: steep 1's leaf, temperature and water, small and `onSurfaceVariant`. No
       brewing time.
     - In progress: a primary "Brewing, steep 3" label replaces the tap-swallowing `AssistChip`.
-      Photo thumbnail and menu unchanged.
+      No photo thumbnail: it no longer fit the taller card, and Session Detail shows photos. Menu
+      unchanged.
 - **History reads by day.**
     - A date header on every day for the last 30 days counting today ("Today", "Yesterday", then
       `formatDate`), per month beyond. Month headings carry no summary (Recap's job).
@@ -864,7 +865,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
    goes.
 4. [x] `feat: last time, before you brew`: `dominantTags`, the Log Tea card, the quick-brew line,
    `PrefillBanner`'s strings. Test: dominant tags.
-5. [ ] `feat: a session card for reading`
+5. [x] `feat: a session card for reading`
 6. [ ] `fix: history audit findings`. Nothing beyond the fixes.
 7. [ ] `feat: history reads by day`. Test: grouping across midnight, the 30-day edge, months.
 8. [ ] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.

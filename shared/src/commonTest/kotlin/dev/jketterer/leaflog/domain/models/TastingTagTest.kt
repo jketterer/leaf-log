@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.domain.models
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -64,6 +65,40 @@ class TastingTagTest {
         val session = session(CURATED_TAG_KEYS.map { SteepTag(it, true) })
 
         assertEquals(listOf("floral", "fruity", "honey"), session.dominantTags(vocabulary).map { it.id })
+    }
+
+    @Test
+    fun `the flavor profile counts a tag once per session however many steeps confirmed it`() {
+        val gongfu = session(*Array(10) { listOf(SteepTag("bitter", true)) })
+        val western = List(2) { session(listOf(SteepTag("sweet", true))) }
+
+        val profile = (western + gongfu).flavorProfile(vocabulary)!!
+
+        assertEquals(listOf("sweet" to 2, "bitter" to 1), profile.tags.map { (tag, count) -> tag.id to count })
+    }
+
+    @Test
+    fun `the flavor profile is out of the sessions with a confirmed tag`() {
+        val sessions = listOf(
+            session(listOf(SteepTag("floral", true))),
+            session(listOf(SteepTag("sweet", true))),
+            session(listOf(SteepTag("floral", false))),
+            session(emptyList()),
+        )
+
+        assertEquals(2, sessions.flavorProfile(vocabulary)!!.sessions)
+    }
+
+    @Test
+    fun `the flavor profile stops at eight`() {
+        val profile = listOf(session(CURATED_TAG_KEYS.map { SteepTag(it, true) })).flavorProfile(vocabulary)!!
+
+        assertEquals(CURATED_TAG_KEYS.take(8), profile.tags.map { it.first.id })
+    }
+
+    @Test
+    fun `no confirmed tags means no flavor profile`() {
+        assertNull(listOf(session(listOf(SteepTag("floral", false)))).flavorProfile(vocabulary))
     }
 
     private val vocabulary = CURATED_TAG_KEYS.mapIndexed { i, key ->

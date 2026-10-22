@@ -154,6 +154,8 @@ Use `expect`/`actual` pattern for platform differences.
 ## Important Conventions
 
 - Always use trailing commas for lists
+- American spelling everywhere: UI text, identifiers, comments, docs and commit messages
+  (`flavor`, `color`, `favorite`, `labeled`, `canceled`, `gray`, `normalize`)
 - Always include at least one @Preview composable function when creating UI components/screens
 - UI text you write or edit goes in `composeResources/values/strings.xml`, read with
   `stringResource`; anything with a count is a `<plurals>` read with `pluralStringResource`, never

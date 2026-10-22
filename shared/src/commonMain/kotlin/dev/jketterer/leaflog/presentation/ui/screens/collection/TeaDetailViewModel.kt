@@ -3,6 +3,9 @@ package dev.jketterer.leaflog.presentation.ui.screens.collection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.best
+import dev.jketterer.leaflog.domain.models.flavorProfile
+import dev.jketterer.leaflog.domain.models.steepCurve
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
@@ -226,10 +229,18 @@ class TeaDetailViewModel(
         viewModelScope.launch {
             teaSessionRepository.getSessionsByTeaFlow(teaId)
                 // The vocabulary is read again each time, so a tag made since shows by name
-                .map { it.take(5) to tastingTagRepository.getAll() }
+                .map { sessions -> sessions to tastingTagRepository.getAll() }
                 .catchError(Res.string.couldnt_load_tea)
                 .collect { (sessions, vocabulary) ->
-                    _state.update { it.copy(recentSessions = sessions, tagVocabulary = vocabulary) }
+                    _state.update {
+                        it.copy(
+                            recentSessions = sessions.take(5),
+                            bestBrew = sessions.best(),
+                            flavorProfile = sessions.flavorProfile(vocabulary),
+                            steepCurve = sessions.steepCurve(),
+                            tagVocabulary = vocabulary,
+                        )
+                    }
                 }
         }
     }

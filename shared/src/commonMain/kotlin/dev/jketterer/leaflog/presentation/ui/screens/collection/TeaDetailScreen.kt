@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -63,6 +64,7 @@ import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SteepCurve
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
@@ -79,6 +81,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
+import dev.jketterer.leaflog.presentation.ui.components.session.PastBrewCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
@@ -86,6 +89,7 @@ import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.best_brew
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_method_text
 import leaf_log.shared.generated.resources.delete_method_title
@@ -94,6 +98,8 @@ import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.delete_tea_text
 import leaf_log.shared.generated.resources.delete_tea_title
 import leaf_log.shared.generated.resources.header_recent_sessions
+import leaf_log.shared.generated.resources.log_a_brew
+import leaf_log.shared.generated.resources.tea_no_sessions
 import leaf_log.shared.generated.resources.tea_not_found
 import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.stringResource
@@ -408,6 +414,27 @@ private fun TeaDetailContent(
                             }
                         }
 
+                        state.bestBrew?.let { best ->
+                            item(key = "best_brew") {
+                                val sessionId = best.session.id
+                                PastBrewCard(
+                                    title = stringResource(Res.string.best_brew),
+                                    session = best,
+                                    tags = best.dominantTags(state.tagVocabulary),
+                                    onClick = { onIntent(TeaDetailIntent.SessionClicked(sessionId)) },
+                                    onBrewAgain = { onIntent(TeaDetailIntent.BrewAgainClicked(sessionId)) },
+                                )
+                            }
+                        }
+
+                        state.flavorProfile?.let { profile ->
+                            item(key = "flavor_profile") { FlavorProfileSection(profile) }
+                        }
+
+                        state.steepCurve?.let { curve ->
+                            item(key = "steep_curve") { SteepCurveSection(curve) }
+                        }
+
                         // Saved brewing methods
                         item(key = "saved_methods") {
                             SavedMethodsSection(
@@ -426,15 +453,27 @@ private fun TeaDetailContent(
                         }
 
                         // Recent sessions
-                        if (state.recentSessions.isNotEmpty()) {
-                            item(key = "sessions_header") {
-                                SectionHeader(stringResource(Res.string.header_recent_sessions)) {
+                        item(key = "sessions_header") {
+                            SectionHeader(stringResource(Res.string.header_recent_sessions)) {
+                                if (state.recentSessions.isNotEmpty()) {
                                     TextButton(onClick = { onIntent(TeaDetailIntent.ViewAllSessionsClicked) }) {
                                         Text(stringResource(Res.string.view_all))
                                     }
                                 }
                             }
+                        }
 
+                        if (state.recentSessions.isEmpty()) {
+                            item(key = "no_sessions") {
+                                EmptyState(
+                                    message = stringResource(Res.string.tea_no_sessions),
+                                    actionText = stringResource(Res.string.log_a_brew),
+                                    onActionClick = { onIntent(TeaDetailIntent.BrewThisTeaClicked(vesselId = null)) },
+                                    // EmptyState fills and scrolls, so it needs a bounded height in a list
+                                    modifier = Modifier.heightIn(max = 200.dp),
+                                )
+                            }
+                        } else {
                             items(
                                 items = state.recentSessions,
                                 key = { it.session.id },
@@ -629,12 +668,34 @@ private fun TeaDetailScreenPreview() {
                     createdAt = PreviewInstant,
                     updatedAt = PreviewInstant,
                 ),
-                recentSessions = listOf(
-                    previewSession(
-                        ratings = listOf(5f, 4.5f),
-                        status = SessionStatus.COMPLETED,
-                        brewingTime = 2.minutes + 30.seconds,
-                    ),
+                recentSessions = listOf(previewBest),
+                bestBrew = previewBest,
+                steepCurve = SteepCurve(meanRatings = mapOf(1 to 4f, 2 to 4.5f, 3 to 3.5f), peak = 2),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+private val previewBest = previewSession(
+    ratings = listOf(5f, 4.5f),
+    status = SessionStatus.COMPLETED,
+    brewingTime = 2.minutes + 30.seconds,
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun TeaDetailScreenNeverBrewedPreview() {
+    LeafLogTheme {
+        TeaDetailContent(
+            state = TeaDetailState(
+                tea = Tea(
+                    id = "tea-1",
+                    name = "Dragon Well",
+                    teaTypeId = "green",
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
+                    syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
             ),
             onIntent = {},

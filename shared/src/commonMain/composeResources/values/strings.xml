@@ -363,6 +363,18 @@
     <string name="prefill_type_default">Starting from your usual temperature for %1$s tea</string>
     <string name="prefill_change">Change</string>
     <string name="last_time">Last time</string>
+    <string name="best_brew">Best brew</string>
+    <string name="header_flavor_profile">Flavor profile</string>
+    <!-- How many of a tea's tagged sessions confirmed a tag: "in 7 of 12 sessions" -->
+    <plurals name="flavor_in_sessions">
+        <item quantity="one">in %1$d of %2$d session</item>
+        <item quantity="other">in %1$d of %2$d sessions</item>
+    </plurals>
+    <string name="header_steep_curve">Steep curve</string>
+    <string name="steep_curve_peak">Peaks at steep %1$d</string>
+    <!-- One bar of the steep curve, as a screen reader speaks it: "Steep 2, 4.5" -->
+    <string name="steep_curve_bar">Steep %1$d, %2$s</string>
+    <string name="tea_no_sessions">No brews of this tea yet</string>
     <plurals name="steep_count">
         <item quantity="one">%1$d steep</item>
         <item quantity="other">%1$d steeps</item>

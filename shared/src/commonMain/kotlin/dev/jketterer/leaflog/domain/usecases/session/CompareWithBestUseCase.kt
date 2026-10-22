@@ -1,7 +1,7 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
-import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.best
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlin.math.abs
 
@@ -26,11 +26,7 @@ class CompareWithBestUseCase(
 /** Ties for best go to the most recent. Measurement noise (±1 °C, ±10 ml, ±0.5 g, ±5 s) is not a difference. */
 fun compareWithBest(session: SessionWithSteeps, teaSessions: List<SessionWithSteeps>): VsBest? {
     val rating = session.effectiveRating ?: return null
-    val best = teaSessions
-        .filter { it.session.id != session.session.id && it.session.status == SessionStatus.COMPLETED }
-        .filter { it.effectiveRating != null }
-        .maxWithOrNull(compareBy({ it.effectiveRating }, { it.startedAt }))
-        ?: return null
+    val best = teaSessions.filter { it.session.id != session.session.id }.best() ?: return null
     if (rating > best.effectiveRating!!) return VsBest.NewBest
 
     val mine = session.steeps.first()

@@ -130,6 +130,34 @@ fun SessionWithSteeps.timeline(): List<TimelineSteep> = steeps.mapIndexed { inde
 fun List<SessionWithSteeps>.lastCompleted(): SessionWithSteeps? =
     filter { it.session.status == SessionStatus.COMPLETED }.maxByOrNull { it.startedAt }
 
+/** The highest-rated completed session, the most recent on a tie; null when none is rated. */
+fun List<SessionWithSteeps>.best(): SessionWithSteeps? =
+    filter { it.session.status == SessionStatus.COMPLETED && it.effectiveRating != null }
+        .maxWithOrNull(compareBy({ it.effectiveRating }, { it.startedAt }))
+
+/** A tea's mean rating by steep number, and the steep where it peaks. */
+data class SteepCurve(
+    val meanRatings: Map<Int, Float>,
+    val peak: Int,
+)
+
+/**
+ * Mean rating at each steep number two or more completed sessions rated, in steep order. Null
+ * unless one is past steep 1, so a tea only ever brewed western has none. A tie peaks earlier.
+ */
+fun List<SessionWithSteeps>.steepCurve(): SteepCurve? {
+    val means = filter { it.session.status == SessionStatus.COMPLETED }
+        .flatMap { it.steeps }
+        .mapNotNull { steep -> steep.rating?.let { steep.number to it } }
+        .groupBy({ it.first }, { it.second })
+        .filterValues { it.size >= 2 }
+        .mapValues { it.value.average().toFloat() }
+        .entries.sortedBy { it.key }
+        .associate { it.key to it.value }
+    if (means.keys.none { it > 1 }) return null
+    return SteepCurve(means, peak = means.maxBy { it.value }.key)
+}
+
 /** What a tea or a brewing configuration stores about the sessions that used it. */
 data class SessionStats(
     val count: Int,

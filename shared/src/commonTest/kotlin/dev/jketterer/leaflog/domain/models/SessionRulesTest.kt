@@ -123,6 +123,39 @@ class SessionRulesTest {
 
         assertEquals(80.seconds, session.totalBrewTime)
     }
+
+    @Test
+    fun `the best brew is the highest-rated completed session`() {
+        val best = aggregate(4f)
+        val sessions = listOf(aggregate(3f), best, aggregate(null), aggregate(5f, status = SessionStatus.IN_PROGRESS))
+
+        assertEquals(best, sessions.best())
+    }
+
+    @Test
+    fun `the steep curve is the mean rating at each steep`() {
+        val curve = listOf(aggregate(3f, 4f, 5f), aggregate(4f, 5f, 4f)).steepCurve()!!
+
+        assertEquals(mapOf(1 to 3.5f, 2 to 4.5f, 3 to 4.5f), curve.meanRatings)
+        assertEquals(2, curve.peak)
+    }
+
+    @Test
+    fun `a steep shows on the curve only when 2 sessions rated it`() {
+        val curve = listOf(aggregate(3f, 4f, 5f), aggregate(4f, 5f, null), aggregate(null, null)).steepCurve()!!
+
+        assertEquals(listOf(1, 2), curve.meanRatings.keys.toList())
+    }
+
+    @Test
+    fun `there is no curve until 2 sessions rated a steep past 1`() {
+        assertNull(listOf(aggregate(4f, 5f), aggregate(4f, null), aggregate(5f)).steepCurve())
+    }
+
+    @Test
+    fun `in-progress sessions are left out of the curve`() {
+        assertNull(listOf(aggregate(4f, 5f), aggregate(4f, 5f, status = SessionStatus.IN_PROGRESS)).steepCurve())
+    }
 }
 
 private fun SessionWithSteeps.editSteeps(edit: (Int, Steep) -> Steep) =

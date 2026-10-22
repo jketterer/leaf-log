@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -22,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
+import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Layers
 import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.TrendingUp
@@ -47,6 +51,8 @@ import dev.jketterer.leaflog.presentation.ui.theme.StarFilled
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.best_brew
+import leaf_log.shared.generated.resources.brew_again
 import leaf_log.shared.generated.resources.ic_tea_leaf
 import leaf_log.shared.generated.resources.last_time
 import leaf_log.shared.generated.resources.steep_count
@@ -56,16 +62,18 @@ import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * A tea's most recent completed session, read before brewing it again: when, its rating, how
+ * A past session of a tea under [title], such as its last or its best: when, its rating, how
  * steep 1 brewed and, for a gongfu session, how the steeps grew, then its [tags] and the first
- * line of its note. Times come from the plan Brew Again would replay.
+ * line of its note. Times come from the plan Brew Again would replay, which [onBrewAgain] starts.
  */
 @Composable
-fun LastTimeCard(
+fun PastBrewCard(
+    title: String,
     session: SessionWithSteeps,
     tags: List<TastingTag>,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onBrewAgain: (() -> Unit)? = null,
 ) {
     val plan = remember(session) { BrewingPlan.learnedFrom(session.steeps) }
     val date = session.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -81,7 +89,7 @@ fun LastTimeCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(stringResource(Res.string.last_time), style = MaterialTheme.typography.titleSmall)
+                Text(title, style = MaterialTheme.typography.titleSmall)
                 Text(
                     text = TimeFormatter.formatDate(date, currentDate()),
                     style = MaterialTheme.typography.bodySmall,
@@ -114,6 +122,13 @@ fun LastTimeCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+            }
+            onBrewAgain?.let {
+                FilledTonalButton(onClick = it, modifier = Modifier.align(Alignment.End)) {
+                    Icon(FeatherIcons.Coffee, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(Res.string.brew_again))
+                }
             }
         }
     }
@@ -173,9 +188,10 @@ private fun previewGongfuSession(): SessionWithSteeps {
 
 @Preview(showBackground = true)
 @Composable
-private fun LastTimeCardGongfuPreview() {
+private fun PastBrewCardGongfuPreview() {
     LeafLogTheme {
-        LastTimeCard(
+        PastBrewCard(
+            title = stringResource(Res.string.last_time),
             session = previewGongfuSession(),
             tags = previewTags,
             onClick = {},
@@ -186,12 +202,14 @@ private fun LastTimeCardGongfuPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun LastTimeCardWesternPreview() {
+private fun PastBrewCardWesternPreview() {
     LeafLogTheme {
-        LastTimeCard(
+        PastBrewCard(
+            title = stringResource(Res.string.best_brew),
             session = previewSession(status = SessionStatus.COMPLETED, teaQuantityGrams = null),
             tags = emptyList(),
             onClick = {},
+            onBrewAgain = {},
             modifier = Modifier.padding(16.dp),
         )
     }

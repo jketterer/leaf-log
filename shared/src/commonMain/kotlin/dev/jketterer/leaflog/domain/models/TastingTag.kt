@@ -44,7 +44,29 @@ fun List<SteepTag>.carriedForward(): List<SteepTag> = map { it.copy(confirmed = 
 fun SessionWithSteeps.dominantTags(vocabulary: List<TastingTag>): List<TastingTag> {
     val counts = steeps.flatMap { steep -> steep.tags.filter { it.confirmed }.map { it.tagId } }
         .groupingBy { it }.eachCount()
-    return vocabulary.filter { it.id in counts }
-        .sortedByDescending { counts.getValue(it.id) }
-        .take(3)
+    return vocabulary.mostCounted(counts, limit = 3)
 }
+
+/** A tea's most confirmed tags, each with the number of [sessions] it was confirmed in. */
+data class FlavorProfile(
+    val tags: List<Pair<TastingTag, Int>>,
+    /** The completed sessions with any confirmed tag: what each tag's count is out of. */
+    val sessions: Int,
+)
+
+/**
+ * The tags confirmed in the most completed sessions, at most eight, ties in [vocabulary] order.
+ * A tag counts once per session however many steeps confirmed it, so a ten-steep gongfu session
+ * weighs no more than a western one. Null when no session has a confirmed tag.
+ */
+fun List<SessionWithSteeps>.flavorProfile(vocabulary: List<TastingTag>): FlavorProfile? {
+    val tagged = filter { it.session.status == SessionStatus.COMPLETED }
+        .map { session -> session.steeps.flatMap { steep -> steep.tags.filter { it.confirmed }.map { it.tagId } }.toSet() }
+        .filter { it.isNotEmpty() }
+    val counts = tagged.flatten().groupingBy { it }.eachCount()
+    val tags = vocabulary.mostCounted(counts, limit = 8).map { it to counts.getValue(it.id) }
+    return if (tags.isEmpty()) null else FlavorProfile(tags, sessions = tagged.size)
+}
+
+private fun List<TastingTag>.mostCounted(counts: Map<String, Int>, limit: Int): List<TastingTag> =
+    filter { it.id in counts }.sortedByDescending { counts.getValue(it.id) }.take(limit)

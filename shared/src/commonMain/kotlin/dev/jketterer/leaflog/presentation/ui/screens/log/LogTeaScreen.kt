@@ -44,7 +44,7 @@ import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.LeafQuantityField
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
-import dev.jketterer.leaflog.presentation.ui.components.session.LastTimeCard
+import dev.jketterer.leaflog.presentation.ui.components.session.PastBrewCard
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
@@ -57,6 +57,7 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_tea_quantity_required
 import leaf_log.shared.generated.resources.field_temperature_required
 import leaf_log.shared.generated.resources.field_water_quantity_required
+import leaf_log.shared.generated.resources.last_time
 import leaf_log.shared.generated.resources.rinsed
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -170,7 +171,8 @@ private fun LogTeaContent(
 
                 state.lastSession?.let { session ->
                     item(key = "last_time") {
-                        LastTimeCard(
+                        PastBrewCard(
+                            title = stringResource(Res.string.last_time),
                             session = session,
                             tags = state.lastSessionTags,
                             onClick = { onIntent(LogTeaIntent.LastTimeClicked(session.session.id)) },

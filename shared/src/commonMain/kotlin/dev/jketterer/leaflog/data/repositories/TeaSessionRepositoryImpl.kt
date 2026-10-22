@@ -19,6 +19,8 @@ class TeaSessionRepositoryImpl(
     override suspend fun getAllSessions(): List<SessionWithSteeps> =
         teaSessionDao.getAllSessions().toAggregates()
 
+    override fun getSessionIdsFlow(): Flow<List<String>> = teaSessionDao.getSessionIdsFlow()
+
     override fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>> =
         teaSessionDao.getRecentSessionsFlow(limit).map { it.toAggregates() }
 

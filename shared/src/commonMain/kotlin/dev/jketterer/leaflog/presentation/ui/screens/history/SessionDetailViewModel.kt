@@ -25,12 +25,16 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -98,8 +102,12 @@ class SessionDetailViewModel(
             },
         )
 
+    /** Starts at the route's session; stepping moves it without leaving the screen. */
+    private val shownSessionId = MutableStateFlow(route.sessionId)
+
     init {
-        loadSession(route.sessionId)
+        loadSession()
+        loadNeighbours()
         loadVocabulary()
     }
 
@@ -147,6 +155,8 @@ class SessionDetailViewModel(
                 _navEvents.trySend(SessionDetailNavEvent.NavigateBack)
             }
 
+            is SessionDetailIntent.StepToSession -> shownSessionId.value = intent.sessionId
+
             is SessionDetailIntent.SaveAsConfigurationClicked -> saveAsConfiguration()
             is SessionDetailIntent.ConfirmSaveConfiguration -> confirmSaveConfiguration(intent.label)
             is SessionDetailIntent.DismissSaveConfiguration -> _state.update {
@@ -188,23 +198,33 @@ class SessionDetailViewModel(
         }
     }
 
-    private fun loadSession(sessionId: String) {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun loadSession() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
 
             try {
-                teaSessionRepository.getSessionFlow(sessionId)
+                shownSessionId
+                    .flatMapLatest { teaSessionRepository.getSessionFlow(it) }
                     .catch { e ->
                         _state.update { it.copy(isLoading = false) }
                         messages.failure(e, Res.string.couldnt_load_session)
                     }
-                    .collect { session ->
+                    .collectLatest { session ->
                         if (session != null) {
-                            _state.update { it.copy(session = session, isLoading = false) }
-
-                            loadRelatedData(session.session.teaId, session.session.vesselId)
-                            session.session.usedConfigurationId?.let { configId ->
-                                loadConfigurationLabel(configId)
+                            // Everything shown arrives in one update, so a stepped-to session never
+                            // appears beside the last one's tea
+                            val tea = loadTea(session.session.teaId)
+                            val vessel = loadVessel(session.session.vesselId)
+                            val label = session.session.usedConfigurationId?.let { loadConfigurationLabel(it) }
+                            _state.update {
+                                it.copy(
+                                    session = session,
+                                    tea = tea,
+                                    vessel = vessel,
+                                    usedConfigurationLabel = label,
+                                    isLoading = false,
+                                )
                             }
                         } else {
                             // Not found shows in place of the session; one deleted from this screen
@@ -219,18 +239,28 @@ class SessionDetailViewModel(
         }
     }
 
-    private suspend fun loadRelatedData(teaId: String, vesselId: String) {
-        teaRepository.getByIdFlow(teaId)
-            .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load tea: ${e.message}" } }
-            .firstOrNull()
-            .let { tea -> _state.update { it.copy(tea = tea) } }
+    private suspend fun loadTea(teaId: String) = teaRepository.getByIdFlow(teaId)
+        .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load tea: ${e.message}" } }
+        .firstOrNull()
 
-        brewingVesselRepository.getByIdFlow(vesselId)
-            .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load vessel: ${e.message}" } }
-            .firstOrNull()
-            .let { vessel ->
-                _state.update { it.copy(vessel = vessel) }
-            }
+    private suspend fun loadVessel(vesselId: String) = brewingVesselRepository.getByIdFlow(vesselId)
+        .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load vessel: ${e.message}" } }
+        .firstOrNull()
+
+    private fun loadNeighbours() {
+        viewModelScope.launch {
+            combine(shownSessionId, teaSessionRepository.getSessionIdsFlow()) { id, ids -> id to ids }
+                .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load neighbours: ${e.message}" } }
+                .collect { (id, ids) ->
+                    val index = ids.indexOf(id).takeIf { it >= 0 }
+                    _state.update {
+                        it.copy(
+                            previousSessionId = index?.let { i -> ids.getOrNull(i - 1) },
+                            nextSessionId = index?.let { i -> ids.getOrNull(i + 1) },
+                        )
+                    }
+                }
+        }
     }
 
     private fun loadVocabulary() {
@@ -244,13 +274,11 @@ class SessionDetailViewModel(
         }
     }
 
-    private suspend fun loadConfigurationLabel(configurationId: String) {
-        try {
-            val config = brewingConfigurationRepository.getById(configurationId)
-            _state.update { it.copy(usedConfigurationLabel = config?.label) }
-        } catch (e: Exception) {
-            Logger.w(tag = "SessionDetail") { "Failed to load configuration: ${e.message}" }
-        }
+    private suspend fun loadConfigurationLabel(configurationId: String): String? = try {
+        brewingConfigurationRepository.getById(configurationId)?.label
+    } catch (e: Exception) {
+        Logger.w(tag = "SessionDetail") { "Failed to load configuration: ${e.message}" }
+        null
     }
 
     private fun showDeleteConfirmation() {

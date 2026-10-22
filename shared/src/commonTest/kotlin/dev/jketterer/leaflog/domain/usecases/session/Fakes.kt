@@ -141,6 +141,7 @@ class FakeTeaSessionRepository(
     override fun getSessionFlow(id: String): Flow<SessionWithSteeps?> = TODO("unused by these tests")
     override fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
+    override fun getSessionIdsFlow(): Flow<List<String>> = TODO("unused by these tests")
 
 }
 

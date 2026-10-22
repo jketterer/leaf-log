@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-22 (Bet 3: brew parameters sheet)
+> **Last updated:** 2026-10-22 (Bet 3: step through sessions)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -832,9 +832,11 @@ a chip, its own line).
       Changing the date shifts every steep by the same amount. Changing the tea (via
       `TeaPickerSheet`) recomputes both teas' stats and clears `usedConfigurationId` and
       `planSessionId`.
-    - Previous/next: chevrons in the top bar, chronological across all sessions, ignoring History's
-      filters. Each replaces the route, so back still returns to the origin. Considered: a pager
-      (fights photo rows, a ViewModel per page) and per-tea stepping (Tea Detail's job).
+    - Previous/next: up/down chevrons in the top bar (left/right read as back beside the arrow),
+      chronological across all sessions, ignoring History's filters. The screen steps in place:
+      only the content slides, newer from above as in History, while both bars stay; back still
+      returns to the origin. Considered: replacing the route (the whole screen slides in sideways),
+      a pager (fights photo rows, a ViewModel per page) and per-tea stepping (Tea Detail's job).
 - **Tea Detail tells the tea's story**, in order: info, best brew, flavour profile, steep curve,
   methods, sessions.
     - Best brew: the best `effectiveRating` completed session, with date, parameters, tags, and Brew
@@ -890,7 +892,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
     shift keeps intervals; a tea change recomputes both teas and clears the method links.
 14. [x] `refactor: brew parameters sheet`: `EditSessionParametersSheet` renamed
     `BrewParametersSheet`; the unused `CompleteSessionDialog`, left behind by 3, deleted.
-15. [ ] `feat: step through sessions`
+15. [x] `feat: step through sessions`
 16. [ ] `feat: tea detail tells the story`: best brew, flavour profile, steep curve, empty state.
     Tests: the profile counts per session; the curve's peak and minimum data.
 17. [ ] `feat: where a method came from`

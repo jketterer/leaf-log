@@ -374,10 +374,12 @@
     <string name="brewing_steep_n">Brewing, steep %1$d</string>
     <string name="steep_ratings">Steep ratings: %1$s</string>
     <string name="discard_session_action">Discard session</string>
-    <string name="session_title">Session</string>
+    <string name="session_title">Session Details</string>
     <string name="session_not_found">Session not found</string>
     <string name="edit_session">Edit session</string>
     <string name="delete_session">Delete session</string>
+    <string name="previous_session">Previous session</string>
+    <string name="next_session">Next session</string>
     <string name="delete_steep">Delete steep</string>
     <string name="add_steep">Add steep</string>
     <!-- A rest between steeps: "12m break" -->

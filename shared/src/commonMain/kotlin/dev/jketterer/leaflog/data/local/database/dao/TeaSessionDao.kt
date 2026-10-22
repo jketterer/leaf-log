@@ -121,6 +121,15 @@ interface TeaSessionDao {
 
     @Query(
         """
+        SELECT id FROM tea_session
+        WHERE deletedAt IS NULL AND parentSessionId IS NULL
+        ORDER BY timestamp, id
+    """
+    )
+    fun getSessionIdsFlow(): Flow<List<String>>
+
+    @Query(
+        """
         SELECT * FROM tea_session
         WHERE deletedAt IS NULL
         AND COALESCE(parentSessionId, id) IN (

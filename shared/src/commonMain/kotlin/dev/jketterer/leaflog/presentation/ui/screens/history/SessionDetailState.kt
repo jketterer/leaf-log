@@ -14,6 +14,10 @@ data class SessionDetailState(
     val usedConfigurationLabel: String? = null,
     val vocabulary: List<TastingTag> = emptyList(),
 
+    // Its chronological neighbours across every session, for stepping through
+    val previousSessionId: String? = null,
+    val nextSessionId: String? = null,
+
     // UI state
     val isLoading: Boolean = false,
     val showDeleteConfirmation: Boolean = false,

@@ -1,5 +1,12 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
@@ -26,19 +35,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.ChevronDown
+import compose.icons.feathericons.ChevronUp
 import compose.icons.feathericons.Coffee
-import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Plus
-import compose.icons.feathericons.Trash2
+import compose.icons.feathericons.MoreVertical
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.timeline
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
@@ -63,7 +76,10 @@ import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.delete_steep_text
 import leaf_log.shared.generated.resources.delete_steep_title
 import leaf_log.shared.generated.resources.edit_session
+import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
+import leaf_log.shared.generated.resources.next_session
+import leaf_log.shared.generated.resources.previous_session
 import leaf_log.shared.generated.resources.review_save_method_header
 import leaf_log.shared.generated.resources.session_not_found
 import leaf_log.shared.generated.resources.session_title
@@ -119,63 +135,54 @@ private fun SessionDetailContent(
                 }
             },
             actions = {
-                IconButton(onClick = { onIntent(SessionDetailIntent.EditSessionClicked) }) {
-                    Icon(FeatherIcons.Edit2, contentDescription = stringResource(Res.string.edit_session))
+                // Disabled rather than hidden at either end, so the other icons stay put
+                IconButton(
+                    onClick = { state.nextSessionId?.let { onIntent(SessionDetailIntent.StepToSession(it)) } },
+                    enabled = state.nextSessionId != null,
+                ) {
+                    Icon(FeatherIcons.ChevronUp, contentDescription = stringResource(Res.string.next_session))
                 }
-                IconButton(onClick = { onIntent(SessionDetailIntent.DeleteSessionClicked) }) {
-                    Icon(FeatherIcons.Trash2, contentDescription = stringResource(Res.string.delete_session))
+                IconButton(
+                    onClick = { state.previousSessionId?.let { onIntent(SessionDetailIntent.StepToSession(it)) } },
+                    enabled = state.previousSessionId != null,
+                ) {
+                    Icon(FeatherIcons.ChevronDown, contentDescription = stringResource(Res.string.previous_session))
+                }
+                Box {
+                    var showMenu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(FeatherIcons.MoreVertical, contentDescription = stringResource(Res.string.more_options))
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.edit_session)) },
+                            onClick = {
+                                showMenu = false
+                                onIntent(SessionDetailIntent.EditSessionClicked)
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.delete_session)) },
+                            onClick = {
+                                showMenu = false
+                                onIntent(SessionDetailIntent.DeleteSessionClicked)
+                            },
+                        )
+                    }
                 }
             },
         )
         Box(modifier = Modifier.weight(1f)) {
-            val session = state.session
-            when {
-                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-
-                session == null -> EmptyState(
-                    message = stringResource(Res.string.session_not_found),
-                    modifier = Modifier.fillMaxSize(),
-                )
-
-                else -> Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp),
-                ) {
-                    val tea = state.tea
-                    SessionHeaderSection(
-                        teaName = tea?.name,
-                        onTeaClick = tea?.let { { onIntent(SessionDetailIntent.ViewTeaClicked(it.id)) } },
-                        startedAt = session.startedAt,
-                        rating = session.effectiveRating,
-                        session = session.session,
-                        vesselName = state.vessel?.name,
-                        methodLabel = state.usedConfigurationLabel,
-                        photos = session.steeps.flatMap { it.photos },
-                    )
-                    SteepTimelineSection(
-                        timeline = session.timeline(),
-                        totalBrewTime = session.totalBrewTime,
-                        vocabulary = state.vocabulary,
-                        onSteepClick = { onIntent(SessionDetailIntent.SteepClicked(it)) },
-                    )
-                    // Recording a forgotten steep; an in-progress session adds steeps as it brews
-                    if (session.session.status == SessionStatus.COMPLETED) {
-                        OutlinedButton(
-                            onClick = { onIntent(SessionDetailIntent.AddSteepClicked) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(Res.string.add_steep))
-                        }
-                    }
-                }
-            }
+            // Only the content moves when stepping; the bars stay put
+            AnimatedContent(
+                targetState = state,
+                contentKey = { it.session?.session?.id },
+                transitionSpec = { stepTransition(initialState.session, targetState.session) },
+                label = "session",
+            ) { shown -> SessionDetailBody(shown, onIntent) }
 
             SnackbarHost(
                 hostState = snackbarHostState,
@@ -212,6 +219,71 @@ private fun SessionDetailContent(
     }
 
     SessionDetailDialogs(state, onIntent)
+}
+
+@Composable
+private fun SessionDetailBody(
+    state: SessionDetailState,
+    onIntent: (SessionDetailIntent) -> Unit,
+) {
+    val session = state.session
+    when {
+        state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+
+        session == null -> EmptyState(
+            message = stringResource(Res.string.session_not_found),
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        else -> Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            val tea = state.tea
+            SessionHeaderSection(
+                teaName = tea?.name,
+                onTeaClick = tea?.let { { onIntent(SessionDetailIntent.ViewTeaClicked(it.id)) } },
+                startedAt = session.startedAt,
+                rating = session.effectiveRating,
+                session = session.session,
+                vesselName = state.vessel?.name,
+                methodLabel = state.usedConfigurationLabel,
+                photos = session.steeps.flatMap { it.photos },
+            )
+            SteepTimelineSection(
+                timeline = session.timeline(),
+                totalBrewTime = session.totalBrewTime,
+                vocabulary = state.vocabulary,
+                onSteepClick = { onIntent(SessionDetailIntent.SteepClicked(it)) },
+            )
+            // Recording a forgotten steep; an in-progress session adds steeps as it brews
+            if (session.session.status == SessionStatus.COMPLETED) {
+                OutlinedButton(
+                    onClick = { onIntent(SessionDetailIntent.AddSteepClicked) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(Res.string.add_steep))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * A newer session comes down from above, as in History's newest-first list, and an older one up from
+ * below. The first load, or a session deleted from under the screen, just appears.
+ */
+private fun stepTransition(from: SessionWithSteeps?, to: SessionWithSteeps?): ContentTransform {
+    if (from == null || to == null) return EnterTransition.None togetherWith ExitTransition.None
+    val direction = if (to.startedAt > from.startedAt) -1 else 1
+    return slideInVertically { it * direction } togetherWith slideOutVertically { -it * direction }
 }
 
 @Composable
@@ -335,6 +407,7 @@ private fun SessionDetailScreenPreview() {
                     createdAt = PreviewInstant,
                     updatedAt = PreviewInstant,
                 ),
+                previousSessionId = "session-0",
             ),
             onIntent = {},
         )

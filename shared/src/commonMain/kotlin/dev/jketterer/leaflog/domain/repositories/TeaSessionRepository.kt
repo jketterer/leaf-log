@@ -8,6 +8,8 @@ interface TeaSessionRepository {
     // Sessions with their steeps, newest first. Filters apply to the session, not its steeps.
     fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>>
     suspend fun getAllSessions(): List<SessionWithSteeps>
+    /** Every session's id, oldest first. */
+    fun getSessionIdsFlow(): Flow<List<String>>
     fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>>
     suspend fun getSession(id: String): SessionWithSteeps?
     fun getSessionFlow(id: String): Flow<SessionWithSteeps?>

@@ -41,6 +41,7 @@ import dev.jketterer.leaflog.domain.usecases.session.VsBest
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
+import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditSheet
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -196,14 +197,17 @@ private fun SessionReviewContent(
     val editingSteep = state.session?.steeps?.firstOrNull { it.id == state.editingSteepId }
     if (editingSteep != null) {
         SteepEditSheet(
+            steep = editingSteep,
             rating = state.editRating,
             notes = state.editNotes,
-            tags = editingSteep.tags,
             vocabulary = state.vocabulary,
             onRatingChange = { onIntent(SessionReviewIntent.SteepRatingChanged(it)) },
             onNotesChange = { onIntent(SessionReviewIntent.SteepNotesChanged(it)) },
             onTagToggle = { onIntent(SessionReviewIntent.SteepTagToggled(it)) },
             onTagCreate = { onIntent(SessionReviewIntent.SteepTagCreated(it)) },
+            onParametersChange = { time, temperature, water ->
+                onIntent(SessionReviewIntent.SteepParametersChanged(time, temperature, water))
+            },
             onDismiss = { onIntent(SessionReviewIntent.DismissSteepEdit) },
         )
     }

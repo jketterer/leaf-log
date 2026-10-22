@@ -123,6 +123,8 @@
     <string name="header_steep_plan">Steep plan</string>
     <string name="header_optional_details">Optional details</string>
     <string name="header_steep_parameters">Steep parameters</string>
+    <string name="edit_parameters">Edit parameters</string>
+    <string name="loose_leaf">Loose leaf</string>
     <string name="header_session_details">Session details</string>
     <string name="header_rating">Rating</string>
     <string name="header_notes">Notes</string>
@@ -188,6 +190,7 @@
 
     <!-- Confirmations -->
     <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
     <string name="delete">Delete</string>
     <string name="discard">Discard</string>
     <string name="discard_changes_title">Discard Changes?</string>

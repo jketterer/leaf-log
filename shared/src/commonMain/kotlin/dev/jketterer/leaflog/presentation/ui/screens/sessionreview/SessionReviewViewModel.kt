@@ -93,6 +93,14 @@ class SessionReviewViewModel(
 
             is SessionReviewIntent.SteepTagToggled -> toggleTag(intent.tagId)
             is SessionReviewIntent.SteepTagCreated -> createTag(intent.name)
+            is SessionReviewIntent.SteepParametersChanged -> {
+                val id = _state.value.editingSteepId ?: return
+                editSteep(id) {
+                    it.withBrewedTime(intent.brewedTime)
+                        .copy(temperatureCelsius = intent.temperatureCelsius, waterQuantityMl = intent.waterQuantityMl)
+                }
+            }
+
             is SessionReviewIntent.DismissSteepEdit -> _state.update { it.copy(editingSteepId = null) }
             is SessionReviewIntent.MethodLabelChanged -> _state.update { it.copy(methodLabel = intent.label) }
             is SessionReviewIntent.SaveMethod -> saveMethod()

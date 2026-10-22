@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-21 (Bet 3 designed)
+> **Last updated:** 2026-10-22 (Bet 3: one steep editor)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -818,6 +818,11 @@ a chip, its own line).
     - **One steep sheet:** the review's `SteepEditSheet` moves to `components/session/` and gains a
       parameters row (time, temperature, water through `EditSessionParametersSheet`). Edits save as
       made, as in the review. Delete steep lives in its overflow.
+        - Its body (stars, parameters row, tags, note) is one composable the slim review shares,
+          keeping its own layout around it: the collapsed note, Next and Finish. A finished
+          steep and the steep just brewed then edit the same way.
+        - `EditSessionParametersSheet` has edited steeps as well as sessions since the parameters
+          row: renamed `BrewParametersSheet` once Edit Session is session-only.
     - **Edit Session is session-only:** vessel, water type, leaf, rinse, location, plus tea, date
       and time, and the session note. Its steep mode, photo handling and save-method dialog go.
       Changing the date shifts every steep by the same amount. Changing the tea (via
@@ -857,7 +862,7 @@ where you'd want it; the journal audit findings (report 2) for History, Session 
 Session are cleared; Track B line for an upgrade over the v11 build.
 
 **Commits.** Each compiles, passes tests and leaves the app working. 2 → 3; 2 → 4 → 5 → 8; 6 → 7 →
-8 → 9; 5 → 15; 11 → 12 → 13, 14.
+8 → 9; 5 → 16; 11 → 12 → 13 → 14; 12 → 15.
 
 1. [x] `docs: record the Bet 3 design`
 2. [x] `feat: a session note of its own`: v12, backup version 4. The review and Log Tea write it;
@@ -874,17 +879,19 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 8. [x] `feat: history reads by day`. Test: grouping across midnight, the 30-day edge, months.
 9. [x] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
 10. [x] `feat: search the collection`
-11. [ ] `refactor: one steep sheet`: a move plus the parameters row.
-12. [ ] `feat: session detail as a steep timeline`: Edit Session's steep mode goes. Test: deltas and
-    breaks.
+11. [x] `refactor: one steep sheet`: a move plus the parameters row.
+12. [ ] `feat: session detail as a steep timeline`: Edit Session's steep mode goes; the steep
+    sheet's body becomes one composable the slim review shares. Test: deltas and breaks.
 13. [ ] `feat: edit a session's tea, date and note`, with Edit Session's findings. Tests: the date
     shift keeps intervals; a tea change recomputes both teas and clears the method links.
-14. [ ] `feat: step through sessions`
-15. [ ] `feat: tea detail tells the story`: best brew, flavour profile, steep curve, empty state.
+14. [ ] `refactor: brew parameters sheet`: `EditSessionParametersSheet` renamed
+    `BrewParametersSheet`; the unused `CompleteSessionDialog`, left behind by 3, deleted.
+15. [ ] `feat: step through sessions`
+16. [ ] `feat: tea detail tells the story`: best brew, flavour profile, steep curve, empty state.
     Tests: the profile counts per session; the curve's peak and minimum data.
-16. [ ] `feat: where a method came from`
-17. [ ] `feat: cellar age`
-18. [ ] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
+17. [ ] `feat: where a method came from`
+18. [ ] `feat: cellar age`
+19. [ ] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
     Session sections deleted, Analytics kept for Bet 4.
 
 ---

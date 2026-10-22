@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -23,11 +22,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,15 +50,12 @@ import dev.jketterer.leaflog.domain.usecases.session.VsBest
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
-import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
-import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepTagChips
-import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.review_best_session
@@ -75,8 +69,6 @@ import leaf_log.shared.generated.resources.review_method_label
 import leaf_log.shared.generated.resources.review_method_saved
 import leaf_log.shared.generated.resources.review_method_saved_detail
 import leaf_log.shared.generated.resources.review_new_best
-import leaf_log.shared.generated.resources.review_note_label
-import leaf_log.shared.generated.resources.review_rate_steep
 import leaf_log.shared.generated.resources.review_same_as_best
 import leaf_log.shared.generated.resources.review_save_method
 import leaf_log.shared.generated.resources.review_save_method_header
@@ -419,79 +411,6 @@ internal fun UpdateMethodCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun SteepEditSheet(
-    rating: Float,
-    notes: String,
-    tags: List<SteepTag>,
-    vocabulary: List<TastingTag>,
-    onRatingChange: (Float) -> Unit,
-    onNotesChange: (String) -> Unit,
-    onTagToggle: (String) -> Unit,
-    onTagCreate: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        SteepEditSheetContent(
-            rating,
-            notes,
-            tags,
-            vocabulary,
-            onRatingChange,
-            onNotesChange,
-            onTagToggle,
-            onTagCreate,
-        )
-    }
-}
-
-@Composable
-private fun SteepEditSheetContent(
-    rating: Float,
-    notes: String,
-    tags: List<SteepTag>,
-    vocabulary: List<TastingTag>,
-    onRatingChange: (Float) -> Unit,
-    onNotesChange: (String) -> Unit,
-    onTagToggle: (String) -> Unit,
-    onTagCreate: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = stringResource(Res.string.review_rate_steep),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        RatingSelector(
-            rating = rating,
-            onRatingChange = onRatingChange,
-            modifier = Modifier.fillMaxWidth()
-        )
-        SteepTags(
-            tags = tags,
-            vocabulary = vocabulary,
-            onToggle = onTagToggle,
-            onCreate = onTagCreate,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = notes,
-            onValueChange = onNotesChange,
-            label = { Text(stringResource(Res.string.review_note_label)) },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            maxLines = 8,
-        )
-        Spacer(Modifier.height(8.dp))
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun SteepRowsSectionPreview() {
@@ -600,32 +519,5 @@ private fun UpdateMethodCardPreview() {
             onUpdate = {},
             modifier = Modifier.padding(16.dp)
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun SteepEditSheetPreview() {
-    LeafLogTheme {
-        SheetPreviewContainer {
-            SteepEditSheetContent(
-                rating = 4f,
-                notes = "Sweet finish",
-                tags = listOf(SteepTag("floral", confirmed = true)),
-                vocabulary = listOf(
-                    TastingTag(
-                        "floral",
-                        key = "floral",
-                        name = null,
-                        isCustom = false,
-                        displayOrder = 0
-                    )
-                ),
-                onRatingChange = {},
-                onNotesChange = {},
-                onTagToggle = {},
-                onTagCreate = {},
-            )
-        }
     }
 }

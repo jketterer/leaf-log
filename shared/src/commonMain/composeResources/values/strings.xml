@@ -383,4 +383,13 @@
     <!-- A rest between steeps: "12m break" -->
     <string name="session_break">%1$s break</string>
     <string name="session_total_brew_time">Total brew time %1$s</string>
+    <string name="field_date">Date</string>
+    <string name="field_time">Time</string>
+    <string name="field_location_optional">Location (optional)</string>
+    <string name="field_session_note">Session note (optional)</string>
+    <string name="ok">OK</string>
+    <string name="change">Change</string>
+    <!-- Spoken action on a date or time field: "Select Date" -->
+    <string name="select_field">Select %1$s</string>
+    <string name="clear_field">Clear %1$s</string>
 </resources>

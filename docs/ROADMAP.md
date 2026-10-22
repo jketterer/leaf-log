@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-22 (Bet 3: session detail as a timeline)
+> **Last updated:** 2026-10-22 (Bet 3: edit a session's tea, date and note)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -886,7 +886,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 11. [x] `refactor: one steep sheet`: a move plus the parameters row.
 12. [x] `feat: session detail as a steep timeline`: Edit Session's steep mode goes; the steep
     sheet's body becomes one composable the slim review shares. Test: deltas and breaks.
-13. [ ] `feat: edit a session's tea, date and note`, with Edit Session's findings. Tests: the date
+13. [x] `feat: edit a session's tea, date and note`, with Edit Session's findings. Tests: the date
     shift keeps intervals; a tea change recomputes both teas and clears the method links.
 14. [ ] `refactor: brew parameters sheet`: `EditSessionParametersSheet` renamed
     `BrewParametersSheet`; the unused `CompleteSessionDialog`, left behind by 3, deleted.

@@ -42,6 +42,7 @@ import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.LeafQuantityField
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.session.LastTimeCard
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
@@ -53,6 +54,7 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.field_tea_quantity_required
 import leaf_log.shared.generated.resources.field_temperature_required
 import leaf_log.shared.generated.resources.field_water_quantity_required
 import leaf_log.shared.generated.resources.rinsed
@@ -232,13 +234,15 @@ private fun LogTeaContent(
                     }
 
                     item(key = "tea_quantity") {
-                        TeaQuantitySection(
+                        LeafQuantityField(
                             isTeaBag = state.isTeaBag,
                             teaQuantityGrams = state.teaQuantityGrams,
-                            weightUnit = state.userPreferences.weightUnit,
-                            errorMessage = state.teaQuantityError,
                             onTeaBagModeChanged = { onIntent(LogTeaIntent.TeaBagModeChanged(it)) },
                             onTeaQuantityChanged = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
+                            label = stringResource(Res.string.field_tea_quantity_required),
+                            errorMessage = state.teaQuantityError,
+                            presets = true,
+                            weightUnit = state.userPreferences.weightUnit,
                         )
                     }
 

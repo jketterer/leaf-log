@@ -3,16 +3,21 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
 import org.jetbrains.compose.resources.StringResource
+import kotlin.time.Instant
 
 data class EditSessionState(
     // Session metadata
     val existingSession: Session? = null,
-    val existingSteep: Steep? = null, // Steep 1, which holds the session's water
+    val existingSteep: Steep? = null, // Steep 1, which holds the session's water and start
 
     // Form fields
+    val tea: Tea? = null,
+    val startedAt: Instant? = null,
     val selectedVessel: BrewingVessel? = null,
     val selectedWaterType: WaterType = WaterType.FILTERED,
     val rinsed: Boolean = false,
@@ -24,14 +29,15 @@ data class EditSessionState(
 
     // Available options
     val availableVessels: List<BrewingVessel> = emptyList(),
+    val availableTeas: List<Tea> = emptyList(),
+    val recentTeas: List<Tea> = emptyList(),
+    val teaTypes: List<TeaType> = emptyList(),
 
     // Validation errors
-    val vesselError: String? = null,
     val waterQuantityError: StringResource? = null,
     val teaQuantityError: StringResource? = null,
 
     // UI state
-    val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
@@ -40,7 +46,9 @@ data class EditSessionState(
             val session = existingSession ?: return false
             val steep = existingSteep ?: return false
 
-            return selectedVessel?.id != session.vesselId ||
+            return tea?.id != session.teaId ||
+                startedAt != steep.timestamp ||
+                selectedVessel?.id != session.vesselId ||
                 selectedWaterType != session.waterType ||
                 rinsed != session.rinsed ||
                 waterQuantityMl != steep.waterQuantityMl ||
@@ -52,15 +60,15 @@ data class EditSessionState(
 
     val isValid: Boolean
         get() {
-            val fieldsValid = selectedVessel != null &&
+            val fieldsValid = tea != null &&
+                startedAt != null &&
+                selectedVessel != null &&
                 waterQuantityMl != null &&
                 waterQuantityMl > 0
 
             val teaQuantityValid = isTeaBag || (teaQuantityGrams != null && teaQuantityGrams > 0)
 
-            val noErrors = vesselError == null &&
-                waterQuantityError == null &&
-                teaQuantityError == null
+            val noErrors = waterQuantityError == null && teaQuantityError == null
 
             return fieldsValid && teaQuantityValid && noErrors
         }

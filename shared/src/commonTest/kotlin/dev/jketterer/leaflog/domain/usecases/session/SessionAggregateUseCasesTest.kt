@@ -16,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -197,6 +198,49 @@ class SessionAggregateUseCasesTest {
         assertEquals("Floral", updated.steeps.single().notes)
         assertNull(updated.session.notes)
         assertEquals(updated, sessions.getSession(id))
+    }
+
+    @Test
+    fun `moving a session's start shifts every steep and keeps the gaps between them`() = runTest {
+        val id = start(status = SessionStatus.COMPLETED).session.id
+        addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow()
+        val before = sessions.getSession(id)!!
+        val startedAt = before.startedAt - 3.days
+
+        val moved = editSession(id, startedAt = startedAt) { it }.getOrThrow()
+
+        assertEquals(startedAt, moved.startedAt)
+        assertEquals(
+            before.steeps.map { it.timestamp - before.startedAt },
+            moved.steeps.map { it.timestamp - moved.startedAt },
+        )
+        assertEquals(startedAt, tea().lastBrewedAt)
+    }
+
+    @Test
+    fun `moving a session to another tea recomputes both teas and clears its method and plan`() = runTest {
+        teas.upsert(OTHER_TEA)
+        val source = start(status = SessionStatus.COMPLETED).session.id
+        val id = startSession(
+            teaId = TEA.id,
+            vesselId = "gaiwan",
+            waterType = WaterType.FILTERED,
+            brewingTime = 20.seconds,
+            temperatureCelsius = 95.0,
+            waterQuantityMl = 100.0,
+            status = SessionStatus.COMPLETED,
+            usedConfigurationId = CONFIG.id,
+            planSessionId = source,
+        ).getOrThrow().session.id
+
+        val moved = editSession(id) { it.copy(teaId = OTHER_TEA.id) }.getOrThrow()
+
+        assertEquals(OTHER_TEA.id, moved.session.teaId)
+        assertNull(moved.session.usedConfigurationId)
+        assertNull(moved.session.planSessionId)
+        assertEquals(1, tea().totalSessions)
+        assertEquals(1, teas.getById(OTHER_TEA.id)!!.totalSessions)
+        assertEquals(0, config().timesUsed)
     }
 
     @Test
@@ -503,6 +547,8 @@ class SessionAggregateUseCasesTest {
             createdAt = EPOCH,
             updatedAt = EPOCH,
         )
+
+        val OTHER_TEA = TEA.copy(id = "other", name = "Da Hong Pao")
 
         val CONFIG = BrewingConfiguration(
             id = "config",

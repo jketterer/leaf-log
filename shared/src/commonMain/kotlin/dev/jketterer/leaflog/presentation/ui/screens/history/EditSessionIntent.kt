@@ -1,10 +1,15 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
+import kotlinx.datetime.LocalDate
 
 sealed interface EditSessionIntent {
     // Field changes
+    data class TeaSelected(val tea: Tea) : EditSessionIntent
+    data class DateChanged(val date: LocalDate) : EditSessionIntent
+    data class TimeChanged(val hour: Int, val minute: Int) : EditSessionIntent
     data class VesselSelected(val vessel: BrewingVessel) : EditSessionIntent
     data class WaterTypeSelected(val waterType: WaterType) : EditSessionIntent
     data class RinsedChanged(val rinsed: Boolean) : EditSessionIntent

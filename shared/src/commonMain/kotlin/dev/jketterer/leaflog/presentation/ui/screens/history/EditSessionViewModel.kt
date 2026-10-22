@@ -2,12 +2,13 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
@@ -19,9 +20,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_save_session
@@ -33,6 +41,8 @@ class EditSessionViewModel(
     private val route: NavRoute.EditSessionRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val teaRepository: TeaRepository,
+    private val teaTypeRepository: TeaTypeRepository,
     private val preferencesRepository: PreferencesRepository,
     private val editSessionUseCase: EditSessionUseCase,
     private val editSteepUseCase: EditSteepUseCase,
@@ -52,12 +62,17 @@ class EditSessionViewModel(
             stateFlow = _state,
             updateState = { state, prefs -> state.copy(userPreferences = prefs) },
         )
-        loadVessels()
-        loadSession(route.sessionId)
+        load()
     }
 
     fun onIntent(intent: EditSessionIntent) {
         when (intent) {
+            is EditSessionIntent.TeaSelected -> _state.update { it.copy(tea = intent.tea) }
+            is EditSessionIntent.DateChanged -> moveStart { LocalDateTime(intent.date, it.time) }
+            is EditSessionIntent.TimeChanged -> moveStart {
+                LocalDateTime(it.date, LocalTime(intent.hour, intent.minute, it.second, it.nanosecond))
+            }
+
             is EditSessionIntent.VesselSelected -> selectVessel(intent.vessel)
             is EditSessionIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
             is EditSessionIntent.RinsedChanged -> _state.update { it.copy(rinsed = intent.rinsed) }
@@ -78,91 +93,75 @@ class EditSessionViewModel(
         }
     }
 
-    private fun loadVessels() {
-        viewModelScope.launch {
-            brewingVesselRepository.getActiveFlow()
-                .catch { e ->
-                    Logger.w(tag = "EditSession") { "Failed to load vessels: ${e.message}" }
-                }
-                .collect { vessels ->
-                    // Include the session's current vessel even if archived
-                    val sessionVesselId = _state.value.existingSession?.vesselId
-                    val vesselList = if (sessionVesselId != null &&
-                        vessels.none { it.id == sessionVesselId }
-                    ) {
-                        val currentVessel = brewingVesselRepository.getById(sessionVesselId)
-                        if (currentVessel != null) listOf(currentVessel) + vessels else vessels
-                    } else {
-                        vessels
-                    }
-                    _state.update { it.copy(availableVessels = vesselList) }
-                }
+    /**
+     * The session first, then the lists: a session brewed in an archived vessel or of a deleted tea
+     * still shows it, because neither comes from the active lists.
+     */
+    private fun load() = viewModelScope.launch {
+        val sessionVessel = try {
+            val aggregate = teaSessionRepository.getSessionOfSteep(route.sessionId) ?: run {
+                messages.show(Res.string.failure_not_found)
+                return@launch
+            }
+            val session = aggregate.session
+            val steep = aggregate.steeps.first()
+            val vessel = brewingVesselRepository.getById(session.vesselId)
+            val tea = teaRepository.getById(session.teaId)
+            _state.update {
+                it.copy(
+                    existingSession = session,
+                    existingSteep = steep,
+                    tea = tea,
+                    startedAt = steep.timestamp,
+                    selectedVessel = vessel,
+                    selectedWaterType = session.waterType,
+                    rinsed = session.rinsed,
+                    waterQuantityMl = steep.waterQuantityMl,
+                    teaQuantityGrams = session.teaQuantityGrams?.toDouble(),
+                    isTeaBag = session.teaQuantityGrams == null,
+                    location = session.location ?: "",
+                    notes = session.notes ?: "",
+                )
+            }
+            vessel
+        } catch (e: Exception) {
+            messages.failure(e, Res.string.couldnt_load_session)
+            return@launch
         }
-    }
 
-    private fun loadSession(sessionId: String) {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-
-            try {
-                val aggregate = teaSessionRepository.getSessionOfSteep(sessionId)
-
-                if (aggregate != null) {
-                    val session = aggregate.session
-                    val steep = aggregate.steeps.first()
-
-                    if (_state.value.availableVessels.isEmpty()) {
-                        val vessels = brewingVesselRepository.getActive()
-                        // Include the session's current vessel even if archived
-                        val currentVessel = if (vessels.none { it.id == session.vesselId }) {
-                            brewingVesselRepository.getById(session.vesselId)
-                        } else {
-                            null
-                        }
-                        val vesselList = if (currentVessel != null) {
-                            listOf(currentVessel) + vessels
-                        } else {
-                            vessels
-                        }
-                        _state.update { it.copy(availableVessels = vesselList) }
-                    }
-                    // Find vessel
-                    val vessel =
-                        _state.value.availableVessels.firstOrNull { it.id == session.vesselId }
-
-                    _state.update {
-                        it.copy(
-                            existingSession = session,
-                            existingSteep = steep,
-                            selectedVessel = vessel,
-                            selectedWaterType = session.waterType,
-                            rinsed = session.rinsed,
-                            waterQuantityMl = steep.waterQuantityMl,
-                            teaQuantityGrams = session.teaQuantityGrams?.toDouble(),
-                            isTeaBag = session.teaQuantityGrams == null,
-                            location = session.location ?: "",
-                            notes = session.notes ?: "",
-                            isLoading = false,
-                        )
-                    }
-                } else {
-                    _state.update { it.copy(isLoading = false) }
-                    messages.show(Res.string.failure_not_found)
-                }
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false) }
-                messages.failure(e, Res.string.couldnt_load_session)
+        combine(
+            brewingVesselRepository.getActiveFlow(),
+            teaRepository.getAllFlow(),
+            teaRepository.getRecentlyBrewedFlow(RECENT_TEAS),
+            teaTypeRepository.getAllFlow(),
+        ) { vessels, teas, recentTeas, teaTypes ->
+            val withSessionVessel = if (sessionVessel == null || vessels.any { it.id == sessionVessel.id }) {
+                vessels
+            } else {
+                listOf(sessionVessel) + vessels
+            }
+            _state.update {
+                it.copy(
+                    availableVessels = withSessionVessel,
+                    availableTeas = teas,
+                    recentTeas = recentTeas,
+                    teaTypes = teaTypes,
+                )
             }
         }
+            .catch { messages.failure(it, Res.string.couldnt_load_session) }
+            .collect()
+    }
+
+    /** Moves the start within the device's time zone; [save] shifts every steep with it. */
+    private fun moveStart(transform: (LocalDateTime) -> LocalDateTime) = _state.update {
+        val startedAt = it.startedAt ?: return@update it
+        val zone = TimeZone.currentSystemDefault()
+        it.copy(startedAt = transform(startedAt.toLocalDateTime(zone)).toInstant(zone))
     }
 
     private fun selectVessel(vessel: BrewingVessel) {
-        _state.update {
-            it.copy(
-                selectedVessel = vessel,
-                vesselError = null
-            )
-        }
+        _state.update { it.copy(selectedVessel = vessel) }
     }
 
     private fun selectWaterType(waterType: WaterType) {
@@ -217,8 +216,9 @@ class EditSessionViewModel(
                     editSteepUseCase(steep.id) { it.copy(waterQuantityMl = waterQuantityMl) }
                         .getOrThrow()
                 }
-                editSessionUseCase(session.id) {
+                editSessionUseCase(session.id, startedAt = currentState.startedAt) {
                     it.copy(
+                        teaId = currentState.tea?.id ?: it.teaId,
                         vesselId = currentState.selectedVessel?.id ?: it.vesselId,
                         waterType = currentState.selectedWaterType,
                         rinsed = currentState.rinsed,
@@ -242,6 +242,8 @@ class EditSessionViewModel(
         }
     }
 }
+
+private const val RECENT_TEAS = 5
 
 sealed interface EditSessionNavEvent {
     data object NavigateBack : EditSessionNavEvent

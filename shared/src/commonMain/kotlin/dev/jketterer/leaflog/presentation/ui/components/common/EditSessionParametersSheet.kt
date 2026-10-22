@@ -11,10 +11,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetState
@@ -32,11 +29,8 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.cancel
 import leaf_log.shared.generated.resources.edit_parameters
-import leaf_log.shared.generated.resources.field_tea_quantity
 import leaf_log.shared.generated.resources.field_temperature
 import leaf_log.shared.generated.resources.field_water_quantity
-import leaf_log.shared.generated.resources.loose_leaf
-import leaf_log.shared.generated.resources.review_tea_bag
 import leaf_log.shared.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
@@ -187,32 +181,14 @@ internal fun EditSessionParametersContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (isTeaBag != null) {
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                    onClick = { onTeaBagModeChanged(false) },
-                    selected = !isTeaBag,
-                    label = { Text(stringResource(Res.string.loose_leaf)) },
-                )
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                    onClick = { onTeaBagModeChanged(true) },
-                    selected = isTeaBag,
-                    label = { Text(stringResource(Res.string.review_tea_bag)) },
-                )
-            }
-
-            if (!isTeaBag) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                UnitInputField(
-                    value = teaQuantityGrams,
-                    onValueChange = onTeaQuantityChanged,
-                    unit = weightUnit,
-                    label = stringResource(Res.string.field_tea_quantity),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            LeafQuantityField(
+                isTeaBag = isTeaBag,
+                teaQuantityGrams = teaQuantityGrams,
+                onTeaBagModeChanged = onTeaBagModeChanged,
+                onTeaQuantityChanged = onTeaQuantityChanged,
+                weightUnit = weightUnit,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
         }

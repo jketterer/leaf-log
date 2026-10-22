@@ -49,6 +49,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
+import dev.jketterer.leaflog.presentation.ui.components.common.LeafQuantityField
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
@@ -170,53 +171,6 @@ internal fun BrewingParametersHeader(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-/**
- * Loose leaf / tea bag toggle with the leaf weight input for loose leaf brews.
- */
-@Composable
-internal fun TeaQuantitySection(
-    isTeaBag: Boolean,
-    teaQuantityGrams: Double?,
-    weightUnit: WeightUnit,
-    errorMessage: StringResource?,
-    onTeaBagModeChanged: (Boolean) -> Unit,
-    onTeaQuantityChanged: (Double?) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SegmentedButton(
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                onClick = { onTeaBagModeChanged(false) },
-                selected = !isTeaBag,
-                label = { Text("Loose Leaf") },
-            )
-            SegmentedButton(
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                onClick = { onTeaBagModeChanged(true) },
-                selected = isTeaBag,
-                label = { Text("Tea Bag") },
-            )
-        }
-        if (!isTeaBag) {
-            UnitInputField(
-                value = teaQuantityGrams,
-                onValueChange = onTeaQuantityChanged,
-                unit = weightUnit,
-                label = stringResource(Res.string.field_tea_quantity_required),
-                isError = errorMessage != null,
-                supportingText = errorMessage?.let { stringResource(it) },
-                presets = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
     }
 }
 
@@ -413,13 +367,14 @@ private fun BrewingParameterSectionsPreview() {
     LeafLogTheme {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             BrewingParametersHeader()
-            TeaQuantitySection(
+            LeafQuantityField(
                 isTeaBag = false,
                 teaQuantityGrams = 5.0,
-                weightUnit = WeightUnit.GRAMS,
-                errorMessage = null,
                 onTeaBagModeChanged = {},
                 onTeaQuantityChanged = {},
+                label = stringResource(Res.string.field_tea_quantity_required),
+                presets = true,
+                weightUnit = WeightUnit.GRAMS,
             )
             BrewingTimeSection(
                 brewingTime = 2.minutes + 30.seconds,

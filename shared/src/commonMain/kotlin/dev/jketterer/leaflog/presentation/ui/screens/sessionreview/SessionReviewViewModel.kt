@@ -159,7 +159,7 @@ class SessionReviewViewModel(
 
     private fun editSession(edit: (Session) -> Session) {
         viewModelScope.launch {
-            editSessionUseCase(route.sessionId, edit)
+            editSessionUseCase(route.sessionId, edit = edit)
                 .onSuccess { updated -> _state.update { it.copy(session = updated) } }
                 .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
         }

@@ -54,6 +54,12 @@ fun formatBrewingTime(seconds: Int): String {
     }
 }
 
+/** What each steep adds to the last, signed: "+10s", "-5s". */
+fun formatSteepIncrement(step: Duration): String {
+    val seconds = step.inWholeSeconds.toInt()
+    return if (seconds < 0) "-${formatBrewingTime(-seconds)}" else "+${formatBrewingTime(seconds)}"
+}
+
 /** A longer span, to the minute: "45s", "25m", "1h 5m". */
 fun formatDuration(duration: Duration): String {
     val totalMinutes = duration.inWholeMinutes

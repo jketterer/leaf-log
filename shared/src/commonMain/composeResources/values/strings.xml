@@ -89,7 +89,16 @@
         <item quantity="one">Used %1$d time</item>
         <item quantity="other">Used %1$d times</item>
     </plurals>
-    <string name="last_used">Last: %1$s</string>
+    <string name="method_source">From your %1$s brew</string>
+    <string name="unnamed_method">Unnamed method</string>
+    <string name="add_method">Add brewing method</string>
+    <string name="edit">Edit</string>
+    <plurals name="method_usage">
+        <item quantity="one">Brewed once, most recently %2$s</item>
+        <item quantity="other">Brewed %1$d times, most recently %2$s</item>
+    </plurals>
+    <string name="method_not_brewed">Not brewed yet</string>
+    <string name="no_saved_methods">No saved methods yet.</string>
     <plurals name="sessions_label">
         <item quantity="one">Session</item>
         <item quantity="other">Sessions</item>

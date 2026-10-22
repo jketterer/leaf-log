@@ -895,7 +895,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 15. [x] `feat: step through sessions`
 16. [x] `feat: tea detail tells the story`: best brew, flavor profile, steep curve, empty state.
     Tests: the profile counts per session; the curve's peak and minimum data.
-17. [ ] `feat: where a method came from`
+17. [x] `feat: where a method came from`
 18. [ ] `feat: cellar age`
 19. [ ] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
     Session sections deleted, Analytics kept for Bet 4.

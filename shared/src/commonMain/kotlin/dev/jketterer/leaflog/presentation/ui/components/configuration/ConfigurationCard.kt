@@ -1,160 +1,207 @@
 package dev.jketterer.leaflog.presentation.ui.components.configuration
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.ChevronRight
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
-import compose.icons.feathericons.Edit2
+import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Thermometer
-import compose.icons.feathericons.Trash2
+import compose.icons.feathericons.TrendingUp
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.formatDate
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
-import dev.jketterer.leaflog.presentation.ui.components.common.timeAgo
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatSteepIncrement
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
+import dev.jketterer.leaflog.presentation.ui.components.common.timeAgo
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.ic_tea_leaf
-import leaf_log.shared.generated.resources.last_used
-import leaf_log.shared.generated.resources.times_used
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.edit
+import leaf_log.shared.generated.resources.ic_tea_leaf
+import leaf_log.shared.generated.resources.method_not_brewed
+import leaf_log.shared.generated.resources.method_source
+import leaf_log.shared.generated.resources.method_usage
+import leaf_log.shared.generated.resources.more_options
+import leaf_log.shared.generated.resources.unnamed_method
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 
 /**
  * Card displaying a saved brewing configuration
+ *
+ * @param source The session the method was saved from, null when there was none or it's gone
  */
 @Composable
 fun ConfigurationCard(
     configuration: BrewingConfiguration,
     vesselName: String,
+    source: SessionWithSteeps?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onSourceClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-        )
+        ),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            // Header row with label and actions
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
-                        text = configuration.label ?: "Unnamed Method",
+                        text = configuration.label ?: stringResource(Res.string.unnamed_method),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
-                    if (configuration.rating != null) {
-                        RatingDisplay(configuration.rating, iconsOnly = true)
-                    }
+                    // The method keeps a copy of its brew's rating from when it was saved
+                    val rating = if (source != null) source.effectiveRating else configuration.rating
+                    rating?.let { RatingDisplay(it) }
+                    Text(
+                        text = configuration.lastUsedAt?.let { lastUsed ->
+                            val timesUsed = configuration.timesUsed
+                            pluralStringResource(Res.plurals.method_usage, timesUsed, timesUsed, timeAgo(lastUsed))
+                        } ?: stringResource(Res.string.method_not_brewed),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
 
-                Row {
-                    IconButton(onClick = onEdit) {
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
                         Icon(
-                            imageVector = FeatherIcons.Edit2,
-                            contentDescription = "Edit",
+                            imageVector = FeatherIcons.MoreVertical,
+                            contentDescription = stringResource(Res.string.more_options),
                         )
                     }
-                    IconButton(onClick = onDelete) {
-                        Icon(
-                            imageVector = FeatherIcons.Trash2,
-                            contentDescription = "Delete",
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.edit)) },
+                            onClick = {
+                                showMenu = false
+                                onEdit()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.delete)) },
+                            onClick = {
+                                showMenu = false
+                                onDelete()
+                            },
                         )
                     }
                 }
             }
 
-            // Vessel name
             Text(
-                text = "$vesselName • ${
-                    formatVolume(configuration.waterQuantityMl)
-                }",
+                text = vesselName,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Stats row
-            val stats = buildList {
-                val timesUsed = configuration.timesUsed
-                add(pluralStringResource(Res.plurals.times_used, timesUsed, timesUsed))
-                configuration.lastUsedAt?.let { lastUsed ->
-                    add(stringResource(Res.string.last_used, timeAgo(lastUsed)))
-                }
-            }
-
-            Text(
-                text = stats.joinToString(" • "),
-                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
 
-            // Parameters as chips
-            Row(
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.padding(top = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 configuration.teaQuantityGrams?.let {
-                    BrewingParamChip(
-                        vectorResource(Res.drawable.ic_tea_leaf),
-                        formatWeight(it)
+                    BrewingParamChip(vectorResource(Res.drawable.ic_tea_leaf), formatWeight(it))
+                }
+                BrewingParamChip(FeatherIcons.Thermometer, formatTemperature(configuration.temperatureCelsius))
+                BrewingParamChip(FeatherIcons.Clock, formatBrewingTime(configuration.brewingTime.inWholeSeconds.toInt()))
+                configuration.steepIncrement?.let { step ->
+                    BrewingParamChip(FeatherIcons.TrendingUp, formatSteepIncrement(step))
+                }
+                BrewingParamChip(FeatherIcons.Droplet, formatVolume(configuration.waterQuantityMl))
+            }
+
+            source?.let { session ->
+                val date = session.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
+                Row(
+                    modifier = Modifier
+                        .minimumInteractiveComponentSize()
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable(role = Role.Button, onClick = onSourceClick),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.method_source, TimeFormatter.formatDate(date, currentDate())),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Icon(
+                        imageVector = FeatherIcons.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp),
                     )
                 }
-                BrewingParamChip(
-                    FeatherIcons.Thermometer,
-                    formatTemperature(configuration.temperatureCelsius)
-                )
-                BrewingParamChip(
-                    FeatherIcons.Clock,
-                    formatBrewingTime(configuration.brewingTime.inWholeSeconds.toInt())
-                )
-                BrewingParamChip(
-                    FeatherIcons.Droplet,
-                    formatVolume(configuration.waterQuantityMl)
-                )
             }
         }
     }
 }
-
 
 @Preview
 @Composable
@@ -166,9 +213,10 @@ private fun ConfigurationCardPreview() {
                 teaId = "tea-1",
                 vesselId = "vessel-1",
                 teaQuantityGrams = 5.0f,
-                waterQuantityMl = 200.0,
+                waterQuantityMl = 100.0,
                 temperatureCelsius = 95.0,
-                brewingTime = 3.minutes,
+                brewingTime = 20.seconds,
+                steepIncrement = 10.seconds,
                 waterType = WaterType.FILTERED,
                 sourceSessionId = "session-1",
                 rating = 4.5f,
@@ -179,8 +227,10 @@ private fun ConfigurationCardPreview() {
                 updatedAt = PreviewInstant
             ),
             vesselName = "Gaiwan (100ml)",
+            source = previewSession(ratings = listOf(5f, 4f), status = SessionStatus.COMPLETED),
             onEdit = {},
-            onDelete = {}
+            onDelete = {},
+            onSourceClick = {},
         )
     }
 }
@@ -208,8 +258,10 @@ private fun ConfigurationCardImperialUnitsPreview() {
                 updatedAt = PreviewInstant
             ),
             vesselName = "Ceramic Mug",
+            source = null,
             onEdit = {},
-            onDelete = {}
+            onDelete = {},
+            onSourceClick = {},
         )
     }
 }
@@ -237,8 +289,10 @@ private fun ConfigurationCardUnnamedPreview() {
                 updatedAt = PreviewInstant
             ),
             vesselName = "Small Cup",
+            source = null,
             onEdit = {},
-            onDelete = {}
+            onDelete = {},
+            onSourceClick = {},
         )
     }
 }

@@ -63,12 +63,15 @@ import compose.icons.feathericons.Heart
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SteepCurve
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
@@ -442,12 +445,18 @@ private fun TeaDetailContent(
                                 getVesselName = { vesselId ->
                                     state.vessels.find { it.id == vesselId }?.name ?: "Unknown"
                                 },
+                                getSource = { config ->
+                                    config.sourceSessionId?.let { state.sessionsById[it] }
+                                },
                                 onAdd = { onIntent(TeaDetailIntent.AddConfigurationClicked) },
                                 onEdit = { configId ->
                                     onIntent(TeaDetailIntent.EditConfigurationClicked(configId))
                                 },
                                 onDelete = { configId ->
                                     onIntent(TeaDetailIntent.DeleteConfigurationClicked(configId))
+                                },
+                                onSourceClick = { sessionId ->
+                                    onIntent(TeaDetailIntent.SessionClicked(sessionId))
                                 },
                             )
                         }
@@ -669,8 +678,39 @@ private fun TeaDetailScreenPreview() {
                     updatedAt = PreviewInstant,
                 ),
                 recentSessions = listOf(previewBest),
+                sessionsById = mapOf(previewBest.session.id to previewBest),
                 bestBrew = previewBest,
                 steepCurve = SteepCurve(meanRatings = mapOf(1 to 4f, 2 to 4.5f, 3 to 3.5f), peak = 2),
+                configurations = listOf(
+                    BrewingConfiguration(
+                        id = "config-1",
+                        teaId = "tea-1",
+                        vesselId = "vessel-1",
+                        teaQuantityGrams = 5f,
+                        waterQuantityMl = 100.0,
+                        temperatureCelsius = 80.0,
+                        brewingTime = 2.minutes + 30.seconds,
+                        waterType = WaterType.FILTERED,
+                        sourceSessionId = previewBest.session.id,
+                        rating = 4.75f,
+                        timesUsed = 3,
+                        lastUsedAt = PreviewInstant,
+                        label = "Gaiwan gongfu",
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
+                    ),
+                ),
+                vessels = listOf(
+                    BrewingVessel(
+                        id = "vessel-1",
+                        name = "Gaiwan",
+                        iconName = null,
+                        isSystemDefault = true,
+                        displayOrder = 0,
+                        createdAt = PreviewInstant,
+                        updatedAt = PreviewInstant,
+                    ),
+                ),
             ),
             onIntent = {},
         )

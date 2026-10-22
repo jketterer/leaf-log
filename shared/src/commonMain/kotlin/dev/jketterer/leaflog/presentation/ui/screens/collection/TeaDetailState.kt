@@ -14,6 +14,8 @@ data class TeaDetailState(
     val tea: Tea? = null,
     val teaType: TeaType? = null,
     val recentSessions: List<SessionWithSteeps> = emptyList(),
+    /** Every session of the tea, for finding where a saved method came from */
+    val sessionsById: Map<String, SessionWithSteeps> = emptyMap(),
     val bestBrew: SessionWithSteeps? = null,
     val flavorProfile: FlavorProfile? = null,
     val steepCurve: SteepCurve? = null,

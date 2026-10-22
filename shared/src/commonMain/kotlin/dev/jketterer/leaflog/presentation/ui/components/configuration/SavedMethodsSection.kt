@@ -15,13 +15,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.PlusCircle
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration.Companion.minutes
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.add_method
 import leaf_log.shared.generated.resources.header_saved_methods
+import leaf_log.shared.generated.resources.no_saved_methods
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -32,9 +37,11 @@ import org.jetbrains.compose.resources.stringResource
 fun SavedMethodsSection(
     configurations: List<BrewingConfiguration>,
     getVesselName: (String) -> String,
+    getSource: (BrewingConfiguration) -> SessionWithSteeps?,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
     onDelete: (String) -> Unit,
+    onSourceClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -45,7 +52,7 @@ fun SavedMethodsSection(
             IconButton(onClick = onAdd) {
                 Icon(
                     imageVector = FeatherIcons.PlusCircle,
-                    contentDescription = "Add brewing method",
+                    contentDescription = stringResource(Res.string.add_method),
                     modifier = Modifier.size(20.dp),
                 )
             }
@@ -53,7 +60,7 @@ fun SavedMethodsSection(
 
         if (configurations.isEmpty()) {
             Text(
-                text = "No saved methods yet.",
+                text = stringResource(Res.string.no_saved_methods),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -62,8 +69,10 @@ fun SavedMethodsSection(
                 ConfigurationCard(
                     configuration = config,
                     vesselName = getVesselName(config.vesselId),
+                    source = getSource(config),
                     onEdit = { onEdit(config.id) },
                     onDelete = { onDelete(config.id) },
+                    onSourceClick = { config.sourceSessionId?.let(onSourceClick) },
                 )
             }
         }
@@ -77,9 +86,11 @@ private fun SavedMethodsSectionEmptyPreview() {
         SavedMethodsSection(
             configurations = emptyList(),
             getVesselName = { "Gaiwan" },
+            getSource = { null },
             onAdd = {},
             onEdit = {},
             onDelete = {},
+            onSourceClick = {},
         )
     }
 }
@@ -108,11 +119,34 @@ private fun SavedMethodsSectionWithItemsPreview() {
                     createdAt = now,
                     updatedAt = now,
                 ),
+                BrewingConfiguration(
+                    id = "2",
+                    teaId = "tea-1",
+                    vesselId = "vessel-1",
+                    teaQuantityGrams = null,
+                    waterQuantityMl = 300.0,
+                    temperatureCelsius = 85.0,
+                    brewingTime = 4.minutes,
+                    waterType = WaterType.TAP,
+                    sourceSessionId = null,
+                    rating = null,
+                    timesUsed = 0,
+                    lastUsedAt = null,
+                    label = null,
+                    createdAt = now,
+                    updatedAt = now,
+                ),
             ),
             getVesselName = { "Gaiwan (100ml)" },
+            getSource = { config ->
+                config.sourceSessionId?.let {
+                    previewSession(id = it, ratings = listOf(4.5f), status = SessionStatus.COMPLETED)
+                }
+            },
             onAdd = {},
             onEdit = {},
             onDelete = {},
+            onSourceClick = {},
         )
     }
 }

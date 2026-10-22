@@ -41,6 +41,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
+import dev.jketterer.leaflog.presentation.ui.components.common.formatSteepIncrement
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
@@ -107,9 +108,7 @@ fun PastBrewCard(
                 BrewingParamChip(FeatherIcons.Thermometer, formatTemperature(session.steeps.first().temperatureCelsius))
                 BrewingParamChip(FeatherIcons.Clock, formatBrewingTime(plan.base.inWholeSeconds.toInt()))
                 plan.increment?.let { step ->
-                    val seconds = step.inWholeSeconds.toInt()
-                    val signed = if (seconds < 0) "-${formatBrewingTime(-seconds)}" else "+${formatBrewingTime(seconds)}"
-                    BrewingParamChip(FeatherIcons.TrendingUp, signed)
+                    BrewingParamChip(FeatherIcons.TrendingUp, formatSteepIncrement(step))
                     val steeps = session.steeps.size
                     BrewingParamChip(FeatherIcons.Layers, pluralStringResource(Res.plurals.steep_count, steeps, steeps))
                 }

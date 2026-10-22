@@ -235,6 +235,7 @@ class TeaDetailViewModel(
                     _state.update {
                         it.copy(
                             recentSessions = sessions.take(5),
+                            sessionsById = sessions.associateBy { session -> session.session.id },
                             bestBrew = sessions.best(),
                             flavorProfile = sessions.flavorProfile(vocabulary),
                             steepCurve = sessions.steepCurve(),
@@ -341,7 +342,7 @@ class TeaDetailViewModel(
     }
 
     private fun handleSessionClick(sessionId: String) {
-        val session = _state.value.recentSessions.find { it.session.id == sessionId }
+        val session = _state.value.sessionsById[sessionId]
         if (session?.session?.status == SessionStatus.IN_PROGRESS) {
             _navEvents.trySend(TeaDetailNavigationEvent.NavigateToTimer(sessionId))
         } else {

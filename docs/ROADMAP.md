@@ -767,8 +767,9 @@ a chip, its own line).
       the session note's first line (no fallback to steep notes). Tapping opens Session Detail on
       top; the form survives. No "use these" action: the prefill and Choose Method already apply
       parameters. No card for a tea never completed.
-    - On a quick-brew card, one line: when, rating, two tags. Same session for every method of a
-      tea — it's the tea's history.
+    - On a quick-brew card, one line: when and rating. Same session for every method of a tea —
+      it's the tea's history. No tags: a tea tastes much the same by any method, so its top tags
+      would sit unchanged on every card. Tags belong to the journal and the tea.
     - `PrefillBanner`'s hard-coded strings move to `strings.xml` alongside.
 - **Tags on a logged brew.** Save as completed saves the session completed and unrated, then
   replaces Log Tea with the end-of-session review: per-steep rating and tags, the session note,
@@ -861,7 +862,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
    the round trip. Track B: upgrade over the v11 build.
 3. [x] `feat: tags on a logged brew`: Save as completed opens the review; `CompleteSessionDialog`
    goes.
-4. [ ] `feat: last time, before you brew`: `dominantTags`, the Log Tea card, the quick-brew line,
+4. [x] `feat: last time, before you brew`: `dominantTags`, the Log Tea card, the quick-brew line,
    `PrefillBanner`'s strings. Test: dominant tags.
 5. [ ] `feat: a session card for reading`
 6. [ ] `fix: history audit findings`. Nothing beyond the fixes.

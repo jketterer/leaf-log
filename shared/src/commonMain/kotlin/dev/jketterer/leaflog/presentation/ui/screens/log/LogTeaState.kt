@@ -2,6 +2,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.log
 
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
@@ -22,6 +24,10 @@ data class LogTeaState(
     val showTeaPicker: Boolean = false,
     val teaPickerFilter: TeaPickerFilter = TeaPickerFilter.All,
     val availableTeaTypes: List<TeaType> = emptyList(),
+
+    // The selected tea's most recent completed session, and its dominant tags
+    val lastSession: SessionWithSteeps? = null,
+    val lastSessionTags: List<TastingTag> = emptyList(),
 
     // Brewing parameters
     val teaQuantityGrams: Double? = null,

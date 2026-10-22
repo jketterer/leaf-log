@@ -28,22 +28,16 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
-import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
+import dev.jketterer.leaflog.presentation.ui.components.common.timeAgo
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.days_ago
 import leaf_log.shared.generated.resources.ic_tea_leaf
 import leaf_log.shared.generated.resources.last_used
-import leaf_log.shared.generated.resources.months_ago
 import leaf_log.shared.generated.resources.times_used
-import leaf_log.shared.generated.resources.today
-import leaf_log.shared.generated.resources.weeks_ago
-import leaf_log.shared.generated.resources.years_ago
-import leaf_log.shared.generated.resources.yesterday
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -118,26 +112,11 @@ fun ConfigurationCard(
             )
 
             // Stats row
-            val now = currentInstant()
             val stats = buildList {
                 val timesUsed = configuration.timesUsed
                 add(pluralStringResource(Res.plurals.times_used, timesUsed, timesUsed))
                 configuration.lastUsedAt?.let { lastUsed ->
-                    val days = (now - lastUsed).inWholeDays.toInt()
-                    val timeAgo = when {
-                        days == 0 -> stringResource(Res.string.today)
-                        days == 1 -> stringResource(Res.string.yesterday)
-                        days < 7 -> pluralStringResource(Res.plurals.days_ago, days, days)
-                        days < 30 -> pluralStringResource(Res.plurals.weeks_ago, days / 7, days / 7)
-                        days < 365 -> pluralStringResource(
-                            Res.plurals.months_ago,
-                            days / 30,
-                            days / 30
-                        )
-
-                        else -> pluralStringResource(Res.plurals.years_ago, days / 365, days / 365)
-                    }
-                    add(stringResource(Res.string.last_used, timeAgo))
+                    add(stringResource(Res.string.last_used, timeAgo(lastUsed)))
                 }
             }
 

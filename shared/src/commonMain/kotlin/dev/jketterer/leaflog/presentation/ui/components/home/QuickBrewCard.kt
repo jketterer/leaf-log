@@ -29,11 +29,14 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.BrewingConfiguration
+import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.collection.FINISHED_ALPHA
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
+import dev.jketterer.leaflog.presentation.ui.components.session.LastTimeLine
 import dev.jketterer.leaflog.presentation.ui.screens.home.QuickBrewCardData
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
@@ -121,6 +124,8 @@ fun QuickBrewCard(
                         text = formatTemperature(data.configuration.temperatureCelsius),
                     )
                 }
+
+                data.lastSession?.let { LastTimeLine(it) }
             }
         }
     }
@@ -153,6 +158,7 @@ private fun QuickBrewCardPreview() {
                 teaTypeName = "Oolong",
                 teaTypeColorHex = "#FF9800",
                 vesselName = "Gaiwan",
+                lastSession = previewSession(ratings = listOf(4f, 5f), status = SessionStatus.COMPLETED),
             ),
             onClick = {},
             onLongClick = {},

@@ -94,6 +94,10 @@ data class SessionWithSteeps(
         get() = steeps.mapNotNull { it.rating }.takeIf { it.isNotEmpty() }?.average()?.toFloat()
 }
 
+/** The most recent completed session, or null when none is: "last time" for a tea. */
+fun List<SessionWithSteeps>.lastCompleted(): SessionWithSteeps? =
+    filter { it.session.status == SessionStatus.COMPLETED }.maxByOrNull { it.startedAt }
+
 /** What a tea or a brewing configuration stores about the sessions that used it. */
 data class SessionStats(
     val count: Int,

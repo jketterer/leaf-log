@@ -328,6 +328,9 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToReview = { sessionId ->
                     navigator.replace(route, NavRoute.SessionReviewRoute(sessionId, logged = true))
                 },
+                onNavigateToSession = { sessionId ->
+                    navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
+                },
             )
         }
 

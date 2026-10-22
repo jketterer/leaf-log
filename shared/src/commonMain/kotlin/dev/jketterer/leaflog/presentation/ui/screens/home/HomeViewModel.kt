@@ -13,6 +13,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
+import dev.jketterer.leaflog.domain.models.lastCompleted
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -45,6 +46,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_load
@@ -53,7 +55,6 @@ import leaf_log.shared.generated.resources.couldnt_undo
 import leaf_log.shared.generated.resources.couldnt_update_quick_brew
 import leaf_log.shared.generated.resources.session_finished
 import leaf_log.shared.generated.resources.undo
-import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
@@ -441,10 +442,14 @@ class HomeViewModel(
             teaRepository.getAllFlow(),
             teaTypeRepository.getAllFlow(),
             vesselRepository.getAllFlow(),
-        ) { configs, teas, types, vessels ->
+            // reads every session for each tea's last; a per-tea query if History ever pages
+            teaSessionRepository.getAllSessionsFlow(),
+        ) { configs, teas, types, vessels, sessions ->
             val teaMap = teas.associateBy { it.id }
             val typeMap = types.associateBy { it.id }
             val vesselMap = vessels.associateBy { it.id }
+            val lastByTea =
+                sessions.groupBy { it.session.teaId }.mapValues { it.value.lastCompleted() }
             configs.mapNotNull { config ->
                 val tea = teaMap[config.teaId] ?: return@mapNotNull null
                 val type = typeMap[tea.teaTypeId]
@@ -456,6 +461,7 @@ class HomeViewModel(
                     teaTypeColorHex = type?.colorHex,
                     vesselName = vessel.name,
                     isFinished = tea.finishedAt != null,
+                    lastSession = lastByTea[tea.id],
                 )
             }
         }
@@ -549,6 +555,8 @@ data class QuickBrewCardData(
     val teaTypeColorHex: String?,
     val vesselName: String,
     val isFinished: Boolean = false,
+    /** The tea's last completed session, the same for every method of the tea. */
+    val lastSession: SessionWithSteeps? = null,
 )
 
 sealed interface HomeNavEvent {

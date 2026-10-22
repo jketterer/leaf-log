@@ -332,6 +332,17 @@
     <string name="tags_search">Find or create a tag</string>
     <string name="tags_create">Create “%1$s”</string>
     <string name="tags_carried_over">From the last steep, tap to keep</string>
+    <string name="prefill_saved_method">Using your saved brewing method for %1$s</string>
+    <string name="prefill_best_brew">From your best brew of %1$s, rated %2$s</string>
+    <string name="prefill_same_type">Suggested parameters based on how you brew %1$s</string>
+    <string name="prefill_tea_default">Starting from your usual temperature for %1$s</string>
+    <string name="prefill_type_default">Starting from your usual temperature for %1$s tea</string>
+    <string name="prefill_change">Change</string>
+    <string name="last_time">Last time</string>
+    <plurals name="steep_count">
+        <item quantity="one">%1$d steep</item>
+        <item quantity="other">%1$d steeps</item>
+    </plurals>
     <string name="couldnt_create_tag">Couldn't create the tag</string>
     <string name="couldnt_update_method">Couldn't update the method</string>
     <string name="more_options">More options</string>

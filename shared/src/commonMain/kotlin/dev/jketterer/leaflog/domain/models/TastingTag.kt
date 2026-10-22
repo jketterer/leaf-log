@@ -36,3 +36,15 @@ fun List<SteepTag>.toggled(tagId: String): List<SteepTag> {
 
 /** What the next steep starts with: every tag of this one, unconfirmed. */
 fun List<SteepTag>.carriedForward(): List<SteepTag> = map { it.copy(confirmed = false) }
+
+/**
+ * The session's tags confirmed on the most steeps, at most three, ties in [vocabulary] order. A
+ * carry-over nobody tapped counts for nothing, as an untouched rating does.
+ */
+fun SessionWithSteeps.dominantTags(vocabulary: List<TastingTag>): List<TastingTag> {
+    val counts = steeps.flatMap { steep -> steep.tags.filter { it.confirmed }.map { it.tagId } }
+        .groupingBy { it }.eachCount()
+    return vocabulary.filter { it.id in counts }
+        .sortedByDescending { counts.getValue(it.id) }
+        .take(3)
+}

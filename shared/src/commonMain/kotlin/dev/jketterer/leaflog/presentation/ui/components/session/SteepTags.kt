@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -162,22 +163,47 @@ fun SteepTagChips(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         vocabulary.filter { it.id in confirmed }.forEach { tag ->
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.secondaryContainer,
+            ReadingTagChip(
+                label = tag.label(),
                 modifier = if (confirmed[tag.id] == false) {
                     Modifier.alpha(0.5f).semantics { stateDescription = carriedOver }
                 } else Modifier,
-            ) {
-                Text(
-                    text = tag.label(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    maxLines = 1,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                )
-            }
+            )
         }
+    }
+}
+
+/** [tags] as small chips to read, in the order given, such as a session's dominant tags. */
+@Composable
+fun TagChips(
+    tags: List<TastingTag>,
+    modifier: Modifier = Modifier,
+) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        tags.forEach { ReadingTagChip(it.label()) }
+    }
+}
+
+/** Tertiary, so a tag reads apart from the secondary parameter chips beside it. */
+@Composable
+private fun ReadingTagChip(label: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        modifier = modifier,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        )
     }
 }
 
@@ -287,6 +313,14 @@ private fun SteepTagsPreview() {
 private fun SteepTagChipsPreview() {
     LeafLogTheme {
         SteepTagChips(tags = previewTags, vocabulary = previewVocabulary, modifier = Modifier.padding(16.dp))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun TagChipsPreview() {
+    LeafLogTheme {
+        TagChips(tags = previewVocabulary.takeLast(3), modifier = Modifier.padding(16.dp))
     }
 }
 

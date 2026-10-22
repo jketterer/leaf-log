@@ -6,10 +6,14 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.dominantTags
+import dev.jketterer.leaflog.domain.models.lastCompleted
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
+import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
@@ -26,13 +30,18 @@ import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.screens.collection.validateQuantity
 import dev.jketterer.leaflog.presentation.ui.screens.collection.validateTemperature
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -52,6 +61,8 @@ class LogTeaViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val teaSessionRepository: TeaSessionRepository,
+    private val tastingTagRepository: TastingTagRepository,
     private val createTeaUseCase: CreateTeaUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val getBrewingParametersPrefillUseCase: GetBrewingParametersPrefillUseCase,
@@ -94,6 +105,7 @@ class LogTeaViewModel(
 
     init {
         onIntent(LogTeaIntent.LoadData)
+        collectLastSession()
         route.teaId?.let(::selectTea)
         route.vesselId?.let(::selectVessel)
         route.configurationId?.let(::selectMethod)
@@ -127,6 +139,8 @@ class LogTeaViewModel(
             is LogTeaIntent.StartTimerClicked -> inProgressDelegate.checkAndProceed(PendingAction.StartTimer)
 
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
+            is LogTeaIntent.LastTimeClicked ->
+                _navEvents.trySend(LogTeaNavigationEvent.NavigateToSession(intent.sessionId))
 
             is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
             is LogTeaIntent.MethodSelected -> selectMethod(intent.configurationId)
@@ -177,6 +191,22 @@ class LogTeaViewModel(
                     }
                 }
         }
+    }
+
+    /** Follows whichever tea is selected, so the card is never another tea's or a deleted session. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun collectLastSession() = viewModelScope.launch {
+        _state.map { it.selectedTea?.id }
+            .distinctUntilChanged()
+            .flatMapLatest { teaId ->
+                if (teaId == null) flowOf(null)
+                else teaSessionRepository.getSessionsByTeaFlow(teaId).map { it.lastCompleted() }
+            }
+            .map { session -> session to session?.dominantTags(tastingTagRepository.getAll()).orEmpty() }
+            .catch { messages.failure(it, Res.string.couldnt_load) }
+            .collect { (session, tags) ->
+                _state.update { it.copy(lastSession = session, lastSessionTags = tags) }
+            }
     }
 
     private fun showTeaPicker() {
@@ -551,4 +581,5 @@ sealed interface LogTeaNavigationEvent {
     data object NavigateBack : LogTeaNavigationEvent
     data class NavigateToTimer(val sessionId: String) : LogTeaNavigationEvent
     data class NavigateToReview(val sessionId: String) : LogTeaNavigationEvent
+    data class NavigateToSession(val sessionId: String) : LogTeaNavigationEvent
 }

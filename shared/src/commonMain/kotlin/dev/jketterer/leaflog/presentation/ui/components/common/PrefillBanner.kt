@@ -21,6 +21,15 @@ import compose.icons.FeatherIcons
 import compose.icons.feathericons.Info
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.prefill_best_brew
+import leaf_log.shared.generated.resources.prefill_change
+import leaf_log.shared.generated.resources.prefill_same_type
+import leaf_log.shared.generated.resources.prefill_saved_method
+import leaf_log.shared.generated.resources.prefill_tea_default
+import leaf_log.shared.generated.resources.prefill_type_default
+import org.jetbrains.compose.resources.stringResource
+
 /**
  * Banner that shows the source of pre-filled brewing parameters
  */
@@ -33,26 +42,12 @@ fun PrefillBanner(
     onChooseDifferentMethod: (() -> Unit)? = null,
 ) {
     val bannerText = when (source) {
-        is PrefillSource.SavedConfig -> {
-            "Using your saved brewing method for $teaName"
-        }
-
-        is PrefillSource.BestRatedSession -> {
-            "From your best brew of $teaName, rated ${formatRating(source.rating)}"
-        }
-
-        is PrefillSource.SameTypeConfig -> {
-            "Suggested parameters based on how you brew ${source.teaName}"
-        }
-
-        is PrefillSource.TeaDefault -> {
-            "Starting from your usual temperature for $teaName"
-        }
-
-        is PrefillSource.TypeDefault -> {
-            "Starting from your usual temperature for ${source.typeName} tea"
-        }
-
+        is PrefillSource.SavedConfig -> stringResource(Res.string.prefill_saved_method, teaName)
+        is PrefillSource.BestRatedSession ->
+            stringResource(Res.string.prefill_best_brew, teaName, formatRating(source.rating))
+        is PrefillSource.SameTypeConfig -> stringResource(Res.string.prefill_same_type, source.teaName)
+        is PrefillSource.TeaDefault -> stringResource(Res.string.prefill_tea_default, teaName)
+        is PrefillSource.TypeDefault -> stringResource(Res.string.prefill_type_default, source.typeName)
         PrefillSource.None -> return // Don't show banner if no pre-fill
     }
 
@@ -93,7 +88,7 @@ fun PrefillBanner(
             if (hasMultipleMethods && onChooseDifferentMethod != null) {
                 TextButton(onClick = onChooseDifferentMethod) {
                     Text(
-                        text = "Change",
+                        text = stringResource(Res.string.prefill_change),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

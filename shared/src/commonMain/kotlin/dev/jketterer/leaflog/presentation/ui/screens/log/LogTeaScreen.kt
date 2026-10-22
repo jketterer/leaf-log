@@ -43,6 +43,7 @@ import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
+import dev.jketterer.leaflog.presentation.ui.components.session.LastTimeCard
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
@@ -71,6 +72,7 @@ fun LogTeaScreen(
     onNavigateBack: () -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToReview: (String) -> Unit,
+    onNavigateToSession: (String) -> Unit,
     viewModel: LogTeaViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -86,6 +88,10 @@ fun LogTeaScreen(
 
                 is LogTeaNavigationEvent.NavigateToReview -> {
                     onNavigateToReview(event.sessionId)
+                }
+
+                is LogTeaNavigationEvent.NavigateToSession -> {
+                    onNavigateToSession(event.sessionId)
                 }
 
                 is LogTeaNavigationEvent.NavigateBack -> {
@@ -158,6 +164,16 @@ private fun LogTeaContent(
                         onSelectTeaClicked = { onIntent(LogTeaIntent.ShowTeaPicker) },
                         imageStorage = imageStorage,
                     )
+                }
+
+                state.lastSession?.let { session ->
+                    item(key = "last_time") {
+                        LastTimeCard(
+                            session = session,
+                            tags = state.lastSessionTags,
+                            onClick = { onIntent(LogTeaIntent.LastTimeClicked(session.session.id)) },
+                        )
+                    }
                 }
 
                 item(key = "vessel") {

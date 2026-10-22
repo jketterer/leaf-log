@@ -638,8 +638,12 @@ Decided 2026-10-19.
 - **Rinse** is a yes/no, never timed: a switch on the method that a session copies when it starts
   (`rinsed`), also on Log Tea and Edit Session, shown as "rinsed". No timer state, no steep row.
 - **The slim review** between steeps replaces Steep Complete:
-    - Stars, tags, a collapsed note, and the steep's parameters with the edit sheet, which gains a
-      vessel row; choosing a vessel fills the water with its capacity.
+    - A question, "How was steep 3?", under the tea and vessel, with the steep's parameters; they
+      open the edit sheet, which gains a vessel row, and choosing a vessel fills the water with its
+      capacity. Then stars, eight tags ready to tap with More for the rest, and a note. The eight
+      are the tags most confirmed on this tea, then on any, then the curated order, ranked once
+      as the review opens. Below them, the same steep of the session Brew Again copied, else the tea's last, to
+      rate against.
     - A primary **"Next (30s)"** straight to the timer at the planned time. "Adjust" opens a sheet
       with the next steep's time and temperature, then goes to the timer. Water is not adjusted
       between steeps. The review no longer uses the next-steep dialog; Session Detail's add-steep
@@ -818,9 +822,9 @@ a chip, its own line).
     - **One steep sheet:** the review's `SteepEditSheet` moves to `components/session/` and gains a
       parameters row (time, temperature, water through `EditSessionParametersSheet`). Edits save as
       made, as in the review. Delete steep is a trash icon beside its number.
-        - Its body (stars, parameters row, tags, note) is one composable the slim review shares,
-          keeping its own layout around it: the collapsed note, Next and Finish. A finished
-          steep and the steep just brewed then edit the same way.
+        - The slim review lays out the same pieces its own way: a question over big stars, tags
+          ready to tap and an open note. Both save each edit as it's made, so a finished steep and
+          the steep just brewed edit the same way.
         - `EditSessionParametersSheet` has edited steeps as well as sessions since the parameters
           row: renamed `BrewParametersSheet` once Edit Session is session-only.
     - **Edit Session is session-only:** vessel, water type, leaf, rinse, location, plus tea, date

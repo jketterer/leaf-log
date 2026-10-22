@@ -2,6 +2,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 
 import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.SteepTag
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import kotlin.test.Test
@@ -74,5 +76,46 @@ class SteepCompleteActionsTest {
     @Test
     fun `a vessel with no capacity leaves the water`() {
         assertEquals(200.0, waterForVessel(200.0, vessel(capacityMl = null)))
+    }
+
+    private val vocabulary = listOf("floral", "fruity", "honey", "roasted", "sweet", "smooth").map {
+        TastingTag(id = it, key = it, name = null, isCustom = false, displayOrder = 0)
+    }
+
+    /** A session whose one steep carries [tags], confirmed unless listed in [carried]. */
+    private fun tagged(vararg tags: String, carried: Set<String> = emptySet()) = previewSession().let {
+        it.copy(steeps = it.steeps.map { steep -> steep.copy(tags = tags.map { t -> SteepTag(t, confirmed = t !in carried) }) })
+    }
+
+    private fun ids(tags: List<TastingTag>) = tags.map { it.id }
+
+    @Test
+    fun `with no history the vocabulary's order fills the suggestions`() {
+        assertEquals(listOf("floral", "fruity", "honey"), ids(suggestTags(vocabulary, emptyList(), emptyList(), count = 3)))
+    }
+
+    @Test
+    fun `this tea's most used tags come first`() {
+        val tea = listOf(tagged("sweet", "smooth"), tagged("smooth"))
+        assertEquals(listOf("smooth", "sweet", "floral"), ids(suggestTags(vocabulary, tea, tea, count = 3)))
+    }
+
+    @Test
+    fun `tags used on other teas come after this tea's own`() {
+        val tea = listOf(tagged("smooth"))
+        val all = tea + listOf(tagged("roasted"), tagged("roasted"))
+        assertEquals(listOf("smooth", "roasted", "floral"), ids(suggestTags(vocabulary, tea, all, count = 3)))
+    }
+
+    @Test
+    fun `tags used equally keep the vocabulary's order`() {
+        val all = listOf(tagged("smooth", "honey"))
+        assertEquals(listOf("honey", "smooth", "floral"), ids(suggestTags(vocabulary, emptyList(), all, count = 3)))
+    }
+
+    @Test
+    fun `carried over tags that were never confirmed don't count`() {
+        val all = listOf(tagged("smooth", carried = setOf("smooth")))
+        assertEquals(listOf("floral", "fruity", "honey"), ids(suggestTags(vocabulary, emptyList(), all, count = 3)))
     }
 }

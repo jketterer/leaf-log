@@ -4,19 +4,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.lastCompleted
 import dev.jketterer.leaflog.domain.models.toggled
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
-import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
@@ -42,6 +44,7 @@ class SteepCompleteViewModel(
     private val route: NavRoute.SteepCompleteRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
+    private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
     private val tastingTagRepository: TastingTagRepository,
@@ -152,9 +155,16 @@ class SteepCompleteViewModel(
                 }
 
                 val teaDeferred = async { teaRepository.getById(session.session.teaId) }
-                val vesselDeferred = async { brewingVesselRepository.getById(session.session.vesselId) }
+                val vesselDeferred =
+                    async { brewingVesselRepository.getById(session.session.vesselId) }
+                // reads every session once per review; a grouped count query if journals grow large
+                val allSessionsDeferred = async { teaSessionRepository.getAllSessions() }
                 val tea = teaDeferred.await()
                 val vessel = vesselDeferred.await()
+                val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
+                val allSessions = allSessionsDeferred.await()
+                val teaSessions = allSessions.filter { it.session.teaId == session.session.teaId }
+                val vocabulary = tastingTagRepository.getAll()
                 val steep = session.currentSteep
                 val vessels = brewingVesselRepository.getActive().let { active ->
                     if (vessel == null || active.any { it.id == vessel.id }) active else active + vessel
@@ -164,11 +174,16 @@ class SteepCompleteViewModel(
                     it.copy(
                         session = session,
                         tea = tea,
+                        teaTypeColorHex = teaType?.colorHex,
                         vessel = vessel,
                         vessels = vessels,
                         rating = steep.rating ?: 0f,
                         notes = steep.notes ?: "",
-                        vocabulary = tastingTagRepository.getAll(),
+                        vocabulary = vocabulary,
+                        suggestedTags = suggestTags(vocabulary, teaSessions, allSessions),
+                        comparison = session.session.planSessionId
+                            ?.let { source -> allSessions.find { s -> s.session.id == source } }
+                            ?: teaSessions.lastCompleted(),
                         isLoading = false,
                     )
                 }
@@ -340,7 +355,8 @@ class SteepCompleteViewModel(
             }
             editSessionUseCase(session.session.id) {
                 it.copy(
-                    teaQuantityGrams = if (isTeaBag) null else teaQuantityGrams ?: it.teaQuantityGrams,
+                    teaQuantityGrams = if (isTeaBag) null else teaQuantityGrams
+                        ?: it.teaQuantityGrams,
                     waterType = waterType ?: it.waterType,
                     vesselId = editVessel?.id ?: it.vesselId,
                 )

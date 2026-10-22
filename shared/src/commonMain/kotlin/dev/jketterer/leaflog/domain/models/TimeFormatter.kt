@@ -45,6 +45,10 @@ enum class DateSkeleton(val pattern: String) {
     WEEKDAY_MONTH_DAY("EEEEMMMMd"),
 }
 
+/** [date] as "Jan 15", with its year only when that isn't [today]'s: "Jan 15, 2024". */
+fun TimeFormatter.formatDate(date: LocalDate, today: LocalDate): String =
+    formatDate(date, if (date.year == today.year) DateSkeleton.MONTH_DAY else DateSkeleton.MONTH_DAY_YEAR)
+
 /** [instant]'s clock time in the device's time zone: "2:30 PM". */
 fun TimeFormatter.formatClockTime(instant: Instant): String {
     val local = instant.toLocalDateTime(TimeZone.currentSystemDefault())
@@ -64,8 +68,7 @@ fun TimeFormatter.formatRelativeTimestamp(instant: Instant, now: Instant): Strin
     return when (relativeDayOf(instant, now, tz)) {
         RelativeDay.TODAY -> formatClockTime(local.hour, local.minute)
         RelativeDay.YESTERDAY -> "Yesterday"
-        RelativeDay.THIS_YEAR -> formatDate(local.date, DateSkeleton.MONTH_DAY)
-        RelativeDay.OLDER -> formatDate(local.date, DateSkeleton.MONTH_DAY_YEAR)
+        RelativeDay.THIS_YEAR, RelativeDay.OLDER -> formatDate(local.date, now.toLocalDateTime(tz).date)
     }
 }
 

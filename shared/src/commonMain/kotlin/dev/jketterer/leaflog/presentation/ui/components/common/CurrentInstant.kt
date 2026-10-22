@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.components.common
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalInspectionMode
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.toLocalDateTime
@@ -24,6 +25,10 @@ internal val PreviewInstant = Instant.fromEpochSeconds(1_790_000_000L)
 @Composable
 internal fun currentInstant(): Instant =
     if (LocalInspectionMode.current) PreviewInstant else Clock.System.now()
+
+/** Today's date in the device's time zone, or [PreviewInstant]'s in a preview. */
+@Composable
+internal fun currentDate(): LocalDate = currentInstant().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
 /** How long ago [instant] was in calendar days, roughly: "today", "3 days ago", "2 months ago". */
 @Composable

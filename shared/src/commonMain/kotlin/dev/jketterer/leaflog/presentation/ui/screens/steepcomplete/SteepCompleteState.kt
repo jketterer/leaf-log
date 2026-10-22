@@ -11,11 +11,16 @@ import kotlin.time.Duration
 data class SteepCompleteState(
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
+    val teaTypeColorHex: String? = null,
     val vessel: BrewingVessel? = null,
     val vessels: List<BrewingVessel> = emptyList(),
     val rating: Float = 0f,
     val notes: String = "",
     val vocabulary: List<TastingTag> = emptyList(),
+    // Ready to tap, ranked once when the review opens so they hold still
+    val suggestedTags: List<TastingTag> = emptyList(),
+    // The session to rate against: the one Brew Again copied, else the tea's last completed
+    val comparison: SessionWithSteeps? = null,
     // Next steep: what the primary button starts
     val nextSteepDuration: Duration? = null,
     val nextSteepTemperature: Double? = null,

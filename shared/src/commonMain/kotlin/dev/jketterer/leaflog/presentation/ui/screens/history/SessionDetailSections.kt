@@ -32,17 +32,18 @@ import compose.icons.feathericons.Pause
 import compose.icons.feathericons.RefreshCw
 import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.CURATED_TAG_KEYS
-import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SteepTag
 import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.formatDate
 import dev.jketterer.leaflog.domain.models.TimelineSteep
 import dev.jketterer.leaflog.domain.models.formatClockTime
 import dev.jketterer.leaflog.domain.models.timeline
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatDuration
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
@@ -103,7 +104,7 @@ internal fun SessionHeaderSection(
         Text(
             text = stringResource(
                 Res.string.date_at_time,
-                TimeFormatter.formatDate(dateTime.date, DateSkeleton.MONTH_DAY_YEAR),
+                TimeFormatter.formatDate(dateTime.date, currentDate()),
                 TimeFormatter.formatClockTime(dateTime.hour, dateTime.minute),
             ),
             style = MaterialTheme.typography.bodyMedium,

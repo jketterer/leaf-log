@@ -12,6 +12,7 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -65,6 +66,7 @@ import leaf_log.shared.generated.resources.tag_woody
 import leaf_log.shared.generated.resources.tags_add
 import leaf_log.shared.generated.resources.tags_carried_over
 import leaf_log.shared.generated.resources.tags_create
+import leaf_log.shared.generated.resources.tags_more
 import leaf_log.shared.generated.resources.tags_search
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -122,7 +124,8 @@ internal fun <T> searchTags(
 
 /**
  * A steep's tags, with an Add chip that opens the whole vocabulary. Tags carried over from the
- * steep before are faded until tapped; tapping a confirmed one removes it.
+ * steep before are faded until tapped; tapping a confirmed one removes it. [suggestions] show too,
+ * ready to tap, and Add becomes More.
  */
 @Composable
 fun SteepTags(
@@ -131,17 +134,20 @@ fun SteepTags(
     onToggle: (tagId: String) -> Unit,
     onCreate: (name: String) -> Unit,
     modifier: Modifier = Modifier,
+    suggestions: List<TastingTag> = emptyList(),
 ) {
     var picking by remember { mutableStateOf(false) }
     val confirmed = tags.associate { it.tagId to it.confirmed }
 
     FlowRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        vocabulary.filter { it.id in confirmed }.forEach { tag ->
+        // The suggestions hold their places when tapped; the steep's other tags follow them
+        val suggested = suggestions.map { it.id }.toSet()
+        (suggestions + vocabulary.filter { it.id in confirmed && it.id !in suggested }).forEach { tag ->
             TagChip(tag.label(), confirmed[tag.id], onClick = { onToggle(tag.id) })
         }
         AssistChip(
             onClick = { picking = true },
-            label = { Text(stringResource(Res.string.tags_add)) },
+            label = { Text(stringResource(if (suggestions.isNotEmpty()) Res.string.tags_more else Res.string.tags_add)) },
             leadingIcon = {
                 Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize))
             },
@@ -220,6 +226,11 @@ private fun TagChip(label: String, confirmed: Boolean?, onClick: () -> Unit) {
         selected = confirmed != null,
         onClick = onClick,
         label = { Text(label) },
+        // Tertiary, as tags read everywhere else
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        ),
         modifier = if (confirmed == false) {
             Modifier.alpha(0.5f).semantics { stateDescription = carriedOver }
         } else Modifier,

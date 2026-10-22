@@ -38,14 +38,15 @@ import androidx.compose.ui.window.DialogProperties
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.BrewingVessel
-import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.formatDate
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryFilters
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -96,8 +97,8 @@ private fun isCustomDateRange(start: LocalDate?, end: LocalDate?): Boolean {
     }
 }
 
-private fun LocalDate.formatDisplay(): String =
-    TimeFormatter.formatDate(this, DateSkeleton.MONTH_DAY_YEAR)
+@Composable
+private fun LocalDate.formatDisplay(): String = TimeFormatter.formatDate(this, currentDate())
 
 /**
  * History's filters. [brewedTeas] are the teas the Tea filter offers, most recently brewed first.

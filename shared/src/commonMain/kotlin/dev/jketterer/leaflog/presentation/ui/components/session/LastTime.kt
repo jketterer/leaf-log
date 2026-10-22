@@ -27,13 +27,14 @@ import compose.icons.feathericons.Thermometer
 import compose.icons.feathericons.TrendingUp
 import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.CURATED_TAG_KEYS
-import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.formatDate
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
@@ -82,7 +83,7 @@ fun LastTimeCard(
             ) {
                 Text(stringResource(Res.string.last_time), style = MaterialTheme.typography.titleSmall)
                 Text(
-                    text = TimeFormatter.formatDate(date, DateSkeleton.MONTH_DAY_YEAR),
+                    text = TimeFormatter.formatDate(date, currentDate()),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

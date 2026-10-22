@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,11 +58,12 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
-import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditBody
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepAdjustSheet
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
+import kotlin.time.Duration.Companion.seconds
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_session_action
@@ -76,10 +78,10 @@ import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_next_in
 import leaf_log.shared.generated.resources.review_steep_n
 import leaf_log.shared.generated.resources.start_steep_n
+import leaf_log.shared.generated.resources.tea_not_found
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun SteepCompleteScreen(
@@ -118,83 +120,74 @@ private fun SteepCompleteContent(
     onIntent: (SteepCompleteIntent) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        TopAppBar(
-            title = {
-                Column {
-                    Text(state.tea?.name ?: "")
-                    state.vessel?.name?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            TopAppBar(
+                title = {},
+                navigationIcon = {
+                    IconButton(onClick = { onIntent(SteepCompleteIntent.BackClicked) }) {
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    var menuOpen by remember { mutableStateOf(false) }
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(FeatherIcons.MoreVertical, contentDescription = stringResource(Res.string.more_options))
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = stringResource(Res.string.discard_session_action),
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onIntent(SteepCompleteIntent.ShowDiscardConfirmation)
+                            },
+                        )
+                    }
+                },
+            )
+            Box(modifier = Modifier.weight(1f)) {
+                when {
+                    state.isLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    // Failed to load; the snackbar says why
+                    state.session == null -> {}
+
+                    else -> {
+                        SteepCompleteBody(
+                            state = state,
+                            onIntent = onIntent,
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
                 }
-            },
-            navigationIcon = {
-                IconButton(onClick = { onIntent(SteepCompleteIntent.BackClicked) }) {
-                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
-                }
-            },
-            actions = {
-                var menuOpen by remember { mutableStateOf(false) }
-                IconButton(onClick = { menuOpen = true }) {
-                    Icon(FeatherIcons.MoreVertical, contentDescription = stringResource(Res.string.more_options))
-                }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(Res.string.discard_session_action),
-                                color = MaterialTheme.colorScheme.error,
-                            )
-                        },
-                        onClick = {
-                            menuOpen = false
-                            onIntent(SteepCompleteIntent.ShowDiscardConfirmation)
-                        },
-                    )
-                }
-            },
-        )
-        Box(modifier = Modifier.weight(1f)) {
-            when {
-                state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                // Failed to load; the snackbar says why
-                state.session == null -> {}
-
-                else -> {
-                    SteepCompleteBody(
-                        state = state,
-                        onIntent = onIntent,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
-            SnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter),
-            )
-        }
-        if (!state.isLoading && state.session != null) {
-            SteepCompleteBottomBar(
-                finishLeads = state.finishLeads,
-                nextSteepNumber = state.session.currentSteep.number + 1,
-                nextTime = state.nextSteepDuration?.inWholeSeconds?.toInt()?.let(::formatBrewingTime),
-                nextTemperature = state.nextSteepTemperature?.let { formatTemperature(it) },
-                onNext = { onIntent(SteepCompleteIntent.StartNextSteep) },
-                onAdjust = { onIntent(SteepCompleteIntent.ShowAdjustSheet) },
-                onFinishSession = { onIntent(SteepCompleteIntent.FinishSession) },
-            )
+            if (!state.isLoading && state.session != null) {
+                SteepCompleteBottomBar(
+                    finishLeads = state.finishLeads,
+                    nextSteepNumber = state.session.currentSteep.number + 1,
+                    nextTime = state.nextSteepDuration?.inWholeSeconds?.toInt()?.let(::formatBrewingTime),
+                    nextTemperature = state.nextSteepTemperature?.let { formatTemperature(it) },
+                    onNext = { onIntent(SteepCompleteIntent.StartNextSteep) },
+                    onAdjust = { onIntent(SteepCompleteIntent.ShowAdjustSheet) },
+                    onFinishSession = { onIntent(SteepCompleteIntent.FinishSession) },
+                )
+            }
         }
     }
 
@@ -267,34 +260,42 @@ private fun SteepCompleteBody(
 ) {
     val session = state.session ?: return
     val steep = session.currentSteep
-    // Sits on the buttons, where a thumb reaches the stars; the room left over goes under the title
+    val comparison = state.comparison?.steeps?.firstOrNull { it.number == steep.number }
+    val teaColor = state.teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
+        ?: MaterialTheme.colorScheme.primary
+    // The question up top; the answer sits on the buttons, where a thumb reaches the stars, and
+    // the height left over opens between them
     BoxWithConstraints(modifier = modifier) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .heightIn(min = maxHeight)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                text = stringResource(Res.string.review_steep_n, steep.number),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-            SteepEditBody(
+            SteepHeaderSection(
+                teaName = state.tea?.name ?: stringResource(Res.string.tea_not_found),
+                vesselName = state.vessel?.name,
+                teaColor = teaColor,
                 steep = steep,
-                rating = state.rating,
-                notes = state.notes,
-                vocabulary = state.vocabulary,
-                onRatingChange = { onIntent(SteepCompleteIntent.RatingChanged(it)) },
-                onNotesChange = { onIntent(SteepCompleteIntent.NotesChanged(it)) },
-                onTagToggle = { onIntent(SteepCompleteIntent.TagToggled(it)) },
-                onTagCreate = { onIntent(SteepCompleteIntent.TagCreated(it)) },
-                onEditParameters = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
                 teaQuantityGrams = session.session.teaQuantityGrams,
+                onEditParameters = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
+                modifier = Modifier.padding(bottom = 32.dp),
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                SteepReviewSection(
+                    steep = steep,
+                    rating = state.rating,
+                    notes = state.notes,
+                    vocabulary = state.vocabulary,
+                    suggestedTags = state.suggestedTags,
+                    onRatingChange = { onIntent(SteepCompleteIntent.RatingChanged(it)) },
+                    onNotesChange = { onIntent(SteepCompleteIntent.NotesChanged(it)) },
+                    onTagToggle = { onIntent(SteepCompleteIntent.TagToggled(it)) },
+                    onTagCreate = { onIntent(SteepCompleteIntent.TagCreated(it)) },
+                )
+                comparison?.let { ComparisonSteepSection(steep = it, vocabulary = state.vocabulary) }
+            }
         }
     }
 }
@@ -314,7 +315,8 @@ private fun SteepCompleteBottomBar(
     val nextLabel = stringResource(Res.string.start_steep_n, nextSteepNumber)
     val finish = stringResource(Res.string.review_finish_session)
 
-    Surface(modifier = modifier, shadowElevation = 8.dp) {
+    Surface(modifier = modifier) {
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -423,6 +425,9 @@ private fun SteepCompleteScreenWesternPreview() {
                     updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
+                teaTypeColorHex = "#4CAF50",
+                vocabulary = previewVocabulary,
+                suggestedTags = previewVocabulary.take(TAG_SUGGESTIONS),
                 nextSteepDuration = 180.seconds,
                 nextSteepTemperature = 95.0,
                 finishLeads = true,
@@ -462,6 +467,10 @@ private fun SteepCompleteScreenGongfuPreview() {
                     updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
+                teaTypeColorHex = "#FF9800",
+                vocabulary = previewVocabulary,
+                suggestedTags = previewVocabulary.take(TAG_SUGGESTIONS),
+                comparison = previewComparison(),
                 nextSteepDuration = 55.seconds,
                 nextSteepTemperature = 76.4,
                 isLoading = false,

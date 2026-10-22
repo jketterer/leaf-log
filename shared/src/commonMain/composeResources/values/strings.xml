@@ -294,6 +294,10 @@
     <string name="review_add_note">Add a note</string>
     <string name="review_note_label">Note</string>
     <string name="review_steep_n">Steep %1$d</string>
+    <string name="steep_n_on_date">Steep %1$d on %2$s</string>
+    <string name="review_how_was_steep_n">How was steep %1$d?</string>
+    <string name="review_rating">Rating</string>
+    <string name="review_tasting_notes">Tasting notes</string>
     <string name="review_done">Done</string>
     <string name="review_steeps_header">Steeps</string>
     <string name="review_note_header">Note</string>
@@ -348,6 +352,7 @@
     <string name="tag_drying">Drying</string>
     <string name="tag_returning_sweetness">Returning sweetness</string>
     <string name="tags_add">Add tags</string>
+    <string name="tags_more">More</string>
     <string name="tags_search">Find or create a tag</string>
     <string name="tags_create">Create “%1$s”</string>
     <string name="tags_carried_over">From the last steep, tap to keep</string>

@@ -36,6 +36,18 @@ class TimeFormatterTest {
     }
 
     @Test
+    fun `a date this year leaves out the year`() {
+        Locale.setDefault(Locale.US)
+        assertEquals("Jan 15", TimeFormatter.formatDate(LocalDate(2024, 1, 15), today = LocalDate(2024, 12, 31)))
+    }
+
+    @Test
+    fun `a date from another year keeps the year`() {
+        Locale.setDefault(Locale.US)
+        assertEquals("Dec 31, 2023", TimeFormatter.formatDate(LocalDate(2023, 12, 31), today = LocalDate(2024, 1, 1)))
+    }
+
+    @Test
     fun `British English puts the day first`() {
         assertEquals("15 Jan 2024", format(DateSkeleton.MONTH_DAY_YEAR, Locale.UK))
     }

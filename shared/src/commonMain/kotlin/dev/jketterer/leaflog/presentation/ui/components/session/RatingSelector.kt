@@ -17,6 +17,7 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Star
@@ -34,6 +35,7 @@ fun RatingSelector(
     rating: Float,
     onRatingChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
+    starSize: Dp = 24.dp,
 ) {
     val description = ratingDescription(rating.takeIf { it > 0f })
     Row(
@@ -61,7 +63,7 @@ fun RatingSelector(
                         FeatherIcons.Star
                     },
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(starSize),
                 )
             }
         }

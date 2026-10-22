@@ -52,8 +52,8 @@ import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
-import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
@@ -63,7 +63,6 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
-import kotlin.time.Duration.Companion.seconds
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_session_action
@@ -72,16 +71,15 @@ import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
 import leaf_log.shared.generated.resources.more_options
-import leaf_log.shared.generated.resources.review_another_in
 import leaf_log.shared.generated.resources.review_change_steep_n
 import leaf_log.shared.generated.resources.review_finish_session
-import leaf_log.shared.generated.resources.review_next_in
 import leaf_log.shared.generated.resources.review_steep_n
 import leaf_log.shared.generated.resources.start_steep_n
 import leaf_log.shared.generated.resources.tea_not_found
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun SteepCompleteScreen(
@@ -132,7 +130,10 @@ private fun SteepCompleteContent(
                 actions = {
                     var menuOpen by remember { mutableStateOf(false) }
                     IconButton(onClick = { menuOpen = true }) {
-                        Icon(FeatherIcons.MoreVertical, contentDescription = stringResource(Res.string.more_options))
+                        Icon(
+                            FeatherIcons.MoreVertical,
+                            contentDescription = stringResource(Res.string.more_options)
+                        )
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(
@@ -181,7 +182,8 @@ private fun SteepCompleteContent(
                 SteepCompleteBottomBar(
                     finishLeads = state.finishLeads,
                     nextSteepNumber = state.session.currentSteep.number + 1,
-                    nextTime = state.nextSteepDuration?.inWholeSeconds?.toInt()?.let(::formatBrewingTime),
+                    nextTime = state.nextSteepDuration?.inWholeSeconds?.toInt()
+                        ?.let(::formatBrewingTime),
                     nextTemperature = state.nextSteepTemperature?.let { formatTemperature(it) },
                     onNext = { onIntent(SteepCompleteIntent.StartNextSteep) },
                     onAdjust = { onIntent(SteepCompleteIntent.ShowAdjustSheet) },
@@ -226,7 +228,7 @@ private fun SteepCompleteContent(
 
     // Edit parameters sheet
     if (state.showEditParametersSheet && state.editWaterType != null) {
-        EditSessionParametersSheet(
+        BrewParametersSheet(
             brewingTime = state.editBrewingTime,
             onBrewingTimeChanged = { onIntent(SteepCompleteIntent.EditBrewingTimeChanged(it)) },
             temperatureCelsius = state.editTemperatureCelsius,
@@ -294,7 +296,12 @@ private fun SteepCompleteBody(
                     onTagToggle = { onIntent(SteepCompleteIntent.TagToggled(it)) },
                     onTagCreate = { onIntent(SteepCompleteIntent.TagCreated(it)) },
                 )
-                comparison?.let { ComparisonSteepSection(steep = it, vocabulary = state.vocabulary) }
+                comparison?.let {
+                    ComparisonSteepSection(
+                        steep = it,
+                        vocabulary = state.vocabulary
+                    )
+                }
             }
         }
     }
@@ -334,11 +341,21 @@ private fun SteepCompleteBottomBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (finishLeads) {
-                    Button(onClick = onFinishSession, modifier = Modifier.weight(1f)) { Text(finish) }
-                    OutlinedButton(onClick = onNext, modifier = Modifier.weight(1f)) { Text(nextLabel) }
+                    Button(
+                        onClick = onFinishSession,
+                        modifier = Modifier.weight(1f)
+                    ) { Text(finish) }
+                    OutlinedButton(onClick = onNext, modifier = Modifier.weight(1f)) {
+                        Text(
+                            nextLabel
+                        )
+                    }
                 } else {
                     Button(onClick = onNext, modifier = Modifier.weight(1f)) { Text(nextLabel) }
-                    OutlinedButton(onClick = onFinishSession, modifier = Modifier.weight(1f)) { Text(finish) }
+                    OutlinedButton(
+                        onClick = onFinishSession,
+                        modifier = Modifier.weight(1f)
+                    ) { Text(finish) }
                 }
             }
         }

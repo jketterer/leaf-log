@@ -60,8 +60,8 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
-import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
@@ -315,7 +315,7 @@ private fun TimerContent(
 
     // Edit session parameters sheet
     if (state.showEditSheet && state.editWaterType != null) {
-        EditSessionParametersSheet(
+        BrewParametersSheet(
             temperatureCelsius = state.editTemperatureCelsius,
             waterQuantityMl = state.editWaterQuantityMl,
             teaQuantityGrams = state.editTeaQuantityGrams,

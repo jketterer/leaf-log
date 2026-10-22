@@ -38,7 +38,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditSessionParametersSheet(
+fun BrewParametersSheet(
     temperatureCelsius: Double?,
     waterQuantityMl: Double?,
     onTemperatureChanged: (Double?) -> Unit,
@@ -69,7 +69,7 @@ fun EditSessionParametersSheet(
             enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
         ),
     ) {
-        EditSessionParametersContent(
+        BrewParametersContent(
             temperatureCelsius = temperatureCelsius,
             waterQuantityMl = waterQuantityMl,
             teaQuantityGrams = teaQuantityGrams,
@@ -95,7 +95,7 @@ fun EditSessionParametersSheet(
 }
 
 @Composable
-internal fun EditSessionParametersContent(
+internal fun BrewParametersContent(
     temperatureCelsius: Double?,
     waterQuantityMl: Double?,
     onTemperatureChanged: (Double?) -> Unit,
@@ -230,9 +230,9 @@ internal fun EditSessionParametersContent(
 
 @Preview(showBackground = true)
 @Composable
-private fun EditSessionParametersContentLooseLeafPreview() {
+private fun BrewParametersContentLooseLeafPreview() {
     LeafLogTheme {
-        EditSessionParametersContent(
+        BrewParametersContent(
             temperatureCelsius = 80.0,
             waterQuantityMl = 200.0,
             teaQuantityGrams = 5.0,
@@ -254,9 +254,9 @@ private fun EditSessionParametersContentLooseLeafPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun EditSessionParametersContentTeaBagPreview() {
+private fun BrewParametersContentTeaBagPreview() {
     LeafLogTheme {
-        EditSessionParametersContent(
+        BrewParametersContent(
             temperatureCelsius = 80.0,
             waterQuantityMl = 200.0,
             teaQuantityGrams = null,
@@ -278,9 +278,9 @@ private fun EditSessionParametersContentTeaBagPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun EditSessionParametersContentSteepPreview() {
+private fun BrewParametersContentSteepPreview() {
     LeafLogTheme {
-        EditSessionParametersContent(
+        BrewParametersContent(
             brewingTime = 25.seconds,
             temperatureCelsius = 95.0,
             waterQuantityMl = 120.0,

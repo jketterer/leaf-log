@@ -51,8 +51,8 @@ import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.SteepTag
 import dev.jketterer.leaflog.domain.models.TastingTag
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewParametersContent
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
-import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersContent
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
@@ -155,7 +155,7 @@ private fun SteepParametersContent(
     var temperature by remember(steep.id) { mutableStateOf<Double?>(steep.temperatureCelsius) }
     var water by remember(steep.id) { mutableStateOf<Double?>(steep.waterQuantityMl) }
 
-    EditSessionParametersContent(
+    BrewParametersContent(
         brewingTime = brewedTime,
         onBrewingTimeChanged = { brewedTime = it },
         temperatureCelsius = temperature,

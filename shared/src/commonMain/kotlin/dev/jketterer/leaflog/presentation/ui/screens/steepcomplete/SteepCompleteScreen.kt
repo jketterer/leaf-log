@@ -3,33 +3,30 @@ package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,9 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -59,12 +54,10 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EditSessionParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
-import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
-import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
-import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
+import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditBody
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepAdjustSheet
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
@@ -77,13 +70,10 @@ import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
 import leaf_log.shared.generated.resources.more_options
-import leaf_log.shared.generated.resources.review_add_note
 import leaf_log.shared.generated.resources.review_another_in
 import leaf_log.shared.generated.resources.review_change_steep_n
 import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_next_in
-import leaf_log.shared.generated.resources.review_note_label
-import leaf_log.shared.generated.resources.review_rate_steep
 import leaf_log.shared.generated.resources.review_steep_n
 import leaf_log.shared.generated.resources.start_steep_n
 import org.jetbrains.compose.resources.stringResource
@@ -275,68 +265,37 @@ private fun SteepCompleteBody(
     onIntent: (SteepCompleteIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val focusManager = LocalFocusManager.current
-
-    Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Spacer(modifier = Modifier.height(4.dp))
-
-        state.session?.let { session ->
-            SteepParameterCard(
-                session = session,
-                onEditClick = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
-            )
-        }
-
-        HorizontalDivider()
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    val session = state.session ?: return
+    val steep = session.currentSteep
+    // Sits on the buttons, where a thumb reaches the stars; the room left over goes under the title
+    BoxWithConstraints(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
+        ) {
             Text(
-                text = stringResource(Res.string.review_rate_steep),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = stringResource(Res.string.review_steep_n, steep.number),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp),
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            RatingSelector(
+            SteepEditBody(
+                steep = steep,
                 rating = state.rating,
-                onRatingChange = { onIntent(SteepCompleteIntent.RatingChanged(it)) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        state.session?.let { session ->
-            HorizontalDivider()
-            SteepTags(
-                tags = session.currentSteep.tags,
+                notes = state.notes,
                 vocabulary = state.vocabulary,
-                onToggle = { onIntent(SteepCompleteIntent.TagToggled(it)) },
-                onCreate = { onIntent(SteepCompleteIntent.TagCreated(it)) },
+                onRatingChange = { onIntent(SteepCompleteIntent.RatingChanged(it)) },
+                onNotesChange = { onIntent(SteepCompleteIntent.NotesChanged(it)) },
+                onTagToggle = { onIntent(SteepCompleteIntent.TagToggled(it)) },
+                onTagCreate = { onIntent(SteepCompleteIntent.TagCreated(it)) },
+                onEditParameters = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
+                teaQuantityGrams = session.session.teaQuantityGrams,
             )
+            Spacer(modifier = Modifier.height(8.dp))
         }
-        HorizontalDivider()
-
-        // Collapsed until asked for, open when the steep already has a note
-        var noteOpen by remember(state.session?.currentSteep?.id) { mutableStateOf(state.notes.isNotEmpty()) }
-        if (noteOpen) {
-            OutlinedTextField(
-                value = state.notes,
-                onValueChange = { onIntent(SteepCompleteIntent.NotesChanged(it)) },
-                label = { Text(stringResource(Res.string.review_note_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                maxLines = 8,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            )
-        } else {
-            TextButton(onClick = { noteOpen = true }) {
-                Text(stringResource(Res.string.review_add_note))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

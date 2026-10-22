@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.domain.models
 
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 /**
@@ -92,6 +93,37 @@ data class SessionWithSteeps(
     /** Mean of the rated steeps, unrounded. Unrated steeps don't count; no ratings is null. */
     val effectiveRating: Float?
         get() = steeps.mapNotNull { it.rating }.takeIf { it.isNotEmpty() }?.average()?.toFloat()
+
+    /** How long the leaves sat in water, every steep together. */
+    val totalBrewTime: Duration
+        get() = steeps.fold(Duration.ZERO) { total, steep -> total + steep.brewedTime }
+}
+
+/**
+ * A steep as the timeline reads it: each parameter only when it changed from the steep before, so
+ * steep 1 has all three, and the rest before it when that ran long enough to be a break.
+ */
+data class TimelineSteep(
+    val steep: Steep,
+    val brewedTime: Duration?,
+    val temperatureCelsius: Double?,
+    val waterQuantityMl: Double?,
+    val breakBefore: Duration?,
+)
+
+/** A rest between steeps longer than this, beyond the brew before it, reads as a break. */
+private val BREAK_AFTER = 2.minutes
+
+fun SessionWithSteeps.timeline(): List<TimelineSteep> = steeps.mapIndexed { index, steep ->
+    val previous = steeps.getOrNull(index - 1)
+    TimelineSteep(
+        steep = steep,
+        brewedTime = steep.brewedTime.takeIf { it != previous?.brewedTime },
+        temperatureCelsius = steep.temperatureCelsius.takeIf { it != previous?.temperatureCelsius },
+        waterQuantityMl = steep.waterQuantityMl.takeIf { it != previous?.waterQuantityMl },
+        breakBefore = previous?.let { steep.timestamp - it.timestamp - it.brewedTime }
+            ?.takeIf { it > BREAK_AFTER },
+    )
 }
 
 /** The most recent completed session, or null when none is: "last time" for a tea. */

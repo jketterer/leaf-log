@@ -260,9 +260,6 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToSession = { sessionId ->
                     navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
                 },
-                onNavigateToEditSession = { sessionId ->
-                    navigator.navigate(NavRoute.EditSessionRoute(sessionId, false))
-                },
                 onNavigateToLogTea = { teaId, vesselId ->
                     navigator.navigate(NavRoute.LogTeaRoute(teaId, vesselId))
                 },
@@ -341,8 +338,8 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             SessionDetailScreen(
                 route = route,
                 onNavigateBack = { navigator.navigateUp(route) },
-                onNavigateToEdit = { sessionId, editFullSession ->
-                    navigator.navigate(NavRoute.EditSessionRoute(sessionId, editFullSession))
+                onNavigateToEdit = { sessionId ->
+                    navigator.navigate(NavRoute.EditSessionRoute(sessionId))
                 },
                 onNavigateToTea = { teaId ->
                     navigator.navigate(NavRoute.TeaDetailsRoute(teaId))

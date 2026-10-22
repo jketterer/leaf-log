@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
@@ -219,16 +220,24 @@ fun SessionCard(
     }
 }
 
+/** A value beside the icon that says what it is, quiet, in [style]. */
 @Composable
-private fun IconValue(icon: ImageVector, text: String, style: TextStyle) {
+internal fun IconValue(
+    icon: ImageVector,
+    text: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 12.dp,
+) {
     Row(
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(12.dp),
+            modifier = Modifier.size(iconSize),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(

@@ -2,17 +2,17 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlin.time.Duration
 
 data class SessionDetailState(
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
-    val teaType: TeaType? = null,
     val vessel: BrewingVessel? = null,
     val usedConfigurationLabel: String? = null,
+    val vocabulary: List<TastingTag> = emptyList(),
 
     // UI state
     val isLoading: Boolean = false,
@@ -23,11 +23,14 @@ data class SessionDetailState(
     val nextSteepDuration: Duration? = null,
     val nextSteepTemperature: Double? = null,
 
+    // The steep open in the sheet, with its rating and note as typed
+    val editingSteepId: String? = null,
+    val editRating: Float = 0f,
+    val editNotes: String = "",
+
     // Save as configuration dialog
     val showSaveConfigurationDialog: Boolean = false,
     val suggestedConfigurationLabel: String = "",
-
-    // User preferences
 
     // In-progress session conflict dialog
     val inProgressDialogState: InProgressDialogState? = null,

@@ -112,7 +112,6 @@ fun TeaDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onNavigateToSession: (String) -> Unit,
-    onNavigateToEditSession: (String) -> Unit = {},
     onNavigateToLogTea: (String, String?) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: (String) -> Unit,

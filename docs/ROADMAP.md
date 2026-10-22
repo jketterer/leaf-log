@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-22 (Bet 3: one steep editor)
+> **Last updated:** 2026-10-22 (Bet 3: session detail as a timeline)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -817,7 +817,7 @@ a chip, its own line).
       Again and Save as method as today.
     - **One steep sheet:** the review's `SteepEditSheet` moves to `components/session/` and gains a
       parameters row (time, temperature, water through `EditSessionParametersSheet`). Edits save as
-      made, as in the review. Delete steep lives in its overflow.
+      made, as in the review. Delete steep is a trash icon beside its number.
         - Its body (stars, parameters row, tags, note) is one composable the slim review shares,
           keeping its own layout around it: the collapsed note, Next and Finish. A finished
           steep and the steep just brewed then edit the same way.
@@ -880,7 +880,7 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 9. [x] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
 10. [x] `feat: search the collection`
 11. [x] `refactor: one steep sheet`: a move plus the parameters row.
-12. [ ] `feat: session detail as a steep timeline`: Edit Session's steep mode goes; the steep
+12. [x] `feat: session detail as a steep timeline`: Edit Session's steep mode goes; the steep
     sheet's body becomes one composable the slim review shares. Test: deltas and breaks.
 13. [ ] `feat: edit a session's tea, date and note`, with Edit Session's findings. Tests: the date
     shift keeps intervals; a tea change recomputes both teas and clears the method links.

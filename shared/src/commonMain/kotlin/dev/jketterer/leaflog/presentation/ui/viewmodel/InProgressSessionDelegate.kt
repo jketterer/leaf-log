@@ -34,8 +34,6 @@ data class InProgressDialogState(
  * 3. If so, shows a dialog with three options: Resume, Complete & Continue, Discard & Continue
  * 4. On resolution, executes the original pending action
  *
- * Follows the same pattern as [ConfigurationSaveDelegate].
- *
  * @param T The type of the ViewModel state
  * @param PendingAction The ViewModel-specific pending action type
  */

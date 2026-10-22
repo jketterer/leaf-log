@@ -1,28 +1,21 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -33,73 +26,58 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
 import compose.icons.feathericons.Coffee
-import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Trash2
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.BrewingVessel
-import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.Tea
-import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.timeline
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
-import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
-import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
-import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
-import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
-import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
-import dev.jketterer.leaflog.presentation.ui.components.session.BrewingParameterDisplay
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
+import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditSheet
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.answer_yes
-import leaf_log.shared.generated.resources.date_at_time
+import leaf_log.shared.generated.resources.add_steep
+import leaf_log.shared.generated.resources.brew_again
 import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.delete_session
 import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.delete_steep_text
 import leaf_log.shared.generated.resources.delete_steep_title
-import leaf_log.shared.generated.resources.field_rinse
+import leaf_log.shared.generated.resources.edit_session
+import leaf_log.shared.generated.resources.navigate_up
+import leaf_log.shared.generated.resources.review_save_method_header
+import leaf_log.shared.generated.resources.session_not_found
+import leaf_log.shared.generated.resources.session_title
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Instant
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Duration.Companion.seconds
 
-/**
- * Session Detail Screen - displays complete session information.
- */
+/** A session read back as it happened: its setup and note, then each steep on a timeline. */
 @Composable
 fun SessionDetailScreen(
     route: NavRoute.SessionDetailsRoute,
     onNavigateBack: () -> Unit,
-    onNavigateToEdit: (String, Boolean) -> Unit,
+    onNavigateToEdit: (String) -> Unit,
     onNavigateToTea: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     viewModel: SessionDetailViewModel = koinViewModel { parametersOf(route) },
@@ -111,21 +89,10 @@ fun SessionDetailScreen(
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->
             when (event) {
-                is SessionDetailNavEvent.NavigateToEditSession -> {
-                    onNavigateToEdit(event.sessionId, event.editFullSession)
-                }
-
-                is SessionDetailNavEvent.NavigateToTeaDetails -> {
-                    onNavigateToTea(event.teaId)
-                }
-
-                is SessionDetailNavEvent.NavigateToTimer -> {
-                    onNavigateToTimer(event.sessionId)
-                }
-
-                is SessionDetailNavEvent.NavigateBack -> {
-                    onNavigateBack()
-                }
+                is SessionDetailNavEvent.NavigateToEditSession -> onNavigateToEdit(event.sessionId)
+                is SessionDetailNavEvent.NavigateToTeaDetails -> onNavigateToTea(event.teaId)
+                is SessionDetailNavEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId)
+                is SessionDetailNavEvent.NavigateBack -> onNavigateBack()
             }
         }
     }
@@ -145,202 +112,68 @@ private fun SessionDetailContent(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Session Details") },
+            title = { Text(stringResource(Res.string.session_title)) },
             navigationIcon = {
                 IconButton(onClick = { onIntent(SessionDetailIntent.BackClicked) }) {
-                    Icon(
-                        imageVector = FeatherIcons.ArrowLeft,
-                        contentDescription = "Back",
-                    )
+                    Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                 }
             },
             actions = {
                 IconButton(onClick = { onIntent(SessionDetailIntent.EditSessionClicked) }) {
-                    Icon(
-                        imageVector = FeatherIcons.Edit2,
-                        contentDescription = "Edit",
-                    )
+                    Icon(FeatherIcons.Edit2, contentDescription = stringResource(Res.string.edit_session))
                 }
                 IconButton(onClick = { onIntent(SessionDetailIntent.DeleteSessionClicked) }) {
-                    Icon(
-                        imageVector = FeatherIcons.Trash2,
-                        contentDescription = "Delete",
-                    )
+                    Icon(FeatherIcons.Trash2, contentDescription = stringResource(Res.string.delete_session))
                 }
-            }
+            },
         )
         Box(modifier = Modifier.weight(1f)) {
+            val session = state.session
             when {
-                state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
                 }
 
-                state.session != null -> {
-                    val session = state.session.session
-                    val first = state.session.steeps.first()
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Tea Information
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = state.tea?.name ?: "Unknown Tea",
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        color = if (state.tea != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.clickable(enabled = state.tea != null) {
-                                            onIntent(SessionDetailIntent.ViewTeaClicked(state.tea!!.id))
-                                        },
-                                    )
-                                    Text(
-                                        text = state.teaType?.name ?: "Unknown Type",
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                session == null -> EmptyState(
+                    message = stringResource(Res.string.session_not_found),
+                    modifier = Modifier.fillMaxSize(),
+                )
 
-                                    // Date/Time
-                                    val localDateTime = state.session.startedAt
-                                        .toLocalDateTime(TimeZone.currentSystemDefault())
-                                    val dateTimeString = stringResource(
-                                        Res.string.date_at_time,
-                                        TimeFormatter.formatDate(
-                                            localDateTime.date,
-                                            DateSkeleton.MONTH_DAY_YEAR,
-                                        ),
-                                        TimeFormatter.formatClockTime(
-                                            localDateTime.hour,
-                                            localDateTime.minute,
-                                        ),
-                                    )
-                                    Text(
-                                        text = dateTimeString,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-
-                                    RatingDisplay(state.session.effectiveRating)
-
-                                    if (session.notes != null) {
-                                        Text(
-                                            text = session.notes,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        // Session Details
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "Session Details",
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-
-                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-                                    if (state.usedConfigurationLabel != null) {
-                                        BrewingParameterDisplay(
-                                            label = "Method",
-                                            value = state.usedConfigurationLabel,
-                                        )
-                                    }
-
-                                    if (session.teaQuantityGrams != null) {
-                                        BrewingParameterDisplay(
-                                            label = "Tea Amount",
-                                            value = formatWeight(session.teaQuantityGrams)
-                                        )
-                                    }
-                                    BrewingParameterDisplay(
-                                        label = "Water Amount",
-                                        value = formatVolume(first.waterQuantityMl)
-                                    )
-                                    BrewingParameterDisplay(
-                                        label = "Vessel",
-                                        value = state.vessel?.name ?: "Unknown"
-                                    )
-                                    BrewingParameterDisplay(
-                                        label = "Water Type",
-                                        value = session.waterType.displayName
-                                    )
-                                    if (session.rinsed) {
-                                        BrewingParameterDisplay(
-                                            label = stringResource(Res.string.field_rinse),
-                                            value = stringResource(Res.string.answer_yes),
-                                        )
-                                    }
-                                    if (session.location != null) {
-                                        BrewingParameterDisplay(
-                                            label = "Location",
-                                            value = session.location
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        // All Steeps
-                        items(
-                            items = state.session.steeps,
-                            key = { it.id }
-                        ) { steep ->
-                            SteepCard(
-                                steep = steep,
-                                onEditClick = { onIntent(SessionDetailIntent.EditSteepClicked(steep.id)) },
-                                onDeleteClick = {
-                                    onIntent(
-                                        SessionDetailIntent.DeleteSteepClicked(
-                                            steep.id
-                                        )
-                                    )
-                                }
-                            )
-                        }
-
-                        // Recording a forgotten steep; an in-progress session adds steeps as it brews
-                        if (session.status == SessionStatus.COMPLETED) item {
-                            OutlinedButton(
-                                onClick = { onIntent(SessionDetailIntent.AddSteepClicked) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Icon(
-                                    imageVector = FeatherIcons.Plus,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Add Steep")
-                            }
-                        }
-                    }
-                }
-
-                else -> {
-                    EmptyState(
-                        message = "Session not found",
-                        modifier = Modifier.fillMaxSize(),
+                else -> Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                ) {
+                    val tea = state.tea
+                    SessionHeaderSection(
+                        teaName = tea?.name,
+                        onTeaClick = tea?.let { { onIntent(SessionDetailIntent.ViewTeaClicked(it.id)) } },
+                        startedAt = session.startedAt,
+                        rating = session.effectiveRating,
+                        session = session.session,
+                        vesselName = state.vessel?.name,
+                        methodLabel = state.usedConfigurationLabel,
+                        photos = session.steeps.flatMap { it.photos },
                     )
+                    SteepTimelineSection(
+                        timeline = session.timeline(),
+                        totalBrewTime = session.totalBrewTime,
+                        vocabulary = state.vocabulary,
+                        onSteepClick = { onIntent(SessionDetailIntent.SteepClicked(it)) },
+                    )
+                    // Recording a forgotten steep; an in-progress session adds steeps as it brews
+                    if (session.session.status == SessionStatus.COMPLETED) {
+                        OutlinedButton(
+                            onClick = { onIntent(SessionDetailIntent.AddSteepClicked) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(Res.string.add_steep))
+                        }
+                    }
                 }
             }
 
@@ -363,26 +196,51 @@ private fun SessionDetailContent(
                         onClick = { onIntent(SessionDetailIntent.SaveAsConfigurationClicked) },
                         modifier = Modifier.weight(1f),
                     ) {
-                        Text("Save as Method")
+                        Text(stringResource(Res.string.review_save_method_header))
                     }
                 }
                 Button(
                     onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
                     modifier = Modifier.weight(1f),
                 ) {
-                    Icon(
-                        imageVector = FeatherIcons.Coffee,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                    )
+                    Icon(FeatherIcons.Coffee, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Brew Again")
+                    Text(stringResource(Res.string.brew_again))
                 }
             }
         }
     }
 
-    // In-progress session conflict dialog
+    SessionDetailDialogs(state, onIntent)
+}
+
+@Composable
+private fun SessionDetailDialogs(
+    state: SessionDetailState,
+    onIntent: (SessionDetailIntent) -> Unit,
+) {
+    val editingSteep = state.session?.steeps?.firstOrNull { it.id == state.editingSteepId }
+    if (editingSteep != null) {
+        SteepEditSheet(
+            steep = editingSteep,
+            rating = state.editRating,
+            notes = state.editNotes,
+            vocabulary = state.vocabulary,
+            onRatingChange = { onIntent(SessionDetailIntent.SteepRatingChanged(it)) },
+            onNotesChange = { onIntent(SessionDetailIntent.SteepNotesChanged(it)) },
+            onTagToggle = { onIntent(SessionDetailIntent.SteepTagToggled(it)) },
+            onTagCreate = { onIntent(SessionDetailIntent.SteepTagCreated(it)) },
+            onParametersChange = { time, temperature, water ->
+                onIntent(SessionDetailIntent.SteepParametersChanged(time, temperature, water))
+            },
+            onDismiss = { onIntent(SessionDetailIntent.DismissSteepEdit) },
+            // Steep 1 is the session's own row
+            onDelete = if (editingSteep.number > 1) {
+                { onIntent(SessionDetailIntent.DeleteSteepClicked(editingSteep.id)) }
+            } else null,
+        )
+    }
+
     state.inProgressDialogState?.let { dialogState ->
         SessionInProgressDialog(
             teaName = dialogState.teaName,
@@ -396,7 +254,6 @@ private fun SessionDetailContent(
         )
     }
 
-    // Delete session confirmation dialog
     if (state.showDeleteConfirmation) {
         ConfirmDestructiveDialog(
             title = stringResource(Res.string.delete_session_title),
@@ -407,7 +264,6 @@ private fun SessionDetailContent(
         )
     }
 
-    // Add steep dialog
     val lastSteep = state.session?.currentSteep
     if (state.showAddSteepDialog && lastSteep != null) {
         NextSteepParameterDialog(
@@ -422,7 +278,6 @@ private fun SessionDetailContent(
         )
     }
 
-    // Save as configuration dialog
     if (state.showSaveConfigurationDialog && state.session != null) {
         val first = state.session.steeps.first()
         SaveConfigurationDialog(
@@ -439,7 +294,6 @@ private fun SessionDetailContent(
         )
     }
 
-    // Delete steep confirmation dialog
     if (state.showDeleteSteepConfirmation) {
         ConfirmDestructiveDialog(
             title = stringResource(Res.string.delete_steep_title),
@@ -451,125 +305,6 @@ private fun SessionDetailContent(
     }
 }
 
-@Composable
-private fun SteepCard(
-    steep: Steep,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit
-) {
-    // Null in a preview, where no Koin application is running and resolving would throw.
-    val imageStorage: ImageStorage? =
-        if (LocalInspectionMode.current) null else koinInject()
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Steep ${steep.number}",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                Row {
-                    IconButton(onClick = onEditClick) {
-                        Icon(
-                            imageVector = FeatherIcons.Edit,
-                            contentDescription = "Edit steep"
-                        )
-                    }
-                    if (steep.number > 1) {
-                        IconButton(onClick = onDeleteClick) {
-                            Icon(
-                                imageVector = FeatherIcons.Trash2,
-                                contentDescription = "Delete steep"
-                            )
-                        }
-                    }
-                }
-            }
-
-            HorizontalDivider()
-
-            BrewingParameterDisplay(
-                label = "Duration",
-                value = steep.brewingTime.toString()
-            )
-            BrewingParameterDisplay(
-                label = "Temperature",
-                value = formatTemperature(steep.temperatureCelsius)
-            )
-
-            if (steep.rating != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Rating",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    RatingDisplay(steep.rating)
-                }
-            }
-
-            if (steep.notes != null) {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(
-                    text = "Notes",
-                    style = MaterialTheme.typography.labelMedium
-                )
-                Text(
-                    text = steep.notes,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            if (steep.photos.isNotEmpty() && imageStorage != null) {
-                var expandedPhotoIndex by remember { mutableIntStateOf(-1) }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(
-                    text = "Photos",
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(steep.photos.size) { index ->
-                        AsyncImage(
-                            model = imageStorage.resolveImagePath(steep.photos[index]),
-                            contentDescription = "Session photo",
-                            modifier = Modifier
-                                .size(72.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .clickable { expandedPhotoIndex = index },
-                            contentScale = ContentScale.Crop,
-                        )
-                    }
-                }
-
-                if (expandedPhotoIndex >= 0) {
-                    FullscreenImageViewer(
-                        photos = steep.photos.map { imageStorage.resolveImagePath(it) },
-                        initialIndex = expandedPhotoIndex,
-                        onDismiss = { expandedPhotoIndex = -1 },
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Preview
 @Composable
 private fun SessionDetailScreenPreview() {
@@ -577,37 +312,39 @@ private fun SessionDetailScreenPreview() {
         SessionDetailContent(
             state = SessionDetailState(
                 session = previewSession(
-                    ratings = listOf(5f, 4f),
+                    ratings = listOf(5f, 4f, null),
                     status = SessionStatus.COMPLETED,
+                    brewingTime = 25.seconds,
                     temperatureCelsius = 95.0,
-                    waterQuantityMl = 400.0,
+                    waterQuantityMl = 120.0,
+                    notes = "Sweet and long, faded by the third",
                 ),
                 vessel = BrewingVessel(
-                    id = "",
-                    name = "Teapot",
+                    id = "vessel-1",
+                    name = "Gaiwan",
                     isSystemDefault = false,
                     displayOrder = 1,
-                    updatedAt = Instant.fromEpochMilliseconds(1),
-                    createdAt = Instant.fromEpochMilliseconds(1),
-                    iconName = "id"
+                    updatedAt = PreviewInstant,
+                    createdAt = PreviewInstant,
+                    iconName = "gaiwan",
                 ),
                 tea = Tea(
-                    id = "1",
-                    name = "Test Tea",
-                    teaTypeId = "",
-                    createdAt = Instant.fromEpochMilliseconds(1),
-                    updatedAt = Instant.fromEpochMilliseconds(1),
+                    id = "tea-1",
+                    name = "Bai Hao Oolong",
+                    teaTypeId = "oolong",
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
                 ),
-                teaType = TeaType(
-                    id = "",
-                    name = "Black Tea",
-                    colorHex = "",
-                    createdAt = Instant.fromEpochMilliseconds(1),
-                    updatedAt = Instant.fromEpochMilliseconds(1),
-                    isSystemDefault = false,
-                )
             ),
             onIntent = {},
         )
+    }
+}
+
+@Preview
+@Composable
+private fun SessionDetailScreenNotFoundPreview() {
+    LeafLogTheme {
+        SessionDetailContent(state = SessionDetailState(), onIntent = {})
     }
 }

@@ -66,7 +66,67 @@ class SessionRulesTest {
             emptyList<SessionWithSteeps>().stats(),
         )
     }
+
+    @Test
+    fun `the timeline gives steep 1 every parameter`() {
+        val first = aggregate(null).timeline().single()
+
+        assertEquals(30.seconds, first.brewedTime)
+        assertEquals(95.0, first.temperatureCelsius)
+        assertEquals(100.0, first.waterQuantityMl)
+        assertNull(first.breakBefore)
+    }
+
+    @Test
+    fun `the timeline gives a later steep only what changed from the steep before`() {
+        val session = aggregate(null, null, null).editSteeps { index, steep ->
+            when (index) {
+                1 -> steep.copy(brewingTime = 45.seconds)
+                2 -> steep.copy(brewingTime = 45.seconds, temperatureCelsius = 90.0)
+                else -> steep
+            }
+        }
+
+        val (_, second, third) = session.timeline()
+        assertEquals(TimelineSteep(session.steeps[1], 45.seconds, null, null, null), second)
+        assertEquals(TimelineSteep(session.steeps[2], null, 90.0, null, null), third)
+    }
+
+    @Test
+    fun `the timeline compares how long a steep actually brewed`() {
+        val session = aggregate(null, null).editSteeps { index, steep ->
+            if (index == 1) steep.copy(brewingTime = 45.seconds, actualTime = 30.seconds) else steep
+        }
+
+        assertNull(session.timeline()[1].brewedTime)
+    }
+
+    @Test
+    fun `a rest of more than 2 minutes beyond the brew before is a break`() {
+        val session = aggregate(null, null, steepGap = 30.seconds + 2.minutes + 1.seconds)
+
+        assertEquals(2.minutes + 1.seconds, session.timeline()[1].breakBefore)
+    }
+
+    @Test
+    fun `a rest of 2 minutes beyond the brew before is no break`() {
+        val session = aggregate(null, null, steepGap = 30.seconds + 2.minutes)
+
+        assertNull(session.timeline()[1].breakBefore)
+    }
+
+    @Test
+    fun `total brew time adds how long each steep brewed`() {
+        val session = aggregate(null, null).editSteeps { index, steep ->
+            if (index == 1) steep.copy(actualTime = 50.seconds) else steep
+        }
+
+        assertEquals(80.seconds, session.totalBrewTime)
+    }
 }
+
+private fun SessionWithSteeps.editSteeps(edit: (Int, Steep) -> Steep) =
+    copy(steeps = steeps.mapIndexed(edit))
 
 private fun at(minute: Int) = Instant.fromEpochSeconds(1_790_000_000L + minute * 60L)
 

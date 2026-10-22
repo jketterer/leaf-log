@@ -12,19 +12,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +34,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.NavigationEventInfo
@@ -42,6 +47,7 @@ import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.Thermometer
+import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.SteepTag
 import dev.jketterer.leaflog.domain.models.TastingTag
@@ -51,19 +57,25 @@ import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewConta
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.delete_steep
 import leaf_log.shared.generated.resources.edit_parameters
+import leaf_log.shared.generated.resources.ic_tea_leaf
+import leaf_log.shared.generated.resources.review_add_note
 import leaf_log.shared.generated.resources.review_note_label
 import leaf_log.shared.generated.resources.review_rate_steep
+import leaf_log.shared.generated.resources.review_steep_n
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * One steep's rating, tags, note and parameters. [rating] and [notes] are the caller's edits in
- * progress; the parameters are edited in place of the rest and reported on Save.
+ * One steep's [SteepEditBody] in a sheet. [rating] and [notes] are the caller's edits in progress;
+ * the parameters are edited in place of the rest and reported on Save.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +91,8 @@ fun SteepEditSheet(
     onParametersChange: (brewedTime: Duration, temperatureCelsius: Double, waterQuantityMl: Double) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    // Offered beside the steep number when given
+    onDelete: (() -> Unit)? = null,
 ) {
     var editingParameters by remember(steep.id) { mutableStateOf(false) }
 
@@ -116,6 +130,7 @@ fun SteepEditSheet(
                     onTagToggle = onTagToggle,
                     onTagCreate = onTagCreate,
                     onEditParameters = { editingParameters = true },
+                    onDelete = onDelete,
                 )
             }
         }
@@ -167,10 +182,62 @@ private fun SteepEditSheetContent(
     onTagToggle: (String) -> Unit,
     onTagCreate: (String) -> Unit,
     onEditParameters: () -> Unit,
+    onDelete: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.review_steep_n, steep.number),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            if (onDelete != null) {
+                IconButton(onClick = onDelete) {
+                    Icon(FeatherIcons.Trash2, contentDescription = stringResource(Res.string.delete_steep))
+                }
+            }
+        }
+        SteepEditBody(
+            steep = steep,
+            rating = rating,
+            notes = notes,
+            vocabulary = vocabulary,
+            onRatingChange = onRatingChange,
+            onNotesChange = onNotesChange,
+            onTagToggle = onTagToggle,
+            onTagCreate = onTagCreate,
+            onEditParameters = onEditParameters,
+        )
+    }
+}
+
+/**
+ * One steep's rating, parameters, tags and note, edited the same way whether it was just brewed or
+ * long finished. The note stays folded away until asked for, or already written.
+ */
+@Composable
+fun SteepEditBody(
+    steep: Steep,
+    rating: Float,
+    notes: String,
+    vocabulary: List<TastingTag>,
+    onRatingChange: (Float) -> Unit,
+    onNotesChange: (String) -> Unit,
+    onTagToggle: (String) -> Unit,
+    onTagCreate: (String) -> Unit,
+    onEditParameters: () -> Unit,
+    modifier: Modifier = Modifier,
+    // Shown among the parameters when given, for a steep whose edit sheet changes the leaf
+    teaQuantityGrams: Float? = null,
+) {
+    val focusManager = LocalFocusManager.current
     Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -184,7 +251,7 @@ private fun SteepEditSheetContent(
             onRatingChange = onRatingChange,
             modifier = Modifier.fillMaxWidth(),
         )
-        SteepParametersRow(steep, onClick = onEditParameters)
+        SteepParametersRow(steep, teaQuantityGrams, onClick = onEditParameters)
         SteepTags(
             tags = steep.tags,
             vocabulary = vocabulary,
@@ -192,20 +259,28 @@ private fun SteepEditSheetContent(
             onCreate = onTagCreate,
             modifier = Modifier.fillMaxWidth(),
         )
-        OutlinedTextField(
-            value = notes,
-            onValueChange = onNotesChange,
-            label = { Text(stringResource(Res.string.review_note_label)) },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            maxLines = 8,
-        )
-        Spacer(Modifier.height(8.dp))
+        var noteOpen by remember(steep.id) { mutableStateOf(notes.isNotEmpty()) }
+        if (noteOpen) {
+            OutlinedTextField(
+                value = notes,
+                onValueChange = onNotesChange,
+                label = { Text(stringResource(Res.string.review_note_label)) },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
+                maxLines = 8,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            )
+        } else {
+            TextButton(onClick = { noteOpen = true }, modifier = Modifier.align(Alignment.Start)) {
+                Text(stringResource(Res.string.review_add_note))
+            }
+        }
     }
 }
 
 @Composable
-private fun SteepParametersRow(steep: Steep, onClick: () -> Unit) {
+private fun SteepParametersRow(steep: Steep, teaQuantityGrams: Float?, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = MaterialTheme.shapes.medium,
@@ -225,6 +300,9 @@ private fun SteepParametersRow(steep: Steep, onClick: () -> Unit) {
                 BrewingParamChip(FeatherIcons.Clock, formatBrewingTime(steep.brewedTime.inWholeSeconds.toInt()))
                 BrewingParamChip(FeatherIcons.Thermometer, formatTemperature(steep.temperatureCelsius))
                 BrewingParamChip(FeatherIcons.Droplet, formatVolume(steep.waterQuantityMl))
+                teaQuantityGrams?.let {
+                    BrewingParamChip(vectorResource(Res.drawable.ic_tea_leaf), formatWeight(it))
+                }
             }
             Icon(
                 imageVector = FeatherIcons.Edit2,
@@ -260,6 +338,7 @@ private fun SteepEditSheetPreview() {
                 onTagToggle = {},
                 onTagCreate = {},
                 onEditParameters = {},
+                onDelete = {},
             )
         }
     }

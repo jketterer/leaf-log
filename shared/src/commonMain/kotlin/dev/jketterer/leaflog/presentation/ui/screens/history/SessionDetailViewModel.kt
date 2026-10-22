@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
+import dev.jketterer.leaflog.domain.models.Steep
+import dev.jketterer.leaflog.domain.models.toggled
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
@@ -16,6 +18,7 @@ import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
@@ -33,23 +36,25 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_add_steep
+import leaf_log.shared.generated.resources.couldnt_create_tag
 import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_delete_steep
 import leaf_log.shared.generated.resources.couldnt_load_session
+import leaf_log.shared.generated.resources.couldnt_save_changes
 import leaf_log.shared.generated.resources.couldnt_save_method
 import leaf_log.shared.generated.resources.couldnt_start_session
-import leaf_log.shared.generated.resources.failure_not_found
 import leaf_log.shared.generated.resources.method_already_saved
 
 class SessionDetailViewModel(
     private val route: NavRoute.SessionDetailsRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
-    private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val tastingTagRepository: TastingTagRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val deleteSteepUseCase: DeleteSteepUseCase,
+    private val editSteepUseCase: EditSteepUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val addSteepUseCase: AddSteepUseCase,
     private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
@@ -95,20 +100,11 @@ class SessionDetailViewModel(
 
     init {
         loadSession(route.sessionId)
+        loadVocabulary()
     }
 
     fun onIntent(intent: SessionDetailIntent) {
         when (intent) {
-            is SessionDetailIntent.EditSteepClicked -> {
-                // Edit only steep parameters (editFullSession = false)
-                _navEvents.trySend(
-                    SessionDetailNavEvent.NavigateToEditSession(
-                        sessionId = intent.steepId,
-                        editFullSession = false
-                    )
-                )
-            }
-
             is SessionDetailIntent.DeleteSessionClicked -> showDeleteConfirmation()
             is SessionDetailIntent.ConfirmDelete -> confirmDelete()
             is SessionDetailIntent.CancelDelete -> cancelDelete()
@@ -138,13 +134,7 @@ class SessionDetailViewModel(
             // navigation intents
             is SessionDetailIntent.EditSessionClicked -> {
                 val sessionId = _state.value.session?.session?.id ?: return
-                // Edit full session details (editFullSession = true)
-                _navEvents.trySend(
-                    SessionDetailNavEvent.NavigateToEditSession(
-                        sessionId = sessionId,
-                        editFullSession = true
-                    )
-                )
+                _navEvents.trySend(SessionDetailNavEvent.NavigateToEditSession(sessionId))
             }
 
             is SessionDetailIntent.ViewTeaClicked -> _navEvents.trySend(
@@ -164,6 +154,31 @@ class SessionDetailViewModel(
                     showSaveConfigurationDialog = false
                 )
             }
+
+            is SessionDetailIntent.SteepClicked -> openSteep(intent.steepId)
+            is SessionDetailIntent.SteepRatingChanged -> {
+                val id = _state.value.editingSteepId ?: return
+                _state.update { it.copy(editRating = intent.rating) }
+                editSteep(id) { it.copy(rating = _state.value.editRating.takeIf { r -> r > 0f }) }
+            }
+
+            is SessionDetailIntent.SteepNotesChanged -> {
+                val id = _state.value.editingSteepId ?: return
+                _state.update { it.copy(editNotes = intent.notes) }
+                editSteep(id) { it.copy(notes = _state.value.editNotes) }
+            }
+
+            is SessionDetailIntent.SteepTagToggled -> toggleTag(intent.tagId)
+            is SessionDetailIntent.SteepTagCreated -> createTag(intent.name)
+            is SessionDetailIntent.SteepParametersChanged -> {
+                val id = _state.value.editingSteepId ?: return
+                editSteep(id) {
+                    it.withBrewedTime(intent.brewedTime)
+                        .copy(temperatureCelsius = intent.temperatureCelsius, waterQuantityMl = intent.waterQuantityMl)
+                }
+            }
+
+            is SessionDetailIntent.DismissSteepEdit -> _state.update { it.copy(editingSteepId = null) }
 
             // In-progress session conflict dialog
             is SessionDetailIntent.ResumeInProgress -> inProgressDelegate.resume()
@@ -191,10 +206,10 @@ class SessionDetailViewModel(
                             session.session.usedConfigurationId?.let { configId ->
                                 loadConfigurationLabel(configId)
                             }
-                        } else if (_state.value.session == null) {
-                            // A session deleted from this screen is already being navigated away from
+                        } else {
+                            // Not found shows in place of the session; one deleted from this screen
+                            // is already being navigated away from
                             _state.update { it.copy(isLoading = false) }
-                            messages.show(Res.string.failure_not_found)
                         }
                     }
             } catch (e: Exception) {
@@ -208,10 +223,7 @@ class SessionDetailViewModel(
         teaRepository.getByIdFlow(teaId)
             .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load tea: ${e.message}" } }
             .firstOrNull()
-            .let { tea ->
-                _state.update { it.copy(tea = tea) }
-                tea?.let { loadTeaType(it.teaTypeId) }
-            }
+            .let { tea -> _state.update { it.copy(tea = tea) } }
 
         brewingVesselRepository.getByIdFlow(vesselId)
             .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load vessel: ${e.message}" } }
@@ -221,13 +233,15 @@ class SessionDetailViewModel(
             }
     }
 
-    private suspend fun loadTeaType(teaTypeId: String) {
-        teaTypeRepository.getByIdFlow(teaTypeId)
-            .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load tea type: ${e.message}" } }
-            .firstOrNull()
-            .let { teaType ->
-                _state.update { it.copy(teaType = teaType) }
+    private fun loadVocabulary() {
+        viewModelScope.launch {
+            try {
+                val vocabulary = tastingTagRepository.getAll()
+                _state.update { it.copy(vocabulary = vocabulary) }
+            } catch (e: Exception) {
+                Logger.w(tag = "SessionDetail") { "Failed to load tags: ${e.message}" }
             }
+        }
     }
 
     private suspend fun loadConfigurationLabel(configurationId: String) {
@@ -268,9 +282,47 @@ class SessionDetailViewModel(
     private fun showDeleteSteepConfirmation(steepId: String) {
         _state.update {
             it.copy(
+                editingSteepId = null,
                 showDeleteSteepConfirmation = true,
                 steepToDelete = steepId
             )
+        }
+    }
+
+    private fun openSteep(steepId: String) {
+        val steep = _state.value.session?.steeps?.firstOrNull { it.id == steepId } ?: return
+        _state.update {
+            it.copy(
+                editingSteepId = steepId,
+                editRating = steep.rating ?: 0f,
+                editNotes = steep.notes ?: "",
+            )
+        }
+    }
+
+    /** The session flow brings the saved steep back. */
+    private fun editSteep(steepId: String, edit: (Steep) -> Steep) {
+        viewModelScope.launch {
+            editSteepUseCase(steepId, edit)
+                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
+        }
+    }
+
+    private fun toggleTag(tagId: String) {
+        val id = _state.value.editingSteepId ?: return
+        editSteep(id) { it.copy(tags = it.tags.toggled(tagId)) }
+    }
+
+    /** Makes the tag and puts it on the steep being edited. */
+    private fun createTag(name: String) {
+        viewModelScope.launch {
+            try {
+                val tag = tastingTagRepository.createCustom(name)
+                _state.update { it.copy(vocabulary = it.vocabulary + tag) }
+                toggleTag(tag.id)
+            } catch (e: Exception) {
+                messages.failure(e, Res.string.couldnt_create_tag)
+            }
         }
     }
 
@@ -389,10 +441,7 @@ class SessionDetailViewModel(
 
 sealed interface SessionDetailNavEvent {
     data object NavigateBack : SessionDetailNavEvent
-    data class NavigateToEditSession(
-        val sessionId: String,
-        val editFullSession: Boolean = false
-    ) : SessionDetailNavEvent
+    data class NavigateToEditSession(val sessionId: String) : SessionDetailNavEvent
 
     data class NavigateToTeaDetails(val teaId: String) : SessionDetailNavEvent
     data class NavigateToTimer(val sessionId: String) : SessionDetailNavEvent

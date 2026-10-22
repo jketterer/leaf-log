@@ -4,7 +4,6 @@ import kotlin.time.Duration
 
 sealed interface SessionDetailIntent {
     data object EditSessionClicked : SessionDetailIntent
-    data class EditSteepClicked(val steepId: String) : SessionDetailIntent
     data object DeleteSessionClicked : SessionDetailIntent
     data object ConfirmDelete : SessionDetailIntent
     data object CancelDelete : SessionDetailIntent
@@ -22,6 +21,19 @@ sealed interface SessionDetailIntent {
     data object SaveAsConfigurationClicked : SessionDetailIntent
     data class ConfirmSaveConfiguration(val label: String) : SessionDetailIntent
     data object DismissSaveConfiguration : SessionDetailIntent
+
+    // The steep sheet; each edit saves as it's made
+    data class SteepClicked(val steepId: String) : SessionDetailIntent
+    data class SteepRatingChanged(val rating: Float) : SessionDetailIntent
+    data class SteepNotesChanged(val notes: String) : SessionDetailIntent
+    data class SteepTagToggled(val tagId: String) : SessionDetailIntent
+    data class SteepTagCreated(val name: String) : SessionDetailIntent
+    data class SteepParametersChanged(
+        val brewedTime: Duration,
+        val temperatureCelsius: Double,
+        val waterQuantityMl: Double,
+    ) : SessionDetailIntent
+    data object DismissSteepEdit : SessionDetailIntent
 
     // In-progress session conflict dialog
     data object ResumeInProgress : SessionDetailIntent

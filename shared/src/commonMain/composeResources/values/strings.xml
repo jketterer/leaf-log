@@ -383,6 +383,21 @@
     <string name="steep_curve_peak">Peaks at steep %1$d</string>
     <!-- One bar of the steep curve, as a screen reader speaks it: "Steep 2, 4.5" -->
     <string name="steep_curve_bar">Steep %1$d, %2$s</string>
+    <string name="cellar_age">Cellar age</string>
+    <!-- A cellar age of a year or more with months left over: "2 years, 3 months" -->
+    <string name="cellar_age_years_months">%1$s, %2$s</string>
+    <plurals name="year_count">
+        <item quantity="one">%1$d year</item>
+        <item quantity="other">%1$d years</item>
+    </plurals>
+    <plurals name="month_count">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
+    <plurals name="day_count">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
     <string name="tea_no_sessions">No brews of this tea yet</string>
     <plurals name="steep_count">
         <item quantity="one">%1$d steep</item>

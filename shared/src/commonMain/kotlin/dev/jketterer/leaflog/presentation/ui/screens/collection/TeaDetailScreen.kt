@@ -72,6 +72,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.cellarAge
 import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
@@ -79,6 +80,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
@@ -91,8 +93,14 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.best_brew
+import leaf_log.shared.generated.resources.cellar_age
+import leaf_log.shared.generated.resources.cellar_age_years_months
+import leaf_log.shared.generated.resources.day_count
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_method_text
 import leaf_log.shared.generated.resources.delete_method_title
@@ -102,9 +110,12 @@ import leaf_log.shared.generated.resources.delete_tea_text
 import leaf_log.shared.generated.resources.delete_tea_title
 import leaf_log.shared.generated.resources.header_recent_sessions
 import leaf_log.shared.generated.resources.log_a_brew
+import leaf_log.shared.generated.resources.month_count
 import leaf_log.shared.generated.resources.tea_no_sessions
 import leaf_log.shared.generated.resources.tea_not_found
 import leaf_log.shared.generated.resources.view_all
+import leaf_log.shared.generated.resources.year_count
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -365,6 +376,14 @@ private fun TeaDetailContent(
                                         DetailRow(
                                             label = "Producer",
                                             value = state.tea.producer,
+                                        )
+                                    }
+
+                                    val cellarAge = state.tea.cellarAge(currentDate(), TimeZone.currentSystemDefault())
+                                    if (cellarAge != null) {
+                                        DetailRow(
+                                            label = stringResource(Res.string.cellar_age),
+                                            value = formatCellarAge(cellarAge),
                                         )
                                     }
 
@@ -645,6 +664,19 @@ private fun DetailRow(
     }
 }
 
+/** "2 years, 3 months", "5 months" or "12 days": the largest units, never down to days past a month. */
+@Composable
+private fun formatCellarAge(age: DatePeriod): String {
+    val years = pluralStringResource(Res.plurals.year_count, age.years, age.years)
+    val months = pluralStringResource(Res.plurals.month_count, age.months, age.months)
+    return when {
+        age.years > 0 && age.months > 0 -> stringResource(Res.string.cellar_age_years_months, years, months)
+        age.years > 0 -> years
+        age.months > 0 -> months
+        else -> pluralStringResource(Res.plurals.day_count, age.days, age.days)
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun TeaDetailScreenPreview() {
@@ -657,6 +689,7 @@ private fun TeaDetailScreenPreview() {
                     teaTypeId = "green",
                     origin = "Hangzhou, China",
                     producer = "West Lake Tea Company",
+                    purchaseDate = LocalDate(2025, 3, 2),
                     defaultTemperatureCelsius = 80.0,
                     description = "Premium Dragon Well green tea with a sweet, nutty flavor and chesnut aroma.",
                     isFavorite = true,

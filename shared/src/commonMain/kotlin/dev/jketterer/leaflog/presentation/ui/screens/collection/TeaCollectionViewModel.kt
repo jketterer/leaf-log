@@ -7,26 +7,34 @@ import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.SearchTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
-import kotlinx.coroutines.Job
+import dev.jketterer.leaflog.presentation.ui.search.matchesQuery
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_teas
-import leaf_log.shared.generated.resources.couldnt_search
 import leaf_log.shared.generated.resources.couldnt_update_favorite
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class TeaCollectionViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
-    private val searchTeaUseCase: SearchTeasUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
@@ -36,19 +44,16 @@ class TeaCollectionViewModel(
 
     val messages = UiMessages<Nothing>()
 
-    private var teaCollectionJob: Job? = null
-
     init {
         viewModelScope.launch {
             val prefs = preferencesRepository.getPreferences()
             _state.update { it.copy(selectedSortOption = prefs.teaSortOption) }
-            onIntent(TeaCollectionIntent.LoadData)
+            loadData()
         }
     }
 
     fun onIntent(intent: TeaCollectionIntent) {
         when (intent) {
-            is TeaCollectionIntent.LoadData -> loadData()
             is TeaCollectionIntent.ShowAllTeas -> showByFilter(FilterType.ALL)
             is TeaCollectionIntent.ShowFavorites -> showByFilter(FilterType.FAVORITES)
             is TeaCollectionIntent.FilterByType -> showByFilter(
@@ -56,7 +61,7 @@ class TeaCollectionViewModel(
                 teaTypeId = intent.teaTypeId
             )
 
-            is TeaCollectionIntent.SearchQueryChanged -> updateSearchQuery(intent.query)
+            is TeaCollectionIntent.SearchQueryChanged -> _state.update { it.copy(searchQuery = intent.query) }
             is TeaCollectionIntent.ToggleFavorite -> toggleFavorite(intent.tea)
             is TeaCollectionIntent.TabSelected -> selectTab(intent.tab)
             is TeaCollectionIntent.TeaClicked -> {
@@ -71,52 +76,35 @@ class TeaCollectionViewModel(
         }
     }
 
+    @OptIn(FlowPreview::class)
     private fun loadData() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+        _state.update { it.copy(isLoading = true) }
 
-            try {
-                collectTeaTypes()
-                collectTeas()
-            } catch (e: Exception) {
-                _state.update { it.copy(isLoading = false) }
-                messages.failure(e, Res.string.couldnt_load_teas)
-            }
-        }
-    }
-
-    private fun collectTeaTypes() = viewModelScope.launch {
         teaTypeRepository.getAllFlow()
+            .onEach { teaTypes -> _state.update { it.copy(teaTypes = teaTypes) } }
             .catchError()
-            .collect { teaTypes ->
-                _state.update { it.copy(teaTypes = teaTypes) }
-            }
-    }
+            .launchIn(viewModelScope)
 
-    private fun collectTeas() {
-        teaCollectionJob?.cancel()
-        teaCollectionJob = viewModelScope.launch {
-            val teasFlow = when (_state.value.selectedFilter) {
-                FilterType.ALL -> teaRepository.getAllFlow()
-                FilterType.FAVORITES -> teaRepository.getFavoritesFlow()
-                FilterType.BY_TYPE -> _state.value.selectedTypeId?.let { typeId ->
-                    teaRepository.getByTypeFlow(typeId)
-                } ?: teaRepository.getAllFlow()
-            }
+        val criteria = _state.map { Triple(it.selectedFilter, it.selectedTypeId, it.selectedSortOption) }
+            .distinctUntilChanged()
+        // Typing settles before the search runs; clearing it shows everything at once
+        val query = _state.map { it.searchQuery }.distinctUntilChanged()
+            .debounce { if (it.isBlank()) Duration.ZERO else SEARCH_DEBOUNCE }
 
-            teasFlow
-                .catchError()
-                .collect { teas ->
-                    val sorted = sortTeas(teas, _state.value.selectedSortOption)
-                    _state.update {
-                        it.copy(
-                            teas = sorted,
-                            isLoading = false,
-                            isEmpty = teas.isEmpty(),
-                        )
-                    }
-                }
+        // Filtering, searching and sorting read every tea, so they run off Main
+        combine(teaRepository.getAllFlow(), criteria, query) { teas, (filter, typeId, sort), query ->
+            val shown = sortTeas(teas.filteredBy(filter, typeId, query), sort)
+            _state.update {
+                it.copy(
+                    teas = shown,
+                    isLoading = false,
+                    isEmpty = shown.isEmpty(),
+                )
+            }
         }
+            .flowOn(Dispatchers.Default)
+            .catchError()
+            .launchIn(viewModelScope)
     }
 
     private fun <T> Flow<T>.catchError(): Flow<T> {
@@ -127,39 +115,7 @@ class TeaCollectionViewModel(
     }
 
     private fun showByFilter(filterType: FilterType, teaTypeId: String? = null) {
-        _state.update {
-            it.copy(
-                selectedFilter = filterType,
-                selectedTypeId = teaTypeId,
-                searchQuery = "",
-            )
-        }
-        loadData()
-    }
-
-    private fun updateSearchQuery(query: String) {
-        _state.update { it.copy(searchQuery = query) }
-
-        if (query.isBlank()) {
-            loadData()
-            return
-        }
-
-        teaCollectionJob?.cancel()
-        viewModelScope.launch {
-            try {
-                val results = searchTeaUseCase(query)
-                val sorted = sortTeas(results, _state.value.selectedSortOption)
-                _state.update {
-                    it.copy(
-                        teas = sorted,
-                        isEmpty = results.isEmpty(),
-                    )
-                }
-            } catch (e: Exception) {
-                messages.failure(e, Res.string.couldnt_search)
-            }
-        }
+        _state.update { it.copy(selectedFilter = filterType, selectedTypeId = teaTypeId) }
     }
 
     private fun toggleFavorite(tea: Tea) {
@@ -174,17 +130,25 @@ class TeaCollectionViewModel(
     }
 
     private fun selectSort(option: TeaSortOption) {
-        _state.update {
-            it.copy(
-                selectedSortOption = option,
-                teas = sortTeas(it.teas, option),
-            )
-        }
+        _state.update { it.copy(selectedSortOption = option) }
         viewModelScope.launch {
             preferencesRepository.updateTeaSortOption(option)
         }
     }
 }
+
+/** The teas passing [filter] whose name, producer, origin or description match [query]. */
+internal fun List<Tea>.filteredBy(filter: FilterType, typeId: String?, query: String): List<Tea> =
+    filter { tea ->
+        val passesFilter = when (filter) {
+            FilterType.ALL -> true
+            FilterType.FAVORITES -> tea.isFavorite
+            FilterType.BY_TYPE -> typeId == null || tea.teaTypeId == typeId
+        }
+        passesFilter && matchesQuery(query, listOf(tea.name, tea.producer, tea.origin, tea.description))
+    }
+
+private val SEARCH_DEBOUNCE = 300.milliseconds
 
 /** Sorts by [option], with finished teas after the rest in the same order. */
 internal fun sortTeas(teas: List<Tea>, option: TeaSortOption): List<Tea> {

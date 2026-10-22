@@ -269,23 +269,20 @@ private fun TeasTabContent(
     onNavigateToTeaDetail: (String) -> Unit,
     onNavigateToAddTea: () -> Unit,
 ) {
-    // Filter chips (hidden during search)
-    if (state.searchQuery.isBlank()) {
-        TeaFilterChips(
-            teaTypes = state.teaTypes,
-            selectedFilter = state.selectedFilter,
-            selectedTypeId = state.selectedTypeId,
-            onFilterSelected = { filterType, typeId ->
-                when (filterType) {
-                    FilterType.ALL -> onIntent(TeaCollectionIntent.ShowAllTeas)
-                    FilterType.FAVORITES -> onIntent(TeaCollectionIntent.ShowFavorites)
-                    FilterType.BY_TYPE -> typeId?.let {
-                        onIntent(TeaCollectionIntent.FilterByType(it))
-                    }
+    TeaFilterChips(
+        teaTypes = state.teaTypes,
+        selectedFilter = state.selectedFilter,
+        selectedTypeId = state.selectedTypeId,
+        onFilterSelected = { filterType, typeId ->
+            when (filterType) {
+                FilterType.ALL -> onIntent(TeaCollectionIntent.ShowAllTeas)
+                FilterType.FAVORITES -> onIntent(TeaCollectionIntent.ShowFavorites)
+                FilterType.BY_TYPE -> typeId?.let {
+                    onIntent(TeaCollectionIntent.FilterByType(it))
                 }
             }
-        )
-    }
+        },
+    )
 
     // Content
     when {

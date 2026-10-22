@@ -4,7 +4,6 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 
 sealed interface TeaCollectionIntent {
-    data object LoadData : TeaCollectionIntent
     data object ShowAllTeas : TeaCollectionIntent
     data object ShowFavorites : TeaCollectionIntent
     data class FilterByType(val teaTypeId: String) : TeaCollectionIntent

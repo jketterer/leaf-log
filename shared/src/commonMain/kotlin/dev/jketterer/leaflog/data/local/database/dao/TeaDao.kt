@@ -43,26 +43,6 @@ interface TeaDao {
     )
     fun getByTypeFlow(teaTypeId: String): Flow<List<TeaEntity>>
 
-    @Query(
-        """
-        SELECT * FROM tea
-        WHERE deletedAt IS NULL
-        AND isFavorite = 1
-        ORDER BY name ASC
-    """
-    )
-    fun getFavoritesFlow(): Flow<List<TeaEntity>>
-
-    @Query(
-        """
-        SELECT * FROM tea
-        WHERE deletedAt IS NULL
-        AND name LIKE '%' || :query || '%'
-        ORDER BY name ASC
-    """
-    )
-    suspend fun search(query: String): List<TeaEntity>
-
     /** Deleted rows too: a backup carries them. */
     @Query("SELECT * FROM tea")
     suspend fun getAllIncludingDeleted(): List<TeaEntity>

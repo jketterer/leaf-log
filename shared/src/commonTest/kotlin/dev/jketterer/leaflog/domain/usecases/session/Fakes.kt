@@ -46,9 +46,7 @@ class FakeTeaRepository(teas: List<Tea> = emptyList()) : TeaRepository {
     override fun getAllFlow(): Flow<List<Tea>> = TODO("unused by these tests")
     override fun getByIdFlow(id: String): Flow<Tea?> = TODO("unused by these tests")
     override fun getByTypeFlow(teaTypeId: String): Flow<List<Tea>> = TODO("unused by these tests")
-    override fun getFavoritesFlow(): Flow<List<Tea>> = TODO("unused by these tests")
     override fun getRecentlyBrewedFlow(limit: Int): Flow<List<Tea>> = TODO("unused by these tests")
-    override suspend fun search(query: String): List<Tea> = TODO("unused by these tests")
     override fun getDistinctProducersFlow(): Flow<List<String>> = TODO("unused by these tests")
 }
 

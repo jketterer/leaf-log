@@ -253,7 +253,6 @@
     <string name="couldnt_load_analytics">Couldn't load your stats</string>
     <string name="couldnt_update_quick_brew">Couldn't update Quick Brew</string>
     <string name="couldnt_load_teas">Couldn't load your teas</string>
-    <string name="couldnt_search">Couldn't search</string>
     <string name="couldnt_update_favorite">Couldn't update favorites</string>
     <string name="couldnt_load_tea">Couldn't load the tea</string>
     <string name="couldnt_update_tea">Couldn't update the tea</string>

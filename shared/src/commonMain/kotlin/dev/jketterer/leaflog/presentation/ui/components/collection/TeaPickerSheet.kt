@@ -1,6 +1,5 @@
 package dev.jketterer.leaflog.presentation.ui.components.collection
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -65,6 +64,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
+import dev.jketterer.leaflog.presentation.ui.search.matchesQuery
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlinx.coroutines.launch
@@ -112,7 +112,12 @@ internal fun buildTeaPickerSections(
     }
 
     val matches = teas
-        .filter { it.matchesFilter(filter) && it.matchesQuery(trimmedQuery) }
+        .filter {
+            it.matchesFilter(filter) && matchesQuery(
+                trimmedQuery,
+                listOf(it.name, it.origin, it.producer)
+            )
+        }
         .sortedWith(
             compareBy(
                 { !it.name.startsWith(trimmedQuery, ignoreCase = true) },
@@ -140,11 +145,6 @@ private fun Tea.matchesFilter(filter: TeaPickerFilter): Boolean = when (filter) 
     is TeaPickerFilter.All -> true
     is TeaPickerFilter.Favorites -> isFavorite
     is TeaPickerFilter.Type -> teaTypeId == filter.teaTypeId
-}
-
-private fun Tea.matchesQuery(query: String): Boolean {
-    if (query.isBlank()) return true
-    return listOfNotNull(name, origin, producer).any { it.contains(query, ignoreCase = true) }
 }
 
 /**
@@ -216,7 +216,6 @@ fun TeaPickerSheet(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TeaPickerContent(
     teas: List<Tea>,
@@ -480,7 +479,11 @@ private fun TeaPickerRow(
             }
             if (tea.totalSessions > 0) {
                 Text(
-                    text = pluralStringResource(Res.plurals.brew_count, tea.totalSessions, tea.totalSessions),
+                    text = pluralStringResource(
+                        Res.plurals.brew_count,
+                        tea.totalSessions,
+                        tea.totalSessions
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

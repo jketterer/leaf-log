@@ -36,20 +36,10 @@ class TeaRepositoryImpl(
         }
     }
 
-    override fun getFavoritesFlow(): Flow<List<Tea>> {
-        return teaDao.getFavoritesFlow().map { entities ->
-            entities.map { it.toTea() }
-        }
-    }
-
     override fun getRecentlyBrewedFlow(limit: Int): Flow<List<Tea>> {
         return teaDao.getRecentlyBrewedFlow(limit).map { entities ->
             entities.map { it.toTea() }
         }
-    }
-
-    override suspend fun search(query: String): List<Tea> {
-        return teaDao.search(query).map { it.toTea() }
     }
 
     override suspend fun upsert(tea: Tea) {

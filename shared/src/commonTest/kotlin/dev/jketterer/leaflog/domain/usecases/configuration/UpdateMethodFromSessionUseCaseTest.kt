@@ -46,7 +46,7 @@ class UpdateMethodFromSessionUseCaseTest {
     }
 
     @Test
-    fun `the brew's set-up and plan replace the method's, keeping overrides past the last steep`() = runTest {
+    fun `the brew's set-up and plan replace the method's but keep overrides past the last steep`() = runTest {
         val repository = FakeBrewingConfigurationRepository(listOf(method))
 
         val updated = UpdateMethodFromSessionUseCase(repository)("method", session).getOrThrow()

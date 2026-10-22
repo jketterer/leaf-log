@@ -131,7 +131,7 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `the next steep starts with the last one's tags, unconfirmed`() = runTest {
+    fun `the next steep starts with the last one's tags unconfirmed`() = runTest {
         val id = start().session.id
         editSteep(id) {
             it.copy(tags = listOf(SteepTag("floral", confirmed = true), SteepTag("sweet", confirmed = false)))
@@ -185,7 +185,7 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `a session's note is its own, apart from steep 1's`() = runTest {
+    fun `a session's note is its own apart from steep 1's`() = runTest {
         val started = start(notes = "Cosy afternoon")
         val id = started.session.id
         editSteep(id) { it.copy(notes = "Floral") }.getOrThrow()
@@ -354,7 +354,7 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `correcting a brew time changes the time it brewed, timed or not`() = runTest {
+    fun `correcting a brew time changes the time it brewed whether timed or not`() = runTest {
         val untimed = start().session.id
         val timed = start().session.id
         val running = TimerState(
@@ -406,7 +406,7 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `a session starts rinsed when its method is, and brew again keeps that`() = runTest {
+    fun `a session starts rinsed when its method is and brew again keeps that`() = runTest {
         val started = startSession(CONFIG.copy(rinse = true)).getOrThrow()
         assertTrue(started.session.rinsed)
 

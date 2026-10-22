@@ -11,7 +11,7 @@ class SteepTagsTest {
     private val labels = listOf(1 to "Sweet", 2 to "Returning sweetness", 3 to "Smoky")
 
     @Test
-    fun `a search matches any part of a tag, ignoring case`() {
+    fun `a search matches any part of a tag ignoring case`() {
         val (matches, _) = searchTags(labels, "SWEET")
 
         assertEquals(listOf(1, 2), matches.map { it.first })

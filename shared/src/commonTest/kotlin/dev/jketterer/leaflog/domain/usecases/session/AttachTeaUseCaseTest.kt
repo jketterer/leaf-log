@@ -39,7 +39,7 @@ class AttachTeaUseCaseTest {
     )
 
     @Test
-    fun `attaching after three steeps logs all three at their real times, unrated`() = runTest {
+    fun `attaching after three steeps logs all three unrated at their real times`() = runTest {
         // Steep 3 has just finished; the timer brewed it a moment past its 30s
         val timer = TimerState(
             steepNumber = 3,
@@ -84,7 +84,7 @@ class AttachTeaUseCaseTest {
     }
 
     @Test
-    fun `the vessel is the one last used with the tea, with its prefill`() = runTest {
+    fun `the vessel is the one last used with the tea and brings its prefill`() = runTest {
         startSession(
             teaId = TEA.id,
             vesselId = MUG.id,
@@ -105,7 +105,7 @@ class AttachTeaUseCaseTest {
     }
 
     @Test
-    fun `with no history, the type's temperature and the vessel's capacity`() = runTest {
+    fun `with no history it uses the type's temperature and the vessel's capacity`() = runTest {
         val session = attachTea(TEA.id, RUNNING, WaterType.FILTERED).getOrThrow()
 
         assertEquals(GAIWAN.id, session.session.vesselId)

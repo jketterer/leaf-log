@@ -90,7 +90,7 @@ class FindMethodUpdateUseCaseTest {
     }
 
     @Test
-    fun `rinsing when the method doesn't, or the reverse, offers the method`() = runTest {
+    fun `a rinse that differs from the method's either way offers the method`() = runTest {
         assertEquals(method, found(brewed { it.copy(session = it.session.copy(rinsed = true)) }))
 
         val rinsing = method.copy(rinse = true)

@@ -21,7 +21,7 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a method's plan and rinse and a session's source, rinse, note and tags survive a round trip`() {
+    fun `a method's plan and rinse and a session's source and rinse and note and tags survive a round trip`() {
         val backup = decodeBackup(V1).let {
             it.copy(
                 methods = listOf(
@@ -49,7 +49,7 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a version 2 backup reads with no plans, rinses or tags`() {
+    fun `a version 2 backup reads with no plans or rinses or tags`() {
         val backup = decodeBackup(V1).copy(methods = listOf(METHOD))
         val v2 = encodeBackup(backup).replace("\"version\": $BACKUP_VERSION", "\"version\": 2")
 

@@ -243,6 +243,22 @@ class AnalyticsTest {
     }
 
     @Test
+    fun `a cell covers its day or the rest of its week or month`() {
+        val day = ActivityBucket.DAY.daysFrom(LocalDate(2026, 12, 31))
+        // The year's first week cell is clamped to New Year's Day, so it runs only to that Sunday
+        val clampedWeek = ActivityBucket.WEEK.daysFrom(LocalDate(2027, 1, 1))
+        val week = ActivityBucket.WEEK.daysFrom(LocalDate(2027, 1, 4))
+        val february = ActivityBucket.MONTH.daysFrom(LocalDate(2028, 2, 1))
+
+        assertEquals(LocalDate(2026, 12, 31), day.start)
+        assertEquals(LocalDate(2026, 12, 31), day.endInclusive)
+        assertEquals(LocalDate(2027, 1, 1), clampedWeek.start)
+        assertEquals(LocalDate(2027, 1, 3), clampedWeek.endInclusive)
+        assertEquals(LocalDate(2027, 1, 10), week.endInclusive)
+        assertEquals(LocalDate(2028, 2, 29), february.endInclusive)
+    }
+
+    @Test
     fun `tea types are shared out by session count`() {
         val sessions = listOf(
             session(teaId = "green"),

@@ -61,6 +61,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatDuration
 import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
@@ -92,8 +93,8 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun AnalyticsScreen(
     onNavigateToLogTea: () -> Unit,
-    onNavigateToHistory: (filterTeaTypeId: String?, filterDateStart: String?, filterDateEnd: String?) -> Unit = { _, _, _ -> },
-    onNavigateToTeaDetail: (teaId: String) -> Unit = {},
+    onNavigateToHistory: (NavRoute.HistoryRoute) -> Unit,
+    onNavigateToVessel: (vesselId: String) -> Unit,
     viewModel: AnalyticsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -104,13 +105,8 @@ fun AnalyticsScreen(
         viewModel.navEvents.collect { event ->
             when (event) {
                 AnalyticsNavEvent.NavigateToLogTea -> onNavigateToLogTea()
-                is AnalyticsNavEvent.NavigateToHistory -> onNavigateToHistory(
-                    event.filterTeaTypeId,
-                    event.filterDateStart,
-                    event.filterDateEnd,
-                )
-
-                is AnalyticsNavEvent.NavigateToTeaDetail -> onNavigateToTeaDetail(event.teaId)
+                is AnalyticsNavEvent.NavigateToHistory -> onNavigateToHistory(event.route)
+                is AnalyticsNavEvent.NavigateToVessel -> onNavigateToVessel(event.vesselId)
             }
         }
     }
@@ -215,6 +211,7 @@ private fun AnalyticsCards(
             BrewingActivityHeatmap(
                 cells = state.activityCells,
                 period = state.selectedPeriod,
+                onTapCell = { date -> onIntent(AnalyticsIntent.TapActivityCell(date)) },
             )
         }
 
@@ -371,7 +368,7 @@ private fun AnalyticsCards(
             Spacer(modifier = Modifier.height(12.dp))
             TopTeasChart(
                 topTeas = state.topTeas,
-                onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopTea(teaId)) },
+                onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTea(teaId)) },
             )
         }
 
@@ -379,7 +376,7 @@ private fun AnalyticsCards(
             Spacer(modifier = Modifier.height(12.dp))
             TopRatedTeasChart(
                 topRatedTeas = state.topRatedTeas,
-                onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopRatedTea(teaId)) },
+                onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTea(teaId)) },
             )
         }
         Spacer(modifier = Modifier.height(16.dp))

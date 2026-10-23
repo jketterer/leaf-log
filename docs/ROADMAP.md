@@ -951,7 +951,7 @@ southern-region device and the pager across rotation and 2× font.
 8. [x] `fix: analytics chart audit findings`: outlines, the hit-test, legend targets, the neutral
    comparison, icons, Top rated's minimum, semantics. Nothing beyond the fixes.
 9. [x] `feat: vessel donut on theme colors`
-10. [ ] `feat: analytics links into the journal`. Test: a cell's date range.
+10. [x] `feat: analytics links into the journal`. Test: a cell's date range.
 11. [ ] `feat: not brewed lately`. Test: `isDormant`.
 12. [ ] `feat: season recaps`: the windows and gate, `RecapRoute`, the hero card and row, the pager
     with its cover. Tests: finished seasons only, the 10-session gate, the hemisphere flip.

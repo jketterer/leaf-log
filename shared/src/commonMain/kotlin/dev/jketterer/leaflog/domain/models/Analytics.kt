@@ -163,6 +163,10 @@ fun List<SessionWithSteeps>.activity(
         .toList()
 }
 
+/** The days a cell dated [date] covers: from that date to the end of its day, week or month. */
+fun ActivityBucket.daysFrom(date: LocalDate) =
+    date..startOf(date).plus(1, unit).minus(1, DateTimeUnit.DAY)
+
 /** Tea types by session count, most first. */
 fun List<SessionWithSteeps>.teaTypeDistribution(
     window: DateWindow,

@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.components.analytics
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -67,11 +69,13 @@ private fun intensityAlpha(sessionCount: Int): Float =
 /**
  * The period's activity, one cell per [AnalyticsPeriod.activityBucket]: a week and a month as
  * calendars, a season as weekday rows by week, a year as weeks by month, All time as a row a year.
+ * Tapping a cell with sessions passes its date to [onTapCell].
  */
 @Composable
 fun BrewingActivityHeatmap(
     cells: List<ActivityCell>,
     period: AnalyticsPeriod,
+    onTapCell: (date: LocalDate) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (cells.isEmpty()) return
@@ -106,6 +110,7 @@ fun BrewingActivityHeatmap(
                             columnLabels = DAY_LABELS,
                             dayNumbers = true,
                             today = currentDate(),
+                            onTapCell = onTapCell,
                         )
                     }
 
@@ -127,10 +132,11 @@ fun BrewingActivityHeatmap(
                             columnLabels = weeks.toList(),
                             rowLabels = DAY_LABELS,
                             today = currentDate(),
+                            onTapCell = onTapCell,
                         )
                     }
 
-                    AnalyticsPeriod.THIS_YEAR -> YearlyHeatmapCanvas(cells = cells)
+                    AnalyticsPeriod.THIS_YEAR -> YearlyHeatmapCanvas(cells = cells, onTapCell = onTapCell)
 
                     AnalyticsPeriod.ALL_TIME -> {
                         val years = cells.last().date.year - first.year + 1
@@ -142,6 +148,7 @@ fun BrewingActivityHeatmap(
                                 TimeFormatter.formatDate(LocalDate(first.year, it, 1), DateSkeleton.NARROW_MONTH)
                             },
                             rowLabels = List(years) { (first.year + it).toString() },
+                            onTapCell = onTapCell,
                         )
                     }
                 }
@@ -181,6 +188,7 @@ private fun HeatmapGrid(
     lineLength: Int,
     offset: Int,
     columnLabels: List<String?>,
+    onTapCell: (date: LocalDate) -> Unit,
     modifier: Modifier = Modifier,
     transposed: Boolean = false,
     rowLabels: List<String?> = emptyList(),
@@ -217,7 +225,23 @@ private fun HeatmapGrid(
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(canvasHeight),
+                .height(canvasHeight)
+                .pointerInput(cells, cellSize, startXDp) {
+                    detectTapGestures { tap ->
+                        val step = (cellSize + CELL_GAP).toPx()
+                        val x = tap.x - (startXDp + rowLabelWidth).toPx()
+                        val y = tap.y - columnLabelHeight.toPx()
+                        if (x < 0 || y < 0) return@detectTapGestures
+                        val column = (x / step).toInt()
+                        val row = (y / step).toInt()
+                        if (column >= columns || row >= rows) return@detectTapGestures
+                        val along = if (transposed) row else column
+                        val line = if (transposed) column else row
+                        cells.getOrNull(line * lineLength + along - offset)
+                            ?.takeIf { it.sessionCount > 0 }
+                            ?.let { onTapCell(it.date) }
+                    }
+                },
         ) {
             val cellSizePx = cellSize.toPx()
             val step = cellSizePx + CELL_GAP.toPx()
@@ -282,7 +306,7 @@ private fun HeatmapGrid(
 }
 
 @Composable
-private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
+private fun YearlyHeatmapCanvas(cells: List<ActivityCell>, onTapCell: (date: LocalDate) -> Unit) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
     val dark = isDarkTheme()
     val outlineColor = MaterialTheme.colorScheme.outlineVariant
@@ -316,7 +340,20 @@ private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(canvasHeight),
+                .height(canvasHeight)
+                .pointerInput(monthGroups, cellSize, monthsPerRow) {
+                    detectTapGestures { tap ->
+                        val blockWidth = (columnWidth + columnGap).toPx()
+                        val col = (tap.x / blockWidth).toInt()
+                        val row = (tap.y / (blockHeight + rowGap).toPx()).toInt()
+                        val cellsTop = row * (blockHeight + rowGap).toPx() + (monthLabelH + CELL_GAP).toPx()
+                        if (col >= monthsPerRow || tap.y < cellsTop) return@detectTapGestures
+                        val cellIndex = ((tap.x - col * blockWidth) / (cellSize + CELL_GAP).toPx()).toInt()
+                        monthGroups.getOrNull(row * monthsPerRow + col)?.getOrNull(cellIndex)
+                            ?.takeIf { it.sessionCount > 0 }
+                            ?.let { onTapCell(it.date) }
+                    }
+                },
         ) {
             val cellSizePx = cellSize.toPx()
             val cellGapPx = CELL_GAP.toPx()
@@ -407,6 +444,7 @@ private fun BrewingActivityHeatmapWeekPreview() {
                 ActivityCell(LocalDate(2026, 3, 1), "#FF9800", sessionCount = 1),
             ),
             period = AnalyticsPeriod.THIS_WEEK,
+            onTapCell = {},
             modifier = Modifier.padding(16.dp),
         )
     }
@@ -433,6 +471,7 @@ private fun BrewingActivityHeatmapThisMonthPreview() {
         BrewingActivityHeatmap(
             cells = previewCells(LocalDate(2026, 2, 1), 28, DateTimeUnit.DAY),
             period = AnalyticsPeriod.THIS_MONTH,
+            onTapCell = {},
             modifier = Modifier.padding(16.dp),
         )
     }
@@ -445,6 +484,7 @@ private fun BrewingActivityHeatmapWinterPreview() {
         BrewingActivityHeatmap(
             cells = previewCells(LocalDate(2025, 12, 1), 90, DateTimeUnit.DAY),
             period = AnalyticsPeriod.THIS_SEASON,
+            onTapCell = {},
             modifier = Modifier.padding(16.dp),
         )
     }
@@ -458,6 +498,7 @@ private fun BrewingActivityHeatmapYearPreview() {
             cells = listOf(ActivityCell(LocalDate(2026, 1, 1), "#4CAF50", sessionCount = 2)) +
                 previewCells(LocalDate(2026, 1, 5), 52, DateTimeUnit.WEEK),
             period = AnalyticsPeriod.THIS_YEAR,
+            onTapCell = {},
             modifier = Modifier.padding(16.dp),
         )
     }
@@ -470,6 +511,7 @@ private fun BrewingActivityHeatmapAllTimePreview() {
         BrewingActivityHeatmap(
             cells = previewCells(LocalDate(2024, 5, 1), 30, DateTimeUnit.MONTH),
             period = AnalyticsPeriod.ALL_TIME,
+            onTapCell = {},
             modifier = Modifier.padding(16.dp),
         )
     }

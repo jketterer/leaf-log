@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.activity
 import dev.jketterer.leaflog.domain.models.activityBucket
 import dev.jketterer.leaflog.domain.models.comparedTo
+import dev.jketterer.leaflog.domain.models.daysFrom
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
 import dev.jketterer.leaflog.domain.models.topRatedTeas
@@ -19,6 +20,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,23 +68,39 @@ class AnalyticsViewModel(
         when (intent) {
             is AnalyticsIntent.SelectPeriod -> selectPeriod(intent.period)
             is AnalyticsIntent.NavigateToLogTea -> _navEvents.trySend(AnalyticsNavEvent.NavigateToLogTea)
-            is AnalyticsIntent.TapTeaType -> {
+            is AnalyticsIntent.TapActivityCell -> {
+                val days = _state.value.selectedPeriod.activityBucket.daysFrom(intent.date)
                 _navEvents.trySend(
-                    AnalyticsNavEvent.NavigateToHistory(filterTeaTypeId = intent.teaTypeId)
+                    AnalyticsNavEvent.NavigateToHistory(
+                        NavRoute.HistoryRoute(
+                            filterDateStart = days.start.toString(),
+                            filterDateEnd = days.endInclusive.toString(),
+                        )
+                    )
                 )
             }
 
-            is AnalyticsIntent.TapTopTea -> {
-                _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
-            }
-
-            is AnalyticsIntent.TapVessel -> { /* no-op: no vessel detail screen yet */
-            }
-
-            is AnalyticsIntent.TapTopRatedTea -> {
-                _navEvents.trySend(AnalyticsNavEvent.NavigateToTeaDetail(intent.teaId))
-            }
+            is AnalyticsIntent.TapTeaType -> navigateToHistoryOverPeriod(teaTypeId = intent.teaTypeId)
+            is AnalyticsIntent.TapTea -> navigateToHistoryOverPeriod(teaId = intent.teaId)
+            is AnalyticsIntent.TapVessel -> _navEvents.trySend(AnalyticsNavEvent.NavigateToVessel(intent.vesselId))
         }
+    }
+
+    /** History narrowed to the selected period's days; All time narrows to none. */
+    private fun navigateToHistoryOverPeriod(teaTypeId: String? = null, teaId: String? = null) {
+        val period = _state.value.selectedPeriod
+        val window = period.window(Clock.System.now(), TimeZone.currentSystemDefault()).current
+        val bounded = period != AnalyticsPeriod.ALL_TIME
+        _navEvents.trySend(
+            AnalyticsNavEvent.NavigateToHistory(
+                NavRoute.HistoryRoute(
+                    filterTeaTypeId = teaTypeId,
+                    filterTeaId = teaId,
+                    filterDateStart = window.firstDate.takeIf { bounded }?.toString(),
+                    filterDateEnd = window.lastDate.takeIf { bounded }?.toString(),
+                )
+            )
+        )
     }
 
     private fun selectPeriod(period: AnalyticsPeriod) {
@@ -130,11 +148,6 @@ class AnalyticsViewModel(
 
 sealed interface AnalyticsNavEvent {
     data object NavigateToLogTea : AnalyticsNavEvent
-    data class NavigateToHistory(
-        val filterTeaTypeId: String? = null,
-        val filterDateStart: String? = null,
-        val filterDateEnd: String? = null,
-    ) : AnalyticsNavEvent
-
-    data class NavigateToTeaDetail(val teaId: String) : AnalyticsNavEvent
+    data class NavigateToHistory(val route: NavRoute.HistoryRoute) : AnalyticsNavEvent
+    data class NavigateToVessel(val vesselId: String) : AnalyticsNavEvent
 }

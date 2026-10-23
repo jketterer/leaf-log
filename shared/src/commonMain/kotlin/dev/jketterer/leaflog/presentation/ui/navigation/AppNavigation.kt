@@ -199,17 +199,9 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToLogTea = {
                     navigator.navigate(NavRoute.LogTeaRoute())
                 },
-                onNavigateToHistory = { filterTeaTypeId, filterDateStart, filterDateEnd ->
-                    navigator.navigate(
-                        NavRoute.HistoryRoute(
-                            filterTeaTypeId = filterTeaTypeId,
-                            filterDateStart = filterDateStart,
-                            filterDateEnd = filterDateEnd,
-                        )
-                    )
-                },
-                onNavigateToTeaDetail = { teaId ->
-                    navigator.navigate(NavRoute.TeaDetailsRoute(teaId))
+                onNavigateToHistory = { navigator.navigate(it) },
+                onNavigateToVessel = { vesselId ->
+                    navigator.navigate(NavRoute.VesselDetailRoute(vesselId))
                 },
             )
         }

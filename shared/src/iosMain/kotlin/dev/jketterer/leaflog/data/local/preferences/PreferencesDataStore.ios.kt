@@ -165,13 +165,7 @@ actual class PreferencesDataStore {
                     TeaSortOption.NAME_ASC
                 }
             } ?: TeaSortOption.NAME_ASC,
-            analyticsPeriod = analyticsPeriodString?.let {
-                try {
-                    AnalyticsPeriod.valueOf(it)
-                } catch (e: IllegalArgumentException) {
-                    AnalyticsPeriod.THIS_WEEK
-                }
-            } ?: AnalyticsPeriod.THIS_WEEK,
+            analyticsPeriod = AnalyticsPeriod.named(analyticsPeriodString),
             defaultWaterType = defaultWaterTypeString?.let {
                 try {
                     WaterType.valueOf(it)

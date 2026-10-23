@@ -942,7 +942,7 @@ southern-region device and the pager across rotation and 2× font.
    against sessions, new teas reaching before the window.
 4. [x] `feat: a hemisphere setting`. Tests: the region default, a backup without it. Track B: a
    southern-region device.
-5. [ ] `feat: analytics by calendar period`: This season, the trimmed menu, the fallback, labels in
+5. [x] `feat: analytics by calendar period`: This season, the trimmed menu, the fallback, labels in
    `strings.xml`. Tests: week, month, season and year edges, winter across the new year, the
    elapsed-part comparison, importing a backup holding `LAST_30_DAYS`.
 6. [ ] `feat: analytics gated per surface`

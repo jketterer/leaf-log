@@ -172,7 +172,8 @@ data class BackupPreferences(
     val volumeUnit: VolumeUnit,
     val weightUnit: WeightUnit,
     val teaSortOption: TeaSortOption,
-    val analyticsPeriod: AnalyticsPeriod,
+    /** An [AnalyticsPeriod]'s name, kept a string so that one since removed still imports. */
+    val analyticsPeriod: String,
     val defaultWaterType: WaterType,
     val timerCompletionNotificationsEnabled: Boolean,
     val sessionReminderNotificationsEnabled: Boolean,

@@ -164,6 +164,12 @@
     <string name="home_empty_title">Welcome to Leaf Log</string>
     <string name="home_empty_body">Log your brewing sessions to track your favorites and perfect your technique.</string>
     <string name="home_empty_action">Log Your First Session</string>
+    <string name="analytics_period_this_week">This week</string>
+    <string name="analytics_period_this_month">This month</string>
+    <string name="analytics_period_this_season">This season</string>
+    <string name="analytics_period_this_year">This year</string>
+    <string name="analytics_period_all_time">All time</string>
+    <string name="analytics_select_period">Select period</string>
     <string name="analytics_empty_title">Not enough data yet</string>
     <plurals name="analytics_empty_body">
         <item quantity="one">%1$d of %2$d session completed. Log more to unlock analytics about your brewing habits.</item>

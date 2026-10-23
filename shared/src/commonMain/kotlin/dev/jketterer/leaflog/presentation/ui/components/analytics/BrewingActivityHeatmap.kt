@@ -58,11 +58,6 @@ fun BrewingActivityHeatmap(
 ) {
     if (cells.isEmpty()) return
 
-    val isWeekView = period == AnalyticsPeriod.LAST_7_DAYS || period == AnalyticsPeriod.THIS_WEEK
-    val isMonthView = period == AnalyticsPeriod.LAST_30_DAYS ||
-        period == AnalyticsPeriod.THIS_MONTH ||
-        period == AnalyticsPeriod.LAST_MONTH
-
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -73,9 +68,9 @@ fun BrewingActivityHeatmap(
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            when {
-                isWeekView -> WeekHeatmapCanvas(cells = cells, period = period)
-                isMonthView -> MonthCalendarHeatmapCanvas(cells = cells, period = period)
+            when (period) {
+                AnalyticsPeriod.THIS_WEEK -> WeekHeatmapCanvas(cells = cells)
+                AnalyticsPeriod.THIS_MONTH -> MonthCalendarHeatmapCanvas(cells = cells)
                 else -> YearlyHeatmapCanvas(cells = cells)
             }
         }
@@ -83,10 +78,7 @@ fun BrewingActivityHeatmap(
 }
 
 @Composable
-private fun WeekHeatmapCanvas(
-    cells: List<ActivityCell>,
-    period: AnalyticsPeriod,
-) {
+private fun WeekHeatmapCanvas(cells: List<ActivityCell>) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
     val dark = isDarkTheme()
     val outlineColor = MaterialTheme.colorScheme.outline
@@ -105,13 +97,6 @@ private fun WeekHeatmapCanvas(
     )
     val today = remember {
         Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    }
-
-    // For THIS_WEEK, use static day-of-week labels; for LAST_7_DAYS, use actual dates
-    val headerLabels = if (period == AnalyticsPeriod.THIS_WEEK) {
-        DAY_LABELS
-    } else {
-        cells.take(7).map { DAY_LABELS[it.date.dayOfWeek.ordinal] }
     }
 
     val gap = 4.dp
@@ -138,7 +123,7 @@ private fun WeekHeatmapCanvas(
             val strokeWidth = 1.5.dp.toPx()
             val todayRingWidth = 2.dp.toPx()
 
-            headerLabels.forEachIndexed { index, label ->
+            DAY_LABELS.forEachIndexed { index, label ->
                 val cx = startX + index * (cellSizePx + gapPx) + cellSizePx / 2f
                 val textResult = textMeasurer.measure(text = label, style = labelStyle)
                 drawText(
@@ -203,10 +188,7 @@ private fun WeekHeatmapCanvas(
 }
 
 @Composable
-private fun MonthCalendarHeatmapCanvas(
-    cells: List<ActivityCell>,
-    period: AnalyticsPeriod,
-) {
+private fun MonthCalendarHeatmapCanvas(cells: List<ActivityCell>) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
     val dark = isDarkTheme()
     val outlineColor = MaterialTheme.colorScheme.outline
@@ -232,24 +214,15 @@ private fun MonthCalendarHeatmapCanvas(
     }
 
     val firstDate = cells.first().date
-    val lastDate = cells.last().date
     val emptyStart = firstDate.dayOfWeek.ordinal
     val totalPositions = emptyStart + cells.size
     val numRows = (totalPositions + 6) / 7
-    val emptyEnd = numRows * 7 - totalPositions
 
     val gap = 4.dp
     val monthLabelH = 20.dp
     val headerH = 18.dp
     val headerGap = 4.dp
-    val monthLabel = when (period) {
-        AnalyticsPeriod.LAST_30_DAYS -> {
-            val startLabel = TimeFormatter.formatDate(firstDate, DateSkeleton.MONTH_DAY)
-            val endLabel = TimeFormatter.formatDate(lastDate, DateSkeleton.MONTH_DAY)
-            "$startLabel – $endLabel"
-        }
-        else -> TimeFormatter.formatDate(firstDate, DateSkeleton.MONTH_YEAR)
-    }
+    val monthLabel = TimeFormatter.formatDate(firstDate, DateSkeleton.MONTH_YEAR)
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val cellSize: Dp = minOf(28.dp, (maxWidth - gap * 6) / 7)
@@ -479,48 +452,6 @@ private fun BrewingActivityHeatmapThisMonthPreview() {
         BrewingActivityHeatmap(
             cells = cells,
             period = AnalyticsPeriod.THIS_MONTH,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun BrewingActivityHeatmapLastMonthPreview() {
-    LeafLogTheme {
-        // Jan 2026: starts on Thursday, 31 days
-        val cells = (1..31).map { day ->
-            ActivityCell(
-                date = LocalDate(2026, 1, day),
-                dominantTeaTypeColorHex = if (day % 3 == 0) "#4CAF50" else if (day % 5 == 0) "#795548" else null,
-                sessionCount = if (day % 3 == 0) (day % 4) + 1 else if (day % 5 == 0) 2 else 0,
-            )
-        }
-        BrewingActivityHeatmap(
-            cells = cells,
-            period = AnalyticsPeriod.LAST_MONTH,
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun BrewingActivityHeatmapLast30DaysPreview() {
-    LeafLogTheme {
-        // Jan 26 (Mon) through Feb 25 (Wed) = 31 days spanning two months
-        val startDate = LocalDate(2026, 1, 26)
-        val cells = (0 until 31).map { offset ->
-            val date = startDate.plus(offset, DateTimeUnit.DAY)
-            ActivityCell(
-                date = date,
-                dominantTeaTypeColorHex = if (offset % 3 == 0) "#4CAF50" else if (offset % 5 == 0) "#795548" else null,
-                sessionCount = if (offset % 3 == 0) (offset % 5) + 1 else if (offset % 5 == 0) 1 else 0,
-            )
-        }
-        BrewingActivityHeatmap(
-            cells = cells,
-            period = AnalyticsPeriod.LAST_30_DAYS,
             modifier = Modifier.padding(16.dp),
         )
     }

@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.data.local.database.entities.TastingTagEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import dev.jketterer.leaflog.data.local.database.entities.TeaTypeEntity
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 
@@ -216,7 +217,7 @@ internal fun UserPreferences.toBackup() = BackupPreferences(
     volumeUnit = volumeUnit,
     weightUnit = weightUnit,
     teaSortOption = teaSortOption,
-    analyticsPeriod = analyticsPeriod,
+    analyticsPeriod = analyticsPeriod.name,
     defaultWaterType = defaultWaterType,
     timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
     sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
@@ -229,7 +230,7 @@ internal fun BackupPreferences.toDomain() = UserPreferences(
     volumeUnit = volumeUnit,
     weightUnit = weightUnit,
     teaSortOption = teaSortOption,
-    analyticsPeriod = analyticsPeriod,
+    analyticsPeriod = AnalyticsPeriod.named(analyticsPeriod),
     defaultWaterType = defaultWaterType,
     timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
     sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,

@@ -50,34 +50,23 @@ fun AnalyticsPeriod.window(now: Instant, tz: TimeZone): PeriodWindows {
         previous = DateWindow(midnight(first.minus(1, unit)), now.minus(1, unit, tz), tz),
     )
 
-    fun preceded(start: Instant, end: Instant) = PeriodWindows(
-        current = DateWindow(start, end, tz),
-        previous = DateWindow(start - (end - start), start, tz),
-    )
+    fun spanning(first: LocalDate, unit: DateTimeUnit.DateBased) =
+        calendar(first, unit, midnight(first.plus(1, unit)))
 
     val firstOfMonth = LocalDate(today.year, today.month, 1)
     return when (this) {
-        AnalyticsPeriod.LAST_7_DAYS -> preceded(midnight(today.minus(6, DateTimeUnit.DAY)), now)
-        AnalyticsPeriod.LAST_30_DAYS -> preceded(midnight(today.minus(30, DateTimeUnit.DAY)), now)
-        AnalyticsPeriod.LAST_90_DAYS -> preceded(midnight(today.minus(90, DateTimeUnit.DAY)), now)
-        AnalyticsPeriod.THIS_WEEK -> today.startOfWeek().let { monday ->
-            calendar(monday, DateTimeUnit.WEEK, midnight(monday.plus(1, DateTimeUnit.WEEK)))
-        }
-
-        AnalyticsPeriod.THIS_MONTH, AnalyticsPeriod.CUSTOM ->
-            calendar(
-                firstOfMonth,
-                DateTimeUnit.MONTH,
-                midnight(firstOfMonth.plus(1, DateTimeUnit.MONTH))
-            )
-
-        AnalyticsPeriod.LAST_MONTH ->
-            preceded(midnight(firstOfMonth.minus(1, DateTimeUnit.MONTH)), midnight(firstOfMonth))
+        AnalyticsPeriod.THIS_WEEK -> spanning(today.startOfWeek(), DateTimeUnit.WEEK)
+        AnalyticsPeriod.THIS_MONTH -> spanning(firstOfMonth, DateTimeUnit.MONTH)
+        // Meteorological seasons begin in December, March, June and September
+        AnalyticsPeriod.THIS_SEASON ->
+            spanning(firstOfMonth.minus((today.month.ordinal + 1) % 3, DateTimeUnit.MONTH), SEASON)
 
         AnalyticsPeriod.THIS_YEAR -> calendar(LocalDate(today.year, 1, 1), DateTimeUnit.YEAR, now)
         AnalyticsPeriod.ALL_TIME -> PeriodWindows(DateWindow(Instant.DISTANT_PAST, now, tz), null)
     }
 }
+
+private val SEASON = DateTimeUnit.MONTH * 3
 
 // Each aggregator reads every session, counting the completed ones that started in the window
 

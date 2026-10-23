@@ -61,15 +61,13 @@ class AnalyticsViewModel(
     init {
         viewModelScope.launch {
             val savedPeriod = preferencesRepository.getPreferences().analyticsPeriod
-            _state.update { it.copy(selectedPeriod = savedPeriod, periodLabel = savedPeriod.label) }
+            _state.update { it.copy(selectedPeriod = savedPeriod) }
             observeAnalytics()
         }
     }
 
     fun onIntent(intent: AnalyticsIntent) {
         when (intent) {
-            is AnalyticsIntent.ShowPeriodSelector -> _state.update { it.copy(showPeriodSelector = true) }
-            is AnalyticsIntent.HidePeriodSelector -> _state.update { it.copy(showPeriodSelector = false) }
             is AnalyticsIntent.SelectPeriod -> selectPeriod(intent.period)
             is AnalyticsIntent.NavigateToLogTea -> _navEvents.trySend(AnalyticsNavEvent.NavigateToLogTea)
             is AnalyticsIntent.TapTrendPoint -> {
@@ -110,13 +108,7 @@ class AnalyticsViewModel(
     }
 
     private fun selectPeriod(period: AnalyticsPeriod) {
-        _state.update {
-            it.copy(
-                selectedPeriod = period,
-                showPeriodSelector = false,
-                periodLabel = period.label,
-            )
-        }
+        _state.update { it.copy(selectedPeriod = period) }
         viewModelScope.launch { preferencesRepository.updateAnalyticsPeriod(period) }
     }
 
@@ -152,7 +144,7 @@ class AnalyticsViewModel(
                     activityCells = if (period == AnalyticsPeriod.ALL_TIME) {
                         emptyList()
                     } else {
-                        val byWeek = period == AnalyticsPeriod.LAST_90_DAYS || period == AnalyticsPeriod.THIS_YEAR
+                        val byWeek = period == AnalyticsPeriod.THIS_SEASON || period == AnalyticsPeriod.THIS_YEAR
                         sessions.activity(window, byWeek, teas, teaTypes)
                     },
                     topRatedTeas = sessions.topRatedTeas(window, teas),

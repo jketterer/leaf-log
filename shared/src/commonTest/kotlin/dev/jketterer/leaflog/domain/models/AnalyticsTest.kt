@@ -55,11 +55,54 @@ class AnalyticsTest {
     }
 
     @Test
-    fun `a rolling window is compared against the window just before it`() {
-        val (current, previous) = AnalyticsPeriod.LAST_7_DAYS.window(at("2026-09-23T14:30"), tz)
+    fun `this month on its last evening runs to the first of the next`() {
+        val window = AnalyticsPeriod.THIS_MONTH.window(at("2026-09-30T23:59"), tz).current
 
-        assertEquals(current.start, previous!!.end)
-        assertEquals(current.end - current.start, previous.end - previous.start)
+        assertEquals(midnight("2026-09-01"), window.start)
+        assertEquals(midnight("2026-10-01"), window.end)
+    }
+
+    @Test
+    fun `this season on the last evening of August is still summer`() {
+        val window = AnalyticsPeriod.THIS_SEASON.window(at("2026-08-31T23:59"), tz).current
+
+        assertEquals(midnight("2026-06-01"), window.start)
+        assertEquals(midnight("2026-09-01"), window.end)
+    }
+
+    @Test
+    fun `this season at midnight on the first of September is autumn`() {
+        val window = AnalyticsPeriod.THIS_SEASON.window(at("2026-09-01T00:00"), tz).current
+
+        assertEquals(midnight("2026-09-01"), window.start)
+        assertEquals(midnight("2026-12-01"), window.end)
+    }
+
+    @Test
+    fun `winter runs from December across the new year to March`() {
+        for (day in listOf("2026-12-01T00:00", "2027-01-15T12:00", "2027-02-28T23:59")) {
+            val window = AnalyticsPeriod.THIS_SEASON.window(at(day), tz).current
+
+            assertEquals(midnight("2026-12-01"), window.start, day)
+            assertEquals(midnight("2027-03-01"), window.end, day)
+        }
+    }
+
+    @Test
+    fun `this season is compared against the same elapsed part of the season before`() {
+        val previous = AnalyticsPeriod.THIS_SEASON.window(at("2026-10-23T14:30"), tz).previous!!
+
+        assertEquals(midnight("2026-06-01"), previous.start)
+        assertEquals(at("2026-07-23T14:30"), previous.end)
+    }
+
+    @Test
+    fun `this year starts over at midnight on New Year's Day`() {
+        val lastEvening = AnalyticsPeriod.THIS_YEAR.window(at("2026-12-31T23:59"), tz).current
+        val newYear = AnalyticsPeriod.THIS_YEAR.window(at("2027-01-01T00:00"), tz).current
+
+        assertEquals(midnight("2026-01-01"), lastEvening.start)
+        assertEquals(midnight("2027-01-01"), newYear.start)
     }
 
     @Test

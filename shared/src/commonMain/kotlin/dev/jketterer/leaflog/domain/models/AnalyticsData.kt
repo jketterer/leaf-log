@@ -63,30 +63,18 @@ data class TopTea(
     val sessionCount: Int,
 )
 
+/** A stored or backed-up name no longer here reads as [THIS_WEEK]. */
 enum class AnalyticsPeriod {
-    LAST_7_DAYS,
-    LAST_30_DAYS,
-    LAST_90_DAYS,
     THIS_WEEK,
     THIS_MONTH,
-    LAST_MONTH,
+    THIS_SEASON,
     THIS_YEAR,
     ALL_TIME,
-    CUSTOM,
     ;
 
-    val label: String
-        get() = when (this) {
-            LAST_7_DAYS -> "Last 7 Days"
-            LAST_30_DAYS -> "Last 30 Days"
-            LAST_90_DAYS -> "Last 90 Days"
-            THIS_WEEK -> "This Week"
-            THIS_MONTH -> "This Month"
-            LAST_MONTH -> "Last Month"
-            THIS_YEAR -> "This Year"
-            ALL_TIME -> "All Time"
-            CUSTOM -> "Custom Range"
-        }
+    companion object {
+        fun named(name: String?): AnalyticsPeriod = entries.find { it.name == name } ?: THIS_WEEK
+    }
 }
 
 /** The Monday on or before this date. Weeks start on Monday everywhere in the app. */

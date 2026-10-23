@@ -74,13 +74,7 @@ actual class PreferencesDataStore(private val context: Context) {
                         TeaSortOption.NAME_ASC
                     }
                 } ?: TeaSortOption.NAME_ASC,
-                analyticsPeriod = prefs[ANALYTICS_PERIOD_KEY]?.let {
-                    try {
-                        AnalyticsPeriod.valueOf(it)
-                    } catch (e: IllegalArgumentException) {
-                        AnalyticsPeriod.THIS_WEEK
-                    }
-                } ?: AnalyticsPeriod.THIS_WEEK,
+                analyticsPeriod = AnalyticsPeriod.named(prefs[ANALYTICS_PERIOD_KEY]),
                 defaultWaterType = prefs[DEFAULT_WATER_TYPE_KEY]?.let {
                     try {
                         WaterType.valueOf(it)

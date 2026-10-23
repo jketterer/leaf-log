@@ -181,12 +181,7 @@ private fun AnalyticsDataContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PeriodSelector(
-                currentLabel = state.periodLabel,
-                expanded = state.showPeriodSelector,
-                onExpandChange = { expanded ->
-                    if (expanded) onIntent(AnalyticsIntent.ShowPeriodSelector)
-                    else onIntent(AnalyticsIntent.HidePeriodSelector)
-                },
+                selected = state.selectedPeriod,
                 onPeriodSelected = { period -> onIntent(AnalyticsIntent.SelectPeriod(period)) },
             )
         }
@@ -393,7 +388,6 @@ private fun AnalyticsDataContentPreview() {
                     percentageChangeNewTeas = 33.0f,
                     percentageChangeTeaUsed = 12.0f,
                 ),
-                periodLabel = "This Month",
                 isLoading = false,
                 hasMinimumData = true,
                 trendPoints = listOf(

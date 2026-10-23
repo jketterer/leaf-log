@@ -41,9 +41,12 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
-/** One slice of a [DistributionDonutCard]: [count] sessions, [percentage] of them all. */
+/**
+ * One slice of a [DistributionDonutCard]: [count] sessions, [percentage] of them all. A null [id]
+ * neither taps nor opens anything.
+ */
 internal data class DonutSlice(
-    val id: String,
+    val id: String?,
     val label: String,
     val count: Int,
     val percentage: Float,
@@ -100,7 +103,7 @@ internal fun DistributionDonutCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     slices.forEach { slice ->
-                        LegendRow(slice = slice, onClick = { onTapSlice(slice.id) })
+                        LegendRow(slice = slice, onClick = slice.id?.let { id -> { onTapSlice(id) } })
                     }
                 }
             }
@@ -111,14 +114,14 @@ internal fun DistributionDonutCard(
 @Composable
 private fun LegendRow(
     slice: DonutSlice,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 48.dp)
             .clip(MaterialTheme.shapes.small)
-            .clickable(onClick = onClick)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -170,7 +173,7 @@ private fun DonutCanvas(
                         outerRadius = outerRadius,
                         sweeps = sweeps,
                     )
-                    if (index != null) onTapSlice(slices[index].id)
+                    index?.let { slices[it].id }?.let(onTapSlice)
                 }
             },
     ) {

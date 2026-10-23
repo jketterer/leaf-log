@@ -15,10 +15,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
+import compose.icons.feathericons.Clock
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.presentation.ui.screens.collection.FilterType
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.filter_all
+import leaf_log.shared.generated.resources.filter_favorites
+import leaf_log.shared.generated.resources.filter_not_brewed_lately
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 @Composable
@@ -26,7 +32,9 @@ fun TeaFilterChips(
     teaTypes: List<TeaType>,
     selectedFilter: FilterType,
     selectedTypeId: String?,
+    notBrewedLately: Boolean,
     onFilterSelected: (FilterType, String?) -> Unit,
+    onNotBrewedLatelyClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -40,17 +48,31 @@ fun TeaFilterChips(
         FilterChip(
             selected = selectedFilter == FilterType.ALL,
             onClick = { onFilterSelected(FilterType.ALL, null) },
-            label = { Text("All") }
+            label = { Text(stringResource(Res.string.filter_all)) }
         )
 
         // Favorites filter
         FilterChip(
             selected = selectedFilter == FilterType.FAVORITES,
             onClick = { onFilterSelected(FilterType.FAVORITES, null) },
-            label = { Text("Favorites") },
+            label = { Text(stringResource(Res.string.filter_favorites)) },
             leadingIcon = {
                 Icon(
                     imageVector = FeatherIcons.HeartFilled,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        )
+
+        // Narrows whichever filter is chosen, rather than replacing it
+        FilterChip(
+            selected = notBrewedLately,
+            onClick = onNotBrewedLatelyClick,
+            label = { Text(stringResource(Res.string.filter_not_brewed_lately)) },
+            leadingIcon = {
+                Icon(
+                    imageVector = FeatherIcons.Clock,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )
@@ -97,7 +119,9 @@ private fun TeaFilterChipsPreview() {
             ),
             selectedFilter = FilterType.ALL,
             selectedTypeId = null,
+            notBrewedLately = true,
             onFilterSelected = { _, _ -> },
+            onNotBrewedLatelyClick = {},
         )
     }
 }

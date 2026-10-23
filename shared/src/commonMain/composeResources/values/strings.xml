@@ -221,6 +221,11 @@
     <string name="vessel_not_found">Vessel not found</string>
     <string name="no_tea_types">No tea types yet</string>
     <string name="no_teas_found">No teas found</string>
+    <string name="collection_empty">No teas in your collection yet</string>
+    <string name="collection_no_favorites">No favorite teas yet</string>
+    <string name="collection_no_type">No teas of this type</string>
+    <string name="collection_none_dormant">No teas have gone 60 days unbrewed</string>
+    <string name="add_first_tea">Add Your First Tea</string>
 
     <!-- Ratings -->
     <string name="rating_out_of_five">Rated %1$s out of 5</string>
@@ -467,4 +472,7 @@
     <!-- Spoken action on a date or time field: "Select Date" -->
     <string name="select_field">Select %1$s</string>
     <string name="clear_field">Clear %1$s</string>
+    <string name="filter_all">All</string>
+    <string name="filter_favorites">Favorites</string>
+    <string name="filter_not_brewed_lately">Not brewed lately</string>
 </resources>

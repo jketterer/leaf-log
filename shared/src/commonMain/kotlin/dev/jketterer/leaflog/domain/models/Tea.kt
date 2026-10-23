@@ -5,6 +5,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 data class Tea(
@@ -40,3 +41,11 @@ fun Tea.cellarAge(today: LocalDate, tz: TimeZone): DatePeriod? {
     val end = finishedAt?.toLocalDateTime(tz)?.date ?: today
     return if (end < bought) null else bought.periodUntil(end)
 }
+
+/** An unfinished tea brewed before, but not in the last 60 days. Never-brewed teas aren't dormant. */
+fun Tea.isDormant(now: Instant): Boolean {
+    val last = lastBrewedAt ?: return false
+    return finishedAt == null && now - last >= DORMANT_AFTER
+}
+
+private val DORMANT_AFTER = 60.days

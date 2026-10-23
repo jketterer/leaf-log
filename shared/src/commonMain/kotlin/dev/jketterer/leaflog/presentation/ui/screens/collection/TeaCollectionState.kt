@@ -9,6 +9,7 @@ data class TeaCollectionState(
     val teaTypes: List<TeaType> = emptyList(),
     val selectedFilter: FilterType = FilterType.ALL,
     val selectedTypeId: String? = null,
+    val notBrewedLately: Boolean = false,
     val selectedTab: CollectionTab = CollectionTab.TEAS,
     val searchQuery: String = "",
     val selectedSortOption: TeaSortOption = TeaSortOption.NAME_ASC,

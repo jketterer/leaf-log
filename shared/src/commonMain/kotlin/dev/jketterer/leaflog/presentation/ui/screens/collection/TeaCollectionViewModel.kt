@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaSortOption
+import dev.jketterer.leaflog.domain.models.isDormant
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -29,8 +30,10 @@ import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_teas
 import leaf_log.shared.generated.resources.couldnt_update_favorite
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 class TeaCollectionViewModel(
     private val teaRepository: TeaRepository,
@@ -61,6 +64,9 @@ class TeaCollectionViewModel(
                 teaTypeId = intent.teaTypeId
             )
 
+            is TeaCollectionIntent.ToggleNotBrewedLately ->
+                _state.update { it.copy(notBrewedLately = !it.notBrewedLately) }
+
             is TeaCollectionIntent.SearchQueryChanged -> _state.update { it.copy(searchQuery = intent.query) }
             is TeaCollectionIntent.ToggleFavorite -> toggleFavorite(intent.tea)
             is TeaCollectionIntent.TabSelected -> selectTab(intent.tab)
@@ -87,13 +93,24 @@ class TeaCollectionViewModel(
 
         val criteria = _state.map { Triple(it.selectedFilter, it.selectedTypeId, it.selectedSortOption) }
             .distinctUntilChanged()
+        val notBrewedLately = _state.map { it.notBrewedLately }.distinctUntilChanged()
         // Typing settles before the search runs; clearing it shows everything at once
         val query = _state.map { it.searchQuery }.distinctUntilChanged()
             .debounce { if (it.isBlank()) Duration.ZERO else SEARCH_DEBOUNCE }
 
         // Filtering, searching and sorting read every tea, so they run off Main
-        combine(teaRepository.getAllFlow(), criteria, query) { teas, (filter, typeId, sort), query ->
-            val shown = sortTeas(teas.filteredBy(filter, typeId, query), sort)
+        combine(
+            teaRepository.getAllFlow(),
+            criteria,
+            query,
+            notBrewedLately,
+        ) { teas, (filter, typeId, sort), query, notBrewedLately ->
+            val filtered = teas.filteredBy(filter, typeId, query)
+            val shown = if (notBrewedLately) {
+                dormantTeas(filtered, Clock.System.now())
+            } else {
+                sortTeas(filtered, sort)
+            }
             _state.update {
                 it.copy(
                     teas = shown,
@@ -147,6 +164,10 @@ internal fun List<Tea>.filteredBy(filter: FilterType, typeId: String?, query: St
         }
         passesFilter && matchesQuery(query, listOf(tea.name, tea.producer, tea.origin, tea.description))
     }
+
+/** The dormant [teas], longest unbrewed first, whatever the chosen sort. */
+internal fun dormantTeas(teas: List<Tea>, now: Instant): List<Tea> =
+    teas.filter { it.isDormant(now) }.sortedBy { it.lastBrewedAt }
 
 private val SEARCH_DEBOUNCE = 300.milliseconds
 

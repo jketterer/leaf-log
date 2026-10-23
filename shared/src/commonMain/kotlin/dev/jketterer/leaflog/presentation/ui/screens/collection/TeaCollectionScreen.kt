@@ -59,6 +59,14 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListViewModel
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.add_first_tea
+import leaf_log.shared.generated.resources.collection_empty
+import leaf_log.shared.generated.resources.collection_no_favorites
+import leaf_log.shared.generated.resources.collection_no_type
+import leaf_log.shared.generated.resources.collection_none_dormant
+import leaf_log.shared.generated.resources.no_teas_found
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -273,6 +281,8 @@ private fun TeasTabContent(
         teaTypes = state.teaTypes,
         selectedFilter = state.selectedFilter,
         selectedTypeId = state.selectedTypeId,
+        notBrewedLately = state.notBrewedLately,
+        onNotBrewedLatelyClick = { onIntent(TeaCollectionIntent.ToggleNotBrewedLately) },
         onFilterSelected = { filterType, typeId ->
             when (filterType) {
                 FilterType.ALL -> onIntent(TeaCollectionIntent.ShowAllTeas)
@@ -296,20 +306,22 @@ private fun TeasTabContent(
         }
 
         state.isEmpty -> {
+            val noTeas = state.searchQuery.isBlank() && !state.notBrewedLately &&
+                state.selectedFilter == FilterType.ALL
             EmptyState(
-                message = if (state.searchQuery.isNotBlank()) {
-                    "No results found"
-                } else when (state.selectedFilter) {
-                    FilterType.ALL -> "No teas in your collection yet"
-                    FilterType.FAVORITES -> "No favorite teas yet"
-                    FilterType.BY_TYPE -> "No teas of this type"
-                },
-                actionText = if (state.searchQuery.isBlank() && state.selectedFilter == FilterType.ALL) {
-                    "Add Your First Tea"
-                } else null,
-                onActionClick = if (state.searchQuery.isBlank() && state.selectedFilter == FilterType.ALL) {
-                    onNavigateToAddTea
-                } else null
+                message = stringResource(
+                    when {
+                        state.searchQuery.isNotBlank() -> Res.string.no_teas_found
+                        state.notBrewedLately -> Res.string.collection_none_dormant
+                        else -> when (state.selectedFilter) {
+                            FilterType.ALL -> Res.string.collection_empty
+                            FilterType.FAVORITES -> Res.string.collection_no_favorites
+                            FilterType.BY_TYPE -> Res.string.collection_no_type
+                        }
+                    }
+                ),
+                actionText = if (noTeas) stringResource(Res.string.add_first_tea) else null,
+                onActionClick = if (noTeas) onNavigateToAddTea else null,
             )
         }
 

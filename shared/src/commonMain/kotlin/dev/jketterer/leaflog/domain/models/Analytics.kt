@@ -56,9 +56,7 @@ fun AnalyticsPeriod.window(now: Instant, tz: TimeZone): PeriodWindows {
     return when (this) {
         AnalyticsPeriod.THIS_WEEK -> spanning(today.startOfWeek(), DateTimeUnit.WEEK)
         AnalyticsPeriod.THIS_MONTH -> spanning(firstOfMonth, DateTimeUnit.MONTH)
-        // Meteorological seasons begin in December, March, June and September
-        AnalyticsPeriod.THIS_SEASON ->
-            spanning(firstOfMonth.minus((today.month.ordinal + 1) % 3, DateTimeUnit.MONTH), SEASON)
+        AnalyticsPeriod.THIS_SEASON -> spanning(today.startOfSeason(), SEASON)
 
         AnalyticsPeriod.THIS_YEAR -> calendar(LocalDate(today.year, 1, 1), DateTimeUnit.YEAR, now)
         AnalyticsPeriod.ALL_TIME -> PeriodWindows(DateWindow(Instant.DISTANT_PAST, now, tz), null)

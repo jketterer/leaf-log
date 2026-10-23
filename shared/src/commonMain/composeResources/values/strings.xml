@@ -202,6 +202,28 @@
     <string name="analytics_share">%1$s %2$d%%</string>
     <string name="analytics_top_teas">Top Teas</string>
     <string name="analytics_top_rated_teas">Highest Rated Teas</string>
+    <string name="season_winter">Winter</string>
+    <string name="season_spring">Spring</string>
+    <string name="season_summer">Summer</string>
+    <string name="season_autumn">Autumn</string>
+    <!-- A season and its year: "Summer 2026", "Winter 2025–26" -->
+    <string name="season_label">%1$s %2$s</string>
+    <string name="recap_title_winter">Your winter in tea</string>
+    <string name="recap_title_spring">Your spring in tea</string>
+    <string name="recap_title_summer">Your summer in tea</string>
+    <string name="recap_title_autumn">Your autumn in tea</string>
+    <!-- A season's first and last month: "Jun – Aug 2026" -->
+    <string name="recap_months">%1$s – %2$s</string>
+    <plurals name="recap_sessions">
+        <item quantity="one">session</item>
+        <item quantity="other">sessions</item>
+    </plurals>
+    <plurals name="recap_teas">
+        <item quantity="one">tea</item>
+        <item quantity="other">different teas</item>
+    </plurals>
+    <string name="recap_close">Close recap</string>
+    <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>
     <string name="log_a_brew">Log a brew</string>
     <string name="history_today">Today</string>

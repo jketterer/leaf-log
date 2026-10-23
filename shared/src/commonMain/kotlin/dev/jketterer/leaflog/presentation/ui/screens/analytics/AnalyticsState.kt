@@ -3,7 +3,9 @@ package dev.jketterer.leaflog.presentation.ui.screens.analytics
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.PeriodComparison
+import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopRatedTea
 import dev.jketterer.leaflog.domain.models.TopTea
@@ -21,4 +23,8 @@ data class AnalyticsState(
     val activityCells: List<ActivityCell> = emptyList(),
     val topRatedTeas: List<TopRatedTea> = emptyList(),
     val vesselDistribution: List<VesselDistribution> = emptyList(),
+    /** Seasons with a recap, newest first. */
+    val recaps: List<Season> = emptyList(),
+    /** Null until chosen in Settings, when it follows the device's region. */
+    val hemisphere: Hemisphere? = null,
 )

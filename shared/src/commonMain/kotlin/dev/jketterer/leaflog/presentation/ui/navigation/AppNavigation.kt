@@ -53,6 +53,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.home.HomeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.log.LogTeaScreen
+import dev.jketterer.leaflog.presentation.ui.screens.recap.RecapScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.SettingsScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.EditTeaTypeScreen
 import dev.jketterer.leaflog.presentation.ui.screens.settings.teatype.TeaTypeListScreen
@@ -203,6 +204,14 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToVessel = { vesselId ->
                     navigator.navigate(NavRoute.VesselDetailRoute(vesselId))
                 },
+                onNavigateToRecap = { navigator.navigate(it) },
+            )
+        }
+
+        entry<NavRoute.RecapRoute> { route ->
+            RecapScreen(
+                route = route,
+                onClose = { navigator.navigateUp(route) },
             )
         }
 
@@ -407,6 +416,7 @@ private fun NavKey.hidesBottomBar() = when (this) {
     is NavRoute.TimerRoute,
     is NavRoute.SteepCompleteRoute,
     is NavRoute.SessionReviewRoute,
+    is NavRoute.RecapRoute,
     -> true
     else -> false
 }

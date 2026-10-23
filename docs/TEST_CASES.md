@@ -173,6 +173,9 @@ the Activity is portrait-locked.
 - [ ] Settings → Hemisphere on a fresh install with the device region set to Australia (both
       platforms): South is selected. Switching the region to the US moves it to North until a
       chip is tapped, after which the choice holds.
+- [ ] A recap paged past its cover → recreate, and separately open a tea from it and come back:
+      the same page shows. At max font scale every page scrolls rather than clips, and the close
+      button and page dots clear the status and navigation bars.
 - [ ] **[iOS]** Theme set opposite the system: the backup file pickers and share sheet follow it.
 - [ ] **[A]** Large screen or tablet on Android 16 (portrait lock ignored): no screen is unusable
       in landscape.

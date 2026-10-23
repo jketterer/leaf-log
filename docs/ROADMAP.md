@@ -953,7 +953,7 @@ southern-region device and the pager across rotation and 2× font.
 9. [x] `feat: vessel donut on theme colors`
 10. [x] `feat: analytics links into the journal`. Test: a cell's date range.
 11. [x] `feat: not brewed lately`. Test: `isDormant`.
-12. [ ] `feat: season recaps`: the windows and gate, `RecapRoute`, the hero card and row, the pager
+12. [x] `feat: season recaps`: the windows and gate, `RecapRoute`, the hero card and row, the pager
     with its cover. Tests: finished seasons only, the 10-session gate, the hemisphere flip.
 13. [ ] `feat: recap rhythm`
 14. [ ] `feat: recap most brewed`

@@ -46,6 +46,10 @@ sealed interface NavRoute : NavKey {
     @Serializable
     data object AnalyticsRoute : NavRoute
 
+    /** [seasonStart]: the ISO date the recapped season starts on. */
+    @Serializable
+    data class RecapRoute(val seasonStart: String) : NavRoute
+
     @Serializable
     data object SettingsRoute : NavRoute
 

@@ -13,6 +13,7 @@ val navSerializationConfig = SavedStateConfiguration {
             subclass(NavRoute.HistoryRoute::class, NavRoute.HistoryRoute.serializer())
             subclass(NavRoute.AnalyticsRoute::class, NavRoute.AnalyticsRoute.serializer())
             subclass(NavRoute.SettingsRoute::class, NavRoute.SettingsRoute.serializer())
+            subclass(NavRoute.RecapRoute::class, NavRoute.RecapRoute.serializer())
 
             subclass(NavRoute.LogTeaRoute::class, NavRoute.LogTeaRoute.serializer())
             subclass(NavRoute.TeaDetailsRoute::class, NavRoute.TeaDetailsRoute.serializer())

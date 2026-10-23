@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.models.activity
 import dev.jketterer.leaflog.domain.models.activityBucket
 import dev.jketterer.leaflog.domain.models.comparedTo
 import dev.jketterer.leaflog.domain.models.daysFrom
+import dev.jketterer.leaflog.domain.models.seasonRecaps
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
 import dev.jketterer.leaflog.domain.models.topRatedTeas
@@ -62,6 +63,12 @@ class AnalyticsViewModel(
             _state.update { it.copy(selectedPeriod = savedPeriod) }
             observeAnalytics()
         }
+        viewModelScope.launch {
+            preferencesRepository.getPreferencesFlow()
+                .map { it.hemisphere }
+                .distinctUntilChanged()
+                .collect { hemisphere -> _state.update { it.copy(hemisphere = hemisphere) } }
+        }
     }
 
     fun onIntent(intent: AnalyticsIntent) {
@@ -83,6 +90,9 @@ class AnalyticsViewModel(
             is AnalyticsIntent.TapTeaType -> navigateToHistoryOverPeriod(teaTypeId = intent.teaTypeId)
             is AnalyticsIntent.TapTea -> navigateToHistoryOverPeriod(teaId = intent.teaId)
             is AnalyticsIntent.TapVessel -> _navEvents.trySend(AnalyticsNavEvent.NavigateToVessel(intent.vesselId))
+            is AnalyticsIntent.OpenRecap -> _navEvents.trySend(
+                AnalyticsNavEvent.NavigateToRecap(NavRoute.RecapRoute(intent.season.start.toString()))
+            )
         }
     }
 
@@ -119,7 +129,9 @@ class AnalyticsViewModel(
         ) { sessions, teaList, teaTypeList, vesselList, period ->
             val teas = teaList.associateBy { it.id }
             val teaTypes = teaTypeList.associateBy { it.id }
-            val (window, previousWindow) = period.window(Clock.System.now(), TimeZone.currentSystemDefault())
+            val now = Clock.System.now()
+            val tz = TimeZone.currentSystemDefault()
+            val (window, previousWindow) = period.window(now, tz)
             val analytics = sessions.summary(window)
             _state.update {
                 it.copy(
@@ -134,6 +146,7 @@ class AnalyticsViewModel(
                     activityCells = sessions.activity(window, period.activityBucket, teas, teaTypes),
                     topRatedTeas = sessions.topRatedTeas(window, teas),
                     vesselDistribution = sessions.vesselDistribution(window, vesselList.associateBy { v -> v.id }),
+                    recaps = sessions.seasonRecaps(now, tz),
                 )
             }
         }
@@ -150,4 +163,5 @@ sealed interface AnalyticsNavEvent {
     data object NavigateToLogTea : AnalyticsNavEvent
     data class NavigateToHistory(val route: NavRoute.HistoryRoute) : AnalyticsNavEvent
     data class NavigateToVessel(val vesselId: String) : AnalyticsNavEvent
+    data class NavigateToRecap(val route: NavRoute.RecapRoute) : AnalyticsNavEvent
 }

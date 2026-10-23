@@ -42,6 +42,7 @@ import compose.icons.feathericons.Package
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.PeriodComparison
+import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
@@ -55,6 +56,7 @@ import dev.jketterer.leaflog.presentation.ui.components.analytics.TopRatedTeasCh
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.VesselDistributionChart
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
+import dev.jketterer.leaflog.presentation.ui.components.recap.RecapLinks
 import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitSwitchIcon
 import dev.jketterer.leaflog.presentation.ui.components.common.formatDuration
@@ -63,6 +65,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import kotlinx.datetime.LocalDate
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
@@ -95,6 +98,7 @@ fun AnalyticsScreen(
     onNavigateToLogTea: () -> Unit,
     onNavigateToHistory: (NavRoute.HistoryRoute) -> Unit,
     onNavigateToVessel: (vesselId: String) -> Unit,
+    onNavigateToRecap: (NavRoute.RecapRoute) -> Unit,
     viewModel: AnalyticsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -107,6 +111,7 @@ fun AnalyticsScreen(
                 AnalyticsNavEvent.NavigateToLogTea -> onNavigateToLogTea()
                 is AnalyticsNavEvent.NavigateToHistory -> onNavigateToHistory(event.route)
                 is AnalyticsNavEvent.NavigateToVessel -> onNavigateToVessel(event.vesselId)
+                is AnalyticsNavEvent.NavigateToRecap -> onNavigateToRecap(event.route)
             }
         }
     }
@@ -170,14 +175,25 @@ private fun AnalyticsDataContent(
     state: AnalyticsState,
     onIntent: (AnalyticsIntent) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    val analytics = state.analytics?.takeIf { it.totalSessions > 0 }
+    // An empty period's EmptyState fills the rest and scrolls on its own
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(if (analytics != null) Modifier.verticalScroll(rememberScrollState()) else Modifier),
+    ) {
+        RecapLinks(
+            recaps = state.recaps,
+            hemisphere = state.hemisphere,
+            onOpen = { season -> onIntent(AnalyticsIntent.OpenRecap(season)) },
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+        )
         PeriodSelector(
             selected = state.selectedPeriod,
             onPeriodSelected = { period -> onIntent(AnalyticsIntent.SelectPeriod(period)) },
             modifier = Modifier.padding(horizontal = 16.dp),
         )
-        val analytics = state.analytics
-        if (analytics == null || analytics.totalSessions == 0) {
+        if (analytics == null) {
             EmptyState(
                 message = stringResource(Res.string.analytics_period_empty),
                 modifier = Modifier.weight(1f),
@@ -187,7 +203,6 @@ private fun AnalyticsDataContent(
                 state = state,
                 analytics = analytics,
                 onIntent = onIntent,
-                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -200,12 +215,7 @@ private fun AnalyticsCards(
     onIntent: (AnalyticsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
-    ) {
+    Column(modifier = modifier.padding(horizontal = 16.dp)) {
         if (state.activityCells.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             BrewingActivityHeatmap(
@@ -401,6 +411,7 @@ private fun AnalyticsDataContentPreview() {
         AnalyticsDataContent(
             state = AnalyticsState(
                 selectedPeriod = AnalyticsPeriod.THIS_MONTH,
+                recaps = listOf(Season(LocalDate(2026, 6, 1)), Season(LocalDate(2026, 3, 1))),
                 analytics = AnalyticsData(
                     totalSessions = 42,
                     totalBrewingTime = 2.hours + 30.minutes,

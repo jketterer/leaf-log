@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.data.local.preferences
 
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
@@ -29,6 +30,7 @@ actual class PreferencesDataStore {
         private const val TIMER_COMPLETION_NOTIFICATIONS_KEY = "timer_completion_notifications_enabled"
         private const val SESSION_REMINDER_NOTIFICATIONS_KEY = "session_reminder_notifications_enabled"
         private const val THEME_MODE_KEY = "theme_mode"
+        private const val HEMISPHERE_KEY = "hemisphere"
         private const val LAST_BACKUP_AT_KEY = "last_backup_at"
         private const val QUICK_TIMER_KEY = "quick_timer"
     }
@@ -91,6 +93,16 @@ actual class PreferencesDataStore {
         userDefaults.setObject(mode.name, THEME_MODE_KEY)
         userDefaults.synchronize()
         _preferencesFlow.update { it.copy(themeMode = mode) }
+    }
+
+    actual suspend fun updateHemisphere(hemisphere: Hemisphere?) {
+        if (hemisphere == null) {
+            userDefaults.removeObjectForKey(HEMISPHERE_KEY)
+        } else {
+            userDefaults.setObject(hemisphere.name, HEMISPHERE_KEY)
+        }
+        userDefaults.synchronize()
+        _preferencesFlow.update { it.copy(hemisphere = hemisphere) }
     }
 
     actual suspend fun updateLastBackupAt(at: Instant) {
@@ -174,6 +186,8 @@ actual class PreferencesDataStore {
             themeMode = userDefaults.stringForKey(THEME_MODE_KEY)
                 ?.let { name -> ThemeMode.entries.find { it.name == name } }
                 ?: ThemeMode.SYSTEM,
+            hemisphere = userDefaults.stringForKey(HEMISPHERE_KEY)
+                ?.let { name -> Hemisphere.entries.find { it.name == name } },
             lastBackupAt = if (userDefaults.objectForKey(LAST_BACKUP_AT_KEY) != null) {
                 Instant.fromEpochMilliseconds(userDefaults.integerForKey(LAST_BACKUP_AT_KEY))
             } else {

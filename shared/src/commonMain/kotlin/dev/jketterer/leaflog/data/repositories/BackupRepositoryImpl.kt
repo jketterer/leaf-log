@@ -204,6 +204,7 @@ class BackupRepositoryImpl(
                 preferencesRepository
                     .updateSessionReminderNotificationsEnabled(sessionReminderNotificationsEnabled),
                 preferencesRepository.updateThemeMode(themeMode),
+                preferencesRepository.updateHemisphere(hemisphere),
             )
         }
         results.firstNotNullOfOrNull { it.exceptionOrNull() }?.let { error ->

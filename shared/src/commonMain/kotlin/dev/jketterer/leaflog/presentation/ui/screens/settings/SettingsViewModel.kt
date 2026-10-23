@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.repositories.BackupRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
@@ -48,6 +49,7 @@ class SettingsViewModel(
     fun onIntent(intent: SettingsIntent) {
         when (intent) {
             is SettingsIntent.UpdateThemeMode -> updateThemeMode(intent.mode)
+            is SettingsIntent.UpdateHemisphere -> updateHemisphere(intent.hemisphere)
             is SettingsIntent.UpdateTemperatureUnit -> updateTemperatureUnit(intent.unit)
             is SettingsIntent.UpdateVolumeUnit -> updateVolumeUnit(intent.unit)
             is SettingsIntent.UpdateWeightUnit -> updateWeightUnit(intent.unit)
@@ -122,6 +124,13 @@ class SettingsViewModel(
     private fun updateThemeMode(mode: ThemeMode) {
         viewModelScope.launch {
             preferencesRepository.updateThemeMode(mode)
+                .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
+        }
+    }
+
+    private fun updateHemisphere(hemisphere: Hemisphere) {
+        viewModelScope.launch {
+            preferencesRepository.updateHemisphere(hemisphere)
                 .onFailure { messages.failure(it, Res.string.couldnt_save_setting) }
         }
     }

@@ -1,8 +1,14 @@
 package dev.jketterer.leaflog.data.backup
 
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.DomainFailure
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.TeaSortOption
+import dev.jketterer.leaflog.domain.models.TemperatureUnit
+import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.WeightUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -108,6 +114,15 @@ class BackupJsonTest {
     }
 
     @Test
+    fun `settings backed up without a hemisphere leave it following the region`() {
+        val preferences = PREFERENCES.copy(hemisphere = Hemisphere.SOUTHERN)
+        val backup = encodeBackup(decodeBackup(V1).copy(preferences = preferences))
+        val withoutIt = backup.replace(Regex(""",\s*"hemisphere": "SOUTHERN""""), "")
+
+        assertEquals(preferences.copy(hemisphere = null), decodeBackup(withoutIt).preferences)
+    }
+
+    @Test
     fun `a backup from a newer app is refused with a way forward`() {
         assertFailsWith<DomainFailure.NewerBackup> {
             decodeBackup("""{"version": ${BACKUP_VERSION + 1}}""")
@@ -116,6 +131,17 @@ class BackupJsonTest {
 }
 
 /** An export from schema 7, backup version 1: entities as they were, extra fields and all. */
+private val PREFERENCES = BackupPreferences(
+    temperatureUnit = TemperatureUnit.CELSIUS,
+    volumeUnit = VolumeUnit.MILLILITERS,
+    weightUnit = WeightUnit.GRAMS,
+    teaSortOption = TeaSortOption.NAME_ASC,
+    analyticsPeriod = AnalyticsPeriod.THIS_WEEK,
+    defaultWaterType = WaterType.FILTERED,
+    timerCompletionNotificationsEnabled = true,
+    sessionReminderNotificationsEnabled = true,
+)
+
 private val METHOD = BackupMethod(
     id = "method",
     teaId = "tieguanyin",

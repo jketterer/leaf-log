@@ -17,9 +17,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.Preview
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
@@ -79,10 +81,13 @@ private fun SettingsContent(
         ) {
             AppearanceSection(
                 themeMode = state.preferences.themeMode,
+                hemisphere = state.preferences.hemisphere
+                    ?: Hemisphere.forRegion(Locale.current.region),
                 temperatureUnit = state.preferences.temperatureUnit,
                 volumeUnit = state.preferences.volumeUnit,
                 weightUnit = state.preferences.weightUnit,
                 onThemeModeChange = { onIntent(SettingsIntent.UpdateThemeMode(it)) },
+                onHemisphereChange = { onIntent(SettingsIntent.UpdateHemisphere(it)) },
                 onTemperatureUnitChange = { onIntent(SettingsIntent.UpdateTemperatureUnit(it)) },
                 onVolumeUnitChange = { onIntent(SettingsIntent.UpdateVolumeUnit(it)) },
                 onWeightUnitChange = { onIntent(SettingsIntent.UpdateWeightUnit(it)) },

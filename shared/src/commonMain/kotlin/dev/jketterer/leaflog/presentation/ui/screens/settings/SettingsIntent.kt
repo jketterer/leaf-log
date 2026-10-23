@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.settings
 
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
 import dev.jketterer.leaflog.domain.models.VolumeUnit
@@ -8,6 +9,7 @@ import dev.jketterer.leaflog.domain.models.WeightUnit
 
 sealed interface SettingsIntent {
     data class UpdateThemeMode(val mode: ThemeMode) : SettingsIntent
+    data class UpdateHemisphere(val hemisphere: Hemisphere) : SettingsIntent
     data class UpdateTemperatureUnit(val unit: TemperatureUnit) : SettingsIntent
     data class UpdateVolumeUnit(val unit: VolumeUnit) : SettingsIntent
     data class UpdateWeightUnit(val unit: WeightUnit) : SettingsIntent

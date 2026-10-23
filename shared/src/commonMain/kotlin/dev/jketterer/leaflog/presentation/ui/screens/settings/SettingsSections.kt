@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronRight
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.MeasurementUnit
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
@@ -42,7 +43,11 @@ import leaf_log.shared.generated.resources.header_brewing
 import leaf_log.shared.generated.resources.header_data
 import leaf_log.shared.generated.resources.header_management
 import leaf_log.shared.generated.resources.header_notifications
+import leaf_log.shared.generated.resources.hemisphere_northern
+import leaf_log.shared.generated.resources.hemisphere_southern
 import leaf_log.shared.generated.resources.settings_appearance
+import leaf_log.shared.generated.resources.settings_hemisphere
+import leaf_log.shared.generated.resources.settings_hemisphere_subtitle
 import leaf_log.shared.generated.resources.settings_temperature_unit
 import leaf_log.shared.generated.resources.settings_temperature_unit_subtitle
 import leaf_log.shared.generated.resources.settings_theme
@@ -58,10 +63,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun AppearanceSection(
     themeMode: ThemeMode,
+    hemisphere: Hemisphere,
     temperatureUnit: TemperatureUnit,
     volumeUnit: VolumeUnit,
     weightUnit: WeightUnit,
     onThemeModeChange: (ThemeMode) -> Unit,
+    onHemisphereChange: (Hemisphere) -> Unit,
     onTemperatureUnitChange: (TemperatureUnit) -> Unit,
     onVolumeUnitChange: (VolumeUnit) -> Unit,
     onWeightUnitChange: (WeightUnit) -> Unit,
@@ -76,6 +83,13 @@ internal fun AppearanceSection(
         ThemeModeSetting(
             currentMode = themeMode,
             onModeChange = onThemeModeChange,
+        )
+
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
+        HemisphereSetting(
+            current = hemisphere,
+            onChange = onHemisphereChange,
         )
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -338,6 +352,36 @@ private fun ThemeModeSetting(
 }
 
 @Composable
+private fun HemisphereSetting(
+    current: Hemisphere,
+    onChange: (Hemisphere) -> Unit,
+) {
+    SettingRow(
+        title = stringResource(Res.string.settings_hemisphere),
+        subtitle = stringResource(Res.string.settings_hemisphere_subtitle),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Hemisphere.entries.forEach { hemisphere ->
+                FilterChip(
+                    selected = hemisphere == current,
+                    onClick = { onChange(hemisphere) },
+                    label = {
+                        Text(
+                            stringResource(
+                                when (hemisphere) {
+                                    Hemisphere.NORTHERN -> Res.string.hemisphere_northern
+                                    Hemisphere.SOUTHERN -> Res.string.hemisphere_southern
+                                },
+                            ),
+                        )
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun DefaultWaterTypeSetting(
     currentWaterType: WaterType,
     onWaterTypeChange: (WaterType) -> Unit,
@@ -487,10 +531,12 @@ private fun AppearanceSectionPreview() {
     LeafLogTheme {
         AppearanceSection(
             themeMode = ThemeMode.DARK,
+            hemisphere = Hemisphere.SOUTHERN,
             temperatureUnit = TemperatureUnit.CELSIUS,
             volumeUnit = VolumeUnit.MILLILITERS,
             weightUnit = WeightUnit.GRAMS,
             onThemeModeChange = {},
+            onHemisphereChange = {},
             onTemperatureUnitChange = {},
             onVolumeUnitChange = {},
             onWeightUnitChange = {},

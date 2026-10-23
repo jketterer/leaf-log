@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.data.local.preferences
 
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
@@ -22,6 +23,7 @@ expect class PreferencesDataStore {
     suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean)
     suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean)
     suspend fun updateThemeMode(mode: ThemeMode)
+    suspend fun updateHemisphere(hemisphere: Hemisphere?)
     suspend fun updateLastBackupAt(at: Instant)
 
     // The Quick Timer, encoded by the repository. Not a preference, so not in [UserPreferences]

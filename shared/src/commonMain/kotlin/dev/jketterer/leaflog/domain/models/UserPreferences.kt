@@ -12,6 +12,8 @@ data class UserPreferences(
     val timerCompletionNotificationsEnabled: Boolean = true,
     val sessionReminderNotificationsEnabled: Boolean = true,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** Null until chosen, when it follows the device's region through [Hemisphere.forRegion]. */
+    val hemisphere: Hemisphere? = null,
     /** When an export was last delivered. This device's own fact, so it isn't backed up. */
     val lastBackupAt: Instant? = null,
 ) {

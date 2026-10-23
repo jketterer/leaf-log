@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.data.backup
 
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSortOption
@@ -177,6 +178,8 @@ data class BackupPreferences(
     val sessionReminderNotificationsEnabled: Boolean,
     /** Missing from backups made before it was a setting, which followed the system. */
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** Null when unchosen, and in backups made before it was a setting. */
+    val hemisphere: Hemisphere? = null,
 )
 
 /** Rewrites every photo path; a null drops that photo. */

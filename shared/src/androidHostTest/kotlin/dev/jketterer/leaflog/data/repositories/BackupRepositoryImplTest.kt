@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.data.local.database.inMemoryDatabase
 import dev.jketterer.leaflog.data.local.database.row
 import dev.jketterer.leaflog.data.local.database.seedForeignKeys
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TeaSortOption
@@ -215,6 +216,7 @@ class BackupRepositoryImplTest {
             UserPreferences.METRIC.copy(
                 sessionReminderNotificationsEnabled = false,
                 themeMode = ThemeMode.DARK,
+                hemisphere = Hemisphere.SOUTHERN,
             )
         val zip = phone.repository.export().getOrThrow()
         val fresh = Device("fresh")
@@ -505,6 +507,8 @@ private class InMemoryPreferences : PreferencesRepository {
     override suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) =
         set { copy(sessionReminderNotificationsEnabled = enabled) }
     override suspend fun updateThemeMode(mode: ThemeMode) = set { copy(themeMode = mode) }
+    override suspend fun updateHemisphere(hemisphere: Hemisphere?) =
+        set { copy(hemisphere = hemisphere) }
     override suspend fun updateLastBackupAt(at: Instant) = set { copy(lastBackupAt = at) }
     override suspend fun getQuickTimer(): TimerState? = null
     override suspend fun updateQuickTimer(timer: TimerState?) = Result.success(Unit)

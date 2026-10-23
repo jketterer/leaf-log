@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
@@ -37,6 +38,7 @@ actual class PreferencesDataStore(private val context: Context) {
         val SESSION_REMINDER_NOTIFICATIONS_KEY =
             booleanPreferencesKey("session_reminder_notifications_enabled")
         val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+        val HEMISPHERE_KEY = stringPreferencesKey("hemisphere")
         val LAST_BACKUP_AT_KEY = longPreferencesKey("last_backup_at")
         val QUICK_TIMER_KEY = stringPreferencesKey("quick_timer")
     }
@@ -93,6 +95,8 @@ actual class PreferencesDataStore(private val context: Context) {
                 themeMode = prefs[THEME_MODE_KEY]
                     ?.let { name -> ThemeMode.entries.find { it.name == name } }
                     ?: ThemeMode.SYSTEM,
+                hemisphere = prefs[HEMISPHERE_KEY]
+                    ?.let { name -> Hemisphere.entries.find { it.name == name } },
                 lastBackupAt = prefs[LAST_BACKUP_AT_KEY]?.let(Instant::fromEpochMilliseconds),
             )
         }
@@ -149,6 +153,16 @@ actual class PreferencesDataStore(private val context: Context) {
     actual suspend fun updateThemeMode(mode: ThemeMode) {
         context.dataStore.edit { prefs ->
             prefs[THEME_MODE_KEY] = mode.name
+        }
+    }
+
+    actual suspend fun updateHemisphere(hemisphere: Hemisphere?) {
+        context.dataStore.edit { prefs ->
+            if (hemisphere == null) {
+                prefs.remove(HEMISPHERE_KEY)
+            } else {
+                prefs[HEMISPHERE_KEY] = hemisphere.name
+            }
         }
     }
 

@@ -170,6 +170,9 @@ the Activity is portrait-locked.
       follows it, and the status and navigation bar icons stay legible on each. The choice
       survives a restart with no frame drawn in the other theme.
 - [ ] Cold start with the system in dark mode: the splash is dark, not white.
+- [ ] Settings → Hemisphere on a fresh install with the device region set to Australia (both
+      platforms): South is selected. Switching the region to the US moves it to North until a
+      chip is tapped, after which the choice holds.
 - [ ] **[iOS]** Theme set opposite the system: the backup file pickers and share sheet follow it.
 - [ ] **[A]** Large screen or tablet on Android 16 (portrait lock ignored): no screen is unusable
       in landscape.

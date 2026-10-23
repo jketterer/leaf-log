@@ -221,6 +221,7 @@ internal fun UserPreferences.toBackup() = BackupPreferences(
     timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
     sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
     themeMode = themeMode,
+    hemisphere = hemisphere,
 )
 
 internal fun BackupPreferences.toDomain() = UserPreferences(
@@ -233,6 +234,7 @@ internal fun BackupPreferences.toDomain() = UserPreferences(
     timerCompletionNotificationsEnabled = timerCompletionNotificationsEnabled,
     sessionReminderNotificationsEnabled = sessionReminderNotificationsEnabled,
     themeMode = themeMode,
+    hemisphere = hemisphere,
 )
 
 internal fun BackupSteep.tagEntities() =

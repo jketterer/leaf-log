@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.data.repositories
 
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.TeaSortOption
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.domain.models.ThemeMode
@@ -111,6 +112,10 @@ class PreferencesRepositoryImpl(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun updateHemisphere(hemisphere: Hemisphere?): Result<Unit> = runCatching {
+        preferencesDataStore.updateHemisphere(hemisphere)
     }
 
     override suspend fun updateLastBackupAt(at: Instant): Result<Unit> {

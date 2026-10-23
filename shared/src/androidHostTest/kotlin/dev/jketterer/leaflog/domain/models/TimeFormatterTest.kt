@@ -30,7 +30,7 @@ class TimeFormatterTest {
     @Test
     fun `every skeleton formats in US English`() {
         assertEquals(
-            listOf("Jan", "Jan 15", "1/15", "Jan 2024", "Jan 15, 2024", "Monday, January 15"),
+            listOf("J", "Jan", "Jan 15", "1/15", "Jan 2024", "Jan 15, 2024", "Monday, January 15"),
             DateSkeleton.entries.map { format(it, Locale.US) },
         )
     }

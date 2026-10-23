@@ -4,14 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.activity
+import dev.jketterer.leaflog.domain.models.activityBucket
 import dev.jketterer.leaflog.domain.models.comparedTo
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
 import dev.jketterer.leaflog.domain.models.topRatedTeas
 import dev.jketterer.leaflog.domain.models.topTeas
-import dev.jketterer.leaflog.domain.models.trends
 import dev.jketterer.leaflog.domain.models.vesselDistribution
 import dev.jketterer.leaflog.domain.models.window
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -34,10 +33,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_analytics
 import kotlin.time.Clock
@@ -70,24 +66,6 @@ class AnalyticsViewModel(
         when (intent) {
             is AnalyticsIntent.SelectPeriod -> selectPeriod(intent.period)
             is AnalyticsIntent.NavigateToLogTea -> _navEvents.trySend(AnalyticsNavEvent.NavigateToLogTea)
-            is AnalyticsIntent.TapTrendPoint -> {
-                val granularity = _state.value.trendGranularity
-                val startDate = intent.date
-                val endDate = when (granularity) {
-                    TrendGranularity.DAILY -> startDate
-                    TrendGranularity.WEEKLY -> startDate.plus(6, DateTimeUnit.DAY)
-                    TrendGranularity.MONTHLY -> {
-                        startDate.plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY)
-                    }
-                }
-                _navEvents.trySend(
-                    AnalyticsNavEvent.NavigateToHistory(
-                        filterDateStart = startDate.toString(),
-                        filterDateEnd = endDate.toString(),
-                    )
-                )
-            }
-
             is AnalyticsIntent.TapTeaType -> {
                 _navEvents.trySend(
                     AnalyticsNavEvent.NavigateToHistory(filterTeaTypeId = intent.teaTypeId)
@@ -125,7 +103,6 @@ class AnalyticsViewModel(
             val teaTypes = teaTypeList.associateBy { it.id }
             val (window, previousWindow) = period.window(Clock.System.now(), TimeZone.currentSystemDefault())
             val analytics = sessions.summary(window)
-            val trends = sessions.trends(window)
             _state.update {
                 it.copy(
                     analytics = analytics,
@@ -134,17 +111,9 @@ class AnalyticsViewModel(
                     },
                     isLoading = false,
                     hasCompletedSession = sessions.any { s -> s.session.status == SessionStatus.COMPLETED },
-                    trendPoints = trends.points,
-                    trendGranularity = trends.granularity,
                     teaTypeDistribution = sessions.teaTypeDistribution(window, teas, teaTypes),
                     topTeas = sessions.topTeas(window, teas),
-                    // All time would start a cell at the distant past
-                    activityCells = if (period == AnalyticsPeriod.ALL_TIME) {
-                        emptyList()
-                    } else {
-                        val byWeek = period == AnalyticsPeriod.THIS_SEASON || period == AnalyticsPeriod.THIS_YEAR
-                        sessions.activity(window, byWeek, teas, teaTypes)
-                    },
+                    activityCells = sessions.activity(window, period.activityBucket, teas, teaTypes),
                     topRatedTeas = sessions.topRatedTeas(window, teas),
                     vesselDistribution = sessions.vesselDistribution(window, vesselList.associateBy { v -> v.id }),
                 )

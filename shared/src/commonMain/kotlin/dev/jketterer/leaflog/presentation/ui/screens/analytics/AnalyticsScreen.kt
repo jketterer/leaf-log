@@ -47,9 +47,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopTea
-import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingActivityHeatmap
-import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingTrendsChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.PeriodSelector
 import dev.jketterer.leaflog.presentation.ui.components.analytics.SummaryCard
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TeaTypeDistributionChart
@@ -68,7 +66,6 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
-import kotlinx.datetime.LocalDate
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.analytics_empty_body
 import leaf_log.shared.generated.resources.analytics_empty_title
@@ -198,8 +195,7 @@ private fun AnalyticsCards(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        // Brewing activity heatmap (hidden for ALL_TIME)
-        if (state.selectedPeriod != AnalyticsPeriod.ALL_TIME && state.activityCells.isNotEmpty()) {
+        if (state.activityCells.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             BrewingActivityHeatmap(
                 cells = state.activityCells,
@@ -326,16 +322,6 @@ private fun AnalyticsCards(
             )
         }
 
-        // A line needs two points
-        if (state.trendPoints.size >= 2) {
-            Spacer(modifier = Modifier.height(24.dp))
-            BrewingTrendsChart(
-                trendPoints = state.trendPoints,
-                granularity = state.trendGranularity,
-                onTapPoint = { date -> onIntent(AnalyticsIntent.TapTrendPoint(date)) },
-            )
-        }
-
         if (state.teaTypeDistribution.isNotEmpty()) {
             Spacer(modifier = Modifier.height(12.dp))
             TeaTypeDistributionChart(
@@ -403,15 +389,6 @@ private fun AnalyticsDataContentPreview() {
                 ),
                 isLoading = false,
                 hasCompletedSession = true,
-                trendPoints = listOf(
-                    TrendPoint(LocalDate(2024, 1, 1), 2),
-                    TrendPoint(LocalDate(2024, 1, 2), 4),
-                    TrendPoint(LocalDate(2024, 1, 3), 1),
-                    TrendPoint(LocalDate(2024, 1, 4), 6),
-                    TrendPoint(LocalDate(2024, 1, 5), 3),
-                    TrendPoint(LocalDate(2024, 1, 6), 5),
-                    TrendPoint(LocalDate(2024, 1, 7), 2),
-                ),
                 teaTypeDistribution = listOf(
                     TeaTypeDistribution(
                         teaType = TeaType(id = "1", name = "Green", colorHex = "#4CAF50"),

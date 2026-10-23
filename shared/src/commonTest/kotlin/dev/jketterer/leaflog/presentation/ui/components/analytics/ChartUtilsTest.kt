@@ -34,16 +34,4 @@ class ChartUtilsTest {
         assertNull(segmentAt(dx = 0f, dy = -30f))
         assertNull(segmentAt(dx = 0f, dy = -90f))
     }
-
-    @Test
-    fun `a tap past the midpoint between points picks the next point`() {
-        assertEquals(1, nearestPointIndex(x = 125f, firstX = 30f, stepX = 100f, count = 5))
-        assertEquals(2, nearestPointIndex(x = 185f, firstX = 30f, stepX = 100f, count = 5))
-    }
-
-    @Test
-    fun `taps beyond either end pick the end point`() {
-        assertEquals(0, nearestPointIndex(x = 0f, firstX = 30f, stepX = 100f, count = 5))
-        assertEquals(4, nearestPointIndex(x = 900f, firstX = 30f, stepX = 100f, count = 5))
-    }
 }

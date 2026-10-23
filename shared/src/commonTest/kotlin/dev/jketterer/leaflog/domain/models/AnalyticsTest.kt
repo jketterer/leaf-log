@@ -188,7 +188,7 @@ class AnalyticsTest {
             session("2026-09-22T15:00", teaId = "black"),
         )
 
-        val cells = sessions.activity(WEEK, byWeek = false, TEAS, TEA_TYPES)
+        val cells = sessions.activity(WEEK, ActivityBucket.DAY, TEAS, TEA_TYPES)
 
         assertEquals((21..27).map { LocalDate(2026, 9, it) }, cells.map { it.date })
         assertEquals(ActivityCell(LocalDate(2026, 9, 22), "#4CAF50", sessionCount = 3), cells[1])
@@ -199,7 +199,7 @@ class AnalyticsTest {
     fun `weekly cells start on the window's first day and then on Mondays`() {
         val window = DateWindow(midnight("2026-09-23"), at("2026-10-11T12:00"), tz)
 
-        val cells = listOf(session("2026-09-29T10:00")).activity(window, byWeek = true, TEAS, TEA_TYPES)
+        val cells = listOf(session("2026-09-29T10:00")).activity(window, ActivityBucket.WEEK, TEAS, TEA_TYPES)
 
         assertEquals(
             listOf(LocalDate(2026, 9, 23), LocalDate(2026, 9, 28), LocalDate(2026, 10, 5)),
@@ -209,30 +209,37 @@ class AnalyticsTest {
     }
 
     @Test
-    fun `a month trends by day from its first session`() {
-        val window = DateWindow(midnight("2026-09-01"), midnight("2026-10-01"), tz)
-        val sessions = listOf(session("2026-09-05T09:00"), session("2026-09-05T15:00"))
+    fun `winter has a cell per day running on across the new year`() {
+        val window = AnalyticsPeriod.THIS_SEASON.window(at("2027-02-28T12:00"), tz).current
+        val sessions = listOf(session("2026-12-31T23:30"), session("2027-01-01T00:30"))
 
-        val trends = sessions.trends(window)
+        val cells = sessions.activity(window, ActivityBucket.DAY, TEAS, TEA_TYPES)
 
-        assertEquals(TrendGranularity.DAILY, trends.granularity)
-        assertEquals(TrendPoint(LocalDate(2026, 9, 5), 2), trends.points.first())
+        assertEquals(31 + 31 + 28, cells.size)
+        assertEquals(LocalDate(2026, 12, 1), cells.first().date)
+        assertEquals(LocalDate(2027, 2, 28), cells.last().date)
+        assertEquals(listOf(1, 1), cells.slice(30..31).map { it.sessionCount })
     }
 
     @Test
-    fun `a year trends by month`() {
-        val window = DateWindow(midnight("2026-01-01"), at("2026-09-23T12:00"), tz)
-        val sessions = listOf(
-            session("2026-02-10T10:00"),
-            session("2026-02-20T10:00"),
-            session("2026-05-01T10:00"),
+    fun `all time has a cell per month from its first session's month across years`() {
+        val window = AnalyticsPeriod.ALL_TIME.window(at("2027-01-15T12:00"), tz).current
+        val sessions = listOf(session("2026-11-20T10:00"), session("2027-01-02T10:00"))
+
+        val cells = sessions.activity(window, ActivityBucket.MONTH, TEAS, TEA_TYPES)
+
+        assertEquals(
+            listOf(LocalDate(2026, 11, 1), LocalDate(2026, 12, 1), LocalDate(2027, 1, 1)),
+            cells.map { it.date },
         )
+        assertEquals(listOf(1, 0, 1), cells.map { it.sessionCount })
+    }
 
-        val trends = sessions.trends(window)
+    @Test
+    fun `all time without a session has no cells`() {
+        val window = AnalyticsPeriod.ALL_TIME.window(at("2027-01-15T12:00"), tz).current
 
-        assertEquals(TrendGranularity.MONTHLY, trends.granularity)
-        assertEquals(listOf(2, 0, 0, 1), trends.points.take(4).map { it.sessionCount })
-        assertEquals(LocalDate(2026, 2, 1), trends.points.first().date)
+        assertEquals(emptyList(), emptyList<SessionWithSteeps>().activity(window, ActivityBucket.MONTH, TEAS, TEA_TYPES))
     }
 
     @Test

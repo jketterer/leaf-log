@@ -4,7 +4,6 @@ import androidx.compose.ui.graphics.Color
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.math.PI
 import kotlin.math.atan2
-import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 fun String.hexToColor(): Color {
@@ -66,6 +65,3 @@ internal fun donutSegmentAt(
     return sweeps.lastIndex // float rounding can leave the sweeps a hair short of 360
 }
 
-/** Index of the evenly spaced point nearest [x], the first point sitting at [firstX]. */
-internal fun nearestPointIndex(x: Float, firstX: Float, stepX: Float, count: Int): Int =
-    ((x - firstX) / stepX).roundToInt().coerceIn(0, count - 1)

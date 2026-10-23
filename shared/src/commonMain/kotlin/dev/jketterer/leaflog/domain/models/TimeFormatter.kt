@@ -26,6 +26,9 @@ expect object TimeFormatter {
 
 /** The fields a formatted date shows. Examples are en-US. */
 enum class DateSkeleton(val pattern: String) {
+    /** "J" */
+    NARROW_MONTH("MMMMM"),
+
     /** "Jan" */
     MONTH("MMM"),
 

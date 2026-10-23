@@ -4,7 +4,6 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
@@ -127,66 +126,41 @@ fun AnalyticsData.comparedTo(previous: AnalyticsData): PeriodComparison? {
 }
 
 /**
- * A cell per day, or per Monday-led week with the first clamped to the window's first day, each
- * colored by its most brewed tea type.
+ * A cell per [bucket] from the window's first day, the first clamped to it, each colored by its
+ * most brewed tea type. All time's window has no first day, so its cells start at the first
+ * session's.
  */
 fun List<SessionWithSteeps>.activity(
     window: DateWindow,
-    byWeek: Boolean,
+    bucket: ActivityBucket,
     teas: Map<String, Tea>,
     teaTypes: Map<String, TeaType>,
 ): List<ActivityCell> {
-    val bucket: (LocalDate) -> LocalDate = if (byWeek) LocalDate::startOfWeek else { date -> date }
-    val unit = if (byWeek) DateTimeUnit.WEEK else DateTimeUnit.DAY
+    val sessions = completedIn(window)
+    val firstDate = if (window.start == Instant.DISTANT_PAST) {
+        val first = sessions.minOfOrNull { it.startedAt } ?: return emptyList()
+        bucket.startOf(first.toLocalDateTime(window.tz).date)
+    } else {
+        window.firstDate
+    }
     val sessionsByBucket =
-        completedIn(window).groupBy { bucket(it.startedAt.toLocalDateTime(window.tz).date) }
+        sessions.groupBy { bucket.startOf(it.startedAt.toLocalDateTime(window.tz).date) }
     val lastDate = window.lastDate
-    return generateSequence(bucket(window.firstDate)) { it.plus(1, unit) }
+    return generateSequence(bucket.startOf(firstDate)) { it.plus(1, bucket.unit) }
         .takeWhile { it <= lastDate }
         .map { start ->
-            val sessions = sessionsByBucket[start].orEmpty()
+            val bucketSessions = sessionsByBucket[start].orEmpty()
             ActivityCell(
-                date = maxOf(start, window.firstDate),
-                dominantTeaTypeColorHex = sessions
+                date = maxOf(start, firstDate),
+                dominantTeaTypeColorHex = bucketSessions
                     .mapNotNull { teas[it.session.teaId]?.let { tea -> teaTypes[tea.teaTypeId]?.colorHex } }
                     .filter { it.isNotEmpty() }
                     .groupingBy { it }.eachCount()
                     .maxByOrNull { it.value }?.key,
-                sessionCount = sessions.size,
+                sessionCount = bucketSessions.size,
             )
         }
         .toList()
-}
-
-/** Sessions per day, week or month, from the window's first day or first session if later. */
-fun List<SessionWithSteeps>.trends(window: DateWindow): BrewingTrends {
-    val dates = completedIn(window).map { it.startedAt.toLocalDateTime(window.tz).date }
-    if (dates.isEmpty()) return BrewingTrends(emptyList(), TrendGranularity.DAILY)
-
-    val startDate = maxOf(window.firstDate, dates.min())
-    val endDate = window.end.toLocalDateTime(window.tz).date
-    val days = startDate.daysUntil(endDate)
-    val granularity = when {
-        days <= 45 -> TrendGranularity.DAILY
-        days <= 180 -> TrendGranularity.WEEKLY
-        else -> TrendGranularity.MONTHLY
-    }
-    val bucket: (LocalDate) -> LocalDate = when (granularity) {
-        TrendGranularity.DAILY -> { date -> date }
-        TrendGranularity.WEEKLY -> LocalDate::startOfWeek
-        TrendGranularity.MONTHLY -> { date -> LocalDate(date.year, date.month, 1) }
-    }
-    val unit = when (granularity) {
-        TrendGranularity.DAILY -> DateTimeUnit.DAY
-        TrendGranularity.WEEKLY -> DateTimeUnit.WEEK
-        TrendGranularity.MONTHLY -> DateTimeUnit.MONTH
-    }
-    val counts = dates.groupingBy(bucket).eachCount()
-    val points = generateSequence(bucket(startDate)) { it.plus(1, unit) }
-        .takeWhile { it <= endDate }
-        .map { TrendPoint(it, counts[it] ?: 0) }
-        .toList()
-    return BrewingTrends(points, granularity)
 }
 
 /** Tea types by session count, most first. */

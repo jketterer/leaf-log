@@ -7,8 +7,6 @@ import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopRatedTea
 import dev.jketterer.leaflog.domain.models.TopTea
-import dev.jketterer.leaflog.domain.models.TrendGranularity
-import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.domain.models.VesselDistribution
 
 data class AnalyticsState(
@@ -18,8 +16,6 @@ data class AnalyticsState(
     val isLoading: Boolean = true,
     /** Whether any session was ever completed, whatever the period. */
     val hasCompletedSession: Boolean = false,
-    val trendPoints: List<TrendPoint> = emptyList(),
-    val trendGranularity: TrendGranularity = TrendGranularity.DAILY,
     val teaTypeDistribution: List<TeaTypeDistribution> = emptyList(),
     val topTeas: List<TopTea> = emptyList(),
     val activityCells: List<ActivityCell> = emptyList(),

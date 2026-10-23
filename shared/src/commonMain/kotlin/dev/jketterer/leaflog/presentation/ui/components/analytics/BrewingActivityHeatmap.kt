@@ -12,17 +12,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -31,25 +32,32 @@ import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
 import dev.jketterer.leaflog.presentation.ui.theme.isDarkTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
+import kotlinx.datetime.Month
 import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
+import kotlin.math.max
 import kotlin.math.min
 
 // Indexed by DayOfWeek.ordinal (MONDAY = 0)
 private val DAY_LABELS = listOf("M", "T", "W", "T", "F", "S", "S")
 
+private val CELL_GAP = 3.dp
+private val LABEL_GAP = 4.dp
+
 /** Scale alpha based on session count: min 0.35 (1 session), max 1.0 (3+ sessions). */
 private fun intensityAlpha(sessionCount: Int): Float =
     if (sessionCount <= 0) 1f else min(1f, 0.35f + sessionCount * 0.22f)
 
+/**
+ * The period's activity, one cell per [AnalyticsPeriod.activityBucket]: a week and a month as
+ * calendars, a season as weekday rows by week, a year as weeks by month, All time as a row a year.
+ */
 @Composable
 fun BrewingActivityHeatmap(
     cells: List<ActivityCell>,
@@ -68,118 +76,60 @@ fun BrewingActivityHeatmap(
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.height(12.dp))
+            val first = cells.first().date
             when (period) {
-                AnalyticsPeriod.THIS_WEEK -> WeekHeatmapCanvas(cells = cells)
-                AnalyticsPeriod.THIS_MONTH -> MonthCalendarHeatmapCanvas(cells = cells)
-                else -> YearlyHeatmapCanvas(cells = cells)
-            }
-        }
-    }
-}
-
-@Composable
-private fun WeekHeatmapCanvas(cells: List<ActivityCell>) {
-    val activeDefaultColor = MaterialTheme.colorScheme.primary
-    val dark = isDarkTheme()
-    val outlineColor = MaterialTheme.colorScheme.outline
-    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val todayRingColor = MaterialTheme.colorScheme.primary
-    val dayNumberEmptyColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val textMeasurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(
-        fontSize = 10.sp,
-        color = labelColor,
-        textAlign = TextAlign.Center,
-    )
-    val dayNumberStyle = TextStyle(
-        fontSize = 8.sp,
-        textAlign = TextAlign.Center,
-    )
-    val today = remember {
-        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    }
-
-    val gap = 4.dp
-    val labelHeightDp = 14.dp
-    val labelGapDp = 6.dp
-
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val cellSize: Dp = minOf(28.dp, (maxWidth - gap * 6) / 7)
-        val totalGridWidth: Dp = cellSize * 7 + gap * 6
-        val startXDp: Dp = (maxWidth - totalGridWidth) / 2
-        val canvasHeight: Dp = labelHeightDp + labelGapDp + cellSize
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(canvasHeight),
-        ) {
-            val cellSizePx = cellSize.toPx()
-            val gapPx = gap.toPx()
-            val labelHeightPx = labelHeightDp.toPx()
-            val labelGapPx = labelGapDp.toPx()
-            val startX = startXDp.toPx()
-            val cornerRadius = CornerRadius(4.dp.toPx())
-            val strokeWidth = 1.5.dp.toPx()
-            val todayRingWidth = 2.dp.toPx()
-
-            DAY_LABELS.forEachIndexed { index, label ->
-                val cx = startX + index * (cellSizePx + gapPx) + cellSizePx / 2f
-                val textResult = textMeasurer.measure(text = label, style = labelStyle)
-                drawText(
-                    textLayoutResult = textResult,
-                    topLeft = Offset(cx - textResult.size.width / 2f, 0f),
-                )
-            }
-
-            val cellTop = labelHeightPx + labelGapPx
-            cells.take(7).forEachIndexed { index, cell ->
-                val cellX = startX + index * (cellSizePx + gapPx)
-                val color = cell.dominantTeaTypeColorHex?.let { hex ->
-                    val parsed = teaTypeColor(hex, dark)
-                    if (parsed == Color.Unspecified) activeDefaultColor else parsed
-                }
-                if (color != null) {
-                    drawRoundRect(
-                        color = color.copy(alpha = intensityAlpha(cell.sessionCount)),
-                        topLeft = Offset(cellX, cellTop),
-                        size = Size(cellSizePx, cellSizePx),
-                        cornerRadius = cornerRadius,
-                    )
-                } else {
-                    drawRoundRect(
-                        color = outlineColor,
-                        topLeft = Offset(cellX, cellTop),
-                        size = Size(cellSizePx, cellSizePx),
-                        cornerRadius = cornerRadius,
-                        style = Stroke(width = strokeWidth),
+                AnalyticsPeriod.THIS_WEEK, AnalyticsPeriod.THIS_MONTH -> {
+                    if (period == AnalyticsPeriod.THIS_MONTH) {
+                        Text(
+                            text = TimeFormatter.formatDate(first, DateSkeleton.MONTH_YEAR),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Spacer(modifier = Modifier.height(LABEL_GAP))
+                    }
+                    HeatmapGrid(
+                        cells = cells,
+                        lineLength = 7,
+                        offset = first.dayOfWeek.ordinal,
+                        columnLabels = DAY_LABELS,
+                        dayNumbers = true,
+                        today = currentDate(),
                     )
                 }
 
-                // Day number
-                val dayText = cell.date.day.toString()
-                val dayTextColor = if (color != null) contentColorOn(color) else dayNumberEmptyColor
-                val dayResult = textMeasurer.measure(
-                    text = dayText,
-                    style = dayNumberStyle.copy(color = dayTextColor),
-                )
-                drawText(
-                    textLayoutResult = dayResult,
-                    topLeft = Offset(
-                        cellX + (cellSizePx - dayResult.size.width) / 2f,
-                        cellTop + (cellSizePx - dayResult.size.height) / 2f,
-                    ),
-                )
+                AnalyticsPeriod.THIS_SEASON -> {
+                    val offset = first.dayOfWeek.ordinal
+                    // A month is named over the week its first day falls in
+                    val weeks = arrayOfNulls<String>((offset + cells.size + 6) / 7)
+                    cells.forEachIndexed { index, cell ->
+                        if (cell.date.day == 1) {
+                            weeks[(offset + index) / 7] =
+                                TimeFormatter.formatDate(cell.date, DateSkeleton.MONTH)
+                        }
+                    }
+                    HeatmapGrid(
+                        cells = cells,
+                        lineLength = 7,
+                        offset = offset,
+                        transposed = true,
+                        columnLabels = weeks.toList(),
+                        rowLabels = DAY_LABELS,
+                        today = currentDate(),
+                    )
+                }
 
-                // Today indicator ring
-                if (cell.date == today) {
-                    val inset = todayRingWidth / 2f
-                    drawRoundRect(
-                        color = todayRingColor,
-                        topLeft = Offset(cellX - inset, cellTop - inset),
-                        size = Size(cellSizePx + todayRingWidth, cellSizePx + todayRingWidth),
-                        cornerRadius = CornerRadius(4.dp.toPx() + inset),
-                        style = Stroke(width = todayRingWidth),
+                AnalyticsPeriod.THIS_YEAR -> YearlyHeatmapCanvas(cells = cells)
+
+                AnalyticsPeriod.ALL_TIME -> {
+                    val years = cells.last().date.year - first.year + 1
+                    HeatmapGrid(
+                        cells = cells,
+                        lineLength = 12,
+                        offset = first.month.ordinal,
+                        columnLabels = Month.entries.map {
+                            TimeFormatter.formatDate(LocalDate(first.year, it, 1), DateSkeleton.NARROW_MONTH)
+                        },
+                        rowLabels = List(years) { (first.year + it).toString() },
                     )
                 }
             }
@@ -187,49 +137,50 @@ private fun WeekHeatmapCanvas(cells: List<ActivityCell>) {
     }
 }
 
+/**
+ * [cells] in lines of [lineLength], the first [offset] positions in. Lines are rows, or columns
+ * when [transposed]. [columnLabels] head the columns and [rowLabels] lead the rows; a null leaves
+ * that one blank. [today]'s cell is ringed.
+ */
 @Composable
-private fun MonthCalendarHeatmapCanvas(cells: List<ActivityCell>) {
+private fun HeatmapGrid(
+    cells: List<ActivityCell>,
+    lineLength: Int,
+    offset: Int,
+    columnLabels: List<String?>,
+    modifier: Modifier = Modifier,
+    transposed: Boolean = false,
+    rowLabels: List<String?> = emptyList(),
+    dayNumbers: Boolean = false,
+    today: LocalDate? = null,
+) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
     val dark = isDarkTheme()
     val outlineColor = MaterialTheme.colorScheme.outline
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayRingColor = MaterialTheme.colorScheme.primary
-    val dayNumberEmptyColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(
-        fontSize = 10.sp,
-        color = labelColor,
-        textAlign = TextAlign.Center,
-    )
-    val monthStyle = TextStyle(
-        fontSize = 12.sp,
-        color = labelColor,
-    )
-    val dayNumberStyle = TextStyle(
-        fontSize = 8.sp,
-        textAlign = TextAlign.Center,
-    )
-    val today = remember {
-        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    }
+    val labelStyle = TextStyle(fontSize = 10.sp, color = labelColor)
+    val dayNumberStyle = TextStyle(fontSize = 8.sp)
 
-    val firstDate = cells.first().date
-    val emptyStart = firstDate.dayOfWeek.ordinal
-    val totalPositions = emptyStart + cells.size
-    val numRows = (totalPositions + 6) / 7
+    val lines = (offset + cells.size + lineLength - 1) / lineLength
+    val rows = if (transposed) lineLength else lines
+    val columns = if (transposed) lines else lineLength
 
-    val gap = 4.dp
-    val monthLabelH = 20.dp
-    val headerH = 18.dp
-    val headerGap = 4.dp
-    val monthLabel = TimeFormatter.formatDate(firstDate, DateSkeleton.MONTH_YEAR)
+    val columnLabelLayouts = columnLabels.map { it?.let { textMeasurer.measure(it, labelStyle) } }
+    val rowLabelLayouts = rowLabels.map { it?.let { textMeasurer.measure(it, labelStyle) } }
+    val density = LocalDensity.current
+    val columnLabelHeight: Dp = columnLabelLayouts.maxOfOrNull { it?.size?.height ?: 0 }
+        ?.let { with(density) { it.toDp() } + LABEL_GAP } ?: 0.dp
+    val rowLabelWidth: Dp = rowLabelLayouts.maxOfOrNull { it?.size?.width ?: 0 }
+        ?.let { with(density) { it.toDp() } + LABEL_GAP } ?: 0.dp
 
-    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-        val cellSize: Dp = minOf(28.dp, (maxWidth - gap * 6) / 7)
-        val totalGridWidth: Dp = cellSize * 7 + gap * 6
-        val startXDp: Dp = (maxWidth - totalGridWidth) / 2
-        val canvasHeight: Dp = monthLabelH + headerH + headerGap +
-            (cellSize + gap) * numRows - gap
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val cellSize: Dp =
+            minOf(28.dp, (maxWidth - rowLabelWidth - CELL_GAP * (columns - 1)) / columns)
+        val gridWidth: Dp = rowLabelWidth + cellSize * columns + CELL_GAP * (columns - 1)
+        val startXDp: Dp = (maxWidth - gridWidth) / 2
+        val canvasHeight: Dp = columnLabelHeight + cellSize * rows + CELL_GAP * (rows - 1)
 
         Canvas(
             modifier = Modifier
@@ -237,84 +188,55 @@ private fun MonthCalendarHeatmapCanvas(cells: List<ActivityCell>) {
                 .height(canvasHeight),
         ) {
             val cellSizePx = cellSize.toPx()
-            val gapPx = gap.toPx()
-            val monthLabelHPx = monthLabelH.toPx()
-            val headerHPx = headerH.toPx()
-            val headerGapPx = headerGap.toPx()
-            val startX = startXDp.toPx()
-            val cornerRadius = CornerRadius(4.dp.toPx())
-            val strokeWidth = 1.5.dp.toPx()
+            val step = cellSizePx + CELL_GAP.toPx()
+            val gridX = startXDp.toPx() + rowLabelWidth.toPx()
+            val gridY = columnLabelHeight.toPx()
             val todayRingWidth = 2.dp.toPx()
 
-            val monthTextResult = textMeasurer.measure(text = monthLabel, style = monthStyle)
-            drawText(
-                textLayoutResult = monthTextResult,
-                topLeft = Offset(startX, (monthLabelHPx - monthTextResult.size.height) / 2f),
-            )
-
-            DAY_LABELS.forEachIndexed { index, label ->
-                val cx = startX + index * (cellSizePx + gapPx) + cellSizePx / 2f
-                val textResult = textMeasurer.measure(text = label, style = labelStyle)
-                drawText(
-                    textLayoutResult = textResult,
-                    topLeft = Offset(
-                        cx - textResult.size.width / 2f,
-                        monthLabelHPx + (headerHPx - textResult.size.height) / 2f,
-                    ),
-                )
+            columnLabelLayouts.forEachIndexed { col, layout ->
+                if (layout == null) return@forEachIndexed
+                // Centered over its column, or from its left edge when wider, as a month name is
+                val x = gridX + col * step + max(0f, (cellSizePx - layout.size.width) / 2f)
+                drawText(layout, topLeft = Offset(x, 0f))
+            }
+            rowLabelLayouts.forEachIndexed { row, layout ->
+                if (layout == null) return@forEachIndexed
+                val y = gridY + row * step + (cellSizePx - layout.size.height) / 2f
+                drawText(layout, topLeft = Offset(startXDp.toPx(), y))
             }
 
-            val cellsTop = monthLabelHPx + headerHPx + headerGapPx
-
-            // Data cells
             cells.forEachIndexed { index, cell ->
-                val position = index + emptyStart
-                val col = position % 7
-                val row = position / 7
-                val cellX = startX + col * (cellSizePx + gapPx)
-                val cellY = cellsTop + row * (cellSizePx + gapPx)
-                val color = cell.dominantTeaTypeColorHex?.let { hex ->
-                    val parsed = teaTypeColor(hex, dark)
-                    if (parsed == Color.Unspecified) activeDefaultColor else parsed
-                }
-                if (color != null) {
-                    drawRoundRect(
-                        color = color.copy(alpha = intensityAlpha(cell.sessionCount)),
-                        topLeft = Offset(cellX, cellY),
-                        size = Size(cellSizePx, cellSizePx),
-                        cornerRadius = cornerRadius,
+                val position = offset + index
+                val along = position % lineLength
+                val line = position / lineLength
+                val topLeft = Offset(
+                    gridX + (if (transposed) line else along) * step,
+                    gridY + (if (transposed) along else line) * step,
+                )
+                val color = cell.color(dark, activeDefaultColor)
+                drawCell(cell, color, topLeft, cellSizePx, outlineColor)
+
+                if (dayNumbers) {
+                    val dayResult = textMeasurer.measure(
+                        text = cell.date.day.toString(),
+                        style = dayNumberStyle.copy(
+                            color = if (color != null) contentColorOn(color) else labelColor,
+                        ),
                     )
-                } else {
-                    drawRoundRect(
-                        color = outlineColor,
-                        topLeft = Offset(cellX, cellY),
-                        size = Size(cellSizePx, cellSizePx),
-                        cornerRadius = cornerRadius,
-                        style = Stroke(width = strokeWidth),
+                    drawText(
+                        textLayoutResult = dayResult,
+                        topLeft = topLeft + Offset(
+                            (cellSizePx - dayResult.size.width) / 2f,
+                            (cellSizePx - dayResult.size.height) / 2f,
+                        ),
                     )
                 }
 
-                // Day number
-                val dayText = cell.date.day.toString()
-                val dayTextColor = if (color != null) contentColorOn(color) else dayNumberEmptyColor
-                val dayResult = textMeasurer.measure(
-                    text = dayText,
-                    style = dayNumberStyle.copy(color = dayTextColor),
-                )
-                drawText(
-                    textLayoutResult = dayResult,
-                    topLeft = Offset(
-                        cellX + (cellSizePx - dayResult.size.width) / 2f,
-                        cellY + (cellSizePx - dayResult.size.height) / 2f,
-                    ),
-                )
-
-                // Today indicator ring
                 if (cell.date == today) {
                     val inset = todayRingWidth / 2f
                     drawRoundRect(
                         color = todayRingColor,
-                        topLeft = Offset(cellX - inset, cellY - inset),
+                        topLeft = topLeft - Offset(inset, inset),
                         size = Size(cellSizePx + todayRingWidth, cellSizePx + todayRingWidth),
                         cornerRadius = CornerRadius(4.dp.toPx() + inset),
                         style = Stroke(width = todayRingWidth),
@@ -337,24 +259,19 @@ private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
         color = labelColor,
     )
 
-    val monthGroups = cells
-        .groupBy { it.date.month }
-        .entries
-        .sortedBy { it.key.ordinal }
-        .map { it.key to it.value }
+    // Cells arrive in date order, so grouping keeps months in order across a year boundary
+    val monthGroups = cells.groupBy { it.date.year to it.date.month }.values.toList()
 
     val columnGap = 8.dp
-    val cellGap = 3.dp
     val maxCellsPerMonth = 5
     val monthLabelH = 14.dp
-    val labelGap = 3.dp
     val rowGap = 10.dp
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val monthsPerRow = if (maxWidth >= 300.dp) 3 else 2
         val columnWidth: Dp = (maxWidth - columnGap * (monthsPerRow - 1)) / monthsPerRow
-        val cellSize: Dp = (columnWidth - cellGap * (maxCellsPerMonth - 1)) / maxCellsPerMonth
-        val blockHeight: Dp = monthLabelH + labelGap + cellSize
+        val cellSize: Dp = (columnWidth - CELL_GAP * (maxCellsPerMonth - 1)) / maxCellsPerMonth
+        val blockHeight: Dp = monthLabelH + CELL_GAP + cellSize
 
         val numMonthRows = (monthGroups.size + monthsPerRow - 1) / monthsPerRow
         val canvasHeight: Dp = blockHeight * numMonthRows + rowGap * (numMonthRows - 1)
@@ -365,17 +282,14 @@ private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
                 .height(canvasHeight),
         ) {
             val cellSizePx = cellSize.toPx()
-            val cellGapPx = cellGap.toPx()
+            val cellGapPx = CELL_GAP.toPx()
             val columnGapPx = columnGap.toPx()
             val columnWidthPx = columnWidth.toPx()
             val monthLabelHPx = monthLabelH.toPx()
-            val labelGapPx = labelGap.toPx()
             val blockHeightPx = blockHeight.toPx()
             val rowGapPx = rowGap.toPx()
-            val cornerRadius = CornerRadius(4.dp.toPx())
-            val strokeWidth = 1.5.dp.toPx()
 
-            monthGroups.forEachIndexed { monthIndex, (_, monthCells) ->
+            monthGroups.forEachIndexed { monthIndex, monthCells ->
                 val row = monthIndex / monthsPerRow
                 val col = monthIndex % monthsPerRow
                 val blockX = col * (columnWidthPx + columnGapPx)
@@ -389,33 +303,43 @@ private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
                     topLeft = Offset(blockX, blockY + (monthLabelHPx - textResult.size.height) / 2f),
                 )
 
-                val cellsY = blockY + monthLabelHPx + labelGapPx
+                val cellsY = blockY + monthLabelHPx + cellGapPx
                 monthCells.forEachIndexed { cellIndex, cell ->
                     val cellX = blockX + cellIndex * (cellSizePx + cellGapPx)
-                    val color = cell.dominantTeaTypeColorHex?.let { hex ->
-                        val parsed = teaTypeColor(hex, dark)
-                        if (parsed == Color.Unspecified) activeDefaultColor else parsed
-                    }
-                    if (color != null) {
-                        drawRoundRect(
-                            color = color.copy(alpha = intensityAlpha(cell.sessionCount)),
-                            topLeft = Offset(cellX, cellsY),
-                            size = Size(cellSizePx, cellSizePx),
-                            cornerRadius = cornerRadius,
-                        )
-                    } else {
-                        drawRoundRect(
-                            color = outlineColor,
-                            topLeft = Offset(cellX, cellsY),
-                            size = Size(cellSizePx, cellSizePx),
-                            cornerRadius = cornerRadius,
-                            style = Stroke(width = strokeWidth),
-                        )
-                    }
+                    drawCell(
+                        cell = cell,
+                        color = cell.color(dark, activeDefaultColor),
+                        topLeft = Offset(cellX, cellsY),
+                        size = cellSizePx,
+                        outlineColor = outlineColor,
+                    )
                 }
             }
         }
     }
+}
+
+/** The cell's tea type color, [fallback] for a type without one, null when nothing was brewed. */
+private fun ActivityCell.color(dark: Boolean, fallback: Color): Color? =
+    dominantTeaTypeColorHex?.let { hex ->
+        teaTypeColor(hex, dark).takeIf { it != Color.Unspecified } ?: fallback
+    }
+
+/** Filled with [color] by how much was brewed, or outlined when [color] is null. */
+private fun DrawScope.drawCell(
+    cell: ActivityCell,
+    color: Color?,
+    topLeft: Offset,
+    size: Float,
+    outlineColor: Color,
+) {
+    drawRoundRect(
+        color = color?.copy(alpha = intensityAlpha(cell.sessionCount)) ?: outlineColor,
+        topLeft = topLeft,
+        size = Size(size, size),
+        cornerRadius = CornerRadius(4.dp.toPx()),
+        style = if (color == null) Stroke(width = 1.5.dp.toPx()) else Fill,
+    )
 }
 
 @Preview(showBackground = true)
@@ -438,20 +362,39 @@ private fun BrewingActivityHeatmapWeekPreview() {
     }
 }
 
+private fun previewCells(first: LocalDate, count: Int, unit: DateTimeUnit.DateBased) =
+    (0 until count).map { index ->
+        ActivityCell(
+            date = first.plus(index, unit),
+            dominantTeaTypeColorHex = when {
+                index % 7 == 0 -> null
+                index % 3 == 0 -> "#4CAF50"
+                index % 5 == 0 -> "#795548"
+                else -> "#FF9800"
+            },
+            sessionCount = if (index % 7 == 0) 0 else index % 4 + 1,
+        )
+    }
+
 @Preview(showBackground = true)
 @Composable
 private fun BrewingActivityHeatmapThisMonthPreview() {
     LeafLogTheme {
-        val cells = (1..28).map { day ->
-            ActivityCell(
-                date = LocalDate(2026, 2, day),
-                dominantTeaTypeColorHex = if (day % 3 == 0) "#4CAF50" else if (day % 5 == 0) "#795548" else null,
-                sessionCount = if (day % 3 == 0) (day % 4) + 1 else if (day % 5 == 0) 1 else 0,
-            )
-        }
         BrewingActivityHeatmap(
-            cells = cells,
+            cells = previewCells(LocalDate(2026, 2, 1), 28, DateTimeUnit.DAY),
             period = AnalyticsPeriod.THIS_MONTH,
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BrewingActivityHeatmapWinterPreview() {
+    LeafLogTheme {
+        BrewingActivityHeatmap(
+            cells = previewCells(LocalDate(2025, 12, 1), 90, DateTimeUnit.DAY),
+            period = AnalyticsPeriod.THIS_SEASON,
             modifier = Modifier.padding(16.dp),
         )
     }
@@ -461,29 +404,22 @@ private fun BrewingActivityHeatmapThisMonthPreview() {
 @Composable
 private fun BrewingActivityHeatmapYearPreview() {
     LeafLogTheme {
-        val startDate = LocalDate(2026, 1, 5)  // First Monday of Jan 2026
-        val cells = (0 until 52).map { weekIndex ->
-            val weekStart = startDate.plus(weekIndex * 7, DateTimeUnit.DAY)
-            val count = when {
-                weekIndex % 7 == 0 -> 0
-                weekIndex % 3 == 0 -> 3
-                weekIndex % 5 == 0 -> 1
-                else -> 2
-            }
-            ActivityCell(
-                date = weekStart,
-                dominantTeaTypeColorHex = when {
-                    weekIndex % 7 == 0 -> null
-                    weekIndex % 3 == 0 -> "#4CAF50"
-                    weekIndex % 5 == 0 -> "#795548"
-                    else -> "#FF9800"
-                },
-                sessionCount = count,
-            )
-        }
         BrewingActivityHeatmap(
-            cells = cells,
+            cells = listOf(ActivityCell(LocalDate(2026, 1, 1), "#4CAF50", sessionCount = 2)) +
+                previewCells(LocalDate(2026, 1, 5), 52, DateTimeUnit.WEEK),
             period = AnalyticsPeriod.THIS_YEAR,
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BrewingActivityHeatmapAllTimePreview() {
+    LeafLogTheme {
+        BrewingActivityHeatmap(
+            cells = previewCells(LocalDate(2024, 5, 1), 30, DateTimeUnit.MONTH),
+            period = AnalyticsPeriod.ALL_TIME,
             modifier = Modifier.padding(16.dp),
         )
     }

@@ -36,22 +36,6 @@ data class PeriodComparison(
     val percentageChangeTeaUsed: Float?,
 )
 
-data class TrendPoint(
-    val date: LocalDate,
-    val sessionCount: Int,
-)
-
-enum class TrendGranularity {
-    DAILY,
-    WEEKLY,
-    MONTHLY,
-}
-
-data class BrewingTrends(
-    val points: List<TrendPoint>,
-    val granularity: TrendGranularity,
-)
-
 data class TeaTypeDistribution(
     val teaType: TeaType,
     val sessionCount: Int,
@@ -76,6 +60,27 @@ enum class AnalyticsPeriod {
         fun named(name: String?): AnalyticsPeriod = entries.find { it.name == name } ?: THIS_WEEK
     }
 }
+
+/** What one heatmap cell covers. */
+enum class ActivityBucket(val unit: DateTimeUnit.DateBased) {
+    DAY(DateTimeUnit.DAY),
+    WEEK(DateTimeUnit.WEEK),
+    MONTH(DateTimeUnit.MONTH),
+    ;
+
+    fun startOf(date: LocalDate): LocalDate = when (this) {
+        DAY -> date
+        WEEK -> date.startOfWeek()
+        MONTH -> LocalDate(date.year, date.month, 1)
+    }
+}
+
+val AnalyticsPeriod.activityBucket: ActivityBucket
+    get() = when (this) {
+        AnalyticsPeriod.THIS_WEEK, AnalyticsPeriod.THIS_MONTH, AnalyticsPeriod.THIS_SEASON -> ActivityBucket.DAY
+        AnalyticsPeriod.THIS_YEAR -> ActivityBucket.WEEK
+        AnalyticsPeriod.ALL_TIME -> ActivityBucket.MONTH
+    }
 
 /** The Monday on or before this date. Weeks start on Monday everywhere in the app. */
 fun LocalDate.startOfWeek(): LocalDate = minus(dayOfWeek.ordinal, DateTimeUnit.DAY) // ordinal: MONDAY = 0

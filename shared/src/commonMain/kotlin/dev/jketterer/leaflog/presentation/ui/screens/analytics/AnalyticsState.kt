@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.analytics
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
-import dev.jketterer.leaflog.domain.models.Insight
 import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.SteepInsights
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
@@ -22,7 +21,6 @@ data class AnalyticsState(
     val customDateRange: Pair<LocalDate, LocalDate>? = null,
     val analytics: AnalyticsData? = null,
     val comparison: PeriodComparison? = null,
-    val insights: List<Insight> = emptyList(),
     val formattedBrewingTime: String = "",
     val periodLabel: String = "This Week",
     val isLoading: Boolean = true,

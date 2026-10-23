@@ -8,14 +8,12 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import dev.jketterer.leaflog.domain.usecases.session.GenerateInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsDateRangeUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTimeInsightsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
@@ -42,7 +40,6 @@ class AnalyticsViewModel(
     private val teaSessionRepository: TeaSessionRepository,
     private val preferencesRepository: PreferencesRepository,
     private val getAnalyticsUseCase: GetAnalyticsUseCase,
-    private val generateInsightsUseCase: GenerateInsightsUseCase,
     private val getBrewingTrendsUseCase: GetBrewingTrendsUseCase,
     private val getTeaTypeDistributionUseCase: GetTeaTypeDistributionUseCase,
     private val getTopTeasUseCase: GetTopTeasUseCase,
@@ -50,7 +47,6 @@ class AnalyticsViewModel(
     private val getSteepInsightsUseCase: GetSteepInsightsUseCase,
     private val getTopRatedTeasUseCase: GetTopRatedTeasUseCase,
     private val getVesselDistributionUseCase: GetVesselDistributionUseCase,
-    private val getTimeInsightsUseCase: GetTimeInsightsUseCase,
     private val getAnalyticsDateRangeUseCase: GetAnalyticsDateRangeUseCase,
 ) : ViewModel() {
 
@@ -224,23 +220,10 @@ class AnalyticsViewModel(
                         .getOrElse { emptyList() }
                 val topRatedTeas = getTopRatedTeasUseCase(start, end)
                 val vesselDistribution = getVesselDistributionUseCase(start, end)
-                val timeInsights = getTimeInsightsUseCase(start, end)
-
-                val insights = generateInsightsUseCase(
-                    current = currentData,
-                    topTeas = topTeas,
-                    steepInsights = steepInsights,
-                    teaTypeDistribution = teaTypeDistribution,
-                    topRatedTeas = topRatedTeas,
-                    vesselDistribution = vesselDistribution,
-                    timeInsights = timeInsights,
-                )
-
                 _state.update {
                     it.copy(
                         analytics = currentData,
                         comparison = comparison,
-                        insights = insights,
                         formattedBrewingTime = formattedTime,
                         isLoading = false,
                         hasMinimumData = hasMinimumData,

@@ -935,8 +935,8 @@ southern-region device and the pager across rotation and 2× font.
 **Commits.** Each compiles, passes tests and leaves the app working. 2 → 3 → 5 → 7 → 8 → 9 → 10;
 4 → 5; 3 → 6; 3 and 4 → 12 → 13–20; 7 → 13.
 
-1. [ ] `docs: record the Bet 4 design`
-2. [ ] `refactor: drop analytics insights`
+1. [x] `docs: record the Bet 4 design`
+2. [x] `refactor: drop analytics insights`
 3. [ ] `refactor: analytics from pure aggregators`: `DateWindow`, the aggregators, the ViewModel on
    Flows; the use cases go. No visible change beyond staying live. Tests: every aggregator, steeps
    against sessions, new teas reaching before the window.

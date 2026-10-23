@@ -1,7 +1,6 @@
 package dev.jketterer.leaflog.domain.models
 
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlin.time.Duration
@@ -30,30 +29,6 @@ data class PeriodComparison(
     val percentageChangeAverageSteeps: Float?,
     val percentageChangeNewTeas: Float?,
     val percentageChangeTeaUsed: Float?,
-)
-
-data class Insight(
-    val type: InsightType,
-    val text: String,
-)
-
-enum class InsightType {
-    MOST_BREWED,
-    AVERAGE_RATING,
-    FAVORITE_TYPE,
-    RE_STEEP,
-    TOP_RATED,
-    PREFERRED_VESSEL,
-    TIME_OF_DAY,
-    PEAK_DAY,
-}
-
-enum class TimeOfDay { MORNING, AFTERNOON, EVENING, NIGHT }
-
-data class TimeInsights(
-    val dominantTimeOfDay: TimeOfDay?,
-    val peakDayOfWeek: DayOfWeek?,
-    val sessionCount: Int,
 )
 
 data class TrendPoint(

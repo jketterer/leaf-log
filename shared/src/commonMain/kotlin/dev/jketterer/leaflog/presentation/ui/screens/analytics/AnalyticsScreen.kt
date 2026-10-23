@@ -43,8 +43,6 @@ import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.DateSkeleton
-import dev.jketterer.leaflog.domain.models.Insight
-import dev.jketterer.leaflog.domain.models.InsightType
 import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.SteepInsights
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -57,7 +55,6 @@ import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingActivityHeatmap
 import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingTrendsChart
-import dev.jketterer.leaflog.presentation.ui.components.analytics.InsightItem
 import dev.jketterer.leaflog.presentation.ui.components.analytics.PeriodSelector
 import dev.jketterer.leaflog.presentation.ui.components.analytics.SummaryCard
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TeaTypeDistributionChart
@@ -337,22 +334,6 @@ private fun AnalyticsDataContent(
             }
         }
 
-        // Insights section
-        if (state.insights.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = "Insights",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            state.insights.forEach { insight ->
-                InsightItem(
-                    type = insight.type,
-                    text = insight.text,
-                )
-            }
-        }
-
         // Brewing Trends Chart
         Spacer(modifier = Modifier.height(24.dp))
         BrewingTrendsChart(
@@ -434,28 +415,6 @@ private fun AnalyticsDataContentPreview() {
                         averageSteeps = 3.2f,
                     ),
                     newTeaDiscoveries = 4,
-                ),
-                insights = listOf(
-                    Insight(
-                        InsightType.MOST_BREWED,
-                        "Dragon Well is your most brewed tea with 12 sessions",
-                    ),
-                    Insight(
-                        InsightType.FAVORITE_TYPE,
-                        "Green tea makes up 38% of your sessions",
-                    ),
-                    Insight(
-                        InsightType.RE_STEEP,
-                        "Dragon Well is your most re-steeped tea, averaging 3.2 steeps per session",
-                    ),
-                    Insight(
-                        InsightType.TOP_RATED,
-                        "Tie Guan Yin is your highest rated tea at 4.8",
-                    ),
-                    Insight(
-                        InsightType.PREFERRED_VESSEL,
-                        "Gaiwan is your go-to vessel, used in 60% of sessions",
-                    ),
                 ),
                 formattedBrewingTime = "2h 30m",
                 periodLabel = "This Month",

@@ -162,8 +162,8 @@
     <string name="home_empty_action">Log Your First Session</string>
     <string name="analytics_empty_title">Not enough data yet</string>
     <plurals name="analytics_empty_body">
-        <item quantity="one">%1$d of %2$d session completed. Log more to unlock analytics and insights about your brewing habits.</item>
-        <item quantity="other">%1$d of %2$d sessions completed. Log more to unlock analytics and insights about your brewing habits.</item>
+        <item quantity="one">%1$d of %2$d session completed. Log more to unlock analytics about your brewing habits.</item>
+        <item quantity="other">%1$d of %2$d sessions completed. Log more to unlock analytics about your brewing habits.</item>
     </plurals>
     <string name="log_tea">Log Tea</string>
     <string name="log_a_brew">Log a brew</string>

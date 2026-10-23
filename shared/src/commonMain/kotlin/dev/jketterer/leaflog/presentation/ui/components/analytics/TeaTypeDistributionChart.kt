@@ -59,84 +59,69 @@ fun TeaTypeDistributionChart(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (distribution.isEmpty()) {
+            val totalSessions = remember(distribution) {
+                distribution.sumOf { it.sessionCount }
+            }
+
+            val dark = isDarkTheme()
+            val colors = remember(distribution, dark) {
+                distribution.mapIndexed { index, dist ->
+                    getChartColor(dist.teaType.colorHex, index, dark)
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Donut chart
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp),
                     contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(160.dp),
                 ) {
+                    DonutCanvas(
+                        distribution = distribution,
+                        colors = colors,
+                        onTapSegment = onTapSegment,
+                    )
                     Text(
-                        text = "No data available",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = totalSessions.toString(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
-            } else {
-                val totalSessions = remember(distribution) {
-                    distribution.sumOf { it.sessionCount }
-                }
 
-                val dark = isDarkTheme()
-                val colors = remember(distribution, dark) {
-                    distribution.mapIndexed { index, dist ->
-                        getChartColor(dist.teaType.colorHex, index, dark)
-                    }
-                }
+                Spacer(modifier = Modifier.width(16.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+                // Legend
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f),
                 ) {
-                    // Donut chart
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(160.dp),
-                    ) {
-                        DonutCanvas(
-                            distribution = distribution,
-                            colors = colors,
-                            onTapSegment = onTapSegment,
-                        )
-                        Text(
-                            text = totalSessions.toString(),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // Legend
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        distribution.forEachIndexed { index, dist ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(10.dp)
-                                        .clip(CircleShape)
-                                        .background(colors[index]),
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = dist.teaType.name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = dist.sessionCount.toString(),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Medium,
-                                )
-                            }
+                    distribution.forEachIndexed { index, dist ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(colors[index]),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = dist.teaType.name,
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = dist.sessionCount.toString(),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                            )
                         }
                     }
                 }
@@ -248,18 +233,6 @@ private fun TeaTypeDistributionChartPreview() {
                     percentage = 7.5f,
                 ),
             ),
-            onTapSegment = {},
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun TeaTypeDistributionChartEmptyPreview() {
-    LeafLogTheme {
-        TeaTypeDistributionChart(
-            distribution = emptyList(),
             onTapSegment = {},
             modifier = Modifier.padding(16.dp),
         )

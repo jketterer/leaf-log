@@ -945,7 +945,7 @@ southern-region device and the pager across rotation and 2× font.
 5. [x] `feat: analytics by calendar period`: This season, the trimmed menu, the fallback, labels in
    `strings.xml`. Tests: week, month, season and year edges, winter across the new year, the
    elapsed-part comparison, importing a backup holding `LAST_30_DAYS`.
-6. [ ] `feat: analytics gated per surface`
+6. [x] `feat: analytics gated per surface`
 7. [ ] `feat: one activity heatmap`: the trend chart goes; All time by month; months ordered by
    year. Test: cells across a year boundary.
 8. [ ] `fix: analytics chart audit findings`: outlines, the hit-test, legend targets, the neutral

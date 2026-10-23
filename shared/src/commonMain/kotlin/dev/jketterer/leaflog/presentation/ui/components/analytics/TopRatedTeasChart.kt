@@ -63,30 +63,15 @@ fun TopRatedTeasChart(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (topRatedTeas.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "No data available",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                topRatedTeas.forEachIndexed { index, topRatedTea ->
+                    TopRatedTeaRow(
+                        topRatedTea = topRatedTea,
+                        rank = index,
+                        onClick = { onTapTea(topRatedTea.tea.id) },
                     )
-                }
-            } else {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    topRatedTeas.forEachIndexed { index, topRatedTea ->
-                        TopRatedTeaRow(
-                            topRatedTea = topRatedTea,
-                            rank = index,
-                            onClick = { onTapTea(topRatedTea.tea.id) },
-                        )
-                    }
                 }
             }
         }
@@ -242,18 +227,6 @@ private fun TopRatedTeasChartPreview() {
                     ratedSessionCount = 2,
                 ),
             ),
-            onTapTea = {},
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun TopRatedTeasChartEmptyPreview() {
-    LeafLogTheme {
-        TopRatedTeasChart(
-            topRatedTeas = emptyList(),
             onTapTea = {},
             modifier = Modifier.padding(16.dp),
         )

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -65,18 +64,18 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import kotlinx.datetime.LocalDate
-import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.analytics_empty_body
-import leaf_log.shared.generated.resources.analytics_empty_title
-import leaf_log.shared.generated.resources.log_tea
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.viewmodel.koinViewModel
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import kotlinx.datetime.LocalDate
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.analytics_empty_body
+import leaf_log.shared.generated.resources.analytics_empty_title
+import leaf_log.shared.generated.resources.analytics_period_empty
+import leaf_log.shared.generated.resources.log_tea
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun AnalyticsScreen(
@@ -133,16 +132,11 @@ private fun AnalyticsContent(
                     }
                 }
 
-                !state.hasMinimumData -> {
+                !state.hasCompletedSession -> {
                     EmptyState(
                         message = stringResource(Res.string.analytics_empty_title),
                         icon = FeatherIcons.BarChart2,
-                        body = pluralStringResource(
-                            Res.plurals.analytics_empty_body,
-                            MINIMUM_SESSIONS,
-                            state.totalCompletedSessions,
-                            MINIMUM_SESSIONS,
-                        ),
+                        body = stringResource(Res.string.analytics_empty_body),
                         actionText = stringResource(Res.string.log_tea),
                         onActionClick = { onIntent(AnalyticsIntent.NavigateToLogTea) },
                     )
@@ -168,24 +162,42 @@ private fun AnalyticsDataContent(
     state: AnalyticsState,
     onIntent: (AnalyticsIntent) -> Unit,
 ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        PeriodSelector(
+            selected = state.selectedPeriod,
+            onPeriodSelected = { period -> onIntent(AnalyticsIntent.SelectPeriod(period)) },
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        val analytics = state.analytics
+        if (analytics == null || analytics.totalSessions == 0) {
+            EmptyState(
+                message = stringResource(Res.string.analytics_period_empty),
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            AnalyticsCards(
+                state = state,
+                analytics = analytics,
+                onIntent = onIntent,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnalyticsCards(
+    state: AnalyticsState,
+    analytics: AnalyticsData,
+    onIntent: (AnalyticsIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
     ) {
-        // Period selector (right-aligned)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            PeriodSelector(
-                selected = state.selectedPeriod,
-                onPeriodSelected = { period -> onIntent(AnalyticsIntent.SelectPeriod(period)) },
-            )
-        }
-
         // Brewing activity heatmap (hidden for ALL_TIME)
         if (state.selectedPeriod != AnalyticsPeriod.ALL_TIME && state.activityCells.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
@@ -198,7 +210,6 @@ private fun AnalyticsDataContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         // Summary cards - 2x2 grid
-        val analytics = state.analytics
         var volumeSwitched by rememberSaveable { mutableStateOf(false) }
         var weightSwitched by rememberSaveable { mutableStateOf(false) }
         val volume = LocalUnits.current.volume.let { if (volumeSwitched) it.toggle() else it }
@@ -217,53 +228,51 @@ private fun AnalyticsDataContent(
                 onClick = { weightSwitched = !weightSwitched },
             )
         }
-        if (analytics != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                SummaryCard(
-                    value = analytics.totalSessions.toString(),
-                    label = "Sessions",
-                    icon = FeatherIcons.Coffee,
-                    percentageChange = state.comparison?.percentageChangeSessions,
-                    modifier = Modifier.weight(1f),
-                )
-                SummaryCard(
-                    value = formatDuration(analytics.totalBrewingTime),
-                    label = "Brew Time",
-                    icon = FeatherIcons.Clock,
-                    percentageChange = state.comparison?.percentageChangeBrewTime,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                SummaryCard(
-                    value = formatVolume(analytics.totalWaterMl, volume),
-                    label = "Water Used",
-                    icon = FeatherIcons.Droplet,
-                    percentageChange = state.comparison?.percentageChangeWater,
-                    onClick = { volumeSwitched = !volumeSwitched },
-                    action = volumeChip,
-                    modifier = Modifier.weight(1f),
-                )
-                SummaryCard(
-                    value = analytics.uniqueTeasCount.toString(),
-                    label = "Unique Teas",
-                    icon = FeatherIcons.Star,
-                    percentageChange = state.comparison?.percentageChangeUniqueTeas,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            SummaryCard(
+                value = analytics.totalSessions.toString(),
+                label = "Sessions",
+                icon = FeatherIcons.Coffee,
+                percentageChange = state.comparison?.percentageChangeSessions,
+                modifier = Modifier.weight(1f),
+            )
+            SummaryCard(
+                value = formatDuration(analytics.totalBrewingTime),
+                label = "Brew Time",
+                icon = FeatherIcons.Clock,
+                percentageChange = state.comparison?.percentageChangeBrewTime,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            SummaryCard(
+                value = formatVolume(analytics.totalWaterMl, volume),
+                label = "Water Used",
+                icon = FeatherIcons.Droplet,
+                percentageChange = state.comparison?.percentageChangeWater,
+                onClick = { volumeSwitched = !volumeSwitched },
+                action = volumeChip,
+                modifier = Modifier.weight(1f),
+            )
+            SummaryCard(
+                value = analytics.uniqueTeasCount.toString(),
+                label = "Unique Teas",
+                icon = FeatherIcons.Star,
+                percentageChange = state.comparison?.percentageChangeUniqueTeas,
+                modifier = Modifier.weight(1f),
+            )
         }
 
         // Leaf usage cards. Hidden entirely when nothing in the period recorded a weight,
         // since "0.0 g" would read as a real measurement rather than an absent one.
-        if (analytics != null && analytics.weighedSessionsCount > 0) {
+        if (analytics.weighedSessionsCount > 0) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
@@ -295,65 +304,69 @@ private fun AnalyticsDataContent(
         }
 
         // Steep cards
-        if (analytics != null) {
-            Spacer(modifier = Modifier.height(8.dp))
-            val averageSteeps = ((analytics.averageSteeps ?: 0.0) * 10).roundToInt() / 10.0
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                SummaryCard(
-                    value = averageSteeps.toString(),
-                    label = "Average Steeps",
-                    icon = FeatherIcons.Layers,
-                    percentageChange = state.comparison?.percentageChangeAverageSteeps,
-                    modifier = Modifier.weight(1f),
-                )
-                SummaryCard(
-                    value = analytics.newTeasCount.toString(),
-                    label = "New Teas",
-                    icon = FeatherIcons.Search,
-                    percentageChange = state.comparison?.percentageChangeNewTeas,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        Spacer(modifier = Modifier.height(8.dp))
+        val averageSteeps = ((analytics.averageSteeps ?: 0.0) * 10).roundToInt() / 10.0
+        Row(
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            SummaryCard(
+                value = averageSteeps.toString(),
+                label = "Average Steeps",
+                icon = FeatherIcons.Layers,
+                percentageChange = state.comparison?.percentageChangeAverageSteeps,
+                modifier = Modifier.weight(1f),
+            )
+            SummaryCard(
+                value = analytics.newTeasCount.toString(),
+                label = "New Teas",
+                icon = FeatherIcons.Search,
+                percentageChange = state.comparison?.percentageChangeNewTeas,
+                modifier = Modifier.weight(1f),
+            )
         }
 
-        // Brewing Trends Chart
-        Spacer(modifier = Modifier.height(24.dp))
-        BrewingTrendsChart(
-            trendPoints = state.trendPoints,
-            granularity = state.trendGranularity,
-            onTapPoint = { date -> onIntent(AnalyticsIntent.TapTrendPoint(date)) },
-        )
+        // A line needs two points
+        if (state.trendPoints.size >= 2) {
+            Spacer(modifier = Modifier.height(24.dp))
+            BrewingTrendsChart(
+                trendPoints = state.trendPoints,
+                granularity = state.trendGranularity,
+                onTapPoint = { date -> onIntent(AnalyticsIntent.TapTrendPoint(date)) },
+            )
+        }
 
-        // Tea Type Distribution Chart
-        Spacer(modifier = Modifier.height(12.dp))
-        TeaTypeDistributionChart(
-            distribution = state.teaTypeDistribution,
-            onTapSegment = { teaTypeId -> onIntent(AnalyticsIntent.TapTeaType(teaTypeId)) },
-        )
+        if (state.teaTypeDistribution.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TeaTypeDistributionChart(
+                distribution = state.teaTypeDistribution,
+                onTapSegment = { teaTypeId -> onIntent(AnalyticsIntent.TapTeaType(teaTypeId)) },
+            )
+        }
 
-        // Vessel Distribution Chart
-        Spacer(modifier = Modifier.height(12.dp))
-        VesselDistributionChart(
-            distribution = state.vesselDistribution,
-            onTapSegment = { vesselId -> onIntent(AnalyticsIntent.TapVessel(vesselId)) },
-        )
+        if (state.vesselDistribution.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            VesselDistributionChart(
+                distribution = state.vesselDistribution,
+                onTapSegment = { vesselId -> onIntent(AnalyticsIntent.TapVessel(vesselId)) },
+            )
+        }
 
-        // Most Brewed Teas Chart
-        Spacer(modifier = Modifier.height(12.dp))
-        TopTeasChart(
-            topTeas = state.topTeas,
-            onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopTea(teaId)) },
-        )
+        if (state.topTeas.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TopTeasChart(
+                topTeas = state.topTeas,
+                onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopTea(teaId)) },
+            )
+        }
 
-        // Highest Rated Teas Chart
-        Spacer(modifier = Modifier.height(12.dp))
-        TopRatedTeasChart(
-            topRatedTeas = state.topRatedTeas,
-            onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopRatedTea(teaId)) },
-        )
+        if (state.topRatedTeas.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(12.dp))
+            TopRatedTeasChart(
+                topRatedTeas = state.topRatedTeas,
+                onTapTea = { teaId -> onIntent(AnalyticsIntent.TapTopRatedTea(teaId)) },
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
     }
 }
@@ -389,7 +402,7 @@ private fun AnalyticsDataContentPreview() {
                     percentageChangeTeaUsed = 12.0f,
                 ),
                 isLoading = false,
-                hasMinimumData = true,
+                hasCompletedSession = true,
                 trendPoints = listOf(
                     TrendPoint(LocalDate(2024, 1, 1), 2),
                     TrendPoint(LocalDate(2024, 1, 2), 4),
@@ -451,6 +464,20 @@ private fun AnalyticsDataContentPreview() {
                         sessionCount = 6,
                     ),
                 ),
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AnalyticsDataContentEmptyPeriodPreview() {
+    LeafLogTheme {
+        AnalyticsDataContent(
+            state = AnalyticsState(
+                isLoading = false,
+                hasCompletedSession = true,
             ),
             onIntent = {},
         )

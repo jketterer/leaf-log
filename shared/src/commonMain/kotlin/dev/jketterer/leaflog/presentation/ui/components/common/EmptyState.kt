@@ -28,7 +28,6 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.analytics_empty_body
 import leaf_log.shared.generated.resources.analytics_empty_title
 import leaf_log.shared.generated.resources.log_tea
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -100,7 +99,7 @@ private fun EmptyStateFullPreview() {
         EmptyState(
             message = stringResource(Res.string.analytics_empty_title),
             icon = FeatherIcons.BarChart2,
-            body = pluralStringResource(Res.plurals.analytics_empty_body, 10, 3, 10),
+            body = stringResource(Res.string.analytics_empty_body),
             actionText = stringResource(Res.string.log_tea),
             onActionClick = {},
         )

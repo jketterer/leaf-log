@@ -126,7 +126,6 @@ class AnalyticsViewModel(
             val (window, previousWindow) = period.window(Clock.System.now(), TimeZone.currentSystemDefault())
             val analytics = sessions.summary(window)
             val trends = sessions.trends(window)
-            val totalCompleted = sessions.count { it.session.status == SessionStatus.COMPLETED }
             _state.update {
                 it.copy(
                     analytics = analytics,
@@ -134,8 +133,7 @@ class AnalyticsViewModel(
                         analytics.comparedTo(sessions.summary(previous))
                     },
                     isLoading = false,
-                    hasMinimumData = totalCompleted >= MINIMUM_SESSIONS,
-                    totalCompletedSessions = totalCompleted,
+                    hasCompletedSession = sessions.any { s -> s.session.status == SessionStatus.COMPLETED },
                     trendPoints = trends.points,
                     trendGranularity = trends.granularity,
                     teaTypeDistribution = sessions.teaTypeDistribution(window, teas, teaTypes),

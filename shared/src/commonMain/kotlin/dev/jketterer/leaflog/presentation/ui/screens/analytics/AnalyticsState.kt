@@ -11,16 +11,13 @@ import dev.jketterer.leaflog.domain.models.TrendGranularity
 import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.domain.models.VesselDistribution
 
-/** Completed sessions needed before Analytics has enough to show. */
-internal const val MINIMUM_SESSIONS = 10
-
 data class AnalyticsState(
     val selectedPeriod: AnalyticsPeriod = AnalyticsPeriod.THIS_WEEK,
     val analytics: AnalyticsData? = null,
     val comparison: PeriodComparison? = null,
     val isLoading: Boolean = true,
-    val hasMinimumData: Boolean = false,
-    val totalCompletedSessions: Int = 0,
+    /** Whether any session was ever completed, whatever the period. */
+    val hasCompletedSession: Boolean = false,
     val trendPoints: List<TrendPoint> = emptyList(),
     val trendGranularity: TrendGranularity = TrendGranularity.DAILY,
     val teaTypeDistribution: List<TeaTypeDistribution> = emptyList(),

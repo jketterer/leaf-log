@@ -55,35 +55,20 @@ fun TopTeasChart(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (topTeas.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "No data available",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            } else {
-                val maxCount = remember(topTeas) {
-                    topTeas.maxOf { it.sessionCount }.coerceAtLeast(1)
-                }
+            val maxCount = remember(topTeas) {
+                topTeas.maxOf { it.sessionCount }.coerceAtLeast(1)
+            }
 
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    topTeas.forEachIndexed { index, topTea ->
-                        TopTeaRow(
-                            topTea = topTea,
-                            maxCount = maxCount,
-                            rank = index,
-                            onClick = { onTapTea(topTea.tea.id) },
-                        )
-                    }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                topTeas.forEachIndexed { index, topTea ->
+                    TopTeaRow(
+                        topTea = topTea,
+                        maxCount = maxCount,
+                        rank = index,
+                        onClick = { onTapTea(topTea.tea.id) },
+                    )
                 }
             }
         }
@@ -178,18 +163,6 @@ private fun TopTeasChartPreview() {
                     sessionCount = 2,
                 ),
             ),
-            onTapTea = {},
-            modifier = Modifier.padding(16.dp),
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun TopTeasChartEmptyPreview() {
-    LeafLogTheme {
-        TopTeasChart(
-            topTeas = emptyList(),
             onTapTea = {},
             modifier = Modifier.padding(16.dp),
         )

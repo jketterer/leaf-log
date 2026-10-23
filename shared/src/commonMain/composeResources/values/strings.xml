@@ -170,11 +170,9 @@
     <string name="analytics_period_this_year">This year</string>
     <string name="analytics_period_all_time">All time</string>
     <string name="analytics_select_period">Select period</string>
-    <string name="analytics_empty_title">Not enough data yet</string>
-    <plurals name="analytics_empty_body">
-        <item quantity="one">%1$d of %2$d session completed. Log more to unlock analytics about your brewing habits.</item>
-        <item quantity="other">%1$d of %2$d sessions completed. Log more to unlock analytics about your brewing habits.</item>
-    </plurals>
+    <string name="analytics_empty_title">No stats yet</string>
+    <string name="analytics_empty_body">Complete a brewing session to see your habits here.</string>
+    <string name="analytics_period_empty">Nothing brewed in this period</string>
     <string name="log_tea">Log Tea</string>
     <string name="log_a_brew">Log a brew</string>
     <string name="history_today">Today</string>

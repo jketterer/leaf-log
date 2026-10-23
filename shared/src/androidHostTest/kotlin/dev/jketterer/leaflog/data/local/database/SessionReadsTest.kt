@@ -93,17 +93,6 @@ class SessionReadsTest {
     }
 
     @Test
-    fun `a range holds the sessions that started in it along with all their steeps`() = runTest {
-        insertSession("before", startMinute = 0, steeps = 3, steepGap = 10)
-        insertSession("inside", startMinute = 15, steeps = 3, steepGap = 10)
-
-        val sessions = repository.getSessionsStartedBetween(at(10), at(20))
-
-        assertEquals(listOf("inside"), sessions.ids())
-        assertEquals(3, sessions.single().steeps.size)
-    }
-
-    @Test
     fun `sessions come newest first by start time`() = runTest {
         insertSession("early-long", startMinute = 0, steeps = 3, steepGap = 30)
         insertSession("later", startMinute = 10)

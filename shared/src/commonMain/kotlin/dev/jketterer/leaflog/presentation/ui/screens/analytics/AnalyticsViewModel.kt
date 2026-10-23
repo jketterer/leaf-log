@@ -3,32 +3,38 @@ package dev.jketterer.leaflog.presentation.ui.screens.analytics
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
-import dev.jketterer.leaflog.domain.models.PeriodComparison
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TrendGranularity
+import dev.jketterer.leaflog.domain.models.activity
+import dev.jketterer.leaflog.domain.models.comparedTo
+import dev.jketterer.leaflog.domain.models.summary
+import dev.jketterer.leaflog.domain.models.teaTypeDistribution
+import dev.jketterer.leaflog.domain.models.topRatedTeas
+import dev.jketterer.leaflog.domain.models.topTeas
+import dev.jketterer.leaflog.domain.models.trends
+import dev.jketterer.leaflog.domain.models.vesselDistribution
+import dev.jketterer.leaflog.domain.models.window
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
-import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsDateRangeUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
-import dev.jketterer.leaflog.presentation.ui.components.common.formatDuration
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
@@ -38,16 +44,10 @@ import kotlin.time.Clock
 
 class AnalyticsViewModel(
     private val teaSessionRepository: TeaSessionRepository,
+    private val teaRepository: TeaRepository,
+    private val teaTypeRepository: TeaTypeRepository,
+    private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
-    private val getAnalyticsUseCase: GetAnalyticsUseCase,
-    private val getBrewingTrendsUseCase: GetBrewingTrendsUseCase,
-    private val getTeaTypeDistributionUseCase: GetTeaTypeDistributionUseCase,
-    private val getTopTeasUseCase: GetTopTeasUseCase,
-    private val getBrewingActivityUseCase: GetBrewingActivityUseCase,
-    private val getSteepInsightsUseCase: GetSteepInsightsUseCase,
-    private val getTopRatedTeasUseCase: GetTopRatedTeasUseCase,
-    private val getVesselDistributionUseCase: GetVesselDistributionUseCase,
-    private val getAnalyticsDateRangeUseCase: GetAnalyticsDateRangeUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnalyticsState())
@@ -58,28 +58,19 @@ class AnalyticsViewModel(
 
     val messages = UiMessages<Nothing>()
 
-    private var loadJob: Job? = null
-
     init {
         viewModelScope.launch {
             val savedPeriod = preferencesRepository.getPreferences().analyticsPeriod
-            _state.update {
-                it.copy(
-                    selectedPeriod = savedPeriod,
-                    periodLabel = savedPeriod.label,
-                )
-            }
-            loadAnalytics()
+            _state.update { it.copy(selectedPeriod = savedPeriod, periodLabel = savedPeriod.label) }
+            observeAnalytics()
         }
     }
 
     fun onIntent(intent: AnalyticsIntent) {
         when (intent) {
-            is AnalyticsIntent.LoadAnalytics -> loadAnalytics()
             is AnalyticsIntent.ShowPeriodSelector -> _state.update { it.copy(showPeriodSelector = true) }
             is AnalyticsIntent.HidePeriodSelector -> _state.update { it.copy(showPeriodSelector = false) }
             is AnalyticsIntent.SelectPeriod -> selectPeriod(intent.period)
-            is AnalyticsIntent.SelectCustomRange -> selectCustomRange(intent.start, intent.end)
             is AnalyticsIntent.NavigateToLogTea -> _navEvents.trySend(AnalyticsNavEvent.NavigateToLogTea)
             is AnalyticsIntent.TapTrendPoint -> {
                 val granularity = _state.value.trendGranularity
@@ -127,122 +118,54 @@ class AnalyticsViewModel(
             )
         }
         viewModelScope.launch { preferencesRepository.updateAnalyticsPeriod(period) }
-        loadAnalytics()
     }
 
-    private fun selectCustomRange(start: LocalDate, end: LocalDate) {
-        _state.update {
-            it.copy(
-                selectedPeriod = AnalyticsPeriod.CUSTOM,
-                customDateRange = start to end,
-                showPeriodSelector = false,
-                periodLabel = AnalyticsPeriod.CUSTOM.label,
-            )
-        }
-        loadAnalytics()
-    }
-
-    private fun loadAnalytics() {
-        loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-
-            try {
-                // Count total completed sessions for empty state check
-                val totalCompleted = teaSessionRepository.getAllSessions()
-                    .count { it.session.status == SessionStatus.COMPLETED }
-
-                val hasMinimumData = totalCompleted >= MINIMUM_SESSIONS
-
-                val currentState = _state.value
-                val (start, end, previousStart, previousEnd) = getAnalyticsDateRangeUseCase(
-                    currentState.selectedPeriod,
-                    currentState.customDateRange,
-                    Clock.System.now(),
-                    TimeZone.currentSystemDefault(),
+    /** Recomputes on every write and period change. Aggregating reads every session, so off Main. */
+    private suspend fun observeAnalytics() {
+        combine(
+            teaSessionRepository.getAllSessionsFlow(),
+            teaRepository.getAllFlow(),
+            teaTypeRepository.getAllFlow(),
+            brewingVesselRepository.getAllFlow(),
+            _state.map { it.selectedPeriod }.distinctUntilChanged(),
+        ) { sessions, teaList, teaTypeList, vesselList, period ->
+            val teas = teaList.associateBy { it.id }
+            val teaTypes = teaTypeList.associateBy { it.id }
+            val (window, previousWindow) = period.window(Clock.System.now(), TimeZone.currentSystemDefault())
+            val analytics = sessions.summary(window)
+            val trends = sessions.trends(window)
+            val totalCompleted = sessions.count { it.session.status == SessionStatus.COMPLETED }
+            _state.update {
+                it.copy(
+                    analytics = analytics,
+                    comparison = previousWindow?.let { previous ->
+                        analytics.comparedTo(sessions.summary(previous))
+                    },
+                    isLoading = false,
+                    hasMinimumData = totalCompleted >= MINIMUM_SESSIONS,
+                    totalCompletedSessions = totalCompleted,
+                    trendPoints = trends.points,
+                    trendGranularity = trends.granularity,
+                    teaTypeDistribution = sessions.teaTypeDistribution(window, teas, teaTypes),
+                    topTeas = sessions.topTeas(window, teas),
+                    // All time would start a cell at the distant past
+                    activityCells = if (period == AnalyticsPeriod.ALL_TIME) {
+                        emptyList()
+                    } else {
+                        val byWeek = period == AnalyticsPeriod.LAST_90_DAYS || period == AnalyticsPeriod.THIS_YEAR
+                        sessions.activity(window, byWeek, teas, teaTypes)
+                    },
+                    topRatedTeas = sessions.topRatedTeas(window, teas),
+                    vesselDistribution = sessions.vesselDistribution(window, vesselList.associateBy { v -> v.id }),
                 )
-
-                val currentData = getAnalyticsUseCase(start, end)
-                val previousData = getAnalyticsUseCase(previousStart, previousEnd)
-
-                // Fetch steep insights for both periods (needed for comparison)
-                val steepInsights = getSteepInsightsUseCase(start, end)
-                val previousSteepInsights = getSteepInsightsUseCase(previousStart, previousEnd)
-
-                fun pctChange(current: Double, previous: Double): Float? =
-                    if (previous == 0.0) null else ((current - previous) / previous * 100.0).toFloat()
-
-                val comparison = if (previousData.totalSessions > 0) {
-                    PeriodComparison(
-                        percentageChangeSessions = pctChange(
-                            currentData.totalSessions.toDouble(),
-                            previousData.totalSessions.toDouble(),
-                        ),
-                        percentageChangeBrewTime = pctChange(
-                            currentData.totalBrewingTime.inWholeSeconds.toDouble(),
-                            previousData.totalBrewingTime.inWholeSeconds.toDouble(),
-                        ),
-                        percentageChangeWater = pctChange(
-                            currentData.totalWaterMl,
-                            previousData.totalWaterMl,
-                        ),
-                        percentageChangeUniqueTeas = pctChange(
-                            currentData.uniqueTeasCount.toDouble(),
-                            previousData.uniqueTeasCount.toDouble(),
-                        ),
-                        percentageChangeAverageSteeps = pctChange(
-                            steepInsights.averageSteepsPerSession.toDouble(),
-                            previousSteepInsights.averageSteepsPerSession.toDouble(),
-                        ),
-                        percentageChangeNewTeas = pctChange(
-                            steepInsights.newTeaDiscoveries.toDouble(),
-                            previousSteepInsights.newTeaDiscoveries.toDouble(),
-                        ),
-                        percentageChangeTeaUsed = pctChange(
-                            currentData.totalTeaGrams,
-                            previousData.totalTeaGrams,
-                        ),
-                    )
-                } else {
-                    null
-                }
-
-                val formattedTime = formatDuration(currentData.totalBrewingTime)
-
-                // Load chart data
-                val brewingTrends = getBrewingTrendsUseCase(start, end)
-                val trendPoints = brewingTrends.points
-                val trendGranularity = brewingTrends.granularity
-                val teaTypeDistribution = getTeaTypeDistributionUseCase(start, end)
-                val topTeas = getTopTeasUseCase(start, end)
-                val activityCells =
-                    getBrewingActivityUseCase(start, end, currentState.selectedPeriod)
-                        .getOrElse { emptyList() }
-                val topRatedTeas = getTopRatedTeasUseCase(start, end)
-                val vesselDistribution = getVesselDistributionUseCase(start, end)
-                _state.update {
-                    it.copy(
-                        analytics = currentData,
-                        comparison = comparison,
-                        formattedBrewingTime = formattedTime,
-                        isLoading = false,
-                        hasMinimumData = hasMinimumData,
-                        totalCompletedSessions = totalCompleted,
-                        trendPoints = trendPoints,
-                        trendGranularity = trendGranularity,
-                        teaTypeDistribution = teaTypeDistribution,
-                        topTeas = topTeas,
-                        activityCells = activityCells,
-                        steepInsights = steepInsights,
-                        topRatedTeas = topRatedTeas,
-                        vesselDistribution = vesselDistribution,
-                    )
-                }
-            } catch (e: Exception) {
+            }
+        }
+            .flowOn(Dispatchers.Default)
+            .catch { e ->
                 _state.update { it.copy(isLoading = false) }
                 messages.failure(e, Res.string.couldnt_load_analytics)
             }
-        }
+            .collect()
     }
 }
 

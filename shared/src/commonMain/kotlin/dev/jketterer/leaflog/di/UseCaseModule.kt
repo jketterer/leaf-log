@@ -25,19 +25,10 @@ import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsDateRangeUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetAnalyticsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetBrewingActivityUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetBrewingTrendsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetSessionReminderDelayUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetSteepInsightsUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTeaTypeDistributionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTopRatedTeasUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetTopTeasUseCase
-import dev.jketterer.leaflog.domain.usecases.session.GetVesselDistributionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.RecomputeStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompareWithBestUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
@@ -90,17 +81,6 @@ val useCaseModule = module {
 
     // Home screen use cases
     factoryOf(::GetDailyStatsUseCase)
-
-    // Analytics use cases
-    factoryOf(::GetAnalyticsUseCase)
-    factoryOf(::GetBrewingTrendsUseCase)
-    factoryOf(::GetAnalyticsDateRangeUseCase)
-    factoryOf(::GetTeaTypeDistributionUseCase)
-    factoryOf(::GetTopTeasUseCase)
-    factoryOf(::GetBrewingActivityUseCase)
-    factoryOf(::GetSteepInsightsUseCase)
-    factoryOf(::GetTopRatedTeasUseCase)
-    factoryOf(::GetVesselDistributionUseCase)
 
     // Timer use cases
     factoryOf(::StartTimerUseCase)

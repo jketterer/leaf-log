@@ -937,7 +937,7 @@ southern-region device and the pager across rotation and 2× font.
 
 1. [x] `docs: record the Bet 4 design`
 2. [x] `refactor: drop analytics insights`
-3. [ ] `refactor: analytics from pure aggregators`: `DateWindow`, the aggregators, the ViewModel on
+3. [x] `refactor: analytics from pure aggregators`: `DateWindow`, the aggregators, the ViewModel on
    Flows; the use cases go. No visible change beyond staying live. Tests: every aggregator, steeps
    against sessions, new teas reaching before the window.
 4. [ ] `feat: a hemisphere setting`. Tests: the region default, a backup without it. Track B: a

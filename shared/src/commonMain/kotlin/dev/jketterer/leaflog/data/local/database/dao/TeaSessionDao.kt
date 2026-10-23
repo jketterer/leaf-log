@@ -233,25 +233,6 @@ interface TeaSessionDao {
         """
         SELECT * FROM tea_session
         WHERE deletedAt IS NULL
-        AND COALESCE(parentSessionId, id) IN (
-            SELECT id FROM tea_session
-            WHERE deletedAt IS NULL
-            AND parentSessionId IS NULL
-            AND timestamp >= :startTimestamp AND timestamp <= :endTimestamp
-        )
-        ORDER BY timestamp DESC
-    """
-    )
-    @Transaction
-    suspend fun getSessionsStartedBetween(
-        startTimestamp: Long,
-        endTimestamp: Long,
-    ): List<SteepRow>
-
-    @Query(
-        """
-        SELECT * FROM tea_session
-        WHERE deletedAt IS NULL
         AND COALESCE(parentSessionId, id) = (
             SELECT COALESCE(parentSessionId, id) FROM tea_session
             WHERE deletedAt IS NULL

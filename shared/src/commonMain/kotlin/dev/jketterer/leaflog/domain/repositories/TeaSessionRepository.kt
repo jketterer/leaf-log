@@ -2,7 +2,6 @@ package dev.jketterer.leaflog.domain.repositories
 
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import kotlinx.coroutines.flow.Flow
-import kotlin.time.Instant
 
 interface TeaSessionRepository {
     // Sessions with their steeps, newest first. Filters apply to the session, not its steeps.
@@ -17,9 +16,6 @@ interface TeaSessionRepository {
     fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>>
     suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps>
     fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>>
-
-    /** Sessions that started in [start, end], inclusive. */
-    suspend fun getSessionsStartedBetween(start: Instant, end: Instant): List<SessionWithSteeps>
 
     /** The session [steepId] belongs to. Steep 1's id is the session's own. */
     suspend fun getSessionOfSteep(steepId: String): SessionWithSteeps?

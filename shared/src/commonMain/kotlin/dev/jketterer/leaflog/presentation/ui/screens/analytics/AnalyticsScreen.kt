@@ -42,15 +42,11 @@ import compose.icons.feathericons.Search
 import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
-import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.PeriodComparison
-import dev.jketterer.leaflog.domain.models.SteepInsights
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
-import dev.jketterer.leaflog.domain.models.TimeFormatter
-import dev.jketterer.leaflog.domain.models.TopReSteepedTea
 import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.domain.models.TrendPoint
 import dev.jketterer.leaflog.presentation.ui.components.analytics.BrewingActivityHeatmap
@@ -64,6 +60,7 @@ import dev.jketterer.leaflog.presentation.ui.components.analytics.VesselDistribu
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitSwitchIcon
+import dev.jketterer.leaflog.presentation.ui.components.common.formatDuration
 import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
@@ -184,13 +181,7 @@ private fun AnalyticsDataContent(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PeriodSelector(
-                currentLabel = state.customDateRange
-                    ?.takeIf { state.selectedPeriod == AnalyticsPeriod.CUSTOM }
-                    ?.let { (start, end) ->
-                        "${TimeFormatter.formatDate(start, DateSkeleton.MONTH_DAY)} – " +
-                                TimeFormatter.formatDate(end, DateSkeleton.MONTH_DAY)
-                    }
-                    ?: state.periodLabel,
+                currentLabel = state.periodLabel,
                 expanded = state.showPeriodSelector,
                 onExpandChange = { expanded ->
                     if (expanded) onIntent(AnalyticsIntent.ShowPeriodSelector)
@@ -244,7 +235,7 @@ private fun AnalyticsDataContent(
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
-                    value = state.formattedBrewingTime,
+                    value = formatDuration(analytics.totalBrewingTime),
                     label = "Brew Time",
                     icon = FeatherIcons.Clock,
                     percentageChange = state.comparison?.percentageChangeBrewTime,
@@ -308,11 +299,10 @@ private fun AnalyticsDataContent(
             }
         }
 
-        // Steep insights cards
-        val steepInsights = state.steepInsights
-        if (steepInsights != null) {
+        // Steep cards
+        if (analytics != null) {
             Spacer(modifier = Modifier.height(8.dp))
-            val averageSteeps = (steepInsights.averageSteepsPerSession * 10).roundToInt() / 10.0
+            val averageSteeps = ((analytics.averageSteeps ?: 0.0) * 10).roundToInt() / 10.0
             Row(
                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -325,7 +315,7 @@ private fun AnalyticsDataContent(
                     modifier = Modifier.weight(1f),
                 )
                 SummaryCard(
-                    value = steepInsights.newTeaDiscoveries.toString(),
+                    value = analytics.newTeasCount.toString(),
                     label = "New Teas",
                     icon = FeatherIcons.Search,
                     percentageChange = state.comparison?.percentageChangeNewTeas,
@@ -391,6 +381,8 @@ private fun AnalyticsDataContentPreview() {
                     ratedSessionsCount = 35,
                     totalTeaGrams = 218.5,
                     weighedSessionsCount = 31,
+                    totalSteeps = 97,
+                    newTeasCount = 4,
                 ),
                 comparison = PeriodComparison(
                     percentageChangeSessions = 10.5f,
@@ -401,22 +393,6 @@ private fun AnalyticsDataContentPreview() {
                     percentageChangeNewTeas = 33.0f,
                     percentageChangeTeaUsed = 12.0f,
                 ),
-                steepInsights = SteepInsights(
-                    averageSteepsPerSession = 2.3f,
-                    topReSteepedTea = TopReSteepedTea(
-                        tea = Tea(
-                            id = "1",
-                            name = "Dragon Well",
-                            teaTypeId = "1",
-                            createdAt = now,
-                            updatedAt = now,
-                            syncStatus = SyncStatus.LOCAL_ONLY
-                        ),
-                        averageSteeps = 3.2f,
-                    ),
-                    newTeaDiscoveries = 4,
-                ),
-                formattedBrewingTime = "2h 30m",
                 periodLabel = "This Month",
                 isLoading = false,
                 hasMinimumData = true,

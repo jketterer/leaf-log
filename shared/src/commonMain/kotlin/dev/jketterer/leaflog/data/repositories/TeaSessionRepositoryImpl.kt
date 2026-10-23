@@ -8,7 +8,6 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 class TeaSessionRepositoryImpl(
     private val teaSessionDao: TeaSessionDao,
@@ -41,14 +40,6 @@ class TeaSessionRepositoryImpl(
 
     override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> =
         teaSessionDao.getInProgressSessionsFlow().map { it.toAggregates() }
-
-    override suspend fun getSessionsStartedBetween(
-        start: Instant,
-        end: Instant,
-    ): List<SessionWithSteeps> = teaSessionDao.getSessionsStartedBetween(
-        startTimestamp = start.toEpochMilliseconds(),
-        endTimestamp = end.toEpochMilliseconds(),
-    ).toAggregates()
 
     override suspend fun getSessionOfSteep(steepId: String): SessionWithSteeps? =
         teaSessionDao.getSessionOfSteep(steepId).toAggregates().singleOrNull()

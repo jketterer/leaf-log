@@ -4,7 +4,6 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
 import kotlin.time.Duration
-import kotlin.time.Instant
 
 data class AnalyticsData(
     val totalSessions: Int,
@@ -15,10 +14,16 @@ data class AnalyticsData(
     val ratedSessionsCount: Int,
     val totalTeaGrams: Double,
     val weighedSessionsCount: Int,
+    val totalSteeps: Int,
+    /** Teas whose first completed session falls in the window. */
+    val newTeasCount: Int,
 ) {
     /** Mean dry leaf per brew, over the sessions that recorded a weight. */
     val averageTeaGrams: Double?
         get() = if (weighedSessionsCount > 0) totalTeaGrams / weighedSessionsCount else null
+
+    val averageSteeps: Double?
+        get() = if (totalSessions > 0) totalSteeps.toDouble() / totalSessions else null
 }
 
 data class PeriodComparison(
@@ -56,17 +61,6 @@ data class TeaTypeDistribution(
 data class TopTea(
     val tea: Tea,
     val sessionCount: Int,
-)
-
-/**
- * The `[start, end)` window a period covers, and the `[previousStart, previousEnd)` window it is
- * compared against.
- */
-data class AnalyticsDateRange(
-    val start: Instant,
-    val end: Instant,
-    val previousStart: Instant,
-    val previousEnd: Instant,
 )
 
 enum class AnalyticsPeriod {

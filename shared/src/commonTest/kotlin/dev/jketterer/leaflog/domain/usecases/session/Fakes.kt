@@ -108,11 +108,6 @@ class FakeTeaSessionRepository(
 
     override suspend fun getAllSessions(): List<SessionWithSteeps> = liveRows.toAggregates()
 
-    override suspend fun getSessionsStartedBetween(
-        start: Instant,
-        end: Instant,
-    ): List<SessionWithSteeps> = getAllSessions().filter { it.startedAt in start..end }
-
     override suspend fun getSession(id: String): SessionWithSteeps? =
         liveRows.filter { (it.steep.parentSessionId ?: it.steep.id) == id }.toAggregates().singleOrNull()
 

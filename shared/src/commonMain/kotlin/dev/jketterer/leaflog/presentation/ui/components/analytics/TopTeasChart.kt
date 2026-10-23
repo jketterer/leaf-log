@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
@@ -34,6 +35,9 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TopTea
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.analytics_top_teas
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 @Composable
@@ -50,7 +54,7 @@ fun TopTeasChart(
             modifier = Modifier.padding(16.dp),
         ) {
             Text(
-                text = "Top Teas",
+                text = stringResource(Res.string.analytics_top_teas),
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -101,8 +105,8 @@ private fun TopTeaRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 2.dp),
+            .heightIn(min = 48.dp)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -110,12 +114,12 @@ private fun TopTeaRow(
             style = MaterialTheme.typography.bodyMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.width(100.dp),
+            modifier = Modifier.weight(2f),
         )
         Spacer(modifier = Modifier.width(8.dp))
         Box(
             modifier = Modifier
-                .weight(1f)
+                .weight(3f)
                 .height(20.dp),
         ) {
             Box(

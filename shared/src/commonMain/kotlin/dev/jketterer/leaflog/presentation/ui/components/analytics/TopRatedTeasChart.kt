@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,8 +41,10 @@ import dev.jketterer.leaflog.domain.models.TopRatedTea
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.analytics_top_rated_teas
 import leaf_log.shared.generated.resources.session_count
 import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Instant
 
 @Composable
@@ -58,7 +61,7 @@ fun TopRatedTeasChart(
             modifier = Modifier.padding(16.dp),
         ) {
             Text(
-                text = "Highest Rated Teas",
+                text = stringResource(Res.string.analytics_top_rated_teas),
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -103,12 +106,12 @@ private fun TopRatedTeaRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(vertical = 2.dp),
+            .heightIn(min = 48.dp)
+            .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
-            modifier = Modifier.width(100.dp),
+            modifier = Modifier.weight(2f),
         ) {
             Text(
                 text = topRatedTea.tea.name,
@@ -129,7 +132,7 @@ private fun TopRatedTeaRow(
         Spacer(modifier = Modifier.width(8.dp))
         Box(
             modifier = Modifier
-                .weight(1f)
+                .weight(3f)
                 .height(20.dp),
         ) {
             Box(

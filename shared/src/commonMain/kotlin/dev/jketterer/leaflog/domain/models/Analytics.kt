@@ -204,13 +204,14 @@ fun List<SessionWithSteeps>.topTeas(window: DateWindow, teas: Map<String, Tea>):
         .sortedByDescending { it.sessionCount }
         .take(5)
 
-/** The 5 teas with the highest mean session rating. */
+/** The 5 teas with the highest mean session rating, out of those rated in 2 sessions or more. */
 fun List<SessionWithSteeps>.topRatedTeas(
     window: DateWindow,
     teas: Map<String, Tea>
 ): List<TopRatedTea> =
     completedIn(window).filter { it.effectiveRating != null }
         .groupBy { it.session.teaId }
+        .filterValues { it.size >= 2 }
         .mapNotNull { (teaId, sessions) ->
             teas[teaId]?.let { tea ->
                 TopRatedTea(

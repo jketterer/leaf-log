@@ -18,9 +18,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -28,16 +29,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.jketterer.leaflog.domain.models.ActivityBucket
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.activityBucket
 import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.contentColorOn
 import dev.jketterer.leaflog.presentation.ui.theme.isDarkTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlinx.datetime.DateTimeUnit
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.analytics_activity
+import leaf_log.shared.generated.resources.analytics_activity_summary
+import leaf_log.shared.generated.resources.analytics_week_of
+import leaf_log.shared.generated.resources.session_count
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.plus
@@ -72,69 +82,92 @@ fun BrewingActivityHeatmap(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Brewing Activity",
+                text = stringResource(Res.string.analytics_activity),
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.height(12.dp))
             val first = cells.first().date
-            when (period) {
-                AnalyticsPeriod.THIS_WEEK, AnalyticsPeriod.THIS_MONTH -> {
-                    if (period == AnalyticsPeriod.THIS_MONTH) {
-                        Text(
-                            text = TimeFormatter.formatDate(first, DateSkeleton.MONTH_YEAR),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.height(LABEL_GAP))
-                    }
-                    HeatmapGrid(
-                        cells = cells,
-                        lineLength = 7,
-                        offset = first.dayOfWeek.ordinal,
-                        columnLabels = DAY_LABELS,
-                        dayNumbers = true,
-                        today = currentDate(),
-                    )
-                }
-
-                AnalyticsPeriod.THIS_SEASON -> {
-                    val offset = first.dayOfWeek.ordinal
-                    // A month is named over the week its first day falls in
-                    val weeks = arrayOfNulls<String>((offset + cells.size + 6) / 7)
-                    cells.forEachIndexed { index, cell ->
-                        if (cell.date.day == 1) {
-                            weeks[(offset + index) / 7] =
-                                TimeFormatter.formatDate(cell.date, DateSkeleton.MONTH)
+            val summary = activitySummary(cells, period.activityBucket)
+            Column(modifier = Modifier.semantics { contentDescription = summary }) {
+                when (period) {
+                    AnalyticsPeriod.THIS_WEEK, AnalyticsPeriod.THIS_MONTH -> {
+                        if (period == AnalyticsPeriod.THIS_MONTH) {
+                            Text(
+                                text = TimeFormatter.formatDate(first, DateSkeleton.MONTH_YEAR),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(modifier = Modifier.height(LABEL_GAP))
                         }
+                        HeatmapGrid(
+                            cells = cells,
+                            lineLength = 7,
+                            offset = first.dayOfWeek.ordinal,
+                            columnLabels = DAY_LABELS,
+                            dayNumbers = true,
+                            today = currentDate(),
+                        )
                     }
-                    HeatmapGrid(
-                        cells = cells,
-                        lineLength = 7,
-                        offset = offset,
-                        transposed = true,
-                        columnLabels = weeks.toList(),
-                        rowLabels = DAY_LABELS,
-                        today = currentDate(),
-                    )
-                }
 
-                AnalyticsPeriod.THIS_YEAR -> YearlyHeatmapCanvas(cells = cells)
+                    AnalyticsPeriod.THIS_SEASON -> {
+                        val offset = first.dayOfWeek.ordinal
+                        // A month is named over the week its first day falls in
+                        val weeks = arrayOfNulls<String>((offset + cells.size + 6) / 7)
+                        cells.forEachIndexed { index, cell ->
+                            if (cell.date.day == 1) {
+                                weeks[(offset + index) / 7] =
+                                    TimeFormatter.formatDate(cell.date, DateSkeleton.MONTH)
+                            }
+                        }
+                        HeatmapGrid(
+                            cells = cells,
+                            lineLength = 7,
+                            offset = offset,
+                            transposed = true,
+                            columnLabels = weeks.toList(),
+                            rowLabels = DAY_LABELS,
+                            today = currentDate(),
+                        )
+                    }
 
-                AnalyticsPeriod.ALL_TIME -> {
-                    val years = cells.last().date.year - first.year + 1
-                    HeatmapGrid(
-                        cells = cells,
-                        lineLength = 12,
-                        offset = first.month.ordinal,
-                        columnLabels = Month.entries.map {
-                            TimeFormatter.formatDate(LocalDate(first.year, it, 1), DateSkeleton.NARROW_MONTH)
-                        },
-                        rowLabels = List(years) { (first.year + it).toString() },
-                    )
+                    AnalyticsPeriod.THIS_YEAR -> YearlyHeatmapCanvas(cells = cells)
+
+                    AnalyticsPeriod.ALL_TIME -> {
+                        val years = cells.last().date.year - first.year + 1
+                        HeatmapGrid(
+                            cells = cells,
+                            lineLength = 12,
+                            offset = first.month.ordinal,
+                            columnLabels = Month.entries.map {
+                                TimeFormatter.formatDate(LocalDate(first.year, it, 1), DateSkeleton.NARROW_MONTH)
+                            },
+                            rowLabels = List(years) { (first.year + it).toString() },
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+/** The period's sessions and its busiest cell, for a screen reader. */
+@Composable
+private fun activitySummary(cells: List<ActivityCell>, bucket: ActivityBucket): String {
+    val busiest = cells.maxBy { it.sessionCount }
+    val busiestLabel = when (bucket) {
+        ActivityBucket.DAY -> TimeFormatter.formatDate(busiest.date, DateSkeleton.MONTH_DAY)
+        ActivityBucket.WEEK -> stringResource(
+            Res.string.analytics_week_of,
+            TimeFormatter.formatDate(busiest.date, DateSkeleton.MONTH_DAY),
+        )
+        ActivityBucket.MONTH -> TimeFormatter.formatDate(busiest.date, DateSkeleton.MONTH_YEAR)
+    }
+    val total = cells.sumOf { it.sessionCount }
+    return stringResource(
+        Res.string.analytics_activity_summary,
+        pluralStringResource(Res.plurals.session_count, total, total),
+        busiestLabel,
+    )
 }
 
 /**
@@ -156,12 +189,11 @@ private fun HeatmapGrid(
 ) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
     val dark = isDarkTheme()
-    val outlineColor = MaterialTheme.colorScheme.outline
+    val outlineColor = MaterialTheme.colorScheme.outlineVariant
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val todayRingColor = MaterialTheme.colorScheme.primary
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(fontSize = 10.sp, color = labelColor)
-    val dayNumberStyle = TextStyle(fontSize = 8.sp)
 
     val lines = (offset + cells.size + lineLength - 1) / lineLength
     val rows = if (transposed) lineLength else lines
@@ -192,6 +224,8 @@ private fun HeatmapGrid(
             val gridX = startXDp.toPx() + rowLabelWidth.toPx()
             val gridY = columnLabelHeight.toPx()
             val todayRingWidth = 2.dp.toPx()
+            // Follows the font scale until it would outgrow the cell
+            val dayNumberStyle = TextStyle(fontSize = minOf(8.sp.toPx(), cellSizePx * 0.4f).toSp())
 
             columnLabelLayouts.forEachIndexed { col, layout ->
                 if (layout == null) return@forEachIndexed
@@ -251,20 +285,23 @@ private fun HeatmapGrid(
 private fun YearlyHeatmapCanvas(cells: List<ActivityCell>) {
     val activeDefaultColor = MaterialTheme.colorScheme.primary
     val dark = isDarkTheme()
-    val outlineColor = MaterialTheme.colorScheme.outline
+    val outlineColor = MaterialTheme.colorScheme.outlineVariant
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = TextStyle(
         fontSize = 10.sp,
         color = labelColor,
     )
+    // Measured, so a large font scale pushes the cells down rather than under the label
+    val monthLabelH = with(LocalDensity.current) {
+        textMeasurer.measure("M", labelStyle).size.height.toDp()
+    }
 
     // Cells arrive in date order, so grouping keeps months in order across a year boundary
     val monthGroups = cells.groupBy { it.date.year to it.date.month }.values.toList()
 
     val columnGap = 8.dp
     val maxCellsPerMonth = 5
-    val monthLabelH = 14.dp
     val rowGap = 10.dp
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -325,7 +362,10 @@ private fun ActivityCell.color(dark: Boolean, fallback: Color): Color? =
         teaTypeColor(hex, dark).takeIf { it != Color.Unspecified } ?: fallback
     }
 
-/** Filled with [color] by how much was brewed, or outlined when [color] is null. */
+/**
+ * Filled with [color] by how much was brewed, or empty when [color] is null, and outlined either
+ * way so a pale tea type color reads on any surface.
+ */
 private fun DrawScope.drawCell(
     cell: ActivityCell,
     color: Color?,
@@ -333,12 +373,22 @@ private fun DrawScope.drawCell(
     size: Float,
     outlineColor: Color,
 ) {
+    val cornerRadius = CornerRadius(4.dp.toPx())
+    if (color != null) {
+        drawRoundRect(
+            color = color.copy(alpha = intensityAlpha(cell.sessionCount)),
+            topLeft = topLeft,
+            size = Size(size, size),
+            cornerRadius = cornerRadius,
+        )
+    }
+    val outlineWidth = 1.dp.toPx()
     drawRoundRect(
-        color = color?.copy(alpha = intensityAlpha(cell.sessionCount)) ?: outlineColor,
-        topLeft = topLeft,
-        size = Size(size, size),
-        cornerRadius = CornerRadius(4.dp.toPx()),
-        style = if (color == null) Stroke(width = 1.5.dp.toPx()) else Fill,
+        color = outlineColor,
+        topLeft = topLeft + Offset(outlineWidth / 2, outlineWidth / 2),
+        size = Size(size - outlineWidth, size - outlineWidth),
+        cornerRadius = cornerRadius,
+        style = Stroke(width = outlineWidth),
     )
 }
 

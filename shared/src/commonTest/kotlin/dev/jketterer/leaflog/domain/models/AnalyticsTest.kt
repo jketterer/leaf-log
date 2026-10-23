@@ -280,6 +280,7 @@ class AnalyticsTest {
         val sessions = listOf(
             session(teaId = "green", ratings = listOf(3f)),
             session(teaId = "green", ratings = listOf(null)),
+            session(teaId = "green", ratings = listOf(2f)),
             session(teaId = "black", ratings = listOf(5f)),
             session(teaId = "black", ratings = listOf(4f)),
         )
@@ -287,9 +288,21 @@ class AnalyticsTest {
         val top = sessions.topRatedTeas(WEEK, TEAS)
 
         assertEquals(
-            listOf(TopRatedTea(TEAS.getValue("black"), 4.5f, 2), TopRatedTea(TEAS.getValue("green"), 3f, 1)),
+            listOf(TopRatedTea(TEAS.getValue("black"), 4.5f, 2), TopRatedTea(TEAS.getValue("green"), 2.5f, 2)),
             top,
         )
+    }
+
+    @Test
+    fun `a tea rated in only one session is not top rated`() {
+        val sessions = listOf(
+            session(teaId = "green", ratings = listOf(5f)),
+            session(teaId = "green", ratings = listOf(null)),
+            session(teaId = "black", ratings = listOf(4f)),
+            session(teaId = "black", ratings = listOf(4f)),
+        )
+
+        assertEquals(listOf("black"), sessions.topRatedTeas(WEEK, TEAS).map { it.tea.id })
     }
 
     private fun gongfu(status: SessionStatus = SessionStatus.COMPLETED) = session(

@@ -948,7 +948,7 @@ southern-region device and the pager across rotation and 2× font.
 6. [x] `feat: analytics gated per surface`
 7. [x] `feat: one activity heatmap`: the trend chart goes; All time by month; months ordered by
    year. Test: cells across a year boundary.
-8. [ ] `fix: analytics chart audit findings`: outlines, the hit-test, legend targets, the neutral
+8. [x] `fix: analytics chart audit findings`: outlines, the hit-test, legend targets, the neutral
    comparison, icons, Top rated's minimum, semantics. Nothing beyond the fixes.
 9. [ ] `feat: vessel donut on theme colors`
 10. [ ] `feat: analytics links into the journal`. Test: a cell's date range.

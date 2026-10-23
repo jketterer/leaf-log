@@ -31,14 +31,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.BarChart2
+import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Compass
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.Feather
 import compose.icons.feathericons.Layers
 import compose.icons.feathericons.Package
-import compose.icons.feathericons.Search
-import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.domain.models.AnalyticsData
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.PeriodComparison
@@ -67,10 +67,25 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.analytics_average_steeps
+import leaf_log.shared.generated.resources.analytics_average_tea
+import leaf_log.shared.generated.resources.analytics_brew_time
 import leaf_log.shared.generated.resources.analytics_empty_body
 import leaf_log.shared.generated.resources.analytics_empty_title
+import leaf_log.shared.generated.resources.analytics_new_teas
 import leaf_log.shared.generated.resources.analytics_period_empty
+import leaf_log.shared.generated.resources.analytics_previous_month
+import leaf_log.shared.generated.resources.analytics_previous_season
+import leaf_log.shared.generated.resources.analytics_previous_week
+import leaf_log.shared.generated.resources.analytics_previous_year
+import leaf_log.shared.generated.resources.analytics_sessions
+import leaf_log.shared.generated.resources.analytics_tea_used
+import leaf_log.shared.generated.resources.analytics_unique_teas
+import leaf_log.shared.generated.resources.analytics_water_used
+import leaf_log.shared.generated.resources.analytics_weighed_sessions
 import leaf_log.shared.generated.resources.log_tea
+import leaf_log.shared.generated.resources.tab_analytics
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -115,7 +130,7 @@ private fun AnalyticsContent(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Analytics") },
+            title = { Text(stringResource(Res.string.tab_analytics)) },
         )
 
         Box(modifier = Modifier.weight(1f)) {
@@ -205,6 +220,8 @@ private fun AnalyticsCards(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        val previousPeriod = previousPeriodLabel(state.selectedPeriod)
+
         // Summary cards - 2x2 grid
         var volumeSwitched by rememberSaveable { mutableStateOf(false) }
         var weightSwitched by rememberSaveable { mutableStateOf(false) }
@@ -230,16 +247,18 @@ private fun AnalyticsCards(
         ) {
             SummaryCard(
                 value = analytics.totalSessions.toString(),
-                label = "Sessions",
+                label = stringResource(Res.string.analytics_sessions),
                 icon = FeatherIcons.Coffee,
                 percentageChange = state.comparison?.percentageChangeSessions,
+                previousPeriod = previousPeriod,
                 modifier = Modifier.weight(1f),
             )
             SummaryCard(
                 value = formatDuration(analytics.totalBrewingTime),
-                label = "Brew Time",
+                label = stringResource(Res.string.analytics_brew_time),
                 icon = FeatherIcons.Clock,
                 percentageChange = state.comparison?.percentageChangeBrewTime,
+                previousPeriod = previousPeriod,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -250,18 +269,20 @@ private fun AnalyticsCards(
         ) {
             SummaryCard(
                 value = formatVolume(analytics.totalWaterMl, volume),
-                label = "Water Used",
+                label = stringResource(Res.string.analytics_water_used),
                 icon = FeatherIcons.Droplet,
                 percentageChange = state.comparison?.percentageChangeWater,
+                previousPeriod = previousPeriod,
                 onClick = { volumeSwitched = !volumeSwitched },
                 action = volumeChip,
                 modifier = Modifier.weight(1f),
             )
             SummaryCard(
                 value = analytics.uniqueTeasCount.toString(),
-                label = "Unique Teas",
-                icon = FeatherIcons.Star,
+                label = stringResource(Res.string.analytics_unique_teas),
+                icon = FeatherIcons.Bookmark,
                 percentageChange = state.comparison?.percentageChangeUniqueTeas,
+                previousPeriod = previousPeriod,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -276,11 +297,17 @@ private fun AnalyticsCards(
             ) {
                 SummaryCard(
                     value = formatWeight(analytics.totalTeaGrams, weight),
-                    label = "Tea Used",
+                    label = stringResource(Res.string.analytics_tea_used),
                     icon = FeatherIcons.Package,
                     percentageChange = state.comparison?.percentageChangeTeaUsed,
+                    previousPeriod = previousPeriod,
                     supportingText = if (analytics.weighedSessionsCount < analytics.totalSessions) {
-                        "from ${analytics.weighedSessionsCount} of ${analytics.totalSessions} sessions"
+                        pluralStringResource(
+                            Res.plurals.analytics_weighed_sessions,
+                            analytics.totalSessions,
+                            analytics.weighedSessionsCount,
+                            analytics.totalSessions,
+                        )
                     } else {
                         null
                     },
@@ -290,7 +317,7 @@ private fun AnalyticsCards(
                 )
                 SummaryCard(
                     value = analytics.averageTeaGrams?.let { formatWeight(it, weight) }.orEmpty(),
-                    label = "Avg per Session",
+                    label = stringResource(Res.string.analytics_average_tea),
                     icon = FeatherIcons.Feather,
                     onClick = { weightSwitched = !weightSwitched },
                     action = weightChip,
@@ -308,16 +335,18 @@ private fun AnalyticsCards(
         ) {
             SummaryCard(
                 value = averageSteeps.toString(),
-                label = "Average Steeps",
+                label = stringResource(Res.string.analytics_average_steeps),
                 icon = FeatherIcons.Layers,
                 percentageChange = state.comparison?.percentageChangeAverageSteeps,
+                previousPeriod = previousPeriod,
                 modifier = Modifier.weight(1f),
             )
             SummaryCard(
                 value = analytics.newTeasCount.toString(),
-                label = "New Teas",
-                icon = FeatherIcons.Search,
+                label = stringResource(Res.string.analytics_new_teas),
+                icon = FeatherIcons.Compass,
                 percentageChange = state.comparison?.percentageChangeNewTeas,
+                previousPeriod = previousPeriod,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -357,6 +386,15 @@ private fun AnalyticsCards(
     }
 }
 
+/** The period a comparison is measured from; All time is compared with nothing. */
+@Composable
+private fun previousPeriodLabel(period: AnalyticsPeriod): String = when (period) {
+    AnalyticsPeriod.THIS_WEEK -> stringResource(Res.string.analytics_previous_week)
+    AnalyticsPeriod.THIS_MONTH -> stringResource(Res.string.analytics_previous_month)
+    AnalyticsPeriod.THIS_SEASON -> stringResource(Res.string.analytics_previous_season)
+    AnalyticsPeriod.THIS_YEAR -> stringResource(Res.string.analytics_previous_year)
+    AnalyticsPeriod.ALL_TIME -> ""
+}
 
 @Preview(showBackground = true)
 @Composable

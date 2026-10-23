@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-22 (Bet 3 released as 0.6.0)
+> **Last updated:** 2026-10-23 (Bet 4 designed)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -711,34 +711,6 @@ taps to a running timer; Quick Timer and Timer are one engine and one screen; ta
 round-trip through backup; Track B lines for Live Activity, the timer without a tea across process
 death, and an upgrade over the previous dev build at each migration.
 
-**Commits.** Each compiles, passes tests and leaves the app working. 4 → 5; 4 → 6 → 7 → 8; 6 → 10;
-4 → 11; 4 and 6 → 12 → 13.
-
-1. [x] `docs: record the Bet 2 design`
-2. [x] `fix: timer audit findings`: negative pre-start adjust, Reset not saved, the stale edit
-   snapshot (verify first), the ring's hard-coded size, its semantics and live region, the copy,
-   `onCleared`'s `runBlocking`. Nothing beyond the fixes.
-3. [x] `feat: already brewed and poured early`. Test: Already brewed leaves the actual time null.
-4. [x] `feat: methods plan their steeps`: the plan, `learnPlan`, `planSessionId`, plan resolution,
-   Brew Again replaying the plan, v9 and backup version 3. The next-steep dialog prefills from the
-   plan until the slim review replaces it. Tests: steep times, learning, resolution, the migration,
-   the backup round trip. Track B: upgrade over the v8 build.
-5. [x] `feat: edit a plan in the method form`
-6. [x] `feat: slim review between steeps`
-7. [x] `feat: end-of-session review`: Save as method at any steep count; Steep Complete's remains
-   go.
-8. [x] `feat: update a method from today's brew`. Test: the deviation check and the merge.
-9. [x] `feat: record a rinse`: v10. Track B: upgrade over the v9 build.
-10. [x] `feat: tasting tags`: v11, the vocabulary, carry-forward, custom tags. Tests: carry-forward,
-    the migration, the backup round trip. Track B: upgrade over the v10 build.
-11. [x] `feat: the plan on the lock screen`, with the notification findings. Track B: Live Activity,
-    tap routing.
-12. [x] `refactor: Quick Timer runs on TimerService`: the tealess timer and "Just a timer"; the old
-    engine and screen go. Until 13, a Quick Timer can't become a session. Track B: the tealess timer
-    across process death.
-13. [x] `feat: attach a tea to a running timer`. Test: attaching after three steeps.
-14. [x] `chore: release 0.5.0`: audit rows struck.
-
 ---
 
 ## Bet 3 — The journal
@@ -869,39 +841,6 @@ backup becomes version 4; versions 1–3 read with the same move.
 where you'd want it; the journal audit findings (report 2) for History, Session Detail and Edit
 Session are cleared; Track B line for an upgrade over the v11 build.
 
-**Commits.** Each compiles, passes tests and leaves the app working. 2 → 3; 2 → 4 → 5 → 8; 6 → 7 →
-8 → 9; 5 → 16; 11 → 12 → 13 → 14; 12 → 15.
-
-1. [x] `docs: record the Bet 3 design`
-2. [x] `feat: a session note of its own`: v12, backup version 4. The review and Log Tea write it;
-   the card and Session Detail read it. Tests: the migration, a version 3 import moving the note,
-   the round trip. Track B: upgrade over the v11 build.
-3. [x] `feat: tags on a logged brew`: Save as completed opens the review; `CompleteSessionDialog`
-   goes.
-4. [x] `feat: last time, before you brew`: `dominantTags`, the Log Tea card, the quick-brew line,
-   `PrefillBanner`'s strings. Test: dominant tags.
-5. [x] `feat: a session card for reading`
-6. [x] `fix: history audit findings`. Nothing beyond the fixes.
-7. [x] `feat: filter by several tea types or vessels`. Test: a session in any chosen type or
-   vessel passes.
-8. [x] `feat: history reads by day`. Test: grouping across midnight, the 30-day edge, months.
-9. [x] `feat: search the journal`: `matchesQuery`, History's fields. Test: words, accents, tags.
-10. [x] `feat: search the collection`
-11. [x] `refactor: one steep sheet`: a move plus the parameters row.
-12. [x] `feat: session detail as a steep timeline`: Edit Session's steep mode goes; the steep
-    sheet's body becomes one composable the slim review shares. Test: deltas and breaks.
-13. [x] `feat: edit a session's tea, date and note`, with Edit Session's findings. Tests: the date
-    shift keeps intervals; a tea change recomputes both teas and clears the method links.
-14. [x] `refactor: brew parameters sheet`: `EditSessionParametersSheet` renamed
-    `BrewParametersSheet`; the unused `CompleteSessionDialog`, left behind by 3, deleted.
-15. [x] `feat: step through sessions`
-16. [x] `feat: tea detail tells the story`: best brew, flavor profile, steep curve, empty state.
-    Tests: the profile counts per session; the curve's peak and minimum data.
-17. [x] `feat: where a method came from`
-18. [x] `feat: cellar age`
-19. [x] `chore: release 0.6.0`: audit rows struck; report 2's History, Session Detail and Edit
-    Session sections deleted, Analytics kept for Bet 4.
-
 ---
 
 ## Bet 4 — Recap
@@ -910,21 +849,121 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 "Your year in tea". The one retrospective surface worth opening, and the portfolio's showpiece
 screen.
 
-- **Prerequisite: Analytics refactor** — one query per load over `[previousStart, end)`, then pure
-  aggregator functions. Kills the ~14 sequential full-table queries on All Time, moves work off
-  Main, and makes every date-boundary bug a Track A test. Analytics becomes a Flow so it stops going
-  stale.
-- **Content:** most-brewed teas, new discoveries, how the flavor profile shifted (tags),
-  steep-curve habits, the best session, finished teas.
-- **Gating:** build the mechanism once (a date window); gate each surface on data. With 6–12 months
-  logged: season recaps ship now; Year in Tea ships gated to the first full year; "on this day"
-  waits for year two.
-- **Dormant teas** ("you haven't brewed X in a while") land here, excluding finished teas (F3).
-- **Analytics ↔ journal links:** heatmap day → History for that day; donut segments *and legends*
-  → History with the current period; vessel slice → Vessel Detail.
+### Design
 
-**Exit:** a season recap renders from real data; every aggregator has host tests including week,
-month and year boundaries.
+Decided 2026-10-23.
+
+- **Analytics reads every session, in memory.** It observes `getAllSessionsFlow()` with the tea,
+  tea type and vessel Flows, combines them, and aggregates on `Dispatchers.Default`, so it is live
+  and never blocks Main. The roadmap's earlier "one query over `[previousStart, end)`" couldn't
+  stand alone: new teas need every tea's first brew, whatever the period.
+    - Aggregators are pure functions in `domain/models/Analytics.kt` over a `DateWindow`, like
+      `stats()` and `steepCurve()`; `AnalyticsPeriod.window(now, tz, hemisphere)` replaces
+      `GetAnalyticsDateRangeUseCase`. Nothing is written and nothing fails, so there are no use
+      cases: the ten `Get*UseCase`s go, and `getSessionsStartedBetween` if nothing else reads it.
+    - **Insights are deleted**, `GenerateInsightsUseCase`, `TimeInsights` and `InsightItem` with
+      them. Sentences about a period are Recap's job; Analytics keeps aggregates.
+- **Calendar periods only:** This week, This month, This season, This year, All time. Each is
+  compared with the same elapsed part of the one before; All time has no comparison. CUSTOM (never
+  reachable), Last month and the rolling windows go, taking two off-by-ones with them. A stored or
+  backed-up period that no longer exists reads as This week, so older backups still import.
+- **Gated per surface.** `EmptyState` fills the screen only when no session was ever completed; a
+  period with none shows it under the selector. Each card hides when it has nothing. Changing the
+  period keeps the screen up while it recomputes. The 10-session minimum moves to recaps.
+- **What Analytics shows:**
+    - All seven summary cards. The comparison is `onSurfaceVariant` both ways, no guilt red, and its
+      arrow says "up 15% from last week".
+    - **One activity heatmap**, the only chart over time: by day for a week, month or season, by
+      week for a year, by month for All time. The trend chart goes, and three of its audit bugs with
+      it.
+    - The tea type donut. The vessel donut on theme colors: the top 5 from primary, secondary,
+      tertiary and their containers, the rest one untappable "Other" slice in outline color.
+    - Top teas. Top rated needs 2+ rated sessions per tea and shows ratings through `formatRating`.
+    - Every heatmap cell and donut segment has a 1dp `outlineVariant` stroke, so a pale tea type
+      color reads on any surface; `TeaTypeListScreen`'s special case for White goes.
+- **Links into the journal:** a heatmap cell opens History for its day, week or month; a donut
+  segment or legend row opens History by that type over the period; a vessel opens Vessel Detail; a
+  top tea opens History by that tea over the period. Legend rows are 48dp targets.
+- **Seasons are meteorological, by hemisphere.** Dec–Feb, Mar–May, Jun–Aug, Sep–Nov, named for
+  the hemisphere. A Settings choice, Northern or Southern, stored nullable: unset, it follows
+  `Locale.current.region` through a pure `Hemisphere.forRegion`. It travels in backups with a
+  default. Winter spans two years and is titled so ("Winter 2025–26").
+- **Which recaps exist:**
+    - A season once it has ended, with 10+ completed sessions. The live season is Analytics' This
+      season.
+    - Year N from Jan 1 of N+1, when the first completed session is in Q1 of N or earlier, so a
+      year begun in June isn't called your year.
+    - Computed live from the same Flow, not stored: editing an old session or finishing a tea
+      corrects it. "Told once" is the occasion, not frozen numbers.
+    - "On this day" waits for year two, outside this bet.
+- **Reaching a recap:** at the top of Analytics, above the period selector, a tonal hero card for
+  the newest recap that qualifies, then a row of past recaps, newest first. Hidden when none
+  qualifies. `RecapRoute` lives on Analytics' stack.
+- **The recap is a pager.** `HorizontalPager`, page dots, a close button, no auto-advance. Each page
+  fills with a container color, cycling primary, secondary and tertiary, and leads with a
+  display-size Figtree number. A tea opens Tea Detail, a session Session Detail, a heatmap day
+  History; back lands on the same page. Each page hides when it has nothing:
+    1. **Cover:** the title, the months, sessions and distinct teas.
+    2. **Rhythm:** the season's heatmap and the busiest month.
+    3. **Most brewed:** the top 3 teas with session counts, and a tea type split bar.
+    4. **Discoveries:** teas whose first completed session falls in the window.
+    5. **Flavors:** `flavorProfile()` over the window, a tag missing from the previous window's top 8
+       marked new. Without a previous profile, just the flavors. Needs 3+ tagged sessions; tags
+       exist from 0.4.0, so summer 2026 has none.
+    6. **How you brewed:** gongfu against western, where a session is gongfu when steep 1 brewed
+       under 2 minutes, with the average steeps of a gongfu session; where ratings peak
+       (`steepCurve()`); the longest session; the favorite vessel.
+    7. **Best session:** `best()` over the window.
+    8. **The shelf:** teas finished in the window, and teas waiting, brewed before it, not during
+       it and not finished by its end. A closing line.
+- **Dormant teas in Collection:** a "Not brewed lately" chip narrows the list to unfinished teas
+  last brewed 60+ days ago, oldest first, through a pure `isDormant(now)`. It combines with the type
+  filter and search. A recap's shelf uses its own window instead, so a past recap never changes as
+  you brew today.
+- **Audit findings cleared** (Rule 1), in the commits that rewrite each part: the donut hit-test,
+  legend targets, the heatmap ordering months without the year, Canvas text at large font scale,
+  the error-red comparison and its silent arrow, the Unique and New teas icons, Top rated's sample
+  and rounding, Canvas semantic summaries, strings. Report 2's Analytics section is the last of the
+  report.
+
+**Migration:** none. The hemisphere is a preference.
+
+**Exit:** the summer 2026 recap renders from real data; every aggregator and window has host tests
+at week, month, season and year boundaries; Track B lines for the hemisphere default on a
+southern-region device and the pager across rotation and 2× font.
+
+**Commits.** Each compiles, passes tests and leaves the app working. 2 → 3 → 5 → 7 → 8 → 9 → 10;
+4 → 5; 3 → 6; 3 and 4 → 12 → 13–20; 7 → 13.
+
+1. [ ] `docs: record the Bet 4 design`
+2. [ ] `refactor: drop analytics insights`
+3. [ ] `refactor: analytics from pure aggregators`: `DateWindow`, the aggregators, the ViewModel on
+   Flows; the use cases go. No visible change beyond staying live. Tests: every aggregator, steeps
+   against sessions, new teas reaching before the window.
+4. [ ] `feat: a hemisphere setting`. Tests: the region default, a backup without it. Track B: a
+   southern-region device.
+5. [ ] `feat: analytics by calendar period`: This season, the trimmed menu, the fallback, labels in
+   `strings.xml`. Tests: week, month, season and year edges, winter across the new year, the
+   elapsed-part comparison, importing a backup holding `LAST_30_DAYS`.
+6. [ ] `feat: analytics gated per surface`
+7. [ ] `feat: one activity heatmap`: the trend chart goes; All time by month; months ordered by
+   year. Test: cells across a year boundary.
+8. [ ] `fix: analytics chart audit findings`: outlines, the hit-test, legend targets, the neutral
+   comparison, icons, Top rated's minimum, semantics. Nothing beyond the fixes.
+9. [ ] `feat: vessel donut on theme colors`
+10. [ ] `feat: analytics links into the journal`. Test: a cell's date range.
+11. [ ] `feat: not brewed lately`. Test: `isDormant`.
+12. [ ] `feat: season recaps`: the windows and gate, `RecapRoute`, the hero card and row, the pager
+    with its cover. Tests: finished seasons only, the 10-session gate, the hemisphere flip.
+13. [ ] `feat: recap rhythm`
+14. [ ] `feat: recap most brewed`
+15. [ ] `feat: recap discoveries`
+16. [ ] `feat: recap flavors`. Test: a tag new against the previous season.
+17. [ ] `feat: recap how you brewed`. Tests: the style rule, the longest session.
+18. [ ] `feat: recap best session`
+19. [ ] `feat: recap shelf`. Test: finished and waiting at the window's edges.
+20. [ ] `feat: year in tea`. Test: the Q1 gate.
+21. [ ] `chore: release 0.7.0`: audit rows struck; report 2 deleted.
 
 ---
 
@@ -1048,6 +1087,14 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **Headings are Figtree; body stays system**                                    | A friendly sans gives the app its own voice without formality; system body keeps dense screens scannable. Considered: Literata, tried and dropped as too formal; Nunito, DM Sans.                                                                                                         |
 | **The brew loop lives on Home's stack**                                        | Notification taps and Home's banner already open the Timer there. Pushing it onto the origin tab could leave two Timers in two stacks.                                                                                                                                                    |
 | **Tablet layouts wait for Store readiness**                                    | The author uses a phone, and nothing ships to strangers before then.                                                                                                                                                                                                                      |
+| **Analytics reads every session, in memory**                                   | New teas need every tea's first brew whatever the period, and one Flow keeps the screen live for free. Considered: a range query over `[previousStart, end)` plus a first-brew query.                                                                                                     |
+| **Analytics insights are deleted**                                             | Sentences about a period are Recap's job; Analytics keeps aggregates. Considered: moving the eight sentences to strings, and keeping a few as stat tiles.                                                                                                                                 |
+| **Analytics periods are calendar windows**                                     | "This week" meant four things across the app. Week, month, season, year and all time, each compared with the same elapsed part of the one before. Considered: keeping the rolling windows and Last month.                                                                                 |
+| **One activity heatmap, no trend line**                                        | Both charted sessions over time; the heatmap covers every period. Considered: fixing the trend chart's three bugs and keeping both.                                                                                                                                                       |
+| **Seasons follow a hemisphere setting**                                        | Season names are wrong half the world over. The default comes from the locale's region. Considered: Northern only, and naming windows by months.                                                                                                                                          |
+| **Recaps are for finished seasons, computed live**                             | A recap is an occasion, told once its season ends; computing it live means edits correct it with no table. Considered: a "so far" recap of the current season, and frozen snapshots.                                                                                                      |
+| **A session is gongfu when steep 1 brews under 2 minutes**                     | Pure and works for every session, method or not. Considered: 3+ steeps, which misses an abandoned gongfu session, and the resolved plan, which drags repositories into the aggregators.                                                                                                   |
+| **Dormant is 60 days unbrewed, shown on pull**                                 | A recap page and a Collection chip, never a Home card: not an engagement machine. Considered: a cadence-relative rule, and a Home suggestion.                                                                                                                                             |
 
 ---
 

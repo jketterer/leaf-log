@@ -7,10 +7,13 @@ import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.activity
 import dev.jketterer.leaflog.domain.models.busiestMonth
 import dev.jketterer.leaflog.domain.models.discoveries
+import dev.jketterer.leaflog.domain.models.flavorProfile
+import dev.jketterer.leaflog.domain.models.newSince
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
 import dev.jketterer.leaflog.domain.models.topTeas
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
@@ -26,8 +29,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_sessions
 
@@ -38,6 +43,7 @@ class RecapViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val tastingTagRepository: TastingTagRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(RecapState(Season(LocalDate.parse(route.seasonStart))))
@@ -54,13 +60,19 @@ class RecapViewModel(
                 teaTypeRepository.getAllFlow(),
                 preferencesRepository.getPreferencesFlow(),
             ) { sessions, teas, teaTypes, preferences ->
-                val window = season.window(TimeZone.currentSystemDefault())
+                val tz = TimeZone.currentSystemDefault()
+                val window = season.window(tz)
+                val previousWindow = Season(season.start.minus(3, DateTimeUnit.MONTH)).window(tz)
                 val teasById = teas.associateBy { it.id }
                 val teaTypesById = teaTypes.associateBy { it.id }
                 val summary = sessions.summary(window)
                 val days = sessions.activity(window, ActivityBucket.DAY, teasById, teaTypesById)
                 val topTeas = sessions.topTeas(window, teasById).take(3)
                 val discoveries = sessions.discoveries(window, teasById)
+                // The vocabulary is read again each time, so a tag made since shows by name
+                val vocabulary = tastingTagRepository.getAll()
+                val flavors = sessions.filter { it.startedAt in window }.flavorProfile(vocabulary)
+                    ?.takeIf { it.sessions >= 3 }
                 _state.update {
                     it.copy(
                         hemisphere = preferences.hemisphere,
@@ -71,6 +83,10 @@ class RecapViewModel(
                                 RecapPage.MostBrewed(it, sessions.teaTypeDistribution(window, teasById, teaTypesById))
                             },
                             discoveries.takeIf { it.isNotEmpty() }?.let { RecapPage.Discoveries(it) },
+                            flavors?.let { profile ->
+                                val before = sessions.filter { it.startedAt in previousWindow }.flavorProfile(vocabulary)
+                                RecapPage.Flavors(profile, profile.newSince(before))
+                            },
                         ),
                     )
                 }

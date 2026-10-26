@@ -101,6 +101,21 @@ class TastingTagTest {
         assertNull(listOf(session(listOf(SteepTag("floral", false)))).flavorProfile(vocabulary))
     }
 
+    @Test
+    fun `a flavor missing from the previous season's profile is new`() {
+        val previous = listOf(session(listOf(SteepTag("floral", true)))).flavorProfile(vocabulary)
+        val current = listOf(session(listOf(SteepTag("floral", true), SteepTag("sweet", true)))).flavorProfile(vocabulary)!!
+
+        assertEquals(setOf("sweet"), current.newSince(previous))
+    }
+
+    @Test
+    fun `without a previous profile no flavor is new`() {
+        val current = listOf(session(listOf(SteepTag("floral", true)))).flavorProfile(vocabulary)!!
+
+        assertEquals(emptySet(), current.newSince(null))
+    }
+
     private val vocabulary = CURATED_TAG_KEYS.mapIndexed { i, key ->
         TastingTag(id = key, key = key, name = null, isCustom = false, displayOrder = i)
     }

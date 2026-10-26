@@ -68,5 +68,12 @@ fun List<SessionWithSteeps>.flavorProfile(vocabulary: List<TastingTag>): FlavorP
     return if (tags.isEmpty()) null else FlavorProfile(tags, sessions = tagged.size)
 }
 
+/** This profile's tags missing from [previous]'s; none without a previous profile to compare. */
+fun FlavorProfile.newSince(previous: FlavorProfile?): Set<String> {
+    if (previous == null) return emptySet()
+    val before = previous.tags.map { it.first.id }.toSet()
+    return tags.map { it.first.id }.filterNot { it in before }.toSet()
+}
+
 private fun List<TastingTag>.mostCounted(counts: Map<String, Int>, limit: Int): List<TastingTag> =
     filter { it.id in counts }.sortedByDescending { counts.getValue(it.id) }.take(limit)

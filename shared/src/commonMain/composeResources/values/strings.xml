@@ -237,6 +237,13 @@
         <item quantity="one">tea you brewed for the first time</item>
         <item quantity="other">teas you brewed for the first time</item>
     </plurals>
+    <!-- Under the top flavor's session count: "9 / sessions tagged Floral, your top flavor" -->
+    <plurals name="recap_top_flavor">
+        <item quantity="one">session tagged %1$s, your top flavor</item>
+        <item quantity="other">sessions tagged %1$s, your top flavor</item>
+    </plurals>
+    <!-- Marks a flavor missing from the season before's top flavors -->
+    <string name="recap_new_flavor">New</string>
     <string name="recap_close">Close recap</string>
     <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>

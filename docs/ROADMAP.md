@@ -958,7 +958,7 @@ southern-region device and the pager across rotation and 2× font.
 13. [x] `feat: recap rhythm`
 14. [x] `feat: recap most brewed`
 15. [x] `feat: recap discoveries`
-16. [ ] `feat: recap flavors`. Test: a tag new against the previous season.
+16. [x] `feat: recap flavors`. Test: a tag new against the previous season.
 17. [ ] `feat: recap how you brewed`. Tests: the style rule, the longest session.
 18. [ ] `feat: recap best session`
 19. [ ] `feat: recap shelf`. Test: finished and waiting at the window's edges.

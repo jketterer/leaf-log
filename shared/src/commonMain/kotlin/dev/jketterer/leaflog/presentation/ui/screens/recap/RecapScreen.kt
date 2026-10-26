@@ -100,6 +100,7 @@ private fun RecapContent(
                     is RecapPage.Rhythm -> RhythmPage(page, onTapDay)
                     is RecapPage.MostBrewed -> MostBrewedPage(page, onTapTea)
                     is RecapPage.Discoveries -> DiscoveriesPage(page, onTapTea)
+                    is RecapPage.Flavors -> FlavorsPage(page)
                 }
             }
         }

@@ -182,6 +182,42 @@ class AnalyticsTest {
     }
 
     @Test
+    fun `a session is gongfu when its first steep brewed under 2 minutes`() {
+        val sessions = listOf(
+            session(brewingTime = 119.seconds, ratings = listOf(null, null, null)),
+            session(brewingTime = 30.seconds, ratings = listOf(null, null, null, null, null)),
+            session(brewingTime = 2.minutes),
+            session(brewingTime = 4.minutes, ratings = listOf(null, null)),
+        )
+
+        val habits = sessions.brewingHabits(WEEK)!!
+
+        assertEquals(2, habits.gongfuSessions)
+        assertEquals(2, habits.westernSessions)
+        assertEquals(4.0, habits.gongfuAverageSteeps)
+    }
+
+    @Test
+    fun `without a gongfu session there is no gongfu average`() {
+        assertNull(listOf(session(brewingTime = 3.minutes)).brewingHabits(WEEK)!!.gongfuAverageSteeps)
+    }
+
+    @Test
+    fun `the longest session has the most steeps and the longer brew on a tie`() {
+        val short = session(brewingTime = 20.seconds, ratings = listOf(null, null, null))
+        val longest = session(brewingTime = 30.seconds, ratings = listOf(null, null, null))
+        val outside = session("2026-09-28T12:00", ratings = List(9) { null })
+        val unfinished = session(status = SessionStatus.IN_PROGRESS, ratings = List(9) { null })
+
+        assertEquals(longest, listOf(short, longest, outside, unfinished).brewingHabits(WEEK)!!.longest)
+    }
+
+    @Test
+    fun `a window without sessions has no brewing habits`() {
+        assertNull(listOf(session("2026-09-28T12:00")).brewingHabits(WEEK))
+    }
+
+    @Test
     fun `a period is compared as the percent change from the one before`() {
         val current = listOf(session(), session(), session()).summary(WEEK)
         val previous = listOf(session(), session()).summary(WEEK)

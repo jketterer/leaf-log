@@ -8,6 +8,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 /** The instants `[start, end)`, whose days are read in [tz]. */
@@ -214,6 +215,31 @@ fun List<SessionWithSteeps>.discoveries(window: DateWindow, teas: Map<String, Te
     firstBrews().filterValues { it in window }
         .entries.sortedBy { it.value }
         .mapNotNull { teas[it.key] }
+
+/** A session is gongfu when its first steep brewed under this, and western otherwise. */
+private val GONGFU_UNDER = 2.minutes
+
+/** How the window's sessions were brewed. */
+data class BrewingHabits(
+    val gongfuSessions: Int,
+    val westernSessions: Int,
+    /** Null without a gongfu session. */
+    val gongfuAverageSteeps: Double?,
+    /** The most steeps, the longer brew on a tie. */
+    val longest: SessionWithSteeps,
+)
+
+/** Null when the window has no sessions. */
+fun List<SessionWithSteeps>.brewingHabits(window: DateWindow): BrewingHabits? {
+    val sessions = completedIn(window).ifEmpty { return null }
+    val (gongfu, western) = sessions.partition { it.steeps.first().brewedTime < GONGFU_UNDER }
+    return BrewingHabits(
+        gongfuSessions = gongfu.size,
+        westernSessions = western.size,
+        gongfuAverageSteeps = gongfu.takeIf { it.isNotEmpty() }?.map { it.steeps.size }?.average(),
+        longest = sessions.maxWith(compareBy({ it.steeps.size }, { it.totalBrewTime })),
+    )
+}
 
 /** The 5 most brewed teas. */
 fun List<SessionWithSteeps>.topTeas(window: DateWindow, teas: Map<String, Tea>): List<TopTea> =

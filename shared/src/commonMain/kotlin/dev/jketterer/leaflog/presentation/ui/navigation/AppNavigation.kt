@@ -214,6 +214,7 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onClose = { navigator.navigateUp(route) },
                 onNavigateToHistory = { navigator.navigate(it) },
                 onNavigateToTea = { teaId -> navigator.navigate(NavRoute.TeaDetailsRoute(teaId)) },
+                onNavigateToSession = { sessionId -> navigator.navigate(NavRoute.SessionDetailsRoute(sessionId)) },
             )
         }
 

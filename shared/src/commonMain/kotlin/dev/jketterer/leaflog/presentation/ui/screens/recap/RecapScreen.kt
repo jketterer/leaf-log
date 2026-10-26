@@ -56,6 +56,7 @@ fun RecapScreen(
     onClose: () -> Unit,
     onNavigateToHistory: (NavRoute.HistoryRoute) -> Unit,
     onNavigateToTea: (teaId: String) -> Unit,
+    onNavigateToSession: (sessionId: String) -> Unit,
     viewModel: RecapViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -71,6 +72,7 @@ fun RecapScreen(
             )
         },
         onTapTea = onNavigateToTea,
+        onTapSession = onNavigateToSession,
         snackbarHostState = snackbarHostState,
     )
 }
@@ -82,6 +84,7 @@ private fun RecapContent(
     onClose: () -> Unit,
     onTapDay: (LocalDate) -> Unit = {},
     onTapTea: (teaId: String) -> Unit = {},
+    onTapSession: (sessionId: String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     val pagerState = rememberPagerState { state.pages.size }
@@ -101,6 +104,7 @@ private fun RecapContent(
                     is RecapPage.MostBrewed -> MostBrewedPage(page, onTapTea)
                     is RecapPage.Discoveries -> DiscoveriesPage(page, onTapTea)
                     is RecapPage.Flavors -> FlavorsPage(page)
+                    is RecapPage.HowYouBrewed -> HowYouBrewedPage(page, onTapSession)
                 }
             }
         }

@@ -5,13 +5,17 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.ActivityBucket
 import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.activity
+import dev.jketterer.leaflog.domain.models.brewingHabits
 import dev.jketterer.leaflog.domain.models.busiestMonth
 import dev.jketterer.leaflog.domain.models.discoveries
 import dev.jketterer.leaflog.domain.models.flavorProfile
 import dev.jketterer.leaflog.domain.models.newSince
+import dev.jketterer.leaflog.domain.models.steepCurve
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
 import dev.jketterer.leaflog.domain.models.topTeas
+import dev.jketterer.leaflog.domain.models.vesselDistribution
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -44,6 +48,7 @@ class RecapViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val preferencesRepository: PreferencesRepository,
     private val tastingTagRepository: TastingTagRepository,
+    private val brewingVesselRepository: BrewingVesselRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(RecapState(Season(LocalDate.parse(route.seasonStart))))
@@ -59,7 +64,8 @@ class RecapViewModel(
                 teaRepository.getAllFlow(),
                 teaTypeRepository.getAllFlow(),
                 preferencesRepository.getPreferencesFlow(),
-            ) { sessions, teas, teaTypes, preferences ->
+                brewingVesselRepository.getAllFlow(),
+            ) { sessions, teas, teaTypes, preferences, vessels ->
                 val tz = TimeZone.currentSystemDefault()
                 val window = season.window(tz)
                 val previousWindow = Season(season.start.minus(3, DateTimeUnit.MONTH)).window(tz)
@@ -73,8 +79,9 @@ class RecapViewModel(
                 val vocabulary = tastingTagRepository.getAll()
                 val flavors = sessions.filter { it.startedAt in window }.flavorProfile(vocabulary)
                     ?.takeIf { it.sessions >= 3 }
-                _state.update {
-                    it.copy(
+                val habits = sessions.brewingHabits(window)
+                _state.update { state ->
+                    state.copy(
                         hemisphere = preferences.hemisphere,
                         pages = listOfNotNull(
                             RecapPage.Cover(summary.totalSessions, summary.uniqueTeasCount),
@@ -86,6 +93,15 @@ class RecapViewModel(
                             flavors?.let { profile ->
                                 val before = sessions.filter { it.startedAt in previousWindow }.flavorProfile(vocabulary)
                                 RecapPage.Flavors(profile, profile.newSince(before))
+                            },
+                            habits?.let {
+                                RecapPage.HowYouBrewed(
+                                    habits = it,
+                                    longestTeaName = teasById[it.longest.session.teaId]?.name,
+                                    peakSteep = sessions.filter { s -> s.startedAt in window }.steepCurve()?.peak,
+                                    favoriteVessel = sessions.vesselDistribution(window, vessels.associateBy { v -> v.id })
+                                        .firstOrNull(),
+                                )
                             },
                         ),
                     )

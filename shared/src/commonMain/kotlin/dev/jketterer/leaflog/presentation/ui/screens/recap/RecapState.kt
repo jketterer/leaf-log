@@ -1,12 +1,14 @@
 package dev.jketterer.leaflog.presentation.ui.screens.recap
 
 import dev.jketterer.leaflog.domain.models.ActivityCell
+import dev.jketterer.leaflog.domain.models.BrewingHabits
 import dev.jketterer.leaflog.domain.models.FlavorProfile
 import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopTea
+import dev.jketterer.leaflog.domain.models.VesselDistribution
 import kotlinx.datetime.LocalDate
 
 data class RecapState(
@@ -40,5 +42,14 @@ sealed interface RecapPage {
     data class Flavors(
         val profile: FlavorProfile,
         val newTagIds: Set<String>,
+    ) : RecapPage
+
+    /** Gongfu against western, where ratings peaked, the longest session and the favorite vessel. */
+    data class HowYouBrewed(
+        val habits: BrewingHabits,
+        /** Null when the tea is gone. */
+        val longestTeaName: String?,
+        val peakSteep: Int?,
+        val favoriteVessel: VesselDistribution?,
     ) : RecapPage
 }

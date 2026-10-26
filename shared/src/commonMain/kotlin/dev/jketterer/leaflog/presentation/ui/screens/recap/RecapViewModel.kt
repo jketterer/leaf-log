@@ -6,6 +6,7 @@ import dev.jketterer.leaflog.domain.models.ActivityBucket
 import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.activity
 import dev.jketterer.leaflog.domain.models.busiestMonth
+import dev.jketterer.leaflog.domain.models.discoveries
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
 import dev.jketterer.leaflog.domain.models.topTeas
@@ -59,6 +60,7 @@ class RecapViewModel(
                 val summary = sessions.summary(window)
                 val days = sessions.activity(window, ActivityBucket.DAY, teasById, teaTypesById)
                 val topTeas = sessions.topTeas(window, teasById).take(3)
+                val discoveries = sessions.discoveries(window, teasById)
                 _state.update {
                     it.copy(
                         hemisphere = preferences.hemisphere,
@@ -68,6 +70,7 @@ class RecapViewModel(
                             topTeas.takeIf { it.isNotEmpty() }?.let {
                                 RecapPage.MostBrewed(it, sessions.teaTypeDistribution(window, teasById, teaTypesById))
                             },
+                            discoveries.takeIf { it.isNotEmpty() }?.let { RecapPage.Discoveries(it) },
                         ),
                     )
                 }

@@ -70,15 +70,18 @@ private val SEASON = DateTimeUnit.MONTH * 3
 private fun List<SessionWithSteeps>.completedIn(window: DateWindow) =
     filter { it.session.status == SessionStatus.COMPLETED && it.startedAt in window }
 
+/** When each tea's first completed session started, whatever the window. */
+private fun List<SessionWithSteeps>.firstBrews(): Map<String, Instant> =
+    filter { it.session.status == SessionStatus.COMPLETED }
+        .groupBy { it.session.teaId }
+        .mapValues { (_, teaSessions) -> teaSessions.minOf { it.startedAt } }
+
 fun List<SessionWithSteeps>.summary(window: DateWindow): AnalyticsData {
     val sessions = completedIn(window)
     val steeps = sessions.flatMap { it.steeps }
     // Water is per steep, each one fresh. Leaf is per session: every steep re-uses it.
     val weighed = sessions.mapNotNull { it.session.teaQuantityGrams }
     val ratings = sessions.mapNotNull { it.effectiveRating }
-    val firstBrews = filter { it.session.status == SessionStatus.COMPLETED }
-        .groupBy { it.session.teaId }
-        .values.map { teaSessions -> teaSessions.minOf { it.startedAt } }
     return AnalyticsData(
         totalSessions = sessions.size,
         totalBrewingTime = steeps.fold(Duration.ZERO) { total, steep -> total + steep.brewingTime },
@@ -89,7 +92,7 @@ fun List<SessionWithSteeps>.summary(window: DateWindow): AnalyticsData {
         totalTeaGrams = weighed.sumOf { it.toDouble() },
         weighedSessionsCount = weighed.size,
         totalSteeps = steeps.size,
-        newTeasCount = firstBrews.count { it in window },
+        newTeasCount = firstBrews().values.count { it in window },
     )
 }
 
@@ -205,6 +208,12 @@ fun List<SessionWithSteeps>.vesselDistribution(
         }
         .sortedByDescending { it.sessionCount }
 }
+
+/** Teas first brewed in the window, in the order they were. */
+fun List<SessionWithSteeps>.discoveries(window: DateWindow, teas: Map<String, Tea>): List<Tea> =
+    firstBrews().filterValues { it in window }
+        .entries.sortedBy { it.value }
+        .mapNotNull { teas[it.key] }
 
 /** The 5 most brewed teas. */
 fun List<SessionWithSteeps>.topTeas(window: DateWindow, teas: Map<String, Tea>): List<TopTea> =

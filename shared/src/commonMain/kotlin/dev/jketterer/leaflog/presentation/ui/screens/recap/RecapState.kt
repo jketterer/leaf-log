@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.recap
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopTea
 import kotlinx.datetime.LocalDate
@@ -30,4 +31,7 @@ sealed interface RecapPage {
         val teas: List<TopTea>,
         val teaTypes: List<TeaTypeDistribution>,
     ) : RecapPage
+
+    /** Teas first brewed in the season, in the order they were. */
+    data class Discoveries(val teas: List<Tea>) : RecapPage
 }

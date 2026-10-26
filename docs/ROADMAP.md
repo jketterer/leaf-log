@@ -957,7 +957,7 @@ southern-region device and the pager across rotation and 2× font.
     with its cover. Tests: finished seasons only, the 10-session gate, the hemisphere flip.
 13. [x] `feat: recap rhythm`
 14. [x] `feat: recap most brewed`
-15. [ ] `feat: recap discoveries`
+15. [x] `feat: recap discoveries`
 16. [ ] `feat: recap flavors`. Test: a tag new against the previous season.
 17. [ ] `feat: recap how you brewed`. Tests: the style rule, the longest session.
 18. [ ] `feat: recap best session`

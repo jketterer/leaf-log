@@ -99,6 +99,7 @@ private fun RecapContent(
                     is RecapPage.Cover -> CoverPage(state.season, state.hemisphere, page)
                     is RecapPage.Rhythm -> RhythmPage(page, onTapDay)
                     is RecapPage.MostBrewed -> MostBrewedPage(page, onTapTea)
+                    is RecapPage.Discoveries -> DiscoveriesPage(page, onTapTea)
                 }
             }
         }

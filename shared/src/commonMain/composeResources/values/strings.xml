@@ -232,6 +232,11 @@
         <item quantity="one">session of %1$s, your most brewed tea</item>
         <item quantity="other">sessions of %1$s, your most brewed tea</item>
     </plurals>
+    <!-- Under the count of teas first brewed in the season: "5 / teas you brewed for the first time" -->
+    <plurals name="recap_discoveries">
+        <item quantity="one">tea you brewed for the first time</item>
+        <item quantity="other">teas you brewed for the first time</item>
+    </plurals>
     <string name="recap_close">Close recap</string>
     <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>

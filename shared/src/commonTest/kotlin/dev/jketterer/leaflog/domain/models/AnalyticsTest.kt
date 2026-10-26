@@ -166,6 +166,22 @@ class AnalyticsTest {
     }
 
     @Test
+    fun `discoveries are the teas first brewed in the window in the order they were`() {
+        val sessions = listOf(
+            session("2026-09-01T10:00", teaId = "old"),
+            session("2026-09-22T10:00", teaId = "old"),
+            session("2026-09-25T10:00", teaId = "second"),
+            session("2026-09-22T10:00", teaId = "first"),
+            session("2026-09-24T10:00", teaId = "first"),
+            session("2026-09-23T10:00", teaId = "unfinished", status = SessionStatus.IN_PROGRESS),
+            session("2026-09-28T00:00", teaId = "later"),
+        )
+        val teas = listOf("old", "first", "second", "unfinished", "later").associateWith { tea(it, "green") }
+
+        assertEquals(listOf("first", "second"), sessions.discoveries(WEEK, teas).map { it.id })
+    }
+
+    @Test
     fun `a period is compared as the percent change from the one before`() {
         val current = listOf(session(), session(), session()).summary(WEEK)
         val previous = listOf(session(), session()).summary(WEEK)

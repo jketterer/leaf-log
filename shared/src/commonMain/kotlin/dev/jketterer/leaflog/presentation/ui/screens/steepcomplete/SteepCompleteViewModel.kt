@@ -21,7 +21,9 @@ import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.viewmodel.DebouncedSave
 import dev.jketterer.leaflog.presentation.ui.viewmodel.loadPreferences
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +57,7 @@ class SteepCompleteViewModel(
     private val editSessionUseCase: EditSessionUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
+    appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SteepCompleteState())
@@ -64,6 +67,9 @@ class SteepCompleteViewModel(
     val navigationEvents = _navigationEvents.receiveAsFlow()
 
     val messages = UiMessages<Nothing>()
+
+    // A save rewrites the session and rebuilds the tea's stats, too much to do per keystroke
+    private val notesSave = DebouncedSave(appScope)
 
     init {
         loadPreferences(
@@ -101,7 +107,11 @@ class SteepCompleteViewModel(
             }
 
             is SteepCompleteIntent.ConfirmDiscard -> confirmDiscardSession()
-            is SteepCompleteIntent.BackClicked -> _navigationEvents.trySend(SteepCompleteNavEvent.NavigateBack)
+            is SteepCompleteIntent.BackClicked -> viewModelScope.launch {
+                notesSave.flush()
+                _navigationEvents.send(SteepCompleteNavEvent.NavigateBack)
+            }
+
             is SteepCompleteIntent.ShowEditParametersSheet -> openEditParametersSheet()
             is SteepCompleteIntent.EditBrewingTimeChanged -> _state.update { it.copy(editBrewingTime = intent.duration) }
             is SteepCompleteIntent.EditTemperatureChanged -> _state.update {
@@ -200,11 +210,13 @@ class SteepCompleteViewModel(
      * when they were queued, so the last one to land carries the latest text.
      */
     private fun editSteep(steepId: String, edit: (Steep) -> Steep) {
-        viewModelScope.launch {
-            editSteepUseCase(steepId, edit)
-                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
-                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
-        }
+        viewModelScope.launch { saveSteep(steepId, edit) }
+    }
+
+    private suspend fun saveSteep(steepId: String, edit: (Steep) -> Steep) {
+        editSteepUseCase(steepId, edit)
+            .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+            .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
     }
 
     private fun updateRating(rating: Float) {
@@ -216,7 +228,7 @@ class SteepCompleteViewModel(
     private fun updateNotes(notes: String) {
         val steep = _state.value.session?.currentSteep ?: return
         _state.update { it.copy(notes = notes) }
-        editSteep(steep.id) { it.copy(notes = _state.value.notes) }
+        notesSave.schedule { saveSteep(steep.id) { it.copy(notes = notes) } }
     }
 
     private fun toggleTag(tagId: String) {
@@ -260,6 +272,7 @@ class SteepCompleteViewModel(
         _state.update { it.copy(isLoading = true, showAdjustSheet = false) }
 
         viewModelScope.launch {
+            notesSave.flush()
             addSteepUseCase(
                 sessionId = session.session.id,
                 brewingTime = duration,
@@ -282,6 +295,7 @@ class SteepCompleteViewModel(
         _state.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
+            notesSave.flush()
             finishSessionUseCase(session.session.id)
                 .onSuccess { finished ->
                     timerService.onSessionResolved(finished.session.id)
@@ -299,6 +313,8 @@ class SteepCompleteViewModel(
     private fun confirmDiscardSession() {
         val session = _state.value.session ?: return
         _state.update { it.copy(showDiscardConfirmation = false, isLoading = true) }
+        // The steep is going, so its notes have nowhere to land
+        notesSave.cancel()
 
         viewModelScope.launch {
             discardSteepUseCase(session.session.id)

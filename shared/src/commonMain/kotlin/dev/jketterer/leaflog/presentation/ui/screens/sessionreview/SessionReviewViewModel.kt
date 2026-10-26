@@ -23,6 +23,8 @@ import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.viewmodel.DebouncedSave
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,6 +57,7 @@ class SessionReviewViewModel(
     private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
     private val findMethodUpdateUseCase: FindMethodUpdateUseCase,
     private val updateMethodFromSessionUseCase: UpdateMethodFromSessionUseCase,
+    appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionReviewState())
@@ -65,6 +68,10 @@ class SessionReviewViewModel(
 
     val messages = UiMessages<Nothing>()
 
+    // A save rewrites the session and rebuilds the tea's stats, too much to do per keystroke
+    private val notesSave = DebouncedSave(appScope)
+    private val steepNotesSave = DebouncedSave(appScope)
+
     init {
         load()
     }
@@ -72,8 +79,9 @@ class SessionReviewViewModel(
     fun onIntent(intent: SessionReviewIntent) {
         when (intent) {
             is SessionReviewIntent.NotesChanged -> {
-                _state.update { it.copy(notes = intent.notes) }
-                editSession { it.copy(notes = _state.value.notes) }
+                val notes = intent.notes
+                _state.update { it.copy(notes = notes) }
+                notesSave.schedule { saveSession { it.copy(notes = notes) } }
             }
 
             is SessionReviewIntent.PhotoAdded -> addPhoto(intent.imageBytes)
@@ -87,8 +95,9 @@ class SessionReviewViewModel(
 
             is SessionReviewIntent.SteepNotesChanged -> {
                 val id = _state.value.editingSteepId ?: return
-                _state.update { it.copy(editNotes = intent.notes) }
-                editSteep(id) { it.copy(notes = _state.value.editNotes) }
+                val notes = intent.notes
+                _state.update { it.copy(editNotes = notes) }
+                steepNotesSave.schedule { saveSteep(id) { it.copy(notes = notes) } }
             }
 
             is SessionReviewIntent.SteepTagToggled -> toggleTag(intent.tagId)
@@ -105,11 +114,11 @@ class SessionReviewViewModel(
             is SessionReviewIntent.MethodLabelChanged -> _state.update { it.copy(methodLabel = intent.label) }
             is SessionReviewIntent.SaveMethod -> saveMethod()
             is SessionReviewIntent.UpdateMethod -> updateMethod()
-            is SessionReviewIntent.Done -> _navigationEvents.trySend(
-                SessionReviewNavEvent.NavigateToHome(
-                    route.sessionId
-                )
-            )
+            is SessionReviewIntent.Done -> viewModelScope.launch {
+                notesSave.flush()
+                steepNotesSave.flush()
+                _navigationEvents.send(SessionReviewNavEvent.NavigateToHome(route.sessionId))
+            }
         }
     }
 
@@ -157,20 +166,20 @@ class SessionReviewViewModel(
             brewingTime = BrewingPlan.learnedFrom(session.steeps).base,
         )
 
-    private fun editSession(edit: (Session) -> Session) {
-        viewModelScope.launch {
-            editSessionUseCase(route.sessionId, edit = edit)
-                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
-                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
-        }
+    private suspend fun saveSession(edit: (Session) -> Session) {
+        editSessionUseCase(route.sessionId, edit = edit)
+            .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+            .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
     }
 
     private fun editSteep(steepId: String, edit: (Steep) -> Steep) {
-        viewModelScope.launch {
-            editSteepUseCase(steepId, edit)
-                .onSuccess { updated -> _state.update { it.copy(session = updated) } }
-                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
-        }
+        viewModelScope.launch { saveSteep(steepId, edit) }
+    }
+
+    private suspend fun saveSteep(steepId: String, edit: (Steep) -> Steep) {
+        editSteepUseCase(steepId, edit)
+            .onSuccess { updated -> _state.update { it.copy(session = updated) } }
+            .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
     }
 
     private fun toggleTag(tagId: String) {

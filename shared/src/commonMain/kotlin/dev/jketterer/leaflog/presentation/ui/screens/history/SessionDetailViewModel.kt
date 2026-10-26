@@ -24,7 +24,9 @@ import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUse
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.viewmodel.DebouncedSave
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +70,7 @@ class SessionDetailViewModel(
     private val discardSteepUseCase: DiscardSteepUseCase,
     private val timerService: TimerService,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
+    appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SessionDetailState())
@@ -77,6 +80,10 @@ class SessionDetailViewModel(
     val navEvents = _navEvents.receiveAsFlow()
 
     val messages = UiMessages<Nothing>()
+
+    // A save rewrites the session, rebuilds the tea's stats and reloads this screen, too much to
+    // do per keystroke
+    private val steepNotesSave = DebouncedSave(appScope)
 
     private sealed interface PendingAction {
         data object BrewAgain : PendingAction
@@ -116,7 +123,12 @@ class SessionDetailViewModel(
             is SessionDetailIntent.DeleteSessionClicked -> showDeleteConfirmation()
             is SessionDetailIntent.ConfirmDelete -> confirmDelete()
             is SessionDetailIntent.CancelDelete -> cancelDelete()
-            is SessionDetailIntent.DeleteSteepClicked -> showDeleteSteepConfirmation(intent.steepId)
+            // Notes typed just before land first, in case the delete is canceled
+            is SessionDetailIntent.DeleteSteepClicked -> viewModelScope.launch {
+                steepNotesSave.flush()
+                showDeleteSteepConfirmation(intent.steepId)
+            }
+
             is SessionDetailIntent.ConfirmDeleteSteep -> confirmDeleteSteep()
             is SessionDetailIntent.CancelDeleteSteep -> cancelDeleteSteep()
             is SessionDetailIntent.BrewAgainClicked -> inProgressDelegate.checkAndProceed(
@@ -140,9 +152,13 @@ class SessionDetailViewModel(
             is SessionDetailIntent.ConfirmAddSteep -> confirmAddSteep()
 
             // navigation intents
+            // Edit Session reads the session as stored and saves it whole, notes included
             is SessionDetailIntent.EditSessionClicked -> {
                 val sessionId = _state.value.session?.session?.id ?: return
-                _navEvents.trySend(SessionDetailNavEvent.NavigateToEditSession(sessionId))
+                viewModelScope.launch {
+                    steepNotesSave.flush()
+                    _navEvents.send(SessionDetailNavEvent.NavigateToEditSession(sessionId))
+                }
             }
 
             is SessionDetailIntent.ViewTeaClicked -> _navEvents.trySend(
@@ -151,8 +167,9 @@ class SessionDetailViewModel(
                 )
             )
 
-            is SessionDetailIntent.BackClicked -> {
-                _navEvents.trySend(SessionDetailNavEvent.NavigateBack)
+            is SessionDetailIntent.BackClicked -> viewModelScope.launch {
+                steepNotesSave.flush()
+                _navEvents.send(SessionDetailNavEvent.NavigateBack)
             }
 
             is SessionDetailIntent.StepToSession -> shownSessionId.value = intent.sessionId
@@ -174,8 +191,9 @@ class SessionDetailViewModel(
 
             is SessionDetailIntent.SteepNotesChanged -> {
                 val id = _state.value.editingSteepId ?: return
-                _state.update { it.copy(editNotes = intent.notes) }
-                editSteep(id) { it.copy(notes = _state.value.editNotes) }
+                val notes = intent.notes
+                _state.update { it.copy(editNotes = notes) }
+                steepNotesSave.schedule { saveSteep(id) { it.copy(notes = notes) } }
             }
 
             is SessionDetailIntent.SteepTagToggled -> toggleTag(intent.tagId)
@@ -330,10 +348,12 @@ class SessionDetailViewModel(
 
     /** The session flow brings the saved steep back. */
     private fun editSteep(steepId: String, edit: (Steep) -> Steep) {
-        viewModelScope.launch {
-            editSteepUseCase(steepId, edit)
-                .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
-        }
+        viewModelScope.launch { saveSteep(steepId, edit) }
+    }
+
+    private suspend fun saveSteep(steepId: String, edit: (Steep) -> Steep) {
+        editSteepUseCase(steepId, edit)
+            .onFailure { messages.failure(it, Res.string.couldnt_save_changes) }
     }
 
     private fun toggleTag(tagId: String) {

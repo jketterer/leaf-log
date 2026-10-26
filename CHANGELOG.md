@@ -16,6 +16,48 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-26
+
+Recaps: once a season ends, "Your autumn in tea" pages through what you brewed, and from January,
+"Your year in tea". Analytics follows the calendar and links into your journal.
+
+### Added
+
+- Season recaps, once a season with 10 or more sessions has ended, and a year recap from January.
+  Each is a set of pages: the season at a glance, its rhythm, your most brewed teas, the teas you
+  discovered, your flavors, how you brewed, your best session and your shelf. Tap a tea, session or
+  day to open it. A new recap leads Analytics for two weeks; the book icon opens every recap.
+- A Hemisphere setting, so seasons match where you live. It starts from your region.
+- "Not brewed lately" in the collection: unfinished teas last brewed 60 or more days ago, oldest
+  first. It works with the type filter and search.
+- Analytics links into your journal: a heatmap cell opens History for that day, week or month, a
+  tea type opens History by that type over the period, a vessel opens its page, and a top tea opens
+  History by that tea.
+
+### Changed
+
+- Analytics periods follow the calendar: This week, This month, This season, This year and All
+  time, each compared with the same part of the period before. A saved period that no longer exists
+  reads as This week.
+- Analytics stays up to date as you brew and edit, and keeps the screen up while a period loads.
+  Each card hides when it has nothing to show, rather than the whole screen waiting for 10 sessions.
+- One activity heatmap replaces the trend chart: by day for a week, month or season, by week for a
+  year, by month for All time.
+- The vessel chart uses the app's colors, with the smaller vessels grouped as "Other".
+- Comparisons read "up 15% from last week" in a neutral color, never red.
+- Top rated needs at least 2 rated sessions of a tea.
+- Analytics no longer shows insights.
+
+### Fixed
+
+- This week includes today on a Sunday.
+- Tapping a chart segment opens the segment you tapped, and legend rows can be tapped too.
+- Every heatmap cell and chart segment has an outline, so a pale tea type such as White shows on
+  any background.
+- The heatmap orders months by year, and its text fits at large font sizes.
+- Screen readers describe each chart and the direction of each comparison.
+- Typing a note no longer saves on every keystroke; it saves once you pause.
+
 ## [0.6.0] - 2026-10-22
 
 The journal reads like one: History by day, a session as a timeline of its steeps, and a tea page

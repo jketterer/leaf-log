@@ -9,7 +9,7 @@ and delete this directory once it has been absorbed.
 | Report | Covers | Findings | Of which bugs |
 |---|---|---|---|
 | [1-brew-loop.md](1-brew-loop.md) | Home, Log Tea, Timer, Quick Timer, Steep Complete, brew navigation | 78 | 32 |
-| [2-journal.md](2-journal.md) | History, Session Detail, Edit Session, Analytics, shared photo/rating components | 87 | 30 |
+| ~~2-journal.md~~ | ~~History, Session Detail, Edit Session, Analytics, shared photo/rating components~~ (cleared in 0.6.0 and 0.7.0; open rows moved to report 4) | 87 | 30 |
 | [3-tea-library.md](3-tea-library.md) | Collection, Tea Detail, Edit Tea, Brewing Methods, prefill | 67 | 22 |
 | [4-setup-and-foundations.md](4-setup-and-foundations.md) | Vessels, Settings, Tea Types, navigation, theme, strings, errors, export/import, DI, build, platform parity | 123 | 33 |
 
@@ -92,6 +92,9 @@ These are where the roadmap should spend its first real effort. Each deletes a *
 - **Unit round-trips lose precision** — every edit sheet converts through whole display units
   (150 ml → 147.9 ml for fl-oz users on a no-op save).
 - **`null` means "unchanged"** in update use cases, so "cleared" is inexpressible.
+- **Time zones** (a design note): days are bucketed in the device's *current* zone at read time,
+  so sessions logged while traveling move to a different day back home. Store the UTC offset with
+  each session if that matters.
 - **Whole-row upserts from stale snapshots** — ~~Timer, Steep Complete,~~ Edit Tea, Toggle Favorite,
   search results. Field-level updates or read-modify-write inside use cases.
 
@@ -177,9 +180,9 @@ About/version anywhere in the UI, `allowBackup` without extraction rules.
 | 2.5 "nothing signals completion when the app is open" | The system notification does, in foreground — weakly, and not at all when the in-app toggle is off |
 | 2.7 FAB hidden during in-progress session | Always visible since 558d194; conflict dialog replaced it |
 | 2.7 Choose Method lacks vessel/parameters | Shows parameter chips; list is already vessel-scoped. Real problem is duplicate auto-labels |
-| 2.7 custom date range doesn't survive restart | Custom range is unreachable — filtered out of the menu |
-| 2.7 weight-unit row is "discoverability only" | Weight unit is honoured by one Analytics card only |
-| Decisions: No streaks | A streak insight ships |
+| ~~2.7 custom date range doesn't survive restart~~ | ~~Custom range is unreachable — filtered out of the menu~~ |
+| ~~2.7 weight-unit row is "discoverability only"~~ | ~~Weight unit is honoured by one Analytics card only~~ |
+| ~~Decisions: No streaks~~ | ~~A streak insight ships~~ |
 | CLAUDE.md: `factoryOf` for repositories | Repositories are `singleOf` (correctly) — fix the doc |
 | Dead-code list | Also: `BrewingConfiguration.isActive`, `RecentSessionsCard`, `CompleteDraftDialog`, `NavRoute.MoreRoute`, Log Tea photo intents, ~~Quick Timer dead state, `CompleteTimerUseCase`,~~ 4 single-call use cases, 3 unreferenced drawables |
 
@@ -199,7 +202,7 @@ One line each; detail in the linked reports.
 | ~~History~~ | ~~Still a parameter list, not a journal; child steeps look like brews; invisible search keeps filtering; route filters re-apply~~ |
 | ~~Session Detail~~ | ~~Reads like a form printout; stacking collectors; Add Steep skips in-progress guard and stamps "now"~~ |
 | ~~Edit Session~~ | ~~Can't clear fields; no errors shown; no back guard; edits don't reach child steeps~~ |
-| Analytics | Mostly-correct multi-steep aggregation; date-boundary bugs, broken chart taps, loads once and goes stale, ~14 sequential full-table queries on All Time |
+| ~~Analytics~~ | ~~Mostly-correct multi-steep aggregation; date-boundary bugs, broken chart taps, loads once and goes stale, ~14 sequential full-table queries on All Time~~ |
 | ~~Collection~~ | ~~Works small; search is name-only, a stale snapshot, and can't combine with filters; error display invisible~~ |
 | ~~Tea Detail~~ | ~~A property sheet (roadmap 2.2); delete broken, average wrong, collectors leak, recents filled by child steeps~~ |
 | Edit Tea | Best form in the app; double-submit creates duplicates, edit skips trimming, lands on list not the new tea |
@@ -234,7 +237,7 @@ This is the raw material for choosing big bets in the vision interview — not a
 - **Reading layout**: photo strip ~~and notes lead, parameter chips recede~~.
 - ~~**Steep timeline** in Session Detail: clock time, interval since previous steep, changes,
   inline rating/notes.~~
-- **Calendar navigator** atop History (reuse heatmap canvas); heatmap day → History day.
+- **Calendar navigator** atop History (reuse heatmap canvas)~~; heatmap day → History day~~.
 - ~~**Session-level note**, editable date/time, previous/next session navigation, "previous time
   with this tea".~~
 - ~~**Location** as a journal dimension (stored and edited, never shown or searched).~~
@@ -253,9 +256,9 @@ This is the raw material for choosing big bets in the vision interview — not a
 - Drag-reorder for vessels and tea types (`displayOrder` exists, no UI); merge tea types.
 
 **Retrospection** (roadmap 3.2)
-- Analytics refactor to one query + pure aggregators — prerequisite for recaps and makes every
-  date-boundary bug host-testable.
-- Season/month recaps, parameter distributions per tea type, time-of-day suggestion on Home
+- ~~Analytics refactor to one query + pure aggregators — prerequisite for recaps and makes every
+  date-boundary bug host-testable.~~
+- ~~Season/month recaps,~~ parameter distributions per tea type, time-of-day suggestion on Home
   ("your usual 3pm oolong").
 
 **Platform and craft**
@@ -263,7 +266,7 @@ This is the raw material for choosing big bets in the vision interview — not a
 - ~~Per-tab back stacks;~~ tablet/iPad layouts (can't be avoided on Android 16 anyway).
 - "Last backup 42 days ago" nudge; import preview; preferences in export.
 - ~~String resources + typed errors — the prerequisite for localization and for Phase 4.~~
-- Canvas chart semantics (one line per chart)~~ and RatingSelector semantics — the rating control is
+- ~~Canvas chart semantics (one line per chart) and RatingSelector semantics — the rating control is
   the loop's central input and is currently unusable with a screen reader~~.
 
 ---

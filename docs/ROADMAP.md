@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-23 (Bet 4 designed)
+> **Last updated:** 2026-10-26 (Bet 4 released as 0.7.0)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -845,6 +845,8 @@ Session are cleared; Track B line for an upgrade over the v11 build.
 
 ## Bet 4 — Recap
 
+**Done, released as 0.7.0.**
+
 **Outcome:** retrospection as an occasion. A dedicated, paged recap — "Your autumn in tea", later
 "Your year in tea". The one retrospective surface worth opening, and the portfolio's showpiece
 screen.
@@ -964,7 +966,7 @@ southern-region device and the pager across rotation and 2× font.
 18. [x] `feat: recap best session`
 19. [x] `feat: recap shelf`. Test: finished and waiting at the window's edges.
 20. [x] `feat: year in tea`. Test: the Q1 gate.
-21. [ ] `chore: release 0.7.0`: audit rows struck; report 2 deleted.
+21. [x] `chore: release 0.7.0`: audit rows struck; report 2 deleted.
 
 ---
 

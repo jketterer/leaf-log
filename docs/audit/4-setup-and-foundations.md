@@ -200,6 +200,9 @@ Where the roadmap already lists an item, I only repeat it when I have new eviden
 | ~~consistency~~ | ~~empty states~~ | ~~EmptyState used in 5 places~~ | ~~`AnalyticsEmptyState` and `EmptyHomeState` are separate. TeaTypeList (bare Text), VesselDetail ("Vessel not found" bare Text) and QuickTimerDetailsSheet:221 don't use it. `EmptyState` has no icon slot and always shows a FontAwesome PlusSquare.~~ |
 | ~~consistency~~ | ~~icons~~ | ~~49 files use Feather, 8 use FontAwesome, plus custom vectors~~ | ~~Two icon families are mixed, and FontAwesome ships whole because R8 is off.~~ |
 | ~~a11y~~ | ~~touch target~~ | ~~TemperatureInputField.kt:56-66 (and Volume)~~ | ~~The unit-toggle suffix is text plus 4dp padding, about 28dp tall, and it changes a **global** preference.~~ |
+| arch | CLAUDE.md | BrewingParamChip.kt:23, FullscreenImageViewer.kt:46 | Public components with no `modifier: Modifier = Modifier` parameter. |
+| a11y | touch target | PhotoGrid.kt:73-77 | The remove-photo button is 24dp and removes with no confirmation or undo. Photos are described as a generic "Session photo", and its strings aren't in `strings.xml`. |
+| polish | viewer | FullscreenImageViewer.kt `ZoomableImage` | Double-tap zooms around the center rather than the tap point. Each page's `scale` isn't reset when you page away, so an adjacent page that stays composed may be out of sync *(unverified)*. |
 
 ### Error handling — five different patterns, and several screens drop failures silently.
 Counts: 41 `.onFailure`, 14 `catchError`, 85 sites that put `e.message` or `error.message` into user-facing text, and 7 `showSnackbar` calls in 5 files.

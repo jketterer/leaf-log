@@ -105,6 +105,7 @@ private fun RecapContent(
                     is RecapPage.Discoveries -> DiscoveriesPage(page, onTapTea)
                     is RecapPage.Flavors -> FlavorsPage(page)
                     is RecapPage.HowYouBrewed -> HowYouBrewedPage(page, onTapSession)
+                    is RecapPage.BestSession -> BestSessionPage(page, onTapSession)
                 }
             }
         }

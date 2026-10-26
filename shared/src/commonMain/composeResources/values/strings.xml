@@ -261,6 +261,8 @@
     <string name="recap_longest_session">Steeps in your longest session</string>
     <!-- Over the vessel's name, beside its session count -->
     <string name="recap_favorite_vessel">Sessions in your favorite vessel</string>
+    <!-- Under the best session's rating: "4.8 / out of 5 for Dan Cong Mi Lan Xiang, your best session" -->
+    <string name="recap_best_session">out of 5 for %1$s, your best session</string>
     <string name="recap_close">Close recap</string>
     <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>

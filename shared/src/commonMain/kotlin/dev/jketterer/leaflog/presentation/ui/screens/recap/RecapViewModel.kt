@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.ActivityBucket
 import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.activity
+import dev.jketterer.leaflog.domain.models.best
 import dev.jketterer.leaflog.domain.models.brewingHabits
 import dev.jketterer.leaflog.domain.models.busiestMonth
 import dev.jketterer.leaflog.domain.models.discoveries
@@ -102,6 +103,9 @@ class RecapViewModel(
                                     favoriteVessel = sessions.vesselDistribution(window, vessels.associateBy { v -> v.id })
                                         .firstOrNull(),
                                 )
+                            },
+                            sessions.filter { it.startedAt in window }.best()?.let { best ->
+                                teasById[best.session.teaId]?.let { RecapPage.BestSession(best, it.name) }
                             },
                         ),
                     )

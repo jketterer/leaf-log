@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.BrewingHabits
 import dev.jketterer.leaflog.domain.models.FlavorProfile
 import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
 import dev.jketterer.leaflog.domain.models.TopTea
@@ -51,5 +52,11 @@ sealed interface RecapPage {
         val longestTeaName: String?,
         val peakSteep: Int?,
         val favoriteVessel: VesselDistribution?,
+    ) : RecapPage
+
+    /** The season's highest-rated session, and its tea's name. */
+    data class BestSession(
+        val session: SessionWithSteeps,
+        val teaName: String,
     ) : RecapPage
 }

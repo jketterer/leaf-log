@@ -955,7 +955,7 @@ southern-region device and the pager across rotation and 2× font.
 11. [x] `feat: not brewed lately`. Test: `isDormant`.
 12. [x] `feat: season recaps`: the windows and gate, `RecapRoute`, the hero card and row, the pager
     with its cover. Tests: finished seasons only, the 10-session gate, the hemisphere flip.
-13. [ ] `feat: recap rhythm`
+13. [x] `feat: recap rhythm`
 14. [ ] `feat: recap most brewed`
 15. [ ] `feat: recap discoveries`
 16. [ ] `feat: recap flavors`. Test: a tag new against the previous season.

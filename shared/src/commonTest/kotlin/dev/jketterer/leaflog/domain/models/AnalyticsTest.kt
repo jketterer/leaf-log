@@ -259,6 +259,23 @@ class AnalyticsTest {
     }
 
     @Test
+    fun `the busiest month sums its days and takes the earlier month on a tie`() {
+        val window = AnalyticsPeriod.THIS_SEASON.window(at("2027-02-28T12:00"), tz).current
+        val sessions = listOf(
+            session("2026-12-31T23:30"),
+            session("2027-01-01T00:30"),
+            session("2027-02-10T10:00"),
+            session("2027-02-20T10:00"),
+            session("2027-01-15T10:00"),
+        )
+
+        val cells = sessions.activity(window, ActivityBucket.DAY, TEAS, TEA_TYPES)
+
+        assertEquals(LocalDate(2027, 1, 1) to 2, cells.busiestMonth())
+        assertNull(cells.map { it.copy(sessionCount = 0) }.busiestMonth())
+    }
+
+    @Test
     fun `tea types are shared out by session count`() {
         val sessions = listOf(
             session(teaId = "green"),

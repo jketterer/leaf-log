@@ -1,7 +1,9 @@
 package dev.jketterer.leaflog.presentation.ui.screens.recap
 
+import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.Season
+import kotlinx.datetime.LocalDate
 
 data class RecapState(
     val season: Season,
@@ -13,4 +15,11 @@ data class RecapState(
 
 sealed interface RecapPage {
     data class Cover(val sessions: Int, val teas: Int) : RecapPage
+
+    /** The season's days, and its busiest month by its first day. */
+    data class Rhythm(
+        val cells: List<ActivityCell>,
+        val busiestMonth: LocalDate,
+        val busiestMonthSessions: Int,
+    ) : RecapPage
 }

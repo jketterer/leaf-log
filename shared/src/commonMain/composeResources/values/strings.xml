@@ -222,6 +222,11 @@
         <item quantity="one">tea</item>
         <item quantity="other">different teas</item>
     </plurals>
+    <!-- Under the busiest month's session count: "28 / sessions in July, your busiest month" -->
+    <plurals name="recap_busiest_month">
+        <item quantity="one">session in %1$s, your busiest month</item>
+        <item quantity="other">sessions in %1$s, your busiest month</item>
+    </plurals>
     <string name="recap_close">Close recap</string>
     <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>

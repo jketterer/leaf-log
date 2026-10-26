@@ -212,6 +212,7 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             RecapScreen(
                 route = route,
                 onClose = { navigator.navigateUp(route) },
+                onNavigateToHistory = { navigator.navigate(it) },
             )
         }
 

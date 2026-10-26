@@ -90,68 +90,81 @@ fun BrewingActivityHeatmap(
                 style = MaterialTheme.typography.titleMedium,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            val first = cells.first().date
-            val summary = activitySummary(cells, period.activityBucket)
-            Column(modifier = Modifier.semantics { contentDescription = summary }) {
-                when (period) {
-                    AnalyticsPeriod.THIS_WEEK, AnalyticsPeriod.THIS_MONTH -> {
-                        if (period == AnalyticsPeriod.THIS_MONTH) {
-                            Text(
-                                text = TimeFormatter.formatDate(first, DateSkeleton.MONTH_YEAR),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(modifier = Modifier.height(LABEL_GAP))
-                        }
-                        HeatmapGrid(
-                            cells = cells,
-                            lineLength = 7,
-                            offset = first.dayOfWeek.ordinal,
-                            columnLabels = DAY_LABELS,
-                            dayNumbers = true,
-                            today = currentDate(),
-                            onTapCell = onTapCell,
-                        )
-                    }
+            ActivityHeatmap(cells = cells, period = period, onTapCell = onTapCell)
+        }
+    }
+}
 
-                    AnalyticsPeriod.THIS_SEASON -> {
-                        val offset = first.dayOfWeek.ordinal
-                        // A month is named over the week its first day falls in
-                        val weeks = arrayOfNulls<String>((offset + cells.size + 6) / 7)
-                        cells.forEachIndexed { index, cell ->
-                            if (cell.date.day == 1) {
-                                weeks[(offset + index) / 7] =
-                                    TimeFormatter.formatDate(cell.date, DateSkeleton.MONTH)
-                            }
-                        }
-                        HeatmapGrid(
-                            cells = cells,
-                            lineLength = 7,
-                            offset = offset,
-                            transposed = true,
-                            columnLabels = weeks.toList(),
-                            rowLabels = DAY_LABELS,
-                            today = currentDate(),
-                            onTapCell = onTapCell,
-                        )
-                    }
+/** [BrewingActivityHeatmap]'s grid alone, for a surface that titles it itself. */
+@Composable
+fun ActivityHeatmap(
+    cells: List<ActivityCell>,
+    period: AnalyticsPeriod,
+    onTapCell: (date: LocalDate) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (cells.isEmpty()) return
 
-                    AnalyticsPeriod.THIS_YEAR -> YearlyHeatmapCanvas(cells = cells, onTapCell = onTapCell)
+    val first = cells.first().date
+    val summary = activitySummary(cells, period.activityBucket)
+    Column(modifier = modifier.semantics { contentDescription = summary }) {
+        when (period) {
+            AnalyticsPeriod.THIS_WEEK, AnalyticsPeriod.THIS_MONTH -> {
+                if (period == AnalyticsPeriod.THIS_MONTH) {
+                    Text(
+                        text = TimeFormatter.formatDate(first, DateSkeleton.MONTH_YEAR),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(LABEL_GAP))
+                }
+                HeatmapGrid(
+                    cells = cells,
+                    lineLength = 7,
+                    offset = first.dayOfWeek.ordinal,
+                    columnLabels = DAY_LABELS,
+                    dayNumbers = true,
+                    today = currentDate(),
+                    onTapCell = onTapCell,
+                )
+            }
 
-                    AnalyticsPeriod.ALL_TIME -> {
-                        val years = cells.last().date.year - first.year + 1
-                        HeatmapGrid(
-                            cells = cells,
-                            lineLength = 12,
-                            offset = first.month.ordinal,
-                            columnLabels = Month.entries.map {
-                                TimeFormatter.formatDate(LocalDate(first.year, it, 1), DateSkeleton.NARROW_MONTH)
-                            },
-                            rowLabels = List(years) { (first.year + it).toString() },
-                            onTapCell = onTapCell,
-                        )
+            AnalyticsPeriod.THIS_SEASON -> {
+                val offset = first.dayOfWeek.ordinal
+                // A month is named over the week its first day falls in
+                val weeks = arrayOfNulls<String>((offset + cells.size + 6) / 7)
+                cells.forEachIndexed { index, cell ->
+                    if (cell.date.day == 1) {
+                        weeks[(offset + index) / 7] =
+                            TimeFormatter.formatDate(cell.date, DateSkeleton.MONTH)
                     }
                 }
+                HeatmapGrid(
+                    cells = cells,
+                    lineLength = 7,
+                    offset = offset,
+                    transposed = true,
+                    columnLabels = weeks.toList(),
+                    rowLabels = DAY_LABELS,
+                    today = currentDate(),
+                    onTapCell = onTapCell,
+                )
+            }
+
+            AnalyticsPeriod.THIS_YEAR -> YearlyHeatmapCanvas(cells = cells, onTapCell = onTapCell)
+
+            AnalyticsPeriod.ALL_TIME -> {
+                val years = cells.last().date.year - first.year + 1
+                HeatmapGrid(
+                    cells = cells,
+                    lineLength = 12,
+                    offset = first.month.ordinal,
+                    columnLabels = Month.entries.map {
+                        TimeFormatter.formatDate(LocalDate(first.year, it, 1), DateSkeleton.NARROW_MONTH)
+                    },
+                    rowLabels = List(years) { (first.year + it).toString() },
+                    onTapCell = onTapCell,
+                )
             }
         }
     }

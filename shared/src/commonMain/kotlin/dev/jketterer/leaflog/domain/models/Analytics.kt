@@ -161,6 +161,13 @@ fun List<SessionWithSteeps>.activity(
         .toList()
 }
 
+/** The month with the most sessions in these cells and its count, the earlier on a tie; null with none. */
+fun List<ActivityCell>.busiestMonth(): Pair<LocalDate, Int>? =
+    groupBy { ActivityBucket.MONTH.startOf(it.date) }
+        .map { (month, cells) -> month to cells.sumOf { it.sessionCount } }
+        .filter { (_, sessions) -> sessions > 0 }
+        .maxByOrNull { (_, sessions) -> sessions }
+
 /** The days a cell dated [date] covers: from that date to the end of its day, week or month. */
 fun ActivityBucket.daysFrom(date: LocalDate) =
     date..startOf(date).plus(1, unit).minus(1, DateTimeUnit.DAY)

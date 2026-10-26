@@ -2,10 +2,15 @@ package dev.jketterer.leaflog.presentation.ui.screens.recap
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.jketterer.leaflog.domain.models.ActivityBucket
 import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.domain.models.activity
+import dev.jketterer.leaflog.domain.models.busiestMonth
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +32,8 @@ import leaf_log.shared.generated.resources.couldnt_load_sessions
 class RecapViewModel(
     route: NavRoute.RecapRoute,
     private val teaSessionRepository: TeaSessionRepository,
+    private val teaRepository: TeaRepository,
+    private val teaTypeRepository: TeaTypeRepository,
     private val preferencesRepository: PreferencesRepository,
 ) : ViewModel() {
 
@@ -40,13 +47,25 @@ class RecapViewModel(
             val season = _state.value.season
             combine(
                 teaSessionRepository.getAllSessionsFlow(),
+                teaRepository.getAllFlow(),
+                teaTypeRepository.getAllFlow(),
                 preferencesRepository.getPreferencesFlow(),
-            ) { sessions, preferences ->
-                val summary = sessions.summary(season.window(TimeZone.currentSystemDefault()))
+            ) { sessions, teas, teaTypes, preferences ->
+                val window = season.window(TimeZone.currentSystemDefault())
+                val summary = sessions.summary(window)
+                val days = sessions.activity(
+                    window,
+                    ActivityBucket.DAY,
+                    teas.associateBy { it.id },
+                    teaTypes.associateBy { it.id },
+                )
                 _state.update {
                     it.copy(
                         hemisphere = preferences.hemisphere,
-                        pages = listOf(RecapPage.Cover(summary.totalSessions, summary.uniqueTeasCount)),
+                        pages = listOfNotNull(
+                            RecapPage.Cover(summary.totalSessions, summary.uniqueTeasCount),
+                            days.busiestMonth()?.let { (month, count) -> RecapPage.Rhythm(days, month, count) },
+                        ),
                     )
                 }
             }

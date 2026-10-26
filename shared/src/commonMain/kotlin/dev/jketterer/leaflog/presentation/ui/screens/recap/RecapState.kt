@@ -3,6 +3,8 @@ package dev.jketterer.leaflog.presentation.ui.screens.recap
 import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
+import dev.jketterer.leaflog.domain.models.TopTea
 import kotlinx.datetime.LocalDate
 
 data class RecapState(
@@ -21,5 +23,11 @@ sealed interface RecapPage {
         val cells: List<ActivityCell>,
         val busiestMonth: LocalDate,
         val busiestMonthSessions: Int,
+    ) : RecapPage
+
+    /** The season's top 3 teas, and every tea type's share of its sessions. */
+    data class MostBrewed(
+        val teas: List<TopTea>,
+        val teaTypes: List<TeaTypeDistribution>,
     ) : RecapPage
 }

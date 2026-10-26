@@ -210,7 +210,9 @@ When a screen grows past a few hundred lines, extract:
   `presentation/ui/components/[area]/Name.kt` as public composables, each with a
   `modifier: Modifier = Modifier` parameter and its own @Preview
 - **Sections that only make sense for one feature** into `screens/[feature]/[Feature]Sections.kt` as
-  `internal` composables (top-level `private` is file-scoped and won't cross files)
+  `internal` composables (top-level `private` is file-scoped and won't cross files). When that
+  file would grow as long as the screen it came from, give each section its own file instead,
+  named for it, with its previews (`screens/recap/` has a file per page)
 - **Dialog call-sites** into a single private `[Feature]Dialogs(state, onIntent)` composable
 
 Guidelines:

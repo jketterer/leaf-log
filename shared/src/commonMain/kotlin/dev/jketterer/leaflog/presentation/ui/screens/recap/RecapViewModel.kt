@@ -7,6 +7,8 @@ import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.domain.models.activity
 import dev.jketterer.leaflog.domain.models.busiestMonth
 import dev.jketterer.leaflog.domain.models.summary
+import dev.jketterer.leaflog.domain.models.teaTypeDistribution
+import dev.jketterer.leaflog.domain.models.topTeas
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -52,19 +54,20 @@ class RecapViewModel(
                 preferencesRepository.getPreferencesFlow(),
             ) { sessions, teas, teaTypes, preferences ->
                 val window = season.window(TimeZone.currentSystemDefault())
+                val teasById = teas.associateBy { it.id }
+                val teaTypesById = teaTypes.associateBy { it.id }
                 val summary = sessions.summary(window)
-                val days = sessions.activity(
-                    window,
-                    ActivityBucket.DAY,
-                    teas.associateBy { it.id },
-                    teaTypes.associateBy { it.id },
-                )
+                val days = sessions.activity(window, ActivityBucket.DAY, teasById, teaTypesById)
+                val topTeas = sessions.topTeas(window, teasById).take(3)
                 _state.update {
                     it.copy(
                         hemisphere = preferences.hemisphere,
                         pages = listOfNotNull(
                             RecapPage.Cover(summary.totalSessions, summary.uniqueTeasCount),
                             days.busiestMonth()?.let { (month, count) -> RecapPage.Rhythm(days, month, count) },
+                            topTeas.takeIf { it.isNotEmpty() }?.let {
+                                RecapPage.MostBrewed(it, sessions.teaTypeDistribution(window, teasById, teaTypesById))
+                            },
                         ),
                     )
                 }

@@ -227,6 +227,11 @@
         <item quantity="one">session in %1$s, your busiest month</item>
         <item quantity="other">sessions in %1$s, your busiest month</item>
     </plurals>
+    <!-- Under the top tea's session count: "14 / sessions of Tie Guan Yin, your most brewed tea" -->
+    <plurals name="recap_most_brewed">
+        <item quantity="one">session of %1$s, your most brewed tea</item>
+        <item quantity="other">sessions of %1$s, your most brewed tea</item>
+    </plurals>
     <string name="recap_close">Close recap</string>
     <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>

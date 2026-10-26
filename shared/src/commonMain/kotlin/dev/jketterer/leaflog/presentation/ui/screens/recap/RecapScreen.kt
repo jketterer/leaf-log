@@ -72,9 +72,12 @@ fun RecapScreen(
     RecapContent(
         state = state,
         onClose = onClose,
-        onTapDay = { date ->
+        onTapDays = { days ->
             onNavigateToHistory(
-                NavRoute.HistoryRoute(filterDateStart = date.toString(), filterDateEnd = date.toString()),
+                NavRoute.HistoryRoute(
+                    filterDateStart = days.start.toString(),
+                    filterDateEnd = days.endInclusive.toString(),
+                ),
             )
         },
         onTapTea = onNavigateToTea,
@@ -88,7 +91,7 @@ fun RecapScreen(
 private fun RecapContent(
     state: RecapState,
     onClose: () -> Unit,
-    onTapDay: (LocalDate) -> Unit = {},
+    onTapDays: (ClosedRange<LocalDate>) -> Unit = {},
     onTapTea: (teaId: String) -> Unit = {},
     onTapSession: (sessionId: String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -105,8 +108,8 @@ private fun RecapContent(
         ) { index ->
             RecapPageSurface(index) {
                 when (val page = state.pages[index]) {
-                    is RecapPage.Cover -> CoverPage(state.season, state.hemisphere, page)
-                    is RecapPage.Rhythm -> RhythmPage(page, onTapDay)
+                    is RecapPage.Cover -> CoverPage(state.period, state.hemisphere, page)
+                    is RecapPage.Rhythm -> RhythmPage(page, onTapDays)
                     is RecapPage.MostBrewed -> MostBrewedPage(page, onTapTea)
                     is RecapPage.Discoveries -> DiscoveriesPage(page, onTapTea)
                     is RecapPage.Flavors -> FlavorsPage(page)
@@ -225,7 +228,7 @@ private fun RecapContentPreview() {
     LeafLogTheme {
         RecapContent(
             state = RecapState(
-                season = Season(LocalDate(2026, 6, 1)),
+                period = Season(LocalDate(2026, 6, 1)),
                 hemisphere = Hemisphere.NORTHERN,
                 pages = listOf(RecapPage.Cover(sessions = 64, teas = 17)),
             ),

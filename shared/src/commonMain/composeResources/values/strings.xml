@@ -212,7 +212,8 @@
     <string name="recap_title_spring">Your spring in tea</string>
     <string name="recap_title_summer">Your summer in tea</string>
     <string name="recap_title_autumn">Your autumn in tea</string>
-    <!-- A season's first and last month: "Jun – Aug 2026" -->
+    <string name="recap_title_year">Your year in tea</string>
+    <!-- A recap's first and last month: "Jun – Aug 2026" -->
     <string name="recap_months">%1$s – %2$s</string>
     <plurals name="recap_sessions">
         <item quantity="one">session</item>

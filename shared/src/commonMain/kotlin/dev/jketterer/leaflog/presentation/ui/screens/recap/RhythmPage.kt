@@ -14,6 +14,8 @@ import dev.jketterer.leaflog.domain.models.ActivityCell
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.DateSkeleton
 import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.activityBucket
+import dev.jketterer.leaflog.domain.models.daysFrom
 import dev.jketterer.leaflog.presentation.ui.components.analytics.ActivityHeatmap
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.DateTimeUnit
@@ -24,7 +26,7 @@ import leaf_log.shared.generated.resources.recap_busiest_month
 import org.jetbrains.compose.resources.pluralStringResource
 
 @Composable
-internal fun RhythmPage(rhythm: RecapPage.Rhythm, onTapDay: (LocalDate) -> Unit) {
+internal fun RhythmPage(rhythm: RecapPage.Rhythm, onTapDays: (ClosedRange<LocalDate>) -> Unit) {
     RecapPageColumn {
         Text(
             text = rhythm.busiestMonthSessions.toString(),
@@ -43,8 +45,8 @@ internal fun RhythmPage(rhythm: RecapPage.Rhythm, onTapDay: (LocalDate) -> Unit)
         Surface(shape = MaterialTheme.shapes.large) {
             ActivityHeatmap(
                 cells = rhythm.cells,
-                period = AnalyticsPeriod.THIS_SEASON,
-                onTapCell = onTapDay,
+                period = rhythm.heatmap,
+                onTapCell = { onTapDays(rhythm.heatmap.activityBucket.daysFrom(it)) },
                 modifier = Modifier.padding(16.dp),
             )
         }
@@ -67,10 +69,37 @@ private fun RhythmPagePreview() {
                             sessionCount = sessions,
                         )
                     },
+                    heatmap = AnalyticsPeriod.THIS_SEASON,
                     busiestMonth = LocalDate(2026, 7, 1),
                     busiestMonthSessions = 28,
                 ),
-                onTapDay = {},
+                onTapDays = {},
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun RhythmPageYearPreview() {
+    val start = LocalDate(2025, 12, 29)
+    LeafLogTheme {
+        RecapPageSurface(index = 1) {
+            RhythmPage(
+                rhythm = RecapPage.Rhythm(
+                    cells = List(53) { index ->
+                        val sessions = index * 7 % 12
+                        ActivityCell(
+                            date = maxOf(start.plus(index, DateTimeUnit.WEEK), LocalDate(2026, 1, 1)),
+                            dominantTeaTypeColorHex = if (sessions > 0) "#4CAF50" else null,
+                            sessionCount = sessions,
+                        )
+                    },
+                    heatmap = AnalyticsPeriod.THIS_YEAR,
+                    busiestMonth = LocalDate(2026, 11, 1),
+                    busiestMonthSessions = 46,
+                ),
+                onTapDays = {},
             )
         }
     }

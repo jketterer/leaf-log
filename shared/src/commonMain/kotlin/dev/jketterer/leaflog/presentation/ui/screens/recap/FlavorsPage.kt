@@ -69,7 +69,7 @@ internal fun FlavorsPage(flavors: RecapPage.Flavors) {
     }
 }
 
-/** Marks a flavor missing from the season before's. */
+/** Marks a flavor missing from the period before's. */
 @Composable
 private fun NewBadge(modifier: Modifier = Modifier) {
     Text(

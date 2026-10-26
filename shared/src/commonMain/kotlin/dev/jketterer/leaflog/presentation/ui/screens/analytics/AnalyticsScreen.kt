@@ -185,7 +185,7 @@ private fun AnalyticsDataContent(
         RecapLinks(
             recaps = state.recaps,
             hemisphere = state.hemisphere,
-            onOpen = { season -> onIntent(AnalyticsIntent.OpenRecap(season)) },
+            onOpen = { period -> onIntent(AnalyticsIntent.OpenRecap(period)) },
             modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
         )
         PeriodSelector(

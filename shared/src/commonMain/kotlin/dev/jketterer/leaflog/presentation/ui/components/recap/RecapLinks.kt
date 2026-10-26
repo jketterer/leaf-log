@@ -20,7 +20,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ChevronRight
+import dev.jketterer.leaflog.domain.models.CalendarYear
 import dev.jketterer.leaflog.domain.models.Hemisphere
+import dev.jketterer.leaflog.domain.models.RecapPeriod
 import dev.jketterer.leaflog.domain.models.Season
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.LocalDate
@@ -28,9 +30,9 @@ import kotlinx.datetime.LocalDate
 /** The newest recap as a hero card, then the ones before it. Nothing when [recaps] is empty. */
 @Composable
 fun RecapLinks(
-    recaps: List<Season>,
+    recaps: List<RecapPeriod>,
     hemisphere: Hemisphere?,
-    onOpen: (Season) -> Unit,
+    onOpen: (RecapPeriod) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val newest = recaps.firstOrNull() ?: return
@@ -49,7 +51,7 @@ fun RecapLinks(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = seasonLabel(newest, hemisphere),
+                        text = recapLabel(newest, hemisphere),
                         style = MaterialTheme.typography.labelLarge,
                     )
                     Text(
@@ -65,10 +67,10 @@ fun RecapLinks(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                recaps.drop(1).forEach { season ->
+                recaps.drop(1).forEach { period ->
                     SuggestionChip(
-                        onClick = { onOpen(season) },
-                        label = { Text(seasonLabel(season, hemisphere)) },
+                        onClick = { onOpen(period) },
+                        label = { Text(recapLabel(period, hemisphere)) },
                     )
                 }
             }
@@ -82,9 +84,10 @@ private fun RecapLinksPreview() {
     LeafLogTheme {
         RecapLinks(
             recaps = listOf(
-                Season(LocalDate(2026, 6, 1)),
-                Season(LocalDate(2026, 3, 1)),
-                Season(LocalDate(2025, 12, 1)),
+                CalendarYear(2025),
+                Season(LocalDate(2025, 9, 1)),
+                Season(LocalDate(2025, 6, 1)),
+                Season(LocalDate(2025, 3, 1)),
             ),
             hemisphere = Hemisphere.NORTHERN,
             onOpen = {},

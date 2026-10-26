@@ -8,7 +8,7 @@ import dev.jketterer.leaflog.domain.models.activity
 import dev.jketterer.leaflog.domain.models.activityBucket
 import dev.jketterer.leaflog.domain.models.comparedTo
 import dev.jketterer.leaflog.domain.models.daysFrom
-import dev.jketterer.leaflog.domain.models.seasonRecaps
+import dev.jketterer.leaflog.domain.models.recaps
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
 import dev.jketterer.leaflog.domain.models.topRatedTeas
@@ -91,7 +91,7 @@ class AnalyticsViewModel(
             is AnalyticsIntent.TapTea -> navigateToHistoryOverPeriod(teaId = intent.teaId)
             is AnalyticsIntent.TapVessel -> _navEvents.trySend(AnalyticsNavEvent.NavigateToVessel(intent.vesselId))
             is AnalyticsIntent.OpenRecap -> _navEvents.trySend(
-                AnalyticsNavEvent.NavigateToRecap(NavRoute.RecapRoute(intent.season.start.toString()))
+                AnalyticsNavEvent.NavigateToRecap(NavRoute.RecapRoute.of(intent.period))
             )
         }
     }
@@ -146,7 +146,7 @@ class AnalyticsViewModel(
                     activityCells = sessions.activity(window, period.activityBucket, teas, teaTypes),
                     topRatedTeas = sessions.topRatedTeas(window, teas),
                     vesselDistribution = sessions.vesselDistribution(window, vesselList.associateBy { v -> v.id }),
-                    recaps = sessions.seasonRecaps(now, tz),
+                    recaps = sessions.recaps(now, tz),
                 )
             }
         }

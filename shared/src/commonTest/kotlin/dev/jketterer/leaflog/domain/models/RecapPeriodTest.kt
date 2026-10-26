@@ -8,14 +8,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
 
-class SeasonTest {
+class RecapPeriodTest {
 
     @Test
     fun `a recap waits for its season to end`() {
         val summer = List(10) { session("2026-08-${10 + it}T10:00") }
 
-        assertEquals(emptyList(), summer.seasonRecaps(at("2026-08-31T23:59"), tz))
-        assertEquals(listOf(SUMMER), summer.seasonRecaps(at("2026-09-01T00:00"), tz))
+        assertEquals(emptyList(), summer.recaps(at("2026-08-31T23:59"), tz))
+        assertEquals(listOf(SUMMER), summer.recaps(at("2026-09-01T00:00"), tz))
     }
 
     @Test
@@ -23,8 +23,8 @@ class SeasonTest {
         val nine = List(9) { session("2026-07-${10 + it}T10:00") } +
             session("2026-07-30T10:00", SessionStatus.IN_PROGRESS)
 
-        assertEquals(emptyList(), nine.seasonRecaps(NOW, tz))
-        assertEquals(listOf(SUMMER), (nine + session("2026-07-31T10:00")).seasonRecaps(NOW, tz))
+        assertEquals(emptyList(), nine.recaps(NOW, tz))
+        assertEquals(listOf(SUMMER), (nine + session("2026-07-31T10:00")).recaps(NOW, tz))
     }
 
     @Test
@@ -35,7 +35,42 @@ class SeasonTest {
 
         assertEquals(
             listOf(SUMMER, Season(LocalDate(2025, 12, 1))),
-            (winter + summer).seasonRecaps(NOW, tz),
+            (winter + summer).recaps(NOW, tz),
+        )
+    }
+
+    @Test
+    fun `a year has a recap from the new year when its first session came by March`() {
+        val fromMarch = listOf(session("2025-03-31T10:00"), session("2025-11-30T10:00"))
+        val fromApril = listOf(session("2025-04-01T10:00"), session("2025-11-30T10:00"))
+
+        assertEquals(emptyList(), fromMarch.recaps(at("2025-12-31T23:59"), tz))
+        assertEquals(listOf(CalendarYear(2025)), fromMarch.recaps(at("2026-01-01T00:00"), tz))
+        assertEquals(emptyList(), fromApril.recaps(at("2026-01-01T00:00"), tz))
+        assertEquals(
+            listOf(CalendarYear(2026)),
+            (fromApril + session("2026-06-01T10:00")).recaps(at("2027-01-01T00:00"), tz),
+        )
+    }
+
+    @Test
+    fun `a year without completed sessions has no recap`() {
+        val sessions = listOf(
+            session("2024-01-10T10:00"),
+            session("2025-05-10T10:00", SessionStatus.IN_PROGRESS),
+        )
+
+        assertEquals(listOf(CalendarYear(2024)), sessions.recaps(at("2026-01-01T00:00"), tz))
+    }
+
+    @Test
+    fun `a year's recap comes before its autumn's`() {
+        val autumn = List(10) { session("2025-10-${10 + it}T10:00") }
+        val sessions = autumn + session("2025-01-10T10:00")
+
+        assertEquals(
+            listOf(CalendarYear(2025), Season(LocalDate(2025, 9, 1))),
+            sessions.recaps(at("2026-01-01T00:00"), tz),
         )
     }
 

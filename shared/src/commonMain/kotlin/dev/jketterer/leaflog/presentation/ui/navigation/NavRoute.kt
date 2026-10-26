@@ -1,6 +1,10 @@
 package dev.jketterer.leaflog.presentation.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
+import dev.jketterer.leaflog.domain.models.CalendarYear
+import dev.jketterer.leaflog.domain.models.RecapPeriod
+import dev.jketterer.leaflog.domain.models.Season
+import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -46,9 +50,16 @@ sealed interface NavRoute : NavKey {
     @Serializable
     data object AnalyticsRoute : NavRoute
 
-    /** [seasonStart]: the ISO date the recapped season starts on. */
+    /** [start]: the ISO date the recapped season, or the year when [year], starts on. */
     @Serializable
-    data class RecapRoute(val seasonStart: String) : NavRoute
+    data class RecapRoute(val start: String, val year: Boolean = false) : NavRoute {
+        val period: RecapPeriod
+            get() = LocalDate.parse(start).let { if (year) CalendarYear(it.year) else Season(it) }
+
+        companion object {
+            fun of(period: RecapPeriod) = RecapRoute(period.start.toString(), period is CalendarYear)
+        }
+    }
 
     @Serializable
     data object SettingsRoute : NavRoute

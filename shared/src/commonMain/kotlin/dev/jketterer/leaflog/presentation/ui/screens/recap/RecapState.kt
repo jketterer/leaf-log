@@ -1,10 +1,11 @@
 package dev.jketterer.leaflog.presentation.ui.screens.recap
 
 import dev.jketterer.leaflog.domain.models.ActivityCell
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.BrewingHabits
 import dev.jketterer.leaflog.domain.models.FlavorProfile
 import dev.jketterer.leaflog.domain.models.Hemisphere
-import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.domain.models.RecapPeriod
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
@@ -13,7 +14,7 @@ import dev.jketterer.leaflog.domain.models.VesselDistribution
 import kotlinx.datetime.LocalDate
 
 data class RecapState(
-    val season: Season,
+    val period: RecapPeriod,
     /** Null until chosen in Settings, when it follows the device's region. */
     val hemisphere: Hemisphere? = null,
     /** Only the pages with something to show, in order. */
@@ -23,23 +24,25 @@ data class RecapState(
 sealed interface RecapPage {
     data class Cover(val sessions: Int, val teas: Int) : RecapPage
 
-    /** The season's days, and its busiest month by its first day. */
+    /** The recap's days, or a year's weeks, and its busiest month by its first day. */
     data class Rhythm(
         val cells: List<ActivityCell>,
+        /** Laid out as This season's heatmap, or This year's. */
+        val heatmap: AnalyticsPeriod,
         val busiestMonth: LocalDate,
         val busiestMonthSessions: Int,
     ) : RecapPage
 
-    /** The season's top 3 teas, and every tea type's share of its sessions. */
+    /** The recap's top 3 teas, and every tea type's share of its sessions. */
     data class MostBrewed(
         val teas: List<TopTea>,
         val teaTypes: List<TeaTypeDistribution>,
     ) : RecapPage
 
-    /** Teas first brewed in the season, in the order they were. */
+    /** Teas first brewed in the recap, in the order they were. */
     data class Discoveries(val teas: List<Tea>) : RecapPage
 
-    /** The season's flavor profile, and the ids of its tags missing from the season before's. */
+    /** The recap's flavor profile, and the ids of its tags missing from the period before's. */
     data class Flavors(
         val profile: FlavorProfile,
         val newTagIds: Set<String>,
@@ -54,13 +57,13 @@ sealed interface RecapPage {
         val favoriteVessel: VesselDistribution?,
     ) : RecapPage
 
-    /** The season's highest-rated session, and its tea's name. */
+    /** The recap's highest-rated session, and its tea's name. */
     data class BestSession(
         val session: SessionWithSteeps,
         val teaName: String,
     ) : RecapPage
 
-    /** Teas finished in the season, and teas left waiting through it. */
+    /** Teas finished in the recap, and teas left waiting through it. */
     data class Shelf(
         val finished: List<Tea>,
         val waiting: List<Tea>,

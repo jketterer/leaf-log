@@ -3,8 +3,10 @@ package dev.jketterer.leaflog.presentation.ui.screens.recap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.ActivityBucket
-import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
+import dev.jketterer.leaflog.domain.models.CalendarYear
 import dev.jketterer.leaflog.domain.models.activity
+import dev.jketterer.leaflog.domain.models.activityBucket
 import dev.jketterer.leaflog.domain.models.best
 import dev.jketterer.leaflog.domain.models.brewingHabits
 import dev.jketterer.leaflog.domain.models.busiestMonth
@@ -35,14 +37,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load_sessions
 
-/** Computed live from every session, so editing one in the season corrects its recap. */
+/** Computed live from every session, so editing one in the period corrects its recap. */
 class RecapViewModel(
     route: NavRoute.RecapRoute,
     private val teaSessionRepository: TeaSessionRepository,
@@ -53,14 +52,15 @@ class RecapViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(RecapState(Season(LocalDate.parse(route.seasonStart))))
+    private val _state = MutableStateFlow(RecapState(route.period))
     val state: StateFlow<RecapState> = _state.asStateFlow()
 
     val messages = UiMessages<Nothing>()
 
     init {
         viewModelScope.launch {
-            val season = _state.value.season
+            val period = _state.value.period
+            val heatmap = if (period is CalendarYear) AnalyticsPeriod.THIS_YEAR else AnalyticsPeriod.THIS_SEASON
             combine(
                 teaSessionRepository.getAllSessionsFlow(),
                 teaRepository.getAllFlow(),
@@ -69,8 +69,8 @@ class RecapViewModel(
                 brewingVesselRepository.getAllFlow(),
             ) { sessions, teas, teaTypes, preferences, vessels ->
                 val tz = TimeZone.currentSystemDefault()
-                val window = season.window(tz)
-                val previousWindow = Season(season.start.minus(3, DateTimeUnit.MONTH)).window(tz)
+                val window = period.window(tz)
+                val previousWindow = period.previous.window(tz)
                 val teasById = teas.associateBy { it.id }
                 val teaTypesById = teaTypes.associateBy { it.id }
                 val summary = sessions.summary(window)
@@ -87,7 +87,10 @@ class RecapViewModel(
                         hemisphere = preferences.hemisphere,
                         pages = listOfNotNull(
                             RecapPage.Cover(summary.totalSessions, summary.uniqueTeasCount),
-                            days.busiestMonth()?.let { (month, count) -> RecapPage.Rhythm(days, month, count) },
+                            days.busiestMonth()?.let { (month, count) ->
+                                val cells = sessions.activity(window, heatmap.activityBucket, teasById, teaTypesById)
+                                RecapPage.Rhythm(cells, heatmap, month, count)
+                            },
                             topTeas.takeIf { it.isNotEmpty() }?.let {
                                 RecapPage.MostBrewed(it, sessions.teaTypeDistribution(window, teasById, teaTypesById))
                             },

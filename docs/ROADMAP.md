@@ -962,7 +962,7 @@ southern-region device and the pager across rotation and 2× font.
 17. [x] `feat: recap how you brewed`. Tests: the style rule, the longest session.
 18. [x] `feat: recap best session`
 19. [x] `feat: recap shelf`. Test: finished and waiting at the window's edges.
-20. [ ] `feat: year in tea`. Test: the Q1 gate.
+20. [x] `feat: year in tea`. Test: the Q1 gate.
 21. [ ] `chore: release 0.7.0`: audit rows struck; report 2 deleted.
 
 ---

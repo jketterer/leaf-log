@@ -1,12 +1,15 @@
 package dev.jketterer.leaflog.presentation.ui.screens.recap
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -23,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,12 +37,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -106,6 +112,7 @@ private fun RecapContent(
                     is RecapPage.Flavors -> FlavorsPage(page)
                     is RecapPage.HowYouBrewed -> HowYouBrewedPage(page, onTapSession)
                     is RecapPage.BestSession -> BestSessionPage(page, onTapSession)
+                    is RecapPage.Shelf -> ShelfPage(page, onTapTea)
                 }
             }
         }
@@ -175,6 +182,23 @@ internal fun RecapPageColumn(content: @Composable () -> Unit) {
     ) {
         content()
     }
+}
+
+/** A tea's name, opening Tea Detail. */
+@Composable
+internal fun RecapTeaRow(tea: Tea, onTapTea: (teaId: String) -> Unit) {
+    Text(
+        text = tea.name,
+        style = MaterialTheme.typography.titleMedium,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clip(MaterialTheme.shapes.small)
+            .clickable { onTapTea(tea.id) }
+            .wrapContentHeight(),
+    )
 }
 
 @Composable

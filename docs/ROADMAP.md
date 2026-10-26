@@ -961,7 +961,7 @@ southern-region device and the pager across rotation and 2× font.
 16. [x] `feat: recap flavors`. Test: a tag new against the previous season.
 17. [x] `feat: recap how you brewed`. Tests: the style rule, the longest session.
 18. [x] `feat: recap best session`
-19. [ ] `feat: recap shelf`. Test: finished and waiting at the window's edges.
+19. [x] `feat: recap shelf`. Test: finished and waiting at the window's edges.
 20. [ ] `feat: year in tea`. Test: the Q1 gate.
 21. [ ] `chore: release 0.7.0`: audit rows struck; report 2 deleted.
 

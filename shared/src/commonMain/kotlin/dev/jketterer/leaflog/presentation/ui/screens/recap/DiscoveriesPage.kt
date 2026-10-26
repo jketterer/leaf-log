@@ -1,17 +1,11 @@
 package dev.jketterer.leaflog.presentation.ui.screens.recap
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -34,20 +28,7 @@ internal fun DiscoveriesPage(discoveries: RecapPage.Discoveries, onTapTea: (teaI
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(24.dp))
-        discoveries.teas.forEach { tea ->
-            Text(
-                text = tea.name,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable { onTapTea(tea.id) }
-                    .wrapContentHeight(),
-            )
-        }
+        discoveries.teas.forEach { RecapTeaRow(it, onTapTea) }
     }
 }
 

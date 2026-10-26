@@ -182,6 +182,43 @@ class AnalyticsTest {
     }
 
     @Test
+    fun `the shelf holds teas finished from the window's start up to its end`() {
+        val teas = mapOf(
+            "before" to "2026-09-20T23:59",
+            "first" to "2026-09-21T00:00",
+            "last" to "2026-09-27T23:59",
+            "after" to "2026-09-28T00:00",
+        ).map { (id, finishedAt) -> tea(id, "green").copy(finishedAt = at(finishedAt)) }.associateBy { it.id }
+
+        assertEquals(listOf("first", "last"), emptyList<SessionWithSteeps>().shelf(WEEK, teas).finished.map { it.id })
+    }
+
+    @Test
+    fun `teas wait when brewed before the window and neither brewed nor finished in it`() {
+        val sessions = listOf(
+            session("2026-09-01T10:00", teaId = "older"),
+            session("2026-09-20T23:59", teaId = "waiting"),
+            session("2026-09-10T10:00", teaId = "older"),
+            session("2026-09-01T10:00", teaId = "brewed in it"),
+            session("2026-09-21T00:00", teaId = "brewed in it"),
+            session("2026-09-01T10:00", teaId = "finished in it"),
+            session("2026-09-05T10:00", teaId = "finished at its end"),
+            session("2026-09-01T10:00", teaId = "only started", status = SessionStatus.IN_PROGRESS),
+            session("2026-09-28T00:00", teaId = "first brewed after"),
+        )
+        val teas = listOf("older", "waiting", "brewed in it", "only started", "first brewed after")
+            .map { tea(it, "green") }
+            .plus(tea("finished in it", "green").copy(finishedAt = at("2026-09-27T23:59")))
+            .plus(tea("finished at its end", "green").copy(finishedAt = midnight("2026-09-28")))
+            .associateBy { it.id }
+
+        assertEquals(
+            listOf("finished at its end", "older", "waiting"),
+            sessions.shelf(WEEK, teas).waiting.map { it.id },
+        )
+    }
+
+    @Test
     fun `a session is gongfu when its first steep brewed under 2 minutes`() {
         val sessions = listOf(
             session(brewingTime = 119.seconds, ratings = listOf(null, null, null)),

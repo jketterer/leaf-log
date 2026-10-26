@@ -59,4 +59,10 @@ sealed interface RecapPage {
         val session: SessionWithSteeps,
         val teaName: String,
     ) : RecapPage
+
+    /** Teas finished in the season, and teas left waiting through it. */
+    data class Shelf(
+        val finished: List<Tea>,
+        val waiting: List<Tea>,
+    ) : RecapPage
 }

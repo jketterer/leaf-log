@@ -11,6 +11,7 @@ import dev.jketterer.leaflog.domain.models.busiestMonth
 import dev.jketterer.leaflog.domain.models.discoveries
 import dev.jketterer.leaflog.domain.models.flavorProfile
 import dev.jketterer.leaflog.domain.models.newSince
+import dev.jketterer.leaflog.domain.models.shelf
 import dev.jketterer.leaflog.domain.models.steepCurve
 import dev.jketterer.leaflog.domain.models.summary
 import dev.jketterer.leaflog.domain.models.teaTypeDistribution
@@ -107,6 +108,9 @@ class RecapViewModel(
                             sessions.filter { it.startedAt in window }.best()?.let { best ->
                                 teasById[best.session.teaId]?.let { RecapPage.BestSession(best, it.name) }
                             },
+                            sessions.shelf(window, teasById)
+                                .takeIf { it.finished.isNotEmpty() || it.waiting.isNotEmpty() }
+                                ?.let { RecapPage.Shelf(it.finished, it.waiting) },
                         ),
                     )
                 }

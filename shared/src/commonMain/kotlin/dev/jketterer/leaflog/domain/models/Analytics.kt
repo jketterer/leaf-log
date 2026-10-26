@@ -216,6 +216,32 @@ fun List<SessionWithSteeps>.discoveries(window: DateWindow, teas: Map<String, Te
         .entries.sortedBy { it.value }
         .mapNotNull { teas[it.key] }
 
+data class Shelf(
+    /** Teas finished in the window, in the order they were. */
+    val finished: List<Tea>,
+    /** Teas brewed before the window, not in it and not finished by its end, longest waiting first. */
+    val waiting: List<Tea>,
+)
+
+/** Judged at the window's edges, not today as [isDormant] is. */
+fun List<SessionWithSteeps>.shelf(window: DateWindow, teas: Map<String, Tea>): Shelf {
+    val completed = filter { it.session.status == SessionStatus.COMPLETED }
+    val lastBrewBefore = completed.filter { it.startedAt < window.start }
+        .groupBy { it.session.teaId }
+        .mapValues { (_, teaSessions) -> teaSessions.maxOf { it.startedAt } }
+    val brewedIn = completed.filter { it.startedAt in window }.map { it.session.teaId }.toSet()
+    return Shelf(
+        finished = teas.values.filter { it.finishedAt?.let { at -> at in window } == true }
+            .sortedBy { it.finishedAt },
+        waiting = teas.values
+            .filter { tea ->
+                tea.id in lastBrewBefore && tea.id !in brewedIn &&
+                    tea.finishedAt.let { it == null || it >= window.end }
+            }
+            .sortedBy { lastBrewBefore[it.id] },
+    )
+}
+
 /** A session is gongfu when its first steep brewed under this, and western otherwise. */
 private val GONGFU_UNDER = 2.minutes
 

@@ -263,6 +263,18 @@
     <string name="recap_favorite_vessel">Sessions in your favorite vessel</string>
     <!-- Under the best session's rating: "4.8 / out of 5 for Dan Cong Mi Lan Xiang, your best session" -->
     <string name="recap_best_session">out of 5 for %1$s, your best session</string>
+    <!-- Over the names of the teas finished in the season: "3 / teas you finished" -->
+    <plurals name="recap_finished">
+        <item quantity="one">tea you finished</item>
+        <item quantity="other">teas you finished</item>
+    </plurals>
+    <!-- Over the names of teas brewed before the season and not during it: "7 / teas waiting on your shelf" -->
+    <plurals name="recap_waiting">
+        <item quantity="one">tea waiting on your shelf</item>
+        <item quantity="other">teas waiting on your shelf</item>
+    </plurals>
+    <!-- Closes the last page of a recap -->
+    <string name="recap_closing">Here's to what you brew next.</string>
     <string name="recap_close">Close recap</string>
     <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>

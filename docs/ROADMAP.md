@@ -896,9 +896,10 @@ Decided 2026-10-23.
     - Computed live from the same Flow, not stored: editing an old session or finishing a tea
       corrects it. "Told once" is the occasion, not frozen numbers.
     - "On this day" waits for year two, outside this bet.
-- **Reaching a recap:** at the top of Analytics, above the period selector, a tonal hero card for
-  the newest recap that qualifies, then a row of past recaps, newest first. Hidden when none
-  qualifies. `RecapRoute` lives on Analytics' stack.
+- **Reaching a recap:** a book icon in Analytics' top bar opens a sheet of every recap, the newest
+  ending first; hidden when none qualifies. For 14 days after a recap ends, a tonal hero card for
+  it leads Analytics above the period selector, then goes on its own: a recap is opened a handful
+  of times, and the space is the daily screen's. `RecapRoute` lives on Analytics' stack.
 - **The recap is a pager.** `HorizontalPager`, page dots, a close button, no auto-advance. Each page
   fills with a container color, cycling primary, secondary and tertiary, and leads with a
   display-size Figtree number. A tea opens Tea Detail, a session Session Detail, a heatmap day

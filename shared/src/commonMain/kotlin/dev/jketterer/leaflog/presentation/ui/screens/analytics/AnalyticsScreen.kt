@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -31,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.BarChart2
+import compose.icons.feathericons.BookOpen
 import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Coffee
@@ -56,7 +59,9 @@ import dev.jketterer.leaflog.presentation.ui.components.analytics.TopRatedTeasCh
 import dev.jketterer.leaflog.presentation.ui.components.analytics.TopTeasChart
 import dev.jketterer.leaflog.presentation.ui.components.analytics.VesselDistributionChart
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
-import dev.jketterer.leaflog.presentation.ui.components.recap.RecapLinks
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
+import dev.jketterer.leaflog.presentation.ui.components.recap.RecapCard
+import dev.jketterer.leaflog.presentation.ui.components.recap.RecapSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitSwitchIcon
 import dev.jketterer.leaflog.presentation.ui.components.common.formatDuration
@@ -88,6 +93,7 @@ import leaf_log.shared.generated.resources.analytics_unique_teas
 import leaf_log.shared.generated.resources.analytics_water_used
 import leaf_log.shared.generated.resources.analytics_weighed_sessions
 import leaf_log.shared.generated.resources.log_tea
+import leaf_log.shared.generated.resources.recaps
 import leaf_log.shared.generated.resources.tab_analytics
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -129,10 +135,32 @@ private fun AnalyticsContent(
     onIntent: (AnalyticsIntent) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    var showRecaps by remember { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text(stringResource(Res.string.tab_analytics)) },
+            actions = {
+                if (state.recaps.isNotEmpty()) {
+                    IconButton(onClick = { showRecaps = true }) {
+                        Icon(
+                            imageVector = FeatherIcons.BookOpen,
+                            contentDescription = stringResource(Res.string.recaps),
+                        )
+                    }
+                }
+            },
         )
+        if (showRecaps) {
+            RecapSheet(
+                recaps = state.recaps,
+                hemisphere = state.hemisphere,
+                onOpen = { period ->
+                    showRecaps = false
+                    onIntent(AnalyticsIntent.OpenRecap(period))
+                },
+                onDismiss = { showRecaps = false },
+            )
+        }
 
         Box(modifier = Modifier.weight(1f)) {
             when {
@@ -182,12 +210,15 @@ private fun AnalyticsDataContent(
             .fillMaxSize()
             .then(if (analytics != null) Modifier.verticalScroll(rememberScrollState()) else Modifier),
     ) {
-        RecapLinks(
-            recaps = state.recaps,
-            hemisphere = state.hemisphere,
-            onOpen = { period -> onIntent(AnalyticsIntent.OpenRecap(period)) },
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
-        )
+        // Only while new: every recap stays a tap away in the top bar
+        state.recaps.firstOrNull()?.takeIf { it.isNew(currentDate()) }?.let { period ->
+            RecapCard(
+                period = period,
+                hemisphere = state.hemisphere,
+                onOpen = { onIntent(AnalyticsIntent.OpenRecap(period)) },
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp),
+            )
+        }
         PeriodSelector(
             selected = state.selectedPeriod,
             onPeriodSelected = { period -> onIntent(AnalyticsIntent.SelectPeriod(period)) },

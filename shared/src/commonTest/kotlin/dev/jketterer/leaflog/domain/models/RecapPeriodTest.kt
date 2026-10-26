@@ -6,6 +6,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 
 class RecapPeriodTest {
@@ -72,6 +74,13 @@ class RecapPeriodTest {
             listOf(CalendarYear(2025), Season(LocalDate(2025, 9, 1))),
             sessions.recaps(at("2026-01-01T00:00"), tz),
         )
+    }
+
+    @Test
+    fun `a recap is new for 14 days after it ends`() {
+        assertTrue(SUMMER.isNew(LocalDate(2026, 9, 14)))
+        assertFalse(SUMMER.isNew(LocalDate(2026, 9, 15)))
+        assertTrue(CalendarYear(2025).isNew(LocalDate(2026, 1, 14)))
     }
 
     @Test

@@ -276,6 +276,7 @@
     </plurals>
     <!-- Closes the last page of a recap -->
     <string name="recap_closing">Here's to what you brew next.</string>
+    <string name="recaps">Recaps</string>
     <string name="recap_close">Close recap</string>
     <string name="recap_page">Page %1$d of %2$d</string>
     <string name="log_tea">Log Tea</string>

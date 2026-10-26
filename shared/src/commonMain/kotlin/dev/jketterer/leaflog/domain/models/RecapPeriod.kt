@@ -24,6 +24,9 @@ sealed interface RecapPeriod {
     val end: LocalDate get() = lastMonth.plus(1, DateTimeUnit.MONTH)
 
     fun window(tz: TimeZone) = DateWindow(start.atStartOfDayIn(tz), end.atStartOfDayIn(tz), tz)
+
+    /** For its first 14 days after ending, when Analytics leads with it. */
+    fun isNew(today: LocalDate): Boolean = today < end.plus(14, DateTimeUnit.DAY)
 }
 
 /** A meteorological season: the three months from [start], the first of Dec, Mar, Jun or Sep. */

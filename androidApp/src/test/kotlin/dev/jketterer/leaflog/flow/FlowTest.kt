@@ -25,6 +25,7 @@ import androidx.test.core.app.ApplicationProvider
 import dev.jketterer.leaflog.MainActivity
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.presentation.ui.navigation.DeepLinkHandler
+import dev.jketterer.leaflog.services.TimerForegroundService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
@@ -50,6 +51,7 @@ import org.koin.mp.KoinPlatform
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.android.controller.ActivityController
+import org.robolectric.android.controller.ServiceController
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -88,6 +90,8 @@ abstract class FlowTest {
     private val app = ApplicationProvider.getApplicationContext<Application>()
 
     private var activity: ActivityController<MainActivity>? = null
+
+    private var foregroundService: ServiceController<TimerForegroundService>? = null
 
     @Before
     fun startApp() {
@@ -128,6 +132,11 @@ abstract class FlowTest {
         activity!!.pause().stop()
     }
 
+    /** System back, as a gesture or the button. */
+    fun systemBack() {
+        activity!!.get().onBackPressedDispatcher.onBackPressed()
+    }
+
     /** The system ends the backgrounded process; returning restores the Activity's saved state. */
     fun dieInBackground() {
         val saved = Bundle()
@@ -145,6 +154,9 @@ abstract class FlowTest {
     }
 
     private fun endProcess() {
+        foregroundService?.destroy()
+        foregroundService = null
+        shadowOf(app).clearStartedServices()
         // The app scope outlives the Activity, and would keep a timer ticking into the next test
         koin.get<CoroutineScope>().cancel()
         koin.get<LeafLogDatabase>().close()
@@ -179,7 +191,25 @@ abstract class FlowTest {
     /** Delivers [receiver]'s alarm now, as if its time had come. */
     fun fireAlarm(receiver: KClass<out BroadcastReceiver>) {
         alarms.fireAlarm(checkNotNull(alarm(receiver)) { "No alarm for ${receiver.simpleName}" })
+        idle()
+    }
+
+    /** Runs what's posted to the main thread, and the timer's service as the system would. */
+    private fun idle() {
         shadowOf(Looper.getMainLooper()).idle()
+        while (true) {
+            val intent = shadowOf(app).nextStartedService ?: break
+            val service = foregroundService
+                ?: Robolectric.buildService(TimerForegroundService::class.java).create()
+            foregroundService = service
+            service.withIntent(intent).startCommand(0, 0)
+        }
+        // Destroying it takes its ongoing notification down
+        val service = foregroundService ?: return
+        if (shadowOf(service.get()).isStoppedBySelf) {
+            service.destroy()
+            foregroundService = null
+        }
     }
 
     /**
@@ -197,7 +227,7 @@ abstract class FlowTest {
         try {
             // Run what's posted to the main thread, which only a Compose query does otherwise
             compose.waitUntil(TIMEOUT_MS) {
-                shadowOf(Looper.getMainLooper()).idle()
+                idle()
                 condition()
             }
         } catch (e: ComposeTimeoutException) {

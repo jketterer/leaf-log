@@ -133,7 +133,6 @@ Recreate with a dark-mode switch and with a font-scale change (Settings → Disp
 the Activity is portrait-locked.
 
 - [ ] Running timer → recreate. The timer keeps running, with no reset and no second alert.
-- [ ] Quick Timer running → recreate. Same as above.
 - [ ] Edit Tea, Edit Vessel, Edit Session, and Log Tea half-filled → recreate. Typed values
       survive and nothing re-seeds from the database.
 - [ ] Max font scale: Timer ring, Quick Timer duration sheet, and Quick Brew cards with long tea
@@ -163,16 +162,5 @@ the Activity is portrait-locked.
 
 ## 9. Quick Timer
 
-- [ ] Start → background → complete. Exactly one ready alert; its tap opens the Quick Timer, done,
-      offering "Just a timer".
-- [ ] **[A]** Ongoing notification appears, counts down, opens the Quick Timer on tap, and clears on
-      completion, Poured early or stop.
 - [ ] **[iOS]** The Live Activity appears and its tap opens the Quick Timer.
-- [ ] Back, by the arrow, system back or the edge swipe, while running or paused asks before
-      stopping. Stopping withdraws its notifications.
-- [ ] "Just a timer" returns Home with nothing recorded.
-- [ ] Three steeps by "Next", then "Log it" with a tea → the review of steep 3, with steeps 1 and 2
-      at their real times, unrated. The session starts when steep 1 did.
-- [ ] "What are you brewing?" while running → the session's Timer, still counting, its ongoing
-      notification and ready alert now naming the tea. Quick-add from the picker does the same.
-- [ ] Two steeps by "Next" → let the process die → reopen → attach. Both steeps are logged.
+- [ ] **[iOS]** The edge swipe, while running or paused, asks before stopping.

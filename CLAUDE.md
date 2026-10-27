@@ -29,6 +29,7 @@ the same every day.
 
 A flow test extends `FlowTest`, seeds through use cases from `koin`, finds elements by the strings
 the user sees (`Res` where the UI uses it), and moves time with `clock.advance`, never a sleep.
+`forceStop` and `dieInBackground` end the process, the second keeping the Activity's saved state.
 
 ## Architecture
 

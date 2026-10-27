@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.BrewingVessel
@@ -54,6 +55,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class HistoryViewModel(
     route: NavRoute.HistoryRoute,
+    private val savedStateHandle: SavedStateHandle,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
@@ -68,7 +70,10 @@ class HistoryViewModel(
     private val clock: Clock,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(initialHistoryState(route))
+    // The query is saved so it outlives process death, as the search bar it fills does
+    private val _state = MutableStateFlow(
+        initialHistoryState(route).copy(searchQuery = savedStateHandle[SEARCH_QUERY_KEY] ?: ""),
+    )
     val state: StateFlow<HistoryState> = _state.asStateFlow()
 
     private val _navEvents = Channel<HistoryNavEvent>()
@@ -108,12 +113,16 @@ class HistoryViewModel(
     fun onIntent(intent: HistoryIntent) {
         when (intent) {
             is HistoryIntent.LoadData -> loadData()
-            is HistoryIntent.SearchQueryChanged -> _state.update { it.copy(searchQuery = intent.query) }
+            is HistoryIntent.SearchQueryChanged -> {
+                savedStateHandle[SEARCH_QUERY_KEY] = intent.query
+                _state.update { it.copy(searchQuery = intent.query) }
+            }
             is HistoryIntent.ShowFilterSheet -> _state.update { it.copy(showFilterSheet = true) }
             is HistoryIntent.HideFilterSheet -> _state.update { it.copy(showFilterSheet = false) }
             is HistoryIntent.FiltersChanged -> _state.update { it.copy(filters = intent.filters) }
-            is HistoryIntent.ClearFilters -> _state.update {
-                it.copy(searchQuery = "", filters = HistoryFilters())
+            is HistoryIntent.ClearFilters -> {
+                savedStateHandle[SEARCH_QUERY_KEY] = ""
+                _state.update { it.copy(searchQuery = "", filters = HistoryFilters()) }
             }
 
             is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
@@ -233,6 +242,8 @@ class HistoryViewModel(
 }
 
 /** Opened from elsewhere, History starts filtered the way the route asks. */
+private const val SEARCH_QUERY_KEY = "searchQuery"
+
 internal fun initialHistoryState(route: NavRoute.HistoryRoute) = HistoryState(
     filters = HistoryFilters(
         teaTypeIds = setOfNotNull(route.filterTeaTypeId),

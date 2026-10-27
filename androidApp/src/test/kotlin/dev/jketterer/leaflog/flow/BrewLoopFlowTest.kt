@@ -6,16 +6,11 @@ import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.begin_session
-import leaf_log.shared.generated.resources.field_vessel_required
-import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.navigate_up
-import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.rating_out_of_five
 import leaf_log.shared.generated.resources.review_done
 import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_how_was_steep_n
-import leaf_log.shared.generated.resources.select_tea
 import leaf_log.shared.generated.resources.session_finished
 import leaf_log.shared.generated.resources.settings_title
 import leaf_log.shared.generated.resources.start_brewing
@@ -76,17 +71,9 @@ class BrewLoopFlowTest : FlowTest() {
         assertAbsent(text(Res.string.undo))
     }
 
-    /** From Home to Session Review: Gaiwan, 5 g, 0:30, steep 1 rated 4 and steep 2 rated 5. */
+    /** From Home to Session Review: steep 1 rated 4 and steep 2 rated 5. */
     private fun brewTwoSteepsAndFinish() {
-        click(text(Res.string.open_menu))
-        click(text(Res.string.log_session))
-        click(text(Res.string.select_tea))
-        click("Dragon Well")
-        click(text(Res.string.field_vessel_required))
-        click("Gaiwan")
-        click("5 g")
-        click("0:30")
-        click(text(Res.string.begin_session))
+        beginSession("Dragon Well")
 
         click(text(Res.string.start_brewing))
         clock.advance(30.seconds)

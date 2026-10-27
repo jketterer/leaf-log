@@ -22,8 +22,6 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 - [ ] Running timer → background 30s → return. Remaining time is correct; if it elapsed while
       backgrounded, the timer shows complete.
 - [ ] Running timer → lock the device past the end time. Completion alert fires on time.
-- [ ] Running timer → force-stop from Recents → relaunch. The session is in progress and the
-      remaining time is correct.
 - [ ] Running timer → force-stop → wait past the end time without opening the app. Completion
       alert still fires (backup alarm on [A], scheduled notification on [iOS]).
 - [ ] **[A]** Revoke "Alarms & reminders" in system settings → run a 1-minute timer with the screen
@@ -34,10 +32,6 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       time, and the alert fires at the new time.
 - [ ] Running timer → edit parameters → force-stop → relaunch. Still running with the correct
       remaining time, and the edits kept. The Home banner keeps its progress bar throughout.
-- [ ] Pause → Reset → leave the timer and come back, then force-stop and relaunch. Both times the
-      timer is at full duration and not started.
-- [ ] Steep 2 running → force-stop → relaunch. The Home banner says "Steep 2" with its progress, and
-      Resume opens steep 2's timer, not steep 1's.
 
 ## 2. Notifications
 
@@ -185,9 +179,6 @@ the Activity is portrait-locked.
 - [ ] **[iOS]** Back-swipe on a screen pushed inside a tab returns to the previous screen, not out
       of the tab.
 - [ ] **[A]** System back from a tab's root returns Home, then exits.
-- [ ] Open a screen inside Collection and type a History search, then recreate, and separately
-      let the process die in the background: the selected tab and each tab's screens and search
-      come back as they were.
 - [ ] Edit Tea, Edit Vessel, Edit Tea Type and Edit Session, each with a change made: system back
       (Android) or the edge swipe (iOS) asks before discarding, as the toolbar arrow does. With no
       change it leaves at once, with the predictive-back peek. The question survives rotation.
@@ -199,8 +190,6 @@ the Activity is portrait-locked.
 - [ ] **[A]** Ongoing notification appears, counts down, opens the Quick Timer on tap, and clears on
       completion, Poured early or stop.
 - [ ] **[iOS]** The Live Activity appears and its tap opens the Quick Timer.
-- [ ] Running → let the process die in the background → reopen. The Quick Timer is back, still
-      counting, or done if its time has passed.
 - [ ] Back, by the arrow, system back or the edge swipe, while running or paused asks before
       stopping. Stopping withdraws its notifications.
 - [ ] "Just a timer" returns Home with nothing recorded.

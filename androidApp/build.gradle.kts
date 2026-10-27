@@ -74,6 +74,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.androidx.compose.uiTestJunit4)
     testImplementation(libs.compose.components.resources)
+    testImplementation(libs.androidx.room.runtime)
     // The android variant ships device .so files; the jvm one carries host natives
     testImplementation(libs.androidx.sqlite.bundled.jvm)
 
@@ -117,7 +118,7 @@ kover {
         }
         verify {
             // A ratchet: raise it as tests land, toward 70
-            rule { minBound(56) }
+            rule { minBound(62) }
         }
     }
 }

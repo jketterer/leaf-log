@@ -249,45 +249,43 @@ class LogTeaViewModel(
 
         val tea = _state.value.availableTeas.firstOrNull { it.id == teaId }
         val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
+        val prefill = prefillFor(tea, _state.value.selectedVessel)
         _state.update {
-            it.copy(
-                selectedTea = tea,
-                selectedTeaType = teaType,
-                teaError = null,
-                showTeaPicker = false,
-                hasUnsavedChanges = true,
-            ).withPickerReset()
-        }
-
-        // Load configurations and optionally pre-fill if vessel is also selected
-        if (tea != null) {
-            val vessel = _state.value.selectedVessel
-            if (vessel != null) {
-                loadConfigurationsAndPrefill(tea, vessel)
-            }
+            prefill(
+                it.copy(
+                    selectedTea = tea,
+                    selectedTeaType = teaType,
+                    teaError = null,
+                    showTeaPicker = false,
+                    hasUnsavedChanges = true,
+                ).withPickerReset(),
+            )
         }
     }
 
-    private fun loadConfigurationsAndPrefill(tea: Tea, vessel: BrewingVessel) {
-        viewModelScope.launch {
-            val configurations = brewingConfigurationRepository.getByTeaAndVessel(tea.id, vessel.id)
-            val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
-            _state.update { state ->
-                state.copy(
-                    // A method that named no tea quantity means a bag. A bare default temperature is not a
-                    // method, so it must not be read as one.
-                    isTeaBag = prefill.source.isCompleteMethod && prefill.teaQuantityGrams == null,
-                    teaQuantityGrams = prefill.teaQuantityGrams?.toDouble(),
-                    waterQuantityMl = prefill.waterQuantityMl ?: vessel.capacityMl?.toDouble(),
-                    temperatureCelsius = prefill.temperatureCelsius,
-                    brewingTime = prefill.brewingTime,
-                    selectedWaterType = prefill.waterType ?: state.selectedWaterType,
-                    rinsed = prefill.rinsed,
-                    prefillSource = prefill.source,
-                    availableConfigurations = configurations,
-                    usedConfigurationId = configurations.firstOrNull()?.id,
-                )
-            }
+    /**
+     * Reads the parameters a tea and vessel prefill, for the update that selects them to apply.
+     * The fields appear with that selection, so a value typed into them is never overwritten.
+     */
+    private suspend fun prefillFor(tea: Tea?, vessel: BrewingVessel?): (LogTeaState) -> LogTeaState {
+        if (tea == null || vessel == null) return { it }
+        val configurations = brewingConfigurationRepository.getByTeaAndVessel(tea.id, vessel.id)
+        val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
+        return { state ->
+            state.copy(
+                // A method that named no tea quantity means a bag. A bare default temperature is not a
+                // method, so it must not be read as one.
+                isTeaBag = prefill.source.isCompleteMethod && prefill.teaQuantityGrams == null,
+                teaQuantityGrams = prefill.teaQuantityGrams?.toDouble(),
+                waterQuantityMl = prefill.waterQuantityMl ?: vessel.capacityMl?.toDouble(),
+                temperatureCelsius = prefill.temperatureCelsius,
+                brewingTime = prefill.brewingTime,
+                selectedWaterType = prefill.waterType ?: state.selectedWaterType,
+                rinsed = prefill.rinsed,
+                prefillSource = prefill.source,
+                availableConfigurations = configurations,
+                usedConfigurationId = configurations.firstOrNull()?.id,
+            )
         }
     }
 
@@ -346,18 +344,17 @@ class LogTeaViewModel(
             createTeaUseCase(name = name, teaTypeId = teaTypeId)
                 .onSuccess { tea ->
                     val teaType = teaTypeRepository.getById(tea.teaTypeId)
+                    val prefill = prefillFor(tea, _state.value.selectedVessel)
                     _state.update {
-                        it.copy(
-                            selectedTea = tea,
-                            selectedTeaType = teaType,
-                            teaError = null,
-                            showTeaPicker = false,
-                            hasUnsavedChanges = true,
-                        ).withPickerReset()
-                    }
-                    val vessel = _state.value.selectedVessel
-                    if (vessel != null) {
-                        loadConfigurationsAndPrefill(tea, vessel)
+                        prefill(
+                            it.copy(
+                                selectedTea = tea,
+                                selectedTeaType = teaType,
+                                teaError = null,
+                                showTeaPicker = false,
+                                hasUnsavedChanges = true,
+                            ).withPickerReset(),
+                        )
                     }
                 }
                 .onFailure { messages.failure(it, Res.string.couldnt_save_tea) }
@@ -440,24 +437,20 @@ class LogTeaViewModel(
         state.first { !it.isLoading }
 
         val vessel = _state.value.availableVessels.firstOrNull { it.id == vesselId }
-        _state.update { currentState ->
-            currentState.copy(
-                selectedVessel = vessel,
-                vesselError = null, // Clear error when vessel is selected
-                hasUnsavedChanges = true
-            )
-        }
-
-        if (vessel == null) return@launch
-
         val tea = _state.value.selectedTea
-        if (tea != null) {
-            loadConfigurationsAndPrefill(tea, vessel)
-        } else if (vessel.capacityMl != null) {
-            _state.update {
-                it.copy(
-                    waterQuantityMl = vessel.capacityMl.toDouble(),
-                )
+        val prefill = prefillFor(tea, vessel)
+        _state.update { currentState ->
+            val selected = prefill(
+                currentState.copy(
+                    selectedVessel = vessel,
+                    vesselError = null, // Clear error when vessel is selected
+                    hasUnsavedChanges = true
+                ),
+            )
+            if (tea == null && vessel?.capacityMl != null) {
+                selected.copy(waterQuantityMl = vessel.capacityMl.toDouble())
+            } else {
+                selected
             }
         }
     }

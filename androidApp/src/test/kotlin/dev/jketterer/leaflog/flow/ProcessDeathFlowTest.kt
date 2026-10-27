@@ -4,7 +4,6 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
@@ -84,7 +83,7 @@ class ProcessDeathFlowTest : FlowTest() {
         clock.advance(10.seconds)
         click(text(Res.string.pause))
         click("Reset")
-        compose.onNode(hasText("Reset") and hasAnyAncestor(isDialog())).performClick()
+        click(hasText("Reset") and hasAnyAncestor(isDialog()))
         waitFor(text(Res.string.start_brewing))
 
         click(text(Res.string.navigate_up))

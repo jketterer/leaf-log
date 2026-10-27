@@ -75,6 +75,6 @@ actual fun platformModule(): Module = module {
 
     // Preferences
     single {
-        PreferencesDataStore(context = get())
+        PreferencesDataStore(context = get(), scope = get())
     }
 }

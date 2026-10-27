@@ -116,7 +116,7 @@ class TimerService(
                 if (remaining > Duration.ZERO) {
                     val currentSecond = elapsed.inWholeSeconds
                     if (currentSecond > lastNotificationSecond) {
-                        notificationService.showTimerRunning(state)
+                        notificationService.showTimerRunning(state.copy(remainingDuration = remaining))
                         lastNotificationSecond = currentSecond
                     }
                 }
@@ -165,10 +165,14 @@ class TimerService(
         _timerState.value = TimerState()
     }
 
-    /** The review moved on to the next steep, so the ready alert for the last one is stale. */
+    /**
+     * The review moved on to the next steep, so the last one's alerts are stale. The reminder is
+     * scheduled again when the next steep starts.
+     */
     fun onNextSteep() {
         stop()
         notificationService.cancelTimerComplete()
+        notificationService.cancelSessionReminder()
     }
 
     /**

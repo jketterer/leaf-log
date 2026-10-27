@@ -2,12 +2,13 @@ package dev.jketterer.leaflog.data.local.preferences
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.preferencesDataStoreFile
 import dev.jketterer.leaflog.domain.models.AnalyticsPeriod
 import dev.jketterer.leaflog.domain.models.Hemisphere
 import dev.jketterer.leaflog.domain.models.TeaSortOption
@@ -17,14 +18,23 @@ import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.WeightUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_preferences")
+/**
+ * One per process, on [scope]: the app's, so a test that ends its process releases the file and
+ * the next one reads it fresh, as a real restart would.
+ */
+actual class PreferencesDataStore(context: Context, scope: CoroutineScope) {
 
-actual class PreferencesDataStore(private val context: Context) {
+    private val dataStore: DataStore<Preferences> = PreferenceDataStoreFactory.create(
+        scope = CoroutineScope(scope.coroutineContext + Dispatchers.IO),
+        produceFile = { context.preferencesDataStoreFile("user_preferences") },
+    )
 
     companion object {
         val TEMPERATURE_UNIT_KEY = stringPreferencesKey("temperature_unit")
@@ -44,7 +54,7 @@ actual class PreferencesDataStore(private val context: Context) {
     }
 
     actual fun getPreferencesFlow(): Flow<UserPreferences> {
-        return context.dataStore.data.map { prefs ->
+        return dataStore.data.map { prefs ->
             UserPreferences(
                 temperatureUnit = prefs[TEMPERATURE_UNIT_KEY]?.let {
                     try {
@@ -97,61 +107,61 @@ actual class PreferencesDataStore(private val context: Context) {
     }
 
     actual suspend fun updateTemperatureUnit(unit: TemperatureUnit) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[TEMPERATURE_UNIT_KEY] = unit.name
         }
     }
 
     actual suspend fun updateVolumeUnit(unit: VolumeUnit) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[VOLUME_UNIT_KEY] = unit.name
         }
     }
 
     actual suspend fun updateWeightUnit(unit: WeightUnit) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[WEIGHT_UNIT_KEY] = unit.name
         }
     }
 
     actual suspend fun updateTeaSortOption(option: TeaSortOption) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[TEA_SORT_OPTION_KEY] = option.name
         }
     }
 
     actual suspend fun updateAnalyticsPeriod(period: AnalyticsPeriod) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[ANALYTICS_PERIOD_KEY] = period.name
         }
     }
 
     actual suspend fun updateDefaultWaterType(waterType: WaterType) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[DEFAULT_WATER_TYPE_KEY] = waterType.name
         }
     }
 
     actual suspend fun updateTimerCompletionNotificationsEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[TIMER_COMPLETION_NOTIFICATIONS_KEY] = enabled
         }
     }
 
     actual suspend fun updateSessionReminderNotificationsEnabled(enabled: Boolean) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[SESSION_REMINDER_NOTIFICATIONS_KEY] = enabled
         }
     }
 
     actual suspend fun updateThemeMode(mode: ThemeMode) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[THEME_MODE_KEY] = mode.name
         }
     }
 
     actual suspend fun updateHemisphere(hemisphere: Hemisphere?) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             if (hemisphere == null) {
                 prefs.remove(HEMISPHERE_KEY)
             } else {
@@ -161,15 +171,15 @@ actual class PreferencesDataStore(private val context: Context) {
     }
 
     actual suspend fun updateLastBackupAt(at: Instant) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[LAST_BACKUP_AT_KEY] = at.toEpochMilliseconds()
         }
     }
 
-    actual suspend fun getQuickTimer(): String? = context.dataStore.data.first()[QUICK_TIMER_KEY]
+    actual suspend fun getQuickTimer(): String? = dataStore.data.first()[QUICK_TIMER_KEY]
 
     actual suspend fun updateQuickTimer(encoded: String?) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             if (encoded == null) prefs.remove(QUICK_TIMER_KEY) else prefs[QUICK_TIMER_KEY] = encoded
         }
     }

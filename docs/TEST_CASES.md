@@ -35,46 +35,24 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 
 ## 2. Notifications
 
-- [ ] **[A]** Running timer: ongoing notification shows tea name, "Steep 3", a countdown that
-      counts down, and a draining progress bar. Expanded view matches. No next steep while brewing.
-- [ ] **[A]** Pause: the text reads "Steep 3 paused", the header shows a static m:ss, and nothing
-      ticks. Resume restarts it.
-- [ ] Completion alert from a gongfu method shows "<tea> is ready!" and "Steep 3 done, next 30s"
-      with sound. A western method shows "Steep 1 done". On [iOS] it also appears while the app is in the foreground.
-- [ ] **[A]** Force-stop mid-steep and let the backup alarm post the alert. Same text.
-- [ ] Leave the completion alert in the shade, then Next, Finish or Discard from the review. The
-      alert is withdrawn each time.
+- [ ] **[A]** Running timer: the ongoing notification's countdown visibly ticks down and its
+      progress bar drains, collapsed and expanded.
+- [ ] The completion alert sounds. On **[iOS]** it reads "<tea> is ready!" and "Steep 3 done, next
+      30s" (a western method: "Steep 1 done"), and also appears while the app is in the foreground.
 - [ ] **[A]** Completion alert survives the ongoing notification being cleared when the foreground
       service stops.
-- [ ] Settings → turn off completion notifications. No completion alert; the timer still completes
-      in-app.
-- [ ] Settings → turn off session reminders. Completion alerts still fire.
 - [ ] Leave a finished steep unreviewed. The reminder "How was your <tea>?" arrives after the
       configured delay.
 - [ ] **[A]** With the device in Doze (`adb shell dumpsys deviceidle force-idle`), the reminder
       arrives late but arrives. Known and accepted: inexact by design.
-- [ ] Rate or discard the steep before the reminder is due. The reminder never arrives.
-- [ ] Start a new steep while an old session's reminder is pending. Resolving the old session does
-      not cancel the new one's alerts.
-- [ ] Discard from Steep Complete. The reminder is withdrawn.
-- [ ] Delete a running session from History's card menu. Its timer notification and reminder go.
-- [ ] Brew three steeps, leave the third unreviewed, then Finish from Steep Complete. The reminder
-      is withdrawn.
+- [ ] **[iOS]** Next, Finish or Discard from the review withdraws a completion alert or reminder
+      left in the shade, and a reminder not yet due.
+- [ ] **[A]** Delete a running session from History's card menu. Its ongoing notification goes.
 
 ## 3. Tap routing
 
-- [ ] Tap the ongoing notification (app backgrounded) → Timer for that session. **[A]**
-- [ ] Tap the completion alert (app backgrounded) → Steep Complete for that session.
-- [ ] Tap the completion alert after the app was force-stopped (cold start) → Steep Complete.
-- [ ] Tap the reminder → Steep Complete for the session it names.
-- [ ] Tap the completion alert for steep 2 or later → Steep Complete for that steep, with the
-      earlier ones under Previous Steeps.
-- [ ] Tap a notification, then rotate or switch dark mode. The route is not replayed a second
-      time.
-- [ ] **[A]** Steep 2 running with a reminder for steep 1 still posted → tap each. The ongoing
-      notification opens the Timer, the reminder the review; neither opens the other's screen.
-- [ ] Tap a reminder for a session already finished or discarded. The app opens on Home, not a
-      review or timer for it.
+- [ ] **[iOS]** Tap the completion alert and the reminder, backgrounded and after a force-quit. Each
+      opens Steep Complete for its session; a reminder for a session since finished opens Home.
 
 ## 4. Live Activity [iOS]
 

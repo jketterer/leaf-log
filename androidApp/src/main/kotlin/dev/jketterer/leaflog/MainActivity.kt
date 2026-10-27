@@ -25,7 +25,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         requestNotificationPermissionIfNeeded()
-        handleDeepLink(intent)
+        // A recreated or restored Activity, or one reopened from Recents, gets the tap it started
+        // from again, and its route is already on the restored back stack
+        val fromRecents = intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        if (savedInstanceState == null && !fromRecents) handleDeepLink(intent)
 
         setContent {
             App()

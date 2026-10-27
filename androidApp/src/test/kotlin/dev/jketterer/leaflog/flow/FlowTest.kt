@@ -1,7 +1,13 @@
 package dev.jketterer.leaflog.flow
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.Application
+import android.app.Notification
+import android.app.NotificationManager
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.os.Looper
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
@@ -47,6 +53,8 @@ import org.robolectric.android.controller.ActivityController
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.shadows.ShadowAlarmManager.ScheduledAlarm
+import kotlin.reflect.KClass
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -93,8 +101,8 @@ abstract class FlowTest {
         endProcess()
     }
 
-    fun launch(savedState: Bundle? = null) {
-        val controller = Robolectric.buildActivity(MainActivity::class.java)
+    fun launch(savedState: Bundle? = null, intent: Intent? = null) {
+        val controller = Robolectric.buildActivity(MainActivity::class.java, intent)
         activity = if (savedState == null) controller.setup() else controller.setup(savedState)
     }
 
@@ -104,9 +112,20 @@ abstract class FlowTest {
 
     /** Swiped from Recents: the process ends with nothing saved, and the app starts cold. */
     fun forceStop() {
-        activity!!.pause().stop().destroy()
-        restartProcess()
+        kill()
         launch()
+    }
+
+    /** Swiped from Recents and left closed: alarms and posted notifications outlive it. */
+    fun kill() {
+        activity!!.pause().stop().destroy()
+        activity = null
+        restartProcess()
+    }
+
+    /** Home pressed: the Activity stops, and the process and its timers carry on. */
+    fun background() {
+        activity!!.pause().stop()
     }
 
     /** The system ends the backgrounded process; returning restores the Activity's saved state. */
@@ -147,6 +166,46 @@ abstract class FlowTest {
         }
     }
 
+    private val alarms get() = shadowOf(app.getSystemService(AlarmManager::class.java))
+
+    /** The notification posted under [id], or null if none is in the shade. */
+    fun notification(id: Int): Notification? =
+        shadowOf(app.getSystemService(NotificationManager::class.java)).getNotification(id)
+
+    /** The alarm set to wake [receiver], or null if none is scheduled. */
+    fun alarm(receiver: KClass<out BroadcastReceiver>): ScheduledAlarm? = alarms.scheduledAlarms
+        .singleOrNull { shadowOf(it.operation).savedIntent.component?.className == receiver.java.name }
+
+    /** Delivers [receiver]'s alarm now, as if its time had come. */
+    fun fireAlarm(receiver: KClass<out BroadcastReceiver>) {
+        alarms.fireAlarm(checkNotNull(alarm(receiver)) { "No alarm for ${receiver.simpleName}" })
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /**
+     * Taps [notification] in the shade. A backgrounded app is brought back with the new intent, as
+     * singleTask does; one [kill]ed starts cold from it.
+     */
+    fun tap(notification: Notification) {
+        val intent = shadowOf(notification.contentIntent).savedIntent
+        val running = activity
+        if (running == null) launch(intent = intent) else running.newIntent(intent).restart().resume()
+    }
+
+    /** Waits for [condition], naming [what] and printing the screen if it never holds. */
+    fun waitUntil(what: String, condition: () -> Boolean) {
+        try {
+            // Run what's posted to the main thread, which only a Compose query does otherwise
+            compose.waitUntil(TIMEOUT_MS) {
+                shadowOf(Looper.getMainLooper()).idle()
+                condition()
+            }
+        } catch (e: ComposeTimeoutException) {
+            val screen = compose.onAllNodes(isRoot()).printToString(maxDepth = Int.MAX_VALUE)
+            throw AssertionError("Timed out waiting until $what, on screen:\n$screen", e)
+        }
+    }
+
     fun text(res: StringResource, vararg args: Any): String = runBlocking { getString(res, *args) }
 
     fun text(res: PluralStringResource, count: Int, vararg args: Any): String =
@@ -155,20 +214,15 @@ abstract class FlowTest {
     /** Waits for [text] as a node's text or content description, across every window. */
     fun waitFor(text: String) = waitFor(hasText(text) or hasContentDescription(text))
 
-    fun waitFor(matcher: SemanticsMatcher) {
-        try {
-            compose.waitUntil(TIMEOUT_MS) {
-                compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
-            }
-        } catch (e: ComposeTimeoutException) {
-            val screen = compose.onAllNodes(isRoot()).printToString()
-            throw AssertionError("No ${matcher.description} on screen:\n$screen", e)
-        }
+    fun waitFor(matcher: SemanticsMatcher) = waitUntil("${matcher.description} is on screen") {
+        compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
     }
 
     /** Clicks the one clickable node showing [text], as its text or content description. */
-    fun click(text: String) {
-        val matcher = hasClickAction() and (hasText(text) or hasContentDescription(text))
+    fun click(text: String) = click(hasClickAction() and (hasText(text) or hasContentDescription(text)))
+
+    /** Clicks the one node matching [matcher], once it's on screen. */
+    fun click(matcher: SemanticsMatcher) {
         waitFor(matcher)
         compose.onNode(matcher).performClick()
     }

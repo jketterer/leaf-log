@@ -80,6 +80,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.navigate_up
 
 @Composable
 fun SteepCompleteScreen(
@@ -124,7 +125,7 @@ private fun SteepCompleteContent(
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = { onIntent(SteepCompleteIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
                 actions = {

@@ -61,6 +61,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.field_vessel_required
+import leaf_log.shared.generated.resources.navigate_up
 
 @Composable
 fun CreateBrewingConfigurationScreen(
@@ -101,7 +103,7 @@ private fun CreateBrewingConfigurationContent(
                 title = { Text(if (state.isEditMode) "Edit Brewing Method" else "Add Brewing Method") },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(CreateBrewingConfigurationIntent.NavigateBack) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
             )
@@ -130,7 +132,7 @@ private fun CreateBrewingConfigurationContent(
                         onVesselSelected = { vessel ->
                             onIntent(CreateBrewingConfigurationIntent.SelectVessel(vessel.id))
                         },
-                        label = "Brewing Vessel *",
+                        label = stringResource(Res.string.field_vessel_required),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }

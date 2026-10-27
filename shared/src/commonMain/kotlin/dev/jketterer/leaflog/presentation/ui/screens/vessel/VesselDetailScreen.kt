@@ -57,6 +57,7 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_vessel_text
 import leaf_log.shared.generated.resources.delete_vessel_title
+import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.vessel_in_use
 import leaf_log.shared.generated.resources.vessel_not_found
 import org.jetbrains.compose.resources.pluralStringResource
@@ -138,7 +139,7 @@ fun VesselDetailScreen(
                 title = { Text(state.vessel?.name ?: "Vessel Details") },
                 navigationIcon = {
                     IconButton(onClick = { viewModel.onIntent(VesselDetailIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
                 actions = {

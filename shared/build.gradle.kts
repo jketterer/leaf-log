@@ -108,3 +108,8 @@ dependencies {
 room {
     schemaDirectory("$projectDir/schemas")
 }
+
+compose.resources {
+    // androidApp's flow tests find elements by the same strings the UI shows
+    publicResClass = true
+}

@@ -34,6 +34,9 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.quick_timer
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Bottom sheet for selecting quick timer duration.
@@ -80,7 +83,7 @@ private fun QuickTimerDurationSheetContent(
             .padding(bottom = 32.dp),
     ) {
         Text(
-            text = "Quick Timer",
+            text = stringResource(Res.string.quick_timer),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )

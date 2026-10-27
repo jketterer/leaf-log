@@ -28,6 +28,12 @@ import compose.icons.feathericons.Edit
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.close_menu
+import leaf_log.shared.generated.resources.log_session
+import leaf_log.shared.generated.resources.open_menu
+import leaf_log.shared.generated.resources.quick_timer
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Expandable FAB with options for "Log Session" and "Quick Timer".
@@ -69,7 +75,7 @@ fun ExpandableFAB(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "Log Session",
+                            text = stringResource(Res.string.log_session),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
@@ -86,7 +92,7 @@ fun ExpandableFAB(
                         ) {
                             Icon(
                                 imageVector = FeatherIcons.Edit,
-                                contentDescription = "Log Session",
+                                contentDescription = stringResource(Res.string.log_session),
                             )
                         }
                     }
@@ -96,7 +102,7 @@ fun ExpandableFAB(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "Quick Timer",
+                            text = stringResource(Res.string.quick_timer),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
@@ -113,7 +119,7 @@ fun ExpandableFAB(
                         ) {
                             Icon(
                                 imageVector = FeatherIcons.Clock,
-                                contentDescription = "Quick Timer",
+                                contentDescription = stringResource(Res.string.quick_timer),
                             )
                         }
                     }
@@ -126,7 +132,7 @@ fun ExpandableFAB(
             ) {
                 Icon(
                     imageVector = if (expanded) FeatherIcons.X else FeatherIcons.Plus,
-                    contentDescription = if (expanded) "Close menu" else "Open menu",
+                    contentDescription = if (expanded) stringResource(Res.string.close_menu) else stringResource(Res.string.open_menu),
                     modifier = Modifier.rotate(rotation),
                 )
             }

@@ -11,7 +11,7 @@ the Live Activity, deep links, `FileOperations`, or `MainActivity`. Run the affe
 everything before a release.
 
 **Rule:** platform integration ships with a line here. A line that can be tested on the host moves
-to Track A and is deleted from this file.
+to Track A, or Track F if it is a flow through the app, and is deleted from this file.
 
 Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 
@@ -191,9 +191,6 @@ the Activity is portrait-locked.
 - [ ] Edit Tea, Edit Vessel, Edit Tea Type and Edit Session, each with a change made: system back
       (Android) or the edge swipe (iOS) asks before discarding, as the toolbar arrow does. With no
       change it leaves at once, with the predictive-back peek. The question survives rotation.
-- [ ] Finish a session: Home offers Undo once. Undo opens Steep Complete on the last steep with the
-      session back in progress. Finishing it again offers Undo again. Opening Settings and coming
-      back, or recreating, doesn't offer it again.
 
 ## 9. Quick Timer
 

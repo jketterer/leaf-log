@@ -63,6 +63,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.field_vessel_required
+import leaf_log.shared.generated.resources.log_tea_title
+import leaf_log.shared.generated.resources.navigate_up
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -141,10 +144,10 @@ private fun LogTeaContent(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
-                title = { Text("Log Tea Session") },
+                title = { Text(stringResource(Res.string.log_tea_title)) },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(LogTeaIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
             )
@@ -187,7 +190,7 @@ private fun LogTeaContent(
                         onVesselSelected = { vessel ->
                             onIntent(LogTeaIntent.VesselSelected(vessel.id))
                         },
-                        label = "Brewing Vessel *",
+                        label = stringResource(Res.string.field_vessel_required),
                         isError = state.vesselError != null,
                         errorMessage = state.vesselError,
                         modifier = Modifier.fillMaxWidth(),

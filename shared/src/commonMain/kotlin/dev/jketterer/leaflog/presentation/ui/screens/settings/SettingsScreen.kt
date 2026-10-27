@@ -31,6 +31,10 @@ import dev.jketterer.leaflog.presentation.ui.components.common.ExportFileEffect
 import dev.jketterer.leaflog.presentation.ui.components.common.ImportFileLauncher
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.navigate_up
+import leaf_log.shared.generated.resources.settings_title
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -64,10 +68,10 @@ private fun SettingsContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(Res.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
             )

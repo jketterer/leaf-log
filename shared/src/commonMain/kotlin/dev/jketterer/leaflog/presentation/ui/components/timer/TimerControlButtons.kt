@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.already_brewed
+import leaf_log.shared.generated.resources.pause
+import leaf_log.shared.generated.resources.start_brewing
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -37,7 +39,7 @@ fun TimerControlButtons(
         when {
             isRunning -> {
                 Button(onClick = onPauseClick) {
-                    Text("Pause")
+                    Text(stringResource(Res.string.pause))
                 }
             }
 
@@ -56,7 +58,7 @@ fun TimerControlButtons(
                     onClick = onStartClick,
                     modifier = Modifier.fillMaxWidth(0.7f),
                 ) {
-                    Text("Start Brewing")
+                    Text(stringResource(Res.string.start_brewing))
                 }
                 if (onAlreadyBrewedClick != null) {
                     TextButton(onClick = onAlreadyBrewedClick) {

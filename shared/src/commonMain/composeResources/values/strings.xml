@@ -5,8 +5,12 @@
     <string name="tab_history">History</string>
     <string name="tab_analytics">Analytics</string>
     <string name="navigate_up">Back</string>
+    <string name="open_menu">Open menu</string>
+    <string name="close_menu">Close menu</string>
+    <string name="log_session">Log Session</string>
 
     <!-- Settings -->
+    <string name="settings_title">Settings</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme">Theme</string>
     <string name="theme_mode_system">System</string>
@@ -40,6 +44,7 @@
     <string name="field_water_quantity_required">Water Quantity *</string>
     <string name="field_tea_quantity">Tea Quantity</string>
     <string name="field_tea_quantity_required">Tea Quantity *</string>
+    <string name="field_vessel_required">Brewing Vessel *</string>
     <string name="field_tea_quantity_hint">Optional - leave empty for tea bags</string>
     <string name="field_rinse">Rinse</string>
     <string name="answer_yes">Yes</string>
@@ -341,6 +346,11 @@
     <string name="already_brewed">Already brewed</string>
     <string name="finish_early">Finish early</string>
     <string name="quick_timer">Quick timer</string>
+    <string name="log_tea_title">Log Tea Session</string>
+    <string name="select_tea">Select Tea</string>
+    <string name="begin_session">Begin Session</string>
+    <string name="start_brewing">Start Brewing</string>
+    <string name="pause">Pause</string>
     <string name="just_a_timer">Just a timer</string>
     <string name="what_are_you_brewing">What are you brewing?</string>
     <string name="log_it">Log it</string>

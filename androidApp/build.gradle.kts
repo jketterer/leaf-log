@@ -41,6 +41,10 @@ android {
     buildTypes {
         getByName("release") { isMinifyEnabled = false }
     }
+    testOptions {
+        // Flow tests run the real MainActivity, so Robolectric needs the merged resources
+        unitTests.isIncludeAndroidResources = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -65,6 +69,13 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    testImplementation(libs.robolectric)
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.compose.uiTestJunit4)
+    testImplementation(libs.compose.components.resources)
+    // The android variant ships device .so files; the jvm one carries host natives
+    testImplementation(libs.androidx.sqlite.bundled.jvm)
 
     kover(project(":shared"))
 }
@@ -106,7 +117,7 @@ kover {
         }
         verify {
             // A ratchet: raise it as tests land, toward 70
-            rule { minBound(37) }
+            rule { minBound(56) }
         }
     }
 }

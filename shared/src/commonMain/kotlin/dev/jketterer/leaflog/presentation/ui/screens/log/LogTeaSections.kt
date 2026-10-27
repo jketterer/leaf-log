@@ -67,6 +67,9 @@ import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.begin_session
+import leaf_log.shared.generated.resources.log_session
+import leaf_log.shared.generated.resources.select_tea
 
 /**
  * Tea picker row - shows the selected tea, or a button to open the search dialog.
@@ -110,7 +113,7 @@ internal fun TeaSelectionSection(
                 onClick = onSelectTeaClicked,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Select Tea")
+                Text(stringResource(Res.string.select_tea))
             }
         }
 
@@ -312,7 +315,7 @@ internal fun LogTeaActionButtons(
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Log Session")
+            Text(stringResource(Res.string.log_session))
         }
         Button(
             onClick = onBeginSessionClicked,
@@ -324,7 +327,7 @@ internal fun LogTeaActionButtons(
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Begin Session")
+            Text(stringResource(Res.string.begin_session))
         }
     }
 }

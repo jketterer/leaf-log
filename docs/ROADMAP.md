@@ -123,6 +123,14 @@ isn't after pixel parity, and goldens would churn hundreds of PNGs into git on e
 Components with user text add a long-text preview, for eyeballing in the IDE. It is **not** the
 rejected Compose UI test suite: nothing is tapped, nothing is flaky. Goes live in Bet 1.
 
+### Track F — app flows, host JVM, runs in CI
+
+`androidApp/src/test/.../flow/`: the real Application, Koin graph, Room file database and
+MainActivity on Robolectric, with only the clock swapped. Tests tap through user-visible strings,
+read from `Res` where the UI does, and seed through real use cases. Each flow that lands deletes the
+Track B lines it covers. No retries, `@Ignore` or sleeps: a flaky flow is fixed or deleted the same
+day.
+
 ### Track B — manual, real device, run rarely and deliberately
 
 Timer across backgrounding and process death, notification delivery and tap routing, Live Activity,
@@ -1066,7 +1074,7 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **`purchasePrice` is deleted, not built**                                      | Cost-per-cup analytics is a feature nobody asked for.                                                                                                                                                                                                                                     |
 | **Stock is `finishedAt`, not a quantity**                                      | Marking "I ran out" is the whole need, and it's what feeds the dormant-tea prompt.                                                                                                                                                                                                        |
 | **Finished teas stay in the Log Tea picker**                                   | Hiding them makes the auto-clear unreachable.                                                                                                                                                                                                                                             |
-| **Host-JVM tests; smoke tests from previews; no interactive Compose UI suite** | Revisited 2026-10-15. Rendering every mandatory preview catches crashes without an emulator. Interaction suites still aren't worth their brittleness. Considered: E2E flows, which need an emulator and duplicate Track B.                                                                |
+| **Host-JVM tests; smoke tests from previews; app flows on Robolectric**        | Revisited 2026-10-27. Track B took too long for one person, so flows that a host can drive move to Track F; previews still catch crashes. Considered: an emulator suite, kept for whatever Track B has left once the flows land.                                                          |
 | **Accessibility basics are definition-of-done, not a launch gate**             | Revisited 2026-09-23. Cheap per touch; the rating control — the loop's main input — is unusable with a screen reader today. One full screen-reader pass before store launch.                                                                                                              |
 | **Photos get safety, not features**                                            | The author doesn't reread photos. They matter only because unchecked they break backups and storage.                                                                                                                                                                                      |
 | **Freeform journal entries are rejected**                                      | The author rarely writes notes attached to sessions; detached entries would be emptier. Tags and session notes cover the journal.                                                                                                                                                         |

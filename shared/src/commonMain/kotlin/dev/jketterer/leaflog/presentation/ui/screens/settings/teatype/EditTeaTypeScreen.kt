@@ -55,6 +55,7 @@ import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_default_temperature
 import leaf_log.shared.generated.resources.field_optional
+import leaf_log.shared.generated.resources.navigate_up
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -136,7 +137,7 @@ private fun EditTeaTypeContent(
                 title = { Text(if (state.isEditMode) "Edit Tea Type" else "Add Tea Type") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
                 actions = {

@@ -21,6 +21,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Unit tests
         run: ./gradlew :shared:allTests
+      - name: Flow tests
+        run: ./gradlew :androidApp:testDebugUnitTest
       - name: Coverage
         run: ./gradlew :androidApp:koverVerify
       - name: Build

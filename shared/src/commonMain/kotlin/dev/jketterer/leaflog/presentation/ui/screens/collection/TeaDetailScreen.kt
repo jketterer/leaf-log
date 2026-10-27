@@ -122,6 +122,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.navigate_up
 
 /**
  * Tea Detail Screen - displays detailed information about a specific tea.
@@ -225,7 +226,7 @@ private fun TeaDetailContent(
                     IconButton(onClick = { onIntent(TeaDetailIntent.BackClicked) }) {
                         Icon(
                             imageVector = FeatherIcons.ArrowLeft,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(Res.string.navigate_up),
                         )
                     }
                 },

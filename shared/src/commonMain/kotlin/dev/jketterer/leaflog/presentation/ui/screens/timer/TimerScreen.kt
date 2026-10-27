@@ -94,6 +94,7 @@ import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.navigate_up
 
 /**
  * Timer Screen - brewing countdown timer.
@@ -172,7 +173,7 @@ private fun TimerContent(
                 },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(TimerIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
                 actions = {

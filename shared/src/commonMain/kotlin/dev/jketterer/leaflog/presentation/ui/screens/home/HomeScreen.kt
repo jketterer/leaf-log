@@ -75,6 +75,7 @@ import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.settings_title
 import org.koin.core.parameter.parametersOf
 
 /**
@@ -194,7 +195,7 @@ private fun HomeContent(
                     ) {
                         Icon(
                             imageVector = FeatherIcons.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = stringResource(Res.string.settings_title)
                         )
                     }
                 },

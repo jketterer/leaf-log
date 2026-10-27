@@ -46,6 +46,7 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.review_done
 import leaf_log.shared.generated.resources.review_method_saved
 import leaf_log.shared.generated.resources.review_method_saved_detail
@@ -95,7 +96,7 @@ private fun SessionReviewContent(
             title = { Text(state.tea?.name ?: "") },
             navigationIcon = {
                 IconButton(onClick = { onIntent(SessionReviewIntent.Done) }) {
-                    Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                    Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                 }
             },
         )

@@ -47,6 +47,7 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.no_tea_types
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -104,7 +105,7 @@ private fun TeaTypeListContent(
                 title = { Text("Tea Types") },
                 navigationIcon = {
                     IconButton(onClick = { onIntent(TeaTypeListIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = "Back")
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
             )

@@ -22,6 +22,14 @@ in inspection mode as in the IDE, and fails if it crashes. Build preview data ar
 `PreviewInstant`, and read the clock in composables through `currentInstant()`, so a preview looks
 the same every day.
 
+```bash
+# Flow tests: the real app on Robolectric, driven through its UI
+./gradlew :androidApp:testDebugUnitTest
+```
+
+A flow test extends `FlowTest`, seeds through use cases from `koin`, finds elements by the strings
+the user sees (`Res` where the UI uses it), and moves time with `clock.advance`, never a sleep.
+
 ## Architecture
 
 ### Clean Architecture Layers

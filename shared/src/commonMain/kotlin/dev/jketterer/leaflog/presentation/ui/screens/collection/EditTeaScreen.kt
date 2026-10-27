@@ -44,6 +44,9 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.coroutines.launch
+import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.navigate_up
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -120,7 +123,7 @@ private fun EditTeaContent(
                         IconButton(onClick = onBack) {
                             Icon(
                                 imageVector = FeatherIcons.ArrowLeft,
-                                contentDescription = "Back",
+                                contentDescription = stringResource(Res.string.navigate_up),
                             )
                         }
                     },

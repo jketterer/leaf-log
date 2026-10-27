@@ -19,4 +19,9 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew :shared:allTests :androidApp:assembleDebug
+      - name: Unit tests
+        run: ./gradlew :shared:allTests
+      - name: Coverage
+        run: ./gradlew :androidApp:koverVerify
+      - name: Build
+        run: ./gradlew :androidApp:assembleDebug

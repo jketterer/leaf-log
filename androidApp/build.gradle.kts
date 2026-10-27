@@ -6,6 +6,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kover)
 }
 
 // A ValueSource is re-evaluated on every build; a plain now() would be frozen by the configuration cache.
@@ -64,4 +65,48 @@ dependencies {
     implementation(libs.compose.ui)
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    kover(project(":shared"))
+}
+
+// Coverage of logic, merged with :shared. Screens and components are left to the preview render
+// tests: excluding @Composable alone keeps the lambdas inside them.
+kover {
+    reports {
+        filters {
+            includes {
+                packages(
+                    "dev.jketterer.leaflog.domain",
+                    "dev.jketterer.leaflog.data",
+                    "dev.jketterer.leaflog.di",
+                    "dev.jketterer.leaflog.services",
+                    "dev.jketterer.leaflog.presentation.ui.navigation",
+                    "dev.jketterer.leaflog.presentation.ui.messages",
+                    "dev.jketterer.leaflog.presentation.ui.search",
+                    "dev.jketterer.leaflog.presentation.ui.viewmodel",
+                )
+                classes(
+                    "dev.jketterer.leaflog.MainActivity*",
+                    "dev.jketterer.leaflog.LeafLogApplication*",
+                    "dev.jketterer.leaflog.presentation.ui.screens.*ViewModel*",
+                    "dev.jketterer.leaflog.presentation.ui.screens.*State*",
+                    "dev.jketterer.leaflog.presentation.ui.screens.*Intent*",
+                )
+            }
+            excludes {
+                annotatedBy("androidx.compose.runtime.Composable")
+                classes(
+                    "*ComposableSingletons*",
+                    "*_Impl",
+                    "*_Impl\$*",
+                    "*.LeafLogDatabaseConstructor",
+                    "*\$\$serializer",
+                )
+            }
+        }
+        verify {
+            // A ratchet: raise it as tests land, toward 70
+            rule { minBound(37) }
+        }
+    }
 }

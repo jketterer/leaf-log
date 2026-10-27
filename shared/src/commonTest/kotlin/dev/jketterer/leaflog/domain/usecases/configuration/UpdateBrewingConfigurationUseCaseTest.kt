@@ -8,12 +8,13 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class UpdateBrewingConfigurationUseCaseTest {
     private val repository = FakeBrewingConfigurationRepository(listOf(method()))
-    private val update = UpdateBrewingConfigurationUseCase(repository)
+    private val update = UpdateBrewingConfigurationUseCase(repository, Clock.System)
 
     @Test
     fun `a plan with no increment and no overrides clears both`() = runTest {

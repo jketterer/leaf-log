@@ -12,6 +12,7 @@ import kotlin.time.Instant
 
 class BrewingVesselRepositoryImpl(
     private val brewingVesselDao: BrewingVesselDao,
+    private val clock: Clock,
 ) : BrewingVesselRepository {
     override fun getAllFlow(): Flow<List<BrewingVessel>> {
         return brewingVesselDao.getAllFlow().map { entities ->
@@ -36,7 +37,7 @@ class BrewingVesselRepositoryImpl(
     }
 
     override suspend fun delete(id: String) {
-        val timestamp = Clock.System.now().toEpochMilliseconds()
+        val timestamp = clock.now().toEpochMilliseconds()
         brewingVesselDao.softDelete(id, timestamp)
     }
 

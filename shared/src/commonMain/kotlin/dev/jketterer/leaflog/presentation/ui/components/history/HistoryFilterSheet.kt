@@ -56,7 +56,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
 import kotlin.time.Instant
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.clear_all
@@ -79,9 +78,7 @@ private enum class DateRangePreset(val label: StringResource) {
     LAST_30_DAYS(Res.string.history_last_30_days),
     ;
 
-    fun toDateRange(): Pair<LocalDate, LocalDate> {
-        val today = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+    fun toDateRange(today: LocalDate): Pair<LocalDate, LocalDate> {
         return when (this) {
             TODAY -> today to today
             LAST_7_DAYS -> today.minus(6, DateTimeUnit.DAY) to today
@@ -90,9 +87,9 @@ private enum class DateRangePreset(val label: StringResource) {
     }
 }
 
-private fun isCustomDateRange(start: LocalDate?, end: LocalDate?): Boolean {
+private fun isCustomDateRange(start: LocalDate?, end: LocalDate?, today: LocalDate): Boolean {
     return !(start == null && end == null) && DateRangePreset.entries.none { preset ->
-        val (presetStart, presetEnd) = preset.toDateRange()
+        val (presetStart, presetEnd) = preset.toDateRange(today)
         start == presetStart && end == presetEnd
     }
 }
@@ -255,7 +252,8 @@ private fun HistoryFilterSheetContent(
         SectionHeader(stringResource(Res.string.header_date_range))
         Spacer(modifier = Modifier.height(8.dp))
 
-        val isCustom = isCustomDateRange(filters.dateRangeStart, filters.dateRangeEnd)
+        val today = currentDate()
+        val isCustom = isCustomDateRange(filters.dateRangeStart, filters.dateRangeEnd, today)
         var showDateRangePicker by remember { mutableStateOf(false) }
 
         FlowRow(
@@ -263,7 +261,7 @@ private fun HistoryFilterSheetContent(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             DateRangePreset.entries.forEach { preset ->
-                val (presetStart, presetEnd) = preset.toDateRange()
+                val (presetStart, presetEnd) = preset.toDateRange(today)
                 val selected =
                     filters.dateRangeStart == presetStart && filters.dateRangeEnd == presetEnd
                 FilterChip(

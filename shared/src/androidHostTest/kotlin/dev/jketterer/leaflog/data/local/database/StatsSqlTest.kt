@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 /** The SQL the v7 migration and import rebuild stats with, against the Kotlin rules it copies. */
@@ -17,7 +18,7 @@ class StatsSqlTest {
 
     private val database = inMemoryDatabase()
     private val dao = database.teaSessionDao()
-    private val repository = TeaSessionRepositoryImpl(dao)
+    private val repository = TeaSessionRepositoryImpl(dao, Clock.System)
 
     @AfterTest
     fun close() = database.close()

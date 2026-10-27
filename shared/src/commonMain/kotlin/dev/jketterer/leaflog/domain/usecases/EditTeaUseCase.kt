@@ -7,6 +7,7 @@ import kotlin.time.Clock
 
 class EditTeaUseCase(
     private val teaRepository: TeaRepository,
+    private val clock: Clock,
 ) {
     /**
      * Replaces the editable fields of [existingTea] with the values given.
@@ -45,7 +46,7 @@ class EditTeaUseCase(
             defaultTemperatureCelsius = defaultTemperatureCelsius,
             description = description,
             photos = photos,
-            updatedAt = Clock.System.now(),
+            updatedAt = clock.now(),
         )
 
         return try {

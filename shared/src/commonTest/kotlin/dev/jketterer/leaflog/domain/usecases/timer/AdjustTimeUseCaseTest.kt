@@ -4,13 +4,14 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class AdjustTimeUseCaseTest {
 
-    private val adjustTime = AdjustTimeUseCase()
+    private val adjustTime = AdjustTimeUseCase(Clock.System)
 
     @Test
     fun `taking more time off than a timer not yet started has leaves one second`() {

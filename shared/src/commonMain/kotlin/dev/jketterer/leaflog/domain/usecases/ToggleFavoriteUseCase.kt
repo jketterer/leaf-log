@@ -6,11 +6,12 @@ import kotlin.time.Clock
 
 class ToggleFavoriteUseCase(
     private val teaRepository: TeaRepository,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(tea: Tea): Result<Tea> {
         val updatedTea = tea.copy(
             isFavorite = !tea.isFavorite,
-            updatedAt = Clock.System.now()
+            updatedAt = clock.now()
         )
 
         return try {

@@ -34,6 +34,7 @@ class TimerService(
     private val sessionReminderDelayUseCase: GetSessionReminderDelayUseCase,
     private val lifecycleHandler: TimerLifecycleHandler,
     preferencesRepository: PreferencesRepository,
+    private val clock: Clock,
 ) {
     private val _timerState = MutableStateFlow(TimerState())
     val timerState: StateFlow<TimerState> = _timerState.asStateFlow()
@@ -104,7 +105,7 @@ class TimerService(
                 }
 
                 // Calculate remaining time (simple coordination logic)
-                val now = Clock.System.now()
+                val now = clock.now()
                 val elapsed = now - state.startedAt
                 val remaining = (state.totalDuration - elapsed).coerceAtLeast(Duration.ZERO)
 

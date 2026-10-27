@@ -96,6 +96,7 @@ class HomeViewModel(
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
     private val pinBrewingConfigurationUseCase: PinBrewingConfigurationUseCase,
     private val timerService: TimerService,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState(today = currentDate()))
@@ -196,7 +197,7 @@ class HomeViewModel(
                         totalDuration = duration,
                         remainingDuration = duration,
                         status = TimerStatus.RUNNING,
-                        startedAt = Clock.System.now(),
+                        startedAt = clock.now(),
                     ),
                 )
                 _navEvents.trySend(HomeNavEvent.NavigateToQuickTimer)
@@ -256,7 +257,7 @@ class HomeViewModel(
             is HomeIntent.SettingsClicked -> _navEvents.trySend(HomeNavEvent.NavigateToSettings)
 
             is HomeIntent.DailyStatsTodaySessionsClicked -> {
-                val today = Clock.System.now()
+                val today = clock.now()
                     .toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
                 _navEvents.trySend(
                     HomeNavEvent.NavigateToHistory(
@@ -286,7 +287,7 @@ class HomeViewModel(
 
     private fun handleResumeSession(session: SessionWithSteeps) {
         val sessionId = session.session.id
-        when (session.currentSteep.resolvedTimerStatus(Clock.System.now())) {
+        when (session.currentSteep.resolvedTimerStatus(clock.now())) {
             TimerStatus.COMPLETE -> _navEvents.trySend(HomeNavEvent.CompleteSession(sessionId))
             else -> _navEvents.trySend(HomeNavEvent.NavigateToTimer(sessionId))
         }
@@ -431,7 +432,7 @@ class HomeViewModel(
             }
             .collect { inProgressInfo ->
                 val resolvedStatus = inProgressInfo?.session?.currentSteep
-                    ?.resolvedTimerStatus(Clock.System.now())
+                    ?.resolvedTimerStatus(clock.now())
                 _state.update {
                     it.copy(
                         mostRecentInProgress = inProgressInfo,
@@ -503,10 +504,10 @@ class HomeViewModel(
     }
 
     private fun currentDate(): LocalDate =
-        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
     private fun generateGreeting(): String {
-        val now = Clock.System.now()
+        val now = clock.now()
         val hour = now.toLocalDateTime(TimeZone.currentSystemDefault()).hour
 
         return when (hour) {

@@ -11,6 +11,7 @@ import kotlin.time.Clock
 
 class TeaSessionRepositoryImpl(
     private val teaSessionDao: TeaSessionDao,
+    private val clock: Clock,
 ) : TeaSessionRepository {
     override fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>> =
         teaSessionDao.getAllSessionsFlow().map { it.toAggregates() }
@@ -52,10 +53,10 @@ class TeaSessionRepositoryImpl(
     }
 
     override suspend fun deleteSteep(steepId: String) =
-        teaSessionDao.softDelete(steepId, Clock.System.now().toEpochMilliseconds())
+        teaSessionDao.softDelete(steepId, clock.now().toEpochMilliseconds())
 
     override suspend fun deleteSession(sessionId: String) {
-        val timestamp = Clock.System.now().toEpochMilliseconds()
+        val timestamp = clock.now().toEpochMilliseconds()
         teaSessionDao.softDeleteChildSteeps(sessionId, timestamp)
         teaSessionDao.softDelete(sessionId, timestamp)
     }

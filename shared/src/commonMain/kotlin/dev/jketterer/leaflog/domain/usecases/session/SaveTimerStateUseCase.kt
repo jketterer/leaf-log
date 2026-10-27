@@ -19,11 +19,12 @@ import kotlin.time.DurationUnit
 class SaveTimerStateUseCase(
     private val transactor: Transactor,
     private val teaSessionRepository: TeaSessionRepository,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(timerState: TimerState): Result<Unit> = runCatching {
         val sessionId =
             requireNotNull(timerState.sessionId) { "Cannot save a timer with no session" }
-        val now = Clock.System.now()
+        val now = clock.now()
         transactor {
             val current = teaSessionRepository.getSession(sessionId)
                 ?: throw DomainFailure.NotFound("session $sessionId")

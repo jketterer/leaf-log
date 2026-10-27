@@ -9,7 +9,9 @@ import kotlin.time.Duration
 /**
  * Use case to start a brewing timer on the session's current steep.
  */
-class StartTimerUseCase {
+class StartTimerUseCase(
+    private val clock: Clock,
+) {
     operator fun invoke(
         session: SessionWithSteeps,
         duration: Duration,
@@ -28,7 +30,7 @@ class StartTimerUseCase {
                 totalDuration = duration,
                 remainingDuration = duration,
                 status = TimerStatus.RUNNING,
-                startedAt = Clock.System.now(),
+                startedAt = clock.now(),
                 pausedAt = null,
                 brewingTemperatureCelsius = steep.temperatureCelsius,
             ),

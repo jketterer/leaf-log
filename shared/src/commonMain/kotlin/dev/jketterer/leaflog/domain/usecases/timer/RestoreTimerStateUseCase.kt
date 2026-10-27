@@ -10,10 +10,12 @@ import kotlin.time.Duration.Companion.milliseconds
  * Restores the timer saved on the session's current steep, or null if none was saved.
  * Recalculates remaining time based on when the timer was last saved.
  */
-class RestoreTimerStateUseCase {
+class RestoreTimerStateUseCase(
+    private val clock: Clock,
+) {
     operator fun invoke(session: SessionWithSteeps): TimerState? {
         val steep = session.currentSteep
-        val now = Clock.System.now()
+        val now = clock.now()
         val savedRemainingMs = steep.timerRemainingMs ?: 0L
 
         val (newStatus, newRemainingMs) = when (steep.timerStatus) {

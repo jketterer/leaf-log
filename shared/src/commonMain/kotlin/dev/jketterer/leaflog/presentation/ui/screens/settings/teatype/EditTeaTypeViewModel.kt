@@ -24,6 +24,7 @@ import leaf_log.shared.generated.resources.couldnt_load_tea_type
 import leaf_log.shared.generated.resources.couldnt_merge_tea_type
 import leaf_log.shared.generated.resources.couldnt_save_tea_type
 import leaf_log.shared.generated.resources.failure_not_found
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -34,6 +35,7 @@ class EditTeaTypeViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val mergeTeaTypeUseCase: MergeTeaTypeUseCase,
     private val deleteTeaTypeUseCase: DeleteTeaTypeUseCase,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditTeaTypeState())
@@ -151,7 +153,7 @@ class EditTeaTypeViewModel(
                 val temperatureCelsius = currentState.temperatureCelsius
 
                 val now = Instant.fromEpochMilliseconds(
-                    kotlin.time.Clock.System.now().toEpochMilliseconds()
+                    clock.now().toEpochMilliseconds()
                 )
 
                 val teaType = if (currentState.isEditMode && currentState.existingTeaType != null) {

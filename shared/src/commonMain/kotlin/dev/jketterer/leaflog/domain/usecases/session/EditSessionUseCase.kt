@@ -21,6 +21,7 @@ class EditSessionUseCase(
     private val transactor: Transactor,
     private val teaSessionRepository: TeaSessionRepository,
     private val recomputeStats: RecomputeStatsUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(
         sessionId: String,
@@ -56,7 +57,7 @@ class EditSessionUseCase(
                 edited
             }
 
-            val now = Clock.System.now()
+            val now = clock.now()
             val shift = startedAt?.let { it - current.startedAt }
             val updated = current.withSession(moved, now).let { aggregate ->
                 if (shift == null || shift == Duration.ZERO) aggregate

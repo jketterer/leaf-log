@@ -11,6 +11,7 @@ import kotlin.time.Clock
 
 class TeaRepositoryImpl(
     private val teaDao: TeaDao,
+    private val clock: Clock,
 ) : TeaRepository {
     override fun getAllFlow(): Flow<List<Tea>> {
         return teaDao.getAllFlow().map { entities ->
@@ -47,16 +48,16 @@ class TeaRepositoryImpl(
     }
 
     override suspend fun delete(id: String) {
-        val timestamp = Clock.System.now().toEpochMilliseconds()
+        val timestamp = clock.now().toEpochMilliseconds()
         teaDao.softDelete(id, timestamp)
     }
 
     override suspend fun reassignType(fromTypeId: String, toTypeId: String) {
-        teaDao.reassignType(fromTypeId, toTypeId, Clock.System.now().toEpochMilliseconds())
+        teaDao.reassignType(fromTypeId, toTypeId, clock.now().toEpochMilliseconds())
     }
 
     override suspend fun setFinished(id: String, finished: Boolean) {
-        val now = Clock.System.now().toEpochMilliseconds()
+        val now = clock.now().toEpochMilliseconds()
         teaDao.setFinishedAt(id, finishedAt = now.takeIf { finished }, updatedAt = now)
     }
 

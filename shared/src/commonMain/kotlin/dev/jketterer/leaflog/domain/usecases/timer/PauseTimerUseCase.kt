@@ -5,7 +5,9 @@ import dev.jketterer.leaflog.domain.models.TimerStatus
 import kotlin.time.Clock
 import kotlin.time.Duration
 
-class PauseTimerUseCase {
+class PauseTimerUseCase(
+    private val clock: Clock,
+) {
     operator fun invoke(currentState: TimerState): Result<TimerState> {
         if (currentState.status != TimerStatus.RUNNING) {
             return Result.failure(IllegalStateException("Timer is not running"))
@@ -16,7 +18,7 @@ class PauseTimerUseCase {
         }
 
         return try {
-            val now = Clock.System.now()
+            val now = clock.now()
             val elapsed = now - currentState.startedAt
             val remaining = (currentState.totalDuration - elapsed).coerceAtLeast(Duration.ZERO)
 

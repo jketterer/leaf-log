@@ -10,13 +10,14 @@ import kotlin.time.Instant
 /** Makes a method follow a session's brew: its set-up and the plan its steeps followed. */
 class UpdateMethodFromSessionUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(methodId: String, session: SessionWithSteeps): Result<BrewingConfiguration> =
         runCatching {
             val method = requireNotNull(brewingConfigurationRepository.getById(methodId)) {
                 "Configuration not found"
             }
-            method.updatedFrom(session, Clock.System.now()).also { brewingConfigurationRepository.upsert(it) }
+            method.updatedFrom(session, clock.now()).also { brewingConfigurationRepository.upsert(it) }
         }
 }
 

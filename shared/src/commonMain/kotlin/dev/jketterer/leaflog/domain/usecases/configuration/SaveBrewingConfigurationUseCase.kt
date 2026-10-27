@@ -23,6 +23,7 @@ class SaveBrewingConfigurationUseCase(
     private val teaSessionRepository: TeaSessionRepository,
     private val recomputeStats: RecomputeStatsUseCase,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
+    private val clock: Clock,
 ) {
     /**
      * @param customLabel Optional custom label (if null, auto-generates)
@@ -45,7 +46,7 @@ class SaveBrewingConfigurationUseCase(
             brewingTime = plan.base,
         )
 
-        val now = Clock.System.now()
+        val now = clock.now()
         val configuration = BrewingConfiguration(
             id = generateId(),
             teaId = session.session.teaId,
@@ -82,6 +83,6 @@ class SaveBrewingConfigurationUseCase(
     }
 
     private fun generateId(): String {
-        return "config_${Clock.System.now().toEpochMilliseconds()}_${(0..9999).random()}"
+        return "config_${clock.now().toEpochMilliseconds()}_${(0..9999).random()}"
     }
 }

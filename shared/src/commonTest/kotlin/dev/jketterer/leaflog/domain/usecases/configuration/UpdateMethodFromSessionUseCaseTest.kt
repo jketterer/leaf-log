@@ -7,6 +7,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -49,7 +50,7 @@ class UpdateMethodFromSessionUseCaseTest {
     fun `the brew's set-up and plan replace the method's but keep overrides past the last steep`() = runTest {
         val repository = FakeBrewingConfigurationRepository(listOf(method))
 
-        val updated = UpdateMethodFromSessionUseCase(repository)("method", session).getOrThrow()
+        val updated = UpdateMethodFromSessionUseCase(repository, Clock.System)("method", session).getOrThrow()
 
         assertEquals(10.seconds, updated.brewingTime)
         assertEquals(10.seconds, updated.steepIncrement)
@@ -66,7 +67,7 @@ class UpdateMethodFromSessionUseCaseTest {
 
     @Test
     fun `a method that is gone fails`() = runTest {
-        val result = UpdateMethodFromSessionUseCase(FakeBrewingConfigurationRepository())("method", session)
+        val result = UpdateMethodFromSessionUseCase(FakeBrewingConfigurationRepository(), Clock.System)("method", session)
 
         assertEquals(true, result.isFailure)
     }

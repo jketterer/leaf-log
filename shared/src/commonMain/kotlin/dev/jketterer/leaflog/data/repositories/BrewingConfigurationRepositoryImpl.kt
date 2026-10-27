@@ -11,6 +11,7 @@ import kotlin.time.Clock
 
 class BrewingConfigurationRepositoryImpl(
     private val brewingConfigurationDao: BrewingConfigurationDao,
+    private val clock: Clock,
 ) : BrewingConfigurationRepository {
 
     override suspend fun getAll(): List<BrewingConfiguration> {
@@ -57,7 +58,7 @@ class BrewingConfigurationRepositoryImpl(
     }
 
     override suspend fun delete(id: String) {
-        brewingConfigurationDao.softDelete(id, Clock.System.now().toEpochMilliseconds())
+        brewingConfigurationDao.softDelete(id, clock.now().toEpochMilliseconds())
     }
 
     override suspend fun deleteWithTea(teaId: String) {
@@ -83,12 +84,12 @@ class BrewingConfigurationRepositoryImpl(
     }
 
     override suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int) {
-        val now = Clock.System.now().toEpochMilliseconds()
+        val now = clock.now().toEpochMilliseconds()
         brewingConfigurationDao.setPinned(id, isPinned, pinnedSortOrder, updatedAt = now)
     }
 
     override suspend fun reorderPinnedConfigurations(orderedIds: List<String>) {
-        val now = Clock.System.now().toEpochMilliseconds()
+        val now = clock.now().toEpochMilliseconds()
         orderedIds.forEachIndexed { index, id ->
             brewingConfigurationDao.updatePinnedSortOrder(id, index, updatedAt = now)
         }

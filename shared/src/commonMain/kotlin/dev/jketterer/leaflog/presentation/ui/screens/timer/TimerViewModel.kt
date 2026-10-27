@@ -71,6 +71,7 @@ class TimerViewModel(
     private val resolvePlanUseCase: ResolvePlanUseCase,
     private val attachTeaUseCase: AttachTeaUseCase,
     private val createTeaUseCase: CreateTeaUseCase,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -203,7 +204,7 @@ class TimerViewModel(
                 // The live TimerService state above can be stale (its countdown loop stops
                 // advancing while the app is backgrounded), so re-derive against the clock
                 // before deciding whether the timer has finished.
-                val resolvedTimerState = initialTimerState.resolvedAt(Clock.System.now())
+                val resolvedTimerState = initialTimerState.resolvedAt(clock.now())
                     .copy(nextSteepDuration = nextSteep)
 
                 // If timer was already complete (e.g., app killed during SteepComplete),
@@ -256,7 +257,7 @@ class TimerViewModel(
             val live = timerService.getCurrentState()
                 .takeIf { it.sessionId == null && it.totalDuration > Duration.ZERO }
             val timer = (live ?: preferencesRepository.getQuickTimer())
-                ?.resolvedAt(Clock.System.now())
+                ?.resolvedAt(clock.now())
             if (timer == null) {
                 // A notification left over from a timer since ended
                 _navigationEvents.send(TimerNavEvent.NavigateBack)
@@ -299,7 +300,7 @@ class TimerViewModel(
                     timer.copy(
                         status = TimerStatus.RUNNING,
                         remainingDuration = timer.totalDuration,
-                        startedAt = Clock.System.now(),
+                        startedAt = clock.now(),
                         pausedAt = null,
                     ),
                 )
@@ -429,7 +430,7 @@ class TimerViewModel(
         val session = _state.value.session ?: return
 
         viewModelScope.launch {
-            val completedState = timerService.getCurrentState().completedAt(Clock.System.now())
+            val completedState = timerService.getCurrentState().completedAt(clock.now())
             timerService.updateState(completedState)
             // Persist completed state for restoration
             saveTimerStateUseCase(completedState)
@@ -495,7 +496,7 @@ class TimerViewModel(
     private fun completeNow() {
         val isQuickTimer = _state.value.isQuickTimer
         if (_state.value.session == null && !isQuickTimer) return
-        val completed = timerService.getCurrentState().completedAt(Clock.System.now())
+        val completed = timerService.getCurrentState().completedAt(clock.now())
         timerService.updateState(completed)
         if (isQuickTimer) {
             notificationService.onTimerStopped()
@@ -544,7 +545,7 @@ class TimerViewModel(
     private fun attachTea(teaId: String) {
         _state.update { it.copy(showTeaPicker = false) }
         viewModelScope.launch {
-            val timer = timerService.getCurrentState().resolvedAt(Clock.System.now())
+            val timer = timerService.getCurrentState().resolvedAt(clock.now())
             attachTeaUseCase(teaId, timer, _state.value.userPreferences.defaultWaterType)
                 .onSuccess { handOver(it, timer) }
                 .onFailure { messages.failure(it, Res.string.couldnt_save_session) }

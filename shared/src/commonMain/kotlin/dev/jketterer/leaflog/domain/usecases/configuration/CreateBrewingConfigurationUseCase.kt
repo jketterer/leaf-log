@@ -13,6 +13,7 @@ import kotlin.uuid.Uuid
 class CreateBrewingConfigurationUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
+    private val clock: Clock,
 ) {
     /**
      * Create a configuration manually
@@ -49,7 +50,7 @@ class CreateBrewingConfigurationUseCase(
                     brewingTime = brewingTime,
                 )
 
-            val now = Clock.System.now()
+            val now = clock.now()
             val configuration = BrewingConfiguration(
                 id = Uuid.random().toString(),
                 teaId = teaId,

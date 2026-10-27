@@ -4,14 +4,16 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import kotlin.time.Clock
 
-class ResumeTimerUseCase {
+class ResumeTimerUseCase(
+    private val clock: Clock,
+) {
     operator fun invoke(currentState: TimerState): Result<TimerState> {
         if (currentState.status != TimerStatus.PAUSED) {
             return Result.failure(IllegalStateException("Timer is not paused"))
         }
 
         return try {
-            val now = Clock.System.now()
+            val now = clock.now()
 
             // Adjust startedAt to account for time already elapsed before pause,
             // preserving totalDuration so progress ring stays correct

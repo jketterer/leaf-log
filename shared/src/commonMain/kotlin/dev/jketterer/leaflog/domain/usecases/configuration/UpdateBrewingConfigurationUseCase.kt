@@ -11,6 +11,7 @@ import kotlin.time.Clock
  */
 class UpdateBrewingConfigurationUseCase(
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
+    private val clock: Clock,
 ) {
     /**
      * Update a configuration's parameters
@@ -52,7 +53,7 @@ class UpdateBrewingConfigurationUseCase(
                 steepOverrides = plan?.overrides ?: existing.steepOverrides,
                 waterType = waterType ?: existing.waterType,
                 rinse = rinse ?: existing.rinse,
-                updatedAt = Clock.System.now(),
+                updatedAt = clock.now(),
             )
 
             brewingConfigurationRepository.upsert(updated)

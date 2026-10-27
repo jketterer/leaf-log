@@ -10,7 +10,9 @@ import kotlin.time.Duration.Companion.seconds
  * Use case to adjust the timer's duration. A timer not yet started stops at one second, since
  * Start needs a duration; one already counting stops at zero, which completes it.
  */
-class AdjustTimeUseCase {
+class AdjustTimeUseCase(
+    private val clock: Clock,
+) {
     operator fun invoke(
         currentState: TimerState,
         adjustment: Duration,
@@ -24,7 +26,7 @@ class AdjustTimeUseCase {
             }
             // The clock stopped at the pause, so time spent paused isn't counted
             TimerStatus.PAUSED -> currentState.remainingDuration
-            TimerStatus.RUNNING -> currentState.resolvedAt(Clock.System.now()).remainingDuration
+            TimerStatus.RUNNING -> currentState.resolvedAt(clock.now()).remainingDuration
             TimerStatus.COMPLETE -> return Result.failure(IllegalStateException("Timer is complete"))
         }
 

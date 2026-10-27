@@ -12,6 +12,7 @@ import kotlin.time.Instant
 
 class TeaTypeRepositoryImpl(
     private val teaTypeDao: TeaTypeDao,
+    private val clock: Clock,
 ) : TeaTypeRepository {
     override fun getAllFlow(): Flow<List<TeaType>> {
         return teaTypeDao.getAllFlow().map { entities ->
@@ -36,7 +37,7 @@ class TeaTypeRepositoryImpl(
     }
 
     override suspend fun delete(id: String) {
-        val timestamp = Clock.System.now().toEpochMilliseconds()
+        val timestamp = clock.now().toEpochMilliseconds()
         teaTypeDao.softDelete(id, timestamp)
     }
 

@@ -79,11 +79,12 @@ class BackupRepositoryImpl(
     private val imageStorage: ImageStorage,
     private val fileSystem: FileSystem,
     private val preferencesRepository: PreferencesRepository,
+    private val clock: Clock,
 ) : BackupRepository {
 
     override suspend fun export(): Result<String> = withContext(Dispatchers.IO) {
         runCatching {
-            val now = Clock.System.now()
+            val now = clock.now()
             // One transaction, so a steep saved mid-export can't land half in the snapshot
             val snapshot = transactor {
                 val tags = sessionDao.getAllTags().groupBy { it.steepId }

@@ -10,12 +10,13 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Clock
 
 class SessionReadsTest {
 
     private val database = inMemoryDatabase()
     private val dao = database.teaSessionDao()
-    private val repository = TeaSessionRepositoryImpl(dao)
+    private val repository = TeaSessionRepositoryImpl(dao, Clock.System)
 
     @BeforeTest
     fun seed() = runTest { database.seedForeignKeys() }

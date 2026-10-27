@@ -49,6 +49,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -382,6 +383,7 @@ class BackupRepositoryImplTest {
             imageStorage = storage,
             fileSystem = fileSystem,
             preferencesRepository = preferences,
+            clock = Clock.System,
         )
 
         fun read(stored: String) = fileSystem.read(files / stored) { readByteArray() }

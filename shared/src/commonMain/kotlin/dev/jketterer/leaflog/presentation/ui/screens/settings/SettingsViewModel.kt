@@ -34,6 +34,7 @@ private const val BACKUP_OVERDUE_AFTER_DAYS = 14
 class SettingsViewModel(
     private val preferencesRepository: PreferencesRepository,
     private val backupRepository: BackupRepository,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SettingsState())
@@ -96,7 +97,7 @@ class SettingsViewModel(
                 .collect { preferences ->
                     val days = daysSinceBackup(
                         preferences.lastBackupAt,
-                        Clock.System.now(),
+                        clock.now(),
                         TimeZone.currentSystemDefault(),
                     )
                     _state.update {
@@ -194,7 +195,7 @@ class SettingsViewModel(
 
     private fun recordBackup() {
         viewModelScope.launch {
-            preferencesRepository.updateLastBackupAt(Clock.System.now())
+            preferencesRepository.updateLastBackupAt(clock.now())
                 .onFailure { e ->
                     Logger.w(tag = "Settings") { "Failed to record the backup: ${e.message}" }
                 }

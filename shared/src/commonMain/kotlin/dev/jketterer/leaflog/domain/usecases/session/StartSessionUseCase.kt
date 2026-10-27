@@ -25,6 +25,7 @@ class StartSessionUseCase(
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
     private val recomputeStats: RecomputeStatsUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(
         teaId: String,
@@ -45,7 +46,7 @@ class StartSessionUseCase(
     ): Result<SessionWithSteeps> = runCatching {
         require(teaId.isNotBlank()) { "Tea must be selected" }
 
-        val now = Clock.System.now()
+        val now = clock.now()
         val id = Uuid.random().toString()
         val started = SessionWithSteeps(
             session = Session(

@@ -16,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -28,15 +29,15 @@ class SessionAggregateUseCasesTest {
     private val transactor = FakeTransactor()
     private val recomputeStats = RecomputeStatsUseCase(sessions, teas, configurations)
 
-    private val startSession = StartSessionUseCase(transactor, sessions, teas, recomputeStats)
-    private val addSteep = AddSteepUseCase(transactor, sessions, recomputeStats)
-    private val editSteep = EditSteepUseCase(transactor, sessions, recomputeStats)
-    private val editSession = EditSessionUseCase(transactor, sessions, recomputeStats)
-    private val deleteSteep = DeleteSteepUseCase(transactor, sessions, recomputeStats)
-    private val finishSession = FinishSessionUseCase(transactor, sessions, recomputeStats)
-    private val reopenSession = ReopenSessionUseCase(transactor, sessions, recomputeStats)
+    private val startSession = StartSessionUseCase(transactor, sessions, teas, recomputeStats, Clock.System)
+    private val addSteep = AddSteepUseCase(transactor, sessions, recomputeStats, Clock.System)
+    private val editSteep = EditSteepUseCase(transactor, sessions, recomputeStats, Clock.System)
+    private val editSession = EditSessionUseCase(transactor, sessions, recomputeStats, Clock.System)
+    private val deleteSteep = DeleteSteepUseCase(transactor, sessions, recomputeStats, Clock.System)
+    private val finishSession = FinishSessionUseCase(transactor, sessions, recomputeStats, Clock.System)
+    private val reopenSession = ReopenSessionUseCase(transactor, sessions, recomputeStats, Clock.System)
     private val deleteSession = DeleteSessionUseCase(transactor, sessions, recomputeStats)
-    private val saveTimerState = SaveTimerStateUseCase(transactor, sessions)
+    private val saveTimerState = SaveTimerStateUseCase(transactor, sessions, Clock.System)
     private val discardSteep = DiscardSteepUseCase(sessions, deleteSession, deleteSteep, finishSession)
     private val saveConfiguration = SaveBrewingConfigurationUseCase(
         transactor,
@@ -44,6 +45,7 @@ class SessionAggregateUseCasesTest {
         sessions,
         recomputeStats,
         GenerateConfigurationLabelUseCase(),
+        Clock.System,
     )
 
     @Test

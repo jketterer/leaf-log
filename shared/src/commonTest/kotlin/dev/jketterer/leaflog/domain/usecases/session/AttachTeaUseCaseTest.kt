@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -23,7 +24,7 @@ class AttachTeaUseCaseTest {
     private val configurations = FakeBrewingConfigurationRepository()
     private val transactor = FakeTransactor()
     private val recomputeStats = RecomputeStatsUseCase(sessions, teas, configurations)
-    private val startSession = StartSessionUseCase(transactor, sessions, teas, recomputeStats)
+    private val startSession = StartSessionUseCase(transactor, sessions, teas, recomputeStats, Clock.System)
     private val attachTea = AttachTeaUseCase(
         transactor = transactor,
         teaSessionRepository = sessions,
@@ -36,6 +37,7 @@ class AttachTeaUseCaseTest {
             sessions,
         ),
         recomputeStats = recomputeStats,
+        clock = Clock.System,
     )
 
     @Test

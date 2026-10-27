@@ -12,6 +12,7 @@ import kotlin.uuid.Uuid
  */
 class CreateBrewingVesselUseCase(
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val clock: Clock,
 ) {
     @OptIn(ExperimentalUuidApi::class)
     suspend operator fun invoke(
@@ -29,7 +30,7 @@ class CreateBrewingVesselUseCase(
             return Result.failure(IllegalArgumentException("Capacity must be greater than 0"))
         }
 
-        val now = Clock.System.now()
+        val now = clock.now()
 
         // Get max display order
         val existingVessels = brewingVesselRepository.getAll()

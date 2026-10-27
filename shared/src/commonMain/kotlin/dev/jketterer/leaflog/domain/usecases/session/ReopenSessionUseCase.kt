@@ -12,6 +12,7 @@ class ReopenSessionUseCase(
     private val transactor: Transactor,
     private val teaSessionRepository: TeaSessionRepository,
     private val recomputeStats: RecomputeStatsUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(sessionId: String): Result<SessionWithSteeps> = runCatching {
         transactor {
@@ -21,7 +22,7 @@ class ReopenSessionUseCase(
 
             val updated = current.withSession(
                 current.session.copy(status = SessionStatus.IN_PROGRESS),
-                Clock.System.now(),
+                clock.now(),
             )
             teaSessionRepository.saveSession(updated)
             recomputeStats(current.session.teaId)

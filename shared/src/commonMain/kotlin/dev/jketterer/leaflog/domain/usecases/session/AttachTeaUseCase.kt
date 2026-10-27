@@ -34,6 +34,7 @@ class AttachTeaUseCase(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val getBrewingParametersPrefill: GetBrewingParametersPrefillUseCase,
     private val recomputeStats: RecomputeStatsUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(
         teaId: String,
@@ -49,7 +50,7 @@ class AttachTeaUseCase(
             ?: vessel.capacityMl?.toDouble()
             ?: FALLBACK_WATER_ML
 
-        val now = Clock.System.now()
+        val now = clock.now()
         val id = Uuid.random().toString()
         fun steep(number: Int) = Steep(
             id = if (number == 1) id else Uuid.random().toString(),

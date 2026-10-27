@@ -47,6 +47,7 @@ class AnalyticsViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val preferencesRepository: PreferencesRepository,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnalyticsState())
@@ -99,7 +100,7 @@ class AnalyticsViewModel(
     /** History narrowed to the selected period's days; All time narrows to none. */
     private fun navigateToHistoryOverPeriod(teaTypeId: String? = null, teaId: String? = null) {
         val period = _state.value.selectedPeriod
-        val window = period.window(Clock.System.now(), TimeZone.currentSystemDefault()).current
+        val window = period.window(clock.now(), TimeZone.currentSystemDefault()).current
         val bounded = period != AnalyticsPeriod.ALL_TIME
         _navEvents.trySend(
             AnalyticsNavEvent.NavigateToHistory(
@@ -129,7 +130,7 @@ class AnalyticsViewModel(
         ) { sessions, teaList, teaTypeList, vesselList, period ->
             val teas = teaList.associateBy { it.id }
             val teaTypes = teaTypeList.associateBy { it.id }
-            val now = Clock.System.now()
+            val now = clock.now()
             val tz = TimeZone.currentSystemDefault()
             val (window, previousWindow) = period.window(now, tz)
             val analytics = sessions.summary(window)

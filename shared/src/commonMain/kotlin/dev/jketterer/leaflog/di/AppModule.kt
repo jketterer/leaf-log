@@ -26,8 +26,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import kotlin.time.Clock
 
 val appModule = module {
+    single<Clock> { Clock.System }
+
     single {
         CoroutineScope(SupervisorJob() + Dispatchers.Default)
     }
@@ -40,6 +43,7 @@ val appModule = module {
             sessionReminderDelayUseCase = get(),
             lifecycleHandler = get(),
             preferencesRepository = get(),
+            clock = get(),
         )
     }
 

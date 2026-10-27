@@ -15,6 +15,7 @@ class EditSteepUseCase(
     private val transactor: Transactor,
     private val teaSessionRepository: TeaSessionRepository,
     private val recomputeStats: RecomputeStatsUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(
         steepId: String,
@@ -41,7 +42,7 @@ class EditSteepUseCase(
             }
             edited.requireValid()
 
-            val now = Clock.System.now()
+            val now = clock.now()
             val updated = current.copy(
                 steeps = current.steeps.map {
                     if (it.id == steepId) edited.copy(updatedAt = now) else it

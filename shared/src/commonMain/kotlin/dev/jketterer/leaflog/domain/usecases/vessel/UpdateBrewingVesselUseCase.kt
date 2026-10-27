@@ -9,6 +9,7 @@ import kotlin.time.Clock
  */
 class UpdateBrewingVesselUseCase(
     private val brewingVesselRepository: BrewingVesselRepository,
+    private val clock: Clock,
 ) {
     /**
      * Replaces the editable fields of [existingVessel] with the values given.
@@ -39,7 +40,7 @@ class UpdateBrewingVesselUseCase(
             iconName = iconName,
             imagePath = imagePath,
             capacityMl = capacityMl,
-            updatedAt = Clock.System.now(),
+            updatedAt = clock.now(),
         )
 
         return try {

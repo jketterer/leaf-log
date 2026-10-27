@@ -15,16 +15,20 @@ import leaf_log.shared.generated.resources.years_ago
 import leaf_log.shared.generated.resources.yesterday
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import kotlin.time.Clock
 import kotlin.time.Instant
 
 /** The instant @Preview data is built around, so a preview renders the same on every day. */
 internal val PreviewInstant = Instant.fromEpochSeconds(1_790_000_000L)
 
-/** Now, or [PreviewInstant] in a preview, so "today" and "3 days ago" don't move its screenshot. */
+/**
+ * Now from the injected [Clock], or [PreviewInstant] in a preview, so "today" and "3 days ago"
+ * don't move its screenshot.
+ */
 @Composable
 internal fun currentInstant(): Instant =
-    if (LocalInspectionMode.current) PreviewInstant else Clock.System.now()
+    if (LocalInspectionMode.current) PreviewInstant else koinInject<Clock>().now()
 
 /** Today's date in the device's time zone, or [PreviewInstant]'s in a preview. */
 @Composable

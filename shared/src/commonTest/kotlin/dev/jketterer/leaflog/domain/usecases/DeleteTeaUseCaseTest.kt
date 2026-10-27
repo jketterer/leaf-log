@@ -16,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -32,6 +33,7 @@ class DeleteTeaUseCaseTest {
         sessions,
         teas,
         RecomputeStatsUseCase(sessions, teas, configurations),
+        Clock.System,
     )
 
     @Test

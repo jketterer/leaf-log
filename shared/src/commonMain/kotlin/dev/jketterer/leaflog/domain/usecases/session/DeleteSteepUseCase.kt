@@ -14,6 +14,7 @@ class DeleteSteepUseCase(
     private val transactor: Transactor,
     private val teaSessionRepository: TeaSessionRepository,
     private val recomputeStats: RecomputeStatsUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(steepId: String): Result<SessionWithSteeps> = runCatching {
         transactor {
@@ -22,7 +23,7 @@ class DeleteSteepUseCase(
             require(steepId != current.session.id) { "Steep 1 is the session: delete the session" }
 
             teaSessionRepository.deleteSteep(steepId)
-            val now = Clock.System.now()
+            val now = clock.now()
             val updated = current.copy(
                 steeps = current.steeps
                     .filter { it.id != steepId }

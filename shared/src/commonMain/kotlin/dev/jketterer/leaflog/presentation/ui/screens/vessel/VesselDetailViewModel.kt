@@ -24,6 +24,7 @@ class VesselDetailViewModel(
     private val brewingVesselRepository: BrewingVesselRepository,
     private val teaSessionRepository: TeaSessionRepository,
     private val deleteBrewingVesselUseCase: DeleteBrewingVesselUseCase,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(VesselDetailState())
@@ -116,7 +117,7 @@ class VesselDetailViewModel(
             try {
                 val updated = vessel.copy(
                     isArchived = true,
-                    updatedAt = Clock.System.now(),
+                    updatedAt = clock.now(),
                 )
                 brewingVesselRepository.upsert(updated)
                 _navigationEvent.value = VesselDetailNavigationEvent.NavigateBack
@@ -134,7 +135,7 @@ class VesselDetailViewModel(
             try {
                 val updated = vessel.copy(
                     isArchived = false,
-                    updatedAt = Clock.System.now(),
+                    updatedAt = clock.now(),
                 )
                 brewingVesselRepository.upsert(updated)
                 loadVessel(vessel.id)

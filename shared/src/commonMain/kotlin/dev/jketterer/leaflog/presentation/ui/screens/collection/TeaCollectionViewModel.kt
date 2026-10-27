@@ -40,6 +40,7 @@ class TeaCollectionViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val preferencesRepository: PreferencesRepository,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(TeaCollectionState())
@@ -107,7 +108,7 @@ class TeaCollectionViewModel(
         ) { teas, (filter, typeId, sort), query, notBrewedLately ->
             val filtered = teas.filteredBy(filter, typeId, query)
             val shown = if (notBrewedLately) {
-                dormantTeas(filtered, Clock.System.now())
+                dormantTeas(filtered, clock.now())
             } else {
                 sortTeas(filtered, sort)
             }

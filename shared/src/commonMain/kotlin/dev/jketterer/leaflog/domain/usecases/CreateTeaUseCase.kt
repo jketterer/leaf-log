@@ -10,6 +10,7 @@ import kotlin.uuid.Uuid
 
 class CreateTeaUseCase(
     private val teaRepository: TeaRepository,
+    private val clock: Clock,
 ) {
     @OptIn(ExperimentalUuidApi::class)
     suspend operator fun invoke(
@@ -35,7 +36,7 @@ class CreateTeaUseCase(
             return Result.failure(IllegalArgumentException("Temperature must be between 0°C and 100°C"))
         }
 
-        val now = Clock.System.now()
+        val now = clock.now()
         val tea = Tea(
             id = Uuid.random().toString(),
             name = name.trim(),

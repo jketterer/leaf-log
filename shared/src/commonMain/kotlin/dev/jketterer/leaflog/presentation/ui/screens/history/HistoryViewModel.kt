@@ -65,6 +65,7 @@ class HistoryViewModel(
     private val discardSteepUseCase: DiscardSteepUseCase,
     private val timerService: TimerService,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(initialHistoryState(route))
@@ -178,7 +179,7 @@ class HistoryViewModel(
             val groups = if (filters.isActive || query.isNotBlank()) {
                 listOf(HistoryGroup(period = null, sessions = filteredSessions))
             } else {
-                filteredSessions.groupByDay(Clock.System.now().toLocalDateTime(tz).date, tz)
+                filteredSessions.groupByDay(clock.now().toLocalDateTime(tz).date, tz)
             }
             val brewedTeas =
                 data.sessions.map { it.session.teaId }.distinct().mapNotNull(teasMap::get)

@@ -22,6 +22,7 @@ class AddSteepUseCase(
     private val transactor: Transactor,
     private val teaSessionRepository: TeaSessionRepository,
     private val recomputeStats: RecomputeStatsUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(
         sessionId: String,
@@ -33,7 +34,7 @@ class AddSteepUseCase(
             val current = teaSessionRepository.getSession(sessionId)
                 ?: throw DomainFailure.NotFound("session $sessionId")
             val last = current.currentSteep
-            val now = Clock.System.now()
+            val now = clock.now()
             val steep = Steep(
                 id = Uuid.random().toString(),
                 number = last.number + 1,

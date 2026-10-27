@@ -132,10 +132,14 @@ abstract class FlowTest {
         activity!!.pause().stop()
     }
 
-    /** System back, as a gesture or the button. */
+    /** System back, as a gesture or the button, once the last tap's screen is up. */
     fun systemBack() {
+        compose.waitForIdle()
         activity!!.get().onBackPressedDispatcher.onBackPressed()
     }
+
+    /** Whether the Activity is closing, as when back leaves the app. */
+    val isFinishing: Boolean get() = activity!!.get().isFinishing
 
     /** The system ends the backgrounded process; returning restores the Activity's saved state. */
     fun dieInBackground() {
@@ -180,9 +184,10 @@ abstract class FlowTest {
 
     private val alarms get() = shadowOf(app.getSystemService(AlarmManager::class.java))
 
+    val notificationManager: NotificationManager get() = app.getSystemService(NotificationManager::class.java)
+
     /** The notification posted under [id], or null if none is in the shade. */
-    fun notification(id: Int): Notification? =
-        shadowOf(app.getSystemService(NotificationManager::class.java)).getNotification(id)
+    fun notification(id: Int): Notification? = shadowOf(notificationManager).getNotification(id)
 
     /** The alarm set to wake [receiver], or null if none is scheduled. */
     fun alarm(receiver: KClass<out BroadcastReceiver>): ScheduledAlarm? = alarms.scheduledAlarms

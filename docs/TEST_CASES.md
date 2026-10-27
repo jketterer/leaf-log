@@ -30,8 +30,8 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       original end time.
 - [ ] ±adjust during a running timer. The ongoing notification and Live Activity show the new end
       time, and the alert fires at the new time.
-- [ ] Running timer → edit parameters → force-stop → relaunch. Still running with the correct
-      remaining time, and the edits kept. The Home banner keeps its progress bar throughout.
+- [ ] Running timer → edit parameters → force-stop → relaunch. The Home banner keeps its progress
+      bar throughout.
 
 ## 2. Notifications
 
@@ -132,9 +132,6 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 Recreate with a dark-mode switch and with a font-scale change (Settings → Display), not rotation:
 the Activity is portrait-locked.
 
-- [ ] Running timer → recreate. The timer keeps running, with no reset and no second alert.
-- [ ] Edit Tea, Edit Vessel, Edit Session, and Log Tea half-filled → recreate. Typed values
-      survive and nothing re-seeds from the database.
 - [ ] Max font scale: Timer ring, Quick Timer duration sheet, and Quick Brew cards with long tea
       names stay readable, with nothing clipped.
 - [ ] Settings → Theme: Light and Dark each hold against the opposite system setting, System
@@ -155,10 +152,9 @@ the Activity is portrait-locked.
 
 - [ ] **[iOS]** Back-swipe on a screen pushed inside a tab returns to the previous screen, not out
       of the tab.
-- [ ] **[A]** System back from a tab's root returns Home, then exits.
-- [ ] Edit Tea, Edit Vessel, Edit Tea Type and Edit Session, each with a change made: system back
-      (Android) or the edge swipe (iOS) asks before discarding, as the toolbar arrow does. With no
-      change it leaves at once, with the predictive-back peek. The question survives rotation.
+- [ ] Edit Tea, Edit Vessel, Edit Tea Type and Edit Session: with no change, back leaves with the
+      predictive-back peek. On **[iOS]**, with a change made, the edge swipe asks before
+      discarding, and the question survives rotation.
 
 ## 9. Quick Timer
 

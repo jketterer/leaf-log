@@ -5,10 +5,14 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl.Companion.COMPLETION_NOTIFICATION_ID
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.edit_parameters
+import leaf_log.shared.generated.resources.field_water_quantity
 import leaf_log.shared.generated.resources.log_a_brew
 import leaf_log.shared.generated.resources.log_it
 import leaf_log.shared.generated.resources.navigate_up
@@ -18,12 +22,14 @@ import leaf_log.shared.generated.resources.quick_timer
 import leaf_log.shared.generated.resources.review_done
 import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_how_was_steep_n
+import leaf_log.shared.generated.resources.save
 import leaf_log.shared.generated.resources.session_finished
 import leaf_log.shared.generated.resources.start_brewing
 import leaf_log.shared.generated.resources.start_steep_n
 import leaf_log.shared.generated.resources.tab_collection
 import leaf_log.shared.generated.resources.tab_history
 import leaf_log.shared.generated.resources.undo
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import kotlin.time.Duration.Companion.seconds
@@ -58,6 +64,51 @@ class ProcessDeathFlowTest : FlowTest() {
         click("Resume")
         waitFor("0:15")
         waitFor(text(Res.string.pause))
+    }
+
+    @Test
+    fun `parameters edited mid steep outlive a force stop with the steep still running`() {
+        launch()
+        beginSession("Dragon Well")
+        click(text(Res.string.start_brewing))
+        clock.advance(10.seconds)
+        click(text(Res.string.edit_parameters))
+        val water = hasSetTextAction() and hasText(text(Res.string.field_water_quantity))
+        waitFor(water)
+        compose.onNode(water).performTextReplacement("150")
+        click(text(Res.string.save))
+        waitFor("150 mL")
+
+        forceStop()
+        clock.advance(5.seconds)
+
+        click("Resume")
+        waitFor("0:15")
+        waitFor(text(Res.string.pause))
+        waitFor("150 mL")
+    }
+
+    @Test
+    fun `a running steep keeps counting through recreation and alerts only once`() {
+        launch()
+        beginSession("Dragon Well")
+        click(text(Res.string.start_brewing))
+        clock.advance(10.seconds)
+        waitFor("0:20")
+
+        recreate()
+        waitFor("0:20")
+        waitFor(text(Res.string.pause))
+
+        clock.advance(20.seconds)
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+        waitUntil("the ready alert is posted") { notification(COMPLETION_NOTIFICATION_ID) != null }
+        // Swiped away, so posting it again would show
+        notificationManager.cancel(COMPLETION_NOTIFICATION_ID)
+
+        recreate()
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+        assertNull(notification(COMPLETION_NOTIFICATION_ID))
     }
 
     @Test

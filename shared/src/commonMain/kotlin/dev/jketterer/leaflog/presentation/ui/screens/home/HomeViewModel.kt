@@ -34,6 +34,7 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.messages.UiText
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,11 +42,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
@@ -93,7 +98,7 @@ class HomeViewModel(
     private val timerService: TimerService,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(HomeState())
+    private val _state = MutableStateFlow(HomeState(today = currentDate()))
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
     private val _navEvents = Channel<HomeNavEvent>()
@@ -166,6 +171,10 @@ class HomeViewModel(
         when (intent) {
             is HomeIntent.LoadData -> loadData()
             is HomeIntent.Refresh -> refresh()
+
+            // The app can sit in the background past midnight, so today's stats move to the new day
+            is HomeIntent.Resumed ->
+                _state.update { it.copy(today = currentDate(), greeting = generateGreeting()) }
 
             is HomeIntent.LogTeaClicked -> {
                 _state.update { it.copy(isFabExpanded = false) }
@@ -341,8 +350,11 @@ class HomeViewModel(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun collectDailyStats(loaded: MutableStateFlow<Boolean>) {
-        getDailyStatsUseCase()
+        _state.mapNotNull { it.today }
+            .distinctUntilChanged()
+            .flatMapLatest { getDailyStatsUseCase(it) }
             .catch { e ->
                 messages.failure(e, Res.string.couldnt_load)
                 loaded.value = true
@@ -489,6 +501,9 @@ class HomeViewModel(
     private fun refresh() {
         loadData()
     }
+
+    private fun currentDate(): LocalDate =
+        Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
     private fun generateGreeting(): String {
         val now = Clock.System.now()

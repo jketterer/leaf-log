@@ -3,6 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.home
 sealed interface HomeIntent {
     data object LoadData : HomeIntent
     data object Refresh : HomeIntent
+    data object Resumed : HomeIntent
     data object LogTeaClicked : HomeIntent
     data object QuickTimerClicked : HomeIntent
     data class StartQuickTimer(val durationSeconds: Int) : HomeIntent

@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlin.time.Instant
 
 /**
@@ -131,7 +132,7 @@ class FakeTeaSessionRepository(
             .forEach { rows[it.steep.id] = it.deleted() }
     }
 
-    override fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
+    override fun getAllSessionsFlow(): Flow<List<SessionWithSteeps>> = flow { emit(getAllSessions()) }
     override fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getSessionFlow(id: String): Flow<SessionWithSteeps?> = TODO("unused by these tests")
     override fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")

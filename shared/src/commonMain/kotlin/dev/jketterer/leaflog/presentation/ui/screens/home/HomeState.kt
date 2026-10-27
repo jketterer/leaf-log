@@ -5,9 +5,12 @@ import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
+import kotlinx.datetime.LocalDate
 
 data class HomeState(
     val greeting: String = "Good day",
+    // The day dailyStats counts, moved forward when Home resumes on a later one
+    val today: LocalDate? = null,
     val dailyStats: DailyStats = DailyStats(),
     val recentSessionsWithTea: List<SessionWithTeaData> = emptyList(),
     val quickBrewConfigurations: List<QuickBrewCardData> = emptyList(),

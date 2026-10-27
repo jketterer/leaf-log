@@ -27,7 +27,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -94,6 +96,11 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.onIntent(HomeIntent.Resumed)
+        onPauseOrDispose { }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.navEvents.collect { event ->
@@ -222,10 +229,13 @@ private fun HomeContent(
                     ) {
                         // Greeting
                         item(key = "greeting") {
-                            GreetingHeader(
-                                greeting = state.greeting,
-                                userName = null,  // TODO: Get from user preferences
-                            )
+                            // GreetingHeader reads the date itself, so a new day recomposes it
+                            key(state.today) {
+                                GreetingHeader(
+                                    greeting = state.greeting,
+                                    userName = null,  // TODO: Get from user preferences
+                                )
+                            }
                         }
 
                         // In-progress sessions banner

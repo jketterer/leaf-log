@@ -83,6 +83,11 @@ class TestClock(private var now: Instant = Instant.parse("2026-10-27T15:00:00Z")
     fun advance(by: Duration) {
         now += by
     }
+
+    /** Moves to [instant], back as well as forward, as when seeding sessions on past days. */
+    fun set(instant: Instant) {
+        now = instant
+    }
 }
 
 /**

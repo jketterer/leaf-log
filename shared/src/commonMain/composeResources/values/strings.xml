@@ -532,6 +532,7 @@
     <string name="couldnt_update_method">Couldn't update the method</string>
     <string name="more_options">More options</string>
     <string name="brew_again">Brew again</string>
+    <string name="adjust">Adjust</string>
     <string name="brewing_steep_n">Brewing, steep %1$d</string>
     <string name="steep_ratings">Steep ratings: %1$s</string>
     <string name="discard_session_action">Discard session</string>

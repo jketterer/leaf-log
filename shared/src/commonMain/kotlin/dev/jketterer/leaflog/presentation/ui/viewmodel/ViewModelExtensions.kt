@@ -5,7 +5,12 @@ import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.UserPreferences
+import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
+import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
+import dev.jketterer.leaflog.domain.repositories.TeaRepository
+import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
@@ -105,3 +110,34 @@ fun <T, PendingAction> ViewModel.createInProgressSessionDelegate(
         executePendingAction = executePendingAction,
     )
 }
+
+/**
+ * Creates a [BrewAgainDelegate], which holds the Brew again sheet in [stateFlow]. [onStart] and
+ * [onAdjust] get the session the sheet replays; the host checks for an in-progress session first.
+ */
+fun <T> ViewModel.createBrewAgainDelegate(
+    teaSessionRepository: TeaSessionRepository,
+    teaRepository: TeaRepository,
+    teaTypeRepository: TeaTypeRepository,
+    brewingVesselRepository: BrewingVesselRepository,
+    tastingTagRepository: TastingTagRepository,
+    stateFlow: MutableStateFlow<T>,
+    getSheetState: (T) -> BrewAgainSheetState?,
+    setSheetState: (T, BrewAgainSheetState?) -> T,
+    onFailure: (error: Throwable, couldnt: StringResource) -> Unit,
+    onStart: (sessionId: String) -> Unit,
+    onAdjust: (sessionId: String) -> Unit,
+): BrewAgainDelegate<T> = BrewAgainDelegate(
+    viewModelScope = viewModelScope,
+    teaSessionRepository = teaSessionRepository,
+    teaRepository = teaRepository,
+    teaTypeRepository = teaTypeRepository,
+    brewingVesselRepository = brewingVesselRepository,
+    tastingTagRepository = tastingTagRepository,
+    stateFlow = stateFlow,
+    getSheetState = getSheetState,
+    setSheetState = setSheetState,
+    onFailure = onFailure,
+    onStart = onStart,
+    onAdjust = onAdjust,
+)

@@ -1,23 +1,14 @@
 package dev.jketterer.leaflog.presentation.ui.components.configuration
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.BrewingPlan
@@ -26,14 +17,13 @@ import dev.jketterer.leaflog.presentation.ui.components.common.Preset
 import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.session.PlanRow
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_steep_increment
 import leaf_log.shared.generated.resources.field_steep_increment_hint
 import leaf_log.shared.generated.resources.header_steep_plan
-import leaf_log.shared.generated.resources.plan_adjusted
 import leaf_log.shared.generated.resources.plan_clear_adjusted
-import leaf_log.shared.generated.resources.plan_steep_label
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -76,7 +66,12 @@ fun BrewingPlanSection(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 steeps.forEach { (steep, time) ->
-                    PlanRow(steep, time, fraction = (time / longest).toFloat(), adjusted = steep in plan.overrides)
+                    PlanRow(
+                        steep,
+                        time,
+                        fraction = (time / longest).toFloat(),
+                        adjusted = steep in plan.overrides
+                    )
                 }
             }
             if (plan.overrides.isNotEmpty()) {
@@ -85,45 +80,6 @@ fun BrewingPlanSection(
                 }
             }
         }
-    }
-}
-
-/** One steep: its number, a bar sized against the longest steep shown, its time and an Adjusted tag. */
-@Composable
-private fun PlanRow(steep: Int, time: Duration, fraction: Float, adjusted: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            text = stringResource(Res.string.plan_steep_label, steep),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.width(64.dp),
-        )
-        Box(modifier = Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction.coerceIn(0.02f, 1f))
-                    .height(12.dp)
-                    .background(
-                        color = if (adjusted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
-                        shape = MaterialTheme.shapes.extraSmall,
-                    ),
-            )
-        }
-        Text(
-            text = formatBrewingTime(time.inWholeSeconds.toInt()),
-            style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
-            textAlign = TextAlign.End,
-            modifier = Modifier.width(48.dp),
-        )
-        Text(
-            text = if (adjusted) stringResource(Res.string.plan_adjusted) else "",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.width(60.dp),
-        )
     }
 }
 

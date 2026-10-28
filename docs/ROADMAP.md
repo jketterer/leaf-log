@@ -1081,7 +1081,7 @@ Four phases; the app builds and the flow tests pass after each.
 
 **The sheet and the row:**
 
-4. [ ] `feat: brew again sheet`: component, delegate, previews (pair with switch, one session,
+4. [x] `feat: brew again sheet`: component, delegate, previews (pair with switch, one session,
    western, gongfu).
 5. [ ] `feat: every brew again opens the sheet`: History, Tea Detail, Session Detail; Home's recent
    cards lose the button. Flow: Session Detail → sheet → Start → Timer; Adjust → Log Tea filled.

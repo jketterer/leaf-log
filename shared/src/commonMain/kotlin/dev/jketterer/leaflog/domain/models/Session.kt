@@ -135,6 +135,19 @@ fun List<SessionWithSteeps>.best(): SessionWithSteeps? =
     filter { it.session.status == SessionStatus.COMPLETED && it.effectiveRating != null }
         .maxWithOrNull(compareBy({ it.effectiveRating }, { it.startedAt }))
 
+/** A rated brew under this isn't one to repeat by default. */
+private const val REPEATABLE_RATING = 3f
+
+/**
+ * What brewing a pair, one tea in one vessel, again replays from its sessions: the last completed
+ * one, or the [best] when the last is rated under 3★. Null when none is completed.
+ */
+fun List<SessionWithSteeps>.defaultBrew(): SessionWithSteeps? {
+    val last = lastCompleted() ?: return null
+    val rating = last.effectiveRating ?: return last
+    return if (rating < REPEATABLE_RATING) best() else last
+}
+
 /** A tea's mean rating by steep number, and the steep where it peaks. */
 data class SteepCurve(
     val meanRatings: Map<Int, Float>,

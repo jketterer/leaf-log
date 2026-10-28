@@ -1067,7 +1067,7 @@ Four phases; the app builds and the flow tests pass after each.
 
 **Domain**, with methods still in place:
 
-1. [ ] `feat: a pair's default brew`: the replay rule. Tests: the last; a last under 3★ gives the
+1. [x] `feat: a pair's default brew`: the replay rule. Tests: the last; a last under 3★ gives the
    best; an unrated last stays; no rated brew gives the last.
 2. [ ] `feat: a source's plan shifts with steep 1`: `ResolvePlanUseCase`. Tests: no shift; a shift
    with an increment; overrides shift; the 1s floor.

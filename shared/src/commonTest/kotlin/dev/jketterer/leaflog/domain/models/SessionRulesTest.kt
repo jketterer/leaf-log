@@ -133,6 +133,39 @@ class SessionRulesTest {
     }
 
     @Test
+    fun `a pair's default brew is its last completed session`() {
+        val last = aggregate(3f, startedAt = at(10))
+        val sessions = listOf(
+            aggregate(5f, startedAt = at(0)),
+            last,
+            aggregate(4f, status = SessionStatus.IN_PROGRESS, startedAt = at(20)),
+        )
+
+        assertEquals(last, sessions.defaultBrew())
+    }
+
+    @Test
+    fun `a last brew rated under 3 stars gives way to the best`() {
+        val best = aggregate(4f, startedAt = at(0))
+
+        assertEquals(best, listOf(best, aggregate(2.5f, startedAt = at(10))).defaultBrew())
+    }
+
+    @Test
+    fun `an unrated last brew stays the default`() {
+        val last = aggregate(null, startedAt = at(10))
+
+        assertEquals(last, listOf(aggregate(5f, startedAt = at(0)), last).defaultBrew())
+    }
+
+    @Test
+    fun `with no rated brew the default is the last`() {
+        val last = aggregate(null, startedAt = at(10))
+
+        assertEquals(last, listOf(aggregate(null, startedAt = at(0)), last).defaultBrew())
+    }
+
+    @Test
     fun `the steep curve is the mean rating at each steep`() {
         val curve = listOf(aggregate(3f, 4f, 5f), aggregate(4f, 5f, 4f)).steepCurve()!!
 

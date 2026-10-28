@@ -13,11 +13,12 @@ sealed interface NavRoute : NavKey {
     @Serializable
     data class HomeRoute(val finishedSessionId: String? = null) : NavRoute
 
+    /** [sourceSessionId]: a past brew to replay, its tea and vessel filled from it. */
     @Serializable
     data class LogTeaRoute(
         val teaId: String? = null,
         val vesselId: String? = null,
-        val configurationId: String? = null,
+        val sourceSessionId: String? = null,
     ) : NavRoute
 
     @Serializable

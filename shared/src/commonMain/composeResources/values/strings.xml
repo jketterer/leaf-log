@@ -94,10 +94,6 @@
         <item quantity="one">%1$d session</item>
         <item quantity="other">%1$d sessions</item>
     </plurals>
-    <plurals name="times_used">
-        <item quantity="one">Used %1$d time</item>
-        <item quantity="other">Used %1$d times</item>
-    </plurals>
     <string name="method_source">From your %1$s brew</string>
     <string name="unnamed_method">Unnamed method</string>
     <string name="add_method">Add brewing method</string>
@@ -495,14 +491,13 @@
     <string name="tags_search">Find or create a tag</string>
     <string name="tags_create">Create “%1$s”</string>
     <string name="tags_carried_over">From the last steep, tap to keep</string>
-    <string name="prefill_saved_method">Using your saved brewing method for %1$s</string>
-    <string name="prefill_best_brew">From your best brew of %1$s, rated %2$s</string>
-    <string name="prefill_same_type">Suggested parameters based on how you brew %1$s</string>
     <string name="prefill_tea_default">Starting from your usual temperature for %1$s</string>
     <string name="prefill_type_default">Starting from your usual temperature for %1$s tea</string>
-    <string name="prefill_change">Change</string>
     <string name="last_time">Last time</string>
     <string name="best_brew">Best brew</string>
+    <string name="past_brew">Past brew</string>
+    <string name="start_from">Start from</string>
+    <string name="scratch">Scratch</string>
     <string name="header_flavor_profile">Flavor profile</string>
     <!-- How many of a tea's tagged sessions confirmed a tag: "in 7 of 12 sessions" -->
     <plurals name="flavor_in_sessions">

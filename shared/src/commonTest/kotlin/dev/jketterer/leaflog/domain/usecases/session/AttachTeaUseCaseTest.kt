@@ -31,8 +31,6 @@ class AttachTeaUseCaseTest {
         teaRepository = teas,
         brewingVesselRepository = FakeBrewingVesselRepository(listOf(GAIWAN, MUG)),
         getBrewingParametersPrefill = GetBrewingParametersPrefillUseCase(
-            configurations,
-            teas,
             FakeTeaTypeRepository(listOf(OOLONG)),
             sessions,
         ),

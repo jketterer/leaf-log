@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.log
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,7 +44,10 @@ import compose.icons.feathericons.ChevronUp
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Play
 import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.SyncStatus
+import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.WeightUnit
@@ -55,21 +59,140 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RinseSwitch
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
-import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
+import dev.jketterer.leaflog.presentation.ui.components.session.TagChips
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.begin_session
+import leaf_log.shared.generated.resources.best_brew
 import leaf_log.shared.generated.resources.field_tea_quantity_required
 import leaf_log.shared.generated.resources.header_brewing_parameters
 import leaf_log.shared.generated.resources.header_optional_details
-import org.jetbrains.compose.resources.StringResource
+import leaf_log.shared.generated.resources.last_time
+import leaf_log.shared.generated.resources.log_session
+import leaf_log.shared.generated.resources.past_brew
+import leaf_log.shared.generated.resources.select_tea
+import leaf_log.shared.generated.resources.scratch
+import leaf_log.shared.generated.resources.start_from
+import leaf_log.shared.generated.resources.steep_count
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import leaf_log.shared.generated.resources.begin_session
-import leaf_log.shared.generated.resources.log_session
-import leaf_log.shared.generated.resources.select_tea
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
+import compose.icons.feathericons.Layers
+import compose.icons.feathericons.TrendingUp
+import dev.jketterer.leaflog.domain.models.BrewingPlan
+import dev.jketterer.leaflog.domain.models.TimeFormatter
+import dev.jketterer.leaflog.domain.models.formatDate
+import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
+import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
+import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
+import dev.jketterer.leaflog.presentation.ui.components.common.formatSteepIncrement
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.StringResource
+
+/**
+ * Where the form starts from: the pair's last or best brew, the past brew Log Tea was opened on, or
+ * scratch. A chosen brew shows what the fields don't, and opens its session when tapped.
+ */
+@Composable
+internal fun SourceBrewSection(
+    source: SessionWithSteeps?,
+    tags: List<TastingTag>,
+    lastBrew: SessionWithSteeps?,
+    bestBrew: SessionWithSteeps?,
+    onSourceSelected: (SessionWithSteeps?) -> Unit,
+    onSourceClicked: (SessionWithSteeps) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val brews = listOfNotNull(
+        lastBrew?.let { it to Res.string.last_time },
+        bestBrew?.takeIf { it.session.id != lastBrew?.session?.id }?.let { it to Res.string.best_brew },
+    )
+    val choices: List<Pair<SessionWithSteeps?, StringResource>> =
+        if (source == null || brews.any { it.first.session.id == source.session.id }) {
+            brews
+        } else {
+            brews + (source to Res.string.past_brew)
+        } + (null to Res.string.scratch)
+
+    Column(
+        modifier = modifier.animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(Res.string.start_from),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            choices.forEachIndexed { index, (brew, label) ->
+                SegmentedButton(
+                    selected = brew?.session?.id == source?.session?.id,
+                    onClick = { onSourceSelected(brew) },
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = choices.size),
+                ) {
+                    Text(stringResource(label), maxLines = 1)
+                }
+            }
+        }
+        source?.let { SourceBrewSummary(it, tags, onClick = { onSourceClicked(it) }) }
+    }
+}
+
+/** A past brew in the few lines a form above its own fields needs: when, how it went, its steeps. */
+@Composable
+private fun SourceBrewSummary(
+    brew: SessionWithSteeps,
+    tags: List<TastingTag>,
+    onClick: () -> Unit,
+) {
+    val plan = remember(brew) { BrewingPlan.learnedFrom(brew.steeps) }
+    val date = brew.startedAt.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val note = brew.session.notes?.trim()?.lineSequence()?.firstOrNull()?.takeIf { it.isNotEmpty() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = TimeFormatter.formatDate(date, currentDate()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            RatingDisplay(brew.effectiveRating)
+            plan.increment?.let { step ->
+                BrewingParamChip(FeatherIcons.TrendingUp, formatSteepIncrement(step))
+                val steeps = brew.steeps.size
+                BrewingParamChip(FeatherIcons.Layers, pluralStringResource(Res.plurals.steep_count, steeps, steeps))
+            }
+        }
+        if (tags.isNotEmpty()) TagChips(tags)
+        note?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
 
 /**
  * Tea picker row - shows the selected tea, or a button to open the search dialog.
@@ -422,5 +545,39 @@ private fun LogTeaActionButtonsPreview() {
 private fun SelectTeaAndVesselPromptPreview() {
     LeafLogTheme {
         SelectTeaAndVesselPrompt()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SourceBrewSectionPreview() {
+    val last = previewSession(id = "last", ratings = listOf(3f), status = SessionStatus.COMPLETED)
+    val best = previewSession(
+        id = "best",
+        ratings = listOf(5f, 4.5f, 4f),
+        status = SessionStatus.COMPLETED,
+        notes = "Sweet from the second steep",
+    ).let { session ->
+        session.copy(steeps = session.steeps.mapIndexed { i, steep -> steep.copy(brewingTime = 10.seconds + 5.seconds * i) })
+    }
+    LeafLogTheme {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            SourceBrewSection(
+                source = best,
+                tags = emptyList(),
+                lastBrew = last,
+                bestBrew = best,
+                onSourceSelected = {},
+                onSourceClicked = {},
+            )
+            SourceBrewSection(
+                source = null,
+                tags = emptyList(),
+                lastBrew = last,
+                bestBrew = last,
+                onSourceSelected = {},
+                onSourceClicked = {},
+            )
+        }
     }
 }

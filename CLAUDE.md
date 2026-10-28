@@ -180,6 +180,11 @@ Use `expect`/`actual` pattern for platform differences.
   uppercases). Missing content, a failed lookup or a search with no hits shows `EmptyState`
 - A rating is shown by `RatingDisplay` (null reads "Unrated") and chosen with `RatingSelector`. A
   bare rating number goes through `formatRating`
+- Content that changes in place animates; nothing jumps. Shown or hidden is `AnimatedVisibility`,
+  a container whose content changes height is `animateContentSize`, a lazy item that comes or goes
+  takes `Modifier.animateItem()`, and one value swapped for another is `AnimatedContent`. Content
+  that belongs together lands in one State update: derive it in State rather than loading it
+  after, or it moves twice
 
 ### When Creating Use Cases
 

@@ -582,7 +582,6 @@ sealed interface HomeNavEvent {
     data class NavigateToLogTea(
         val teaId: String? = null,
         val vesselId: String? = null,
-        val configurationId: String? = null,
     ) :
         HomeNavEvent
 

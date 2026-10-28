@@ -6,9 +6,8 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.domain.models.dominantTags
+import dev.jketterer.leaflog.domain.models.best
 import dev.jketterer.leaflog.domain.models.lastCompleted
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.PreferencesRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
@@ -17,13 +16,13 @@ import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
+import dev.jketterer.leaflog.domain.usecases.session.BrewingParametersPrefill
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetBrewingParametersPrefillUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
-import dev.jketterer.leaflog.domain.usecases.session.isCompleteMethod
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
@@ -59,7 +58,6 @@ class LogTeaViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
-    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val preferencesRepository: PreferencesRepository,
     private val teaSessionRepository: TeaSessionRepository,
     private val tastingTagRepository: TastingTagRepository,
@@ -105,10 +103,11 @@ class LogTeaViewModel(
 
     init {
         onIntent(LogTeaIntent.LoadData)
-        collectLastSession()
+        collectPairBrews()
+        loadTagVocabulary()
+        route.sourceSessionId?.let(::selectSourceSession)
         route.teaId?.let(::selectTea)
         route.vesselId?.let(::selectVessel)
-        route.configurationId?.let(::selectMethod)
     }
 
     fun onIntent(intent: LogTeaIntent) {
@@ -139,12 +138,10 @@ class LogTeaViewModel(
             is LogTeaIntent.StartTimerClicked -> inProgressDelegate.checkAndProceed(PendingAction.StartTimer)
 
             is LogTeaIntent.BackClicked -> _navEvents.trySend(LogTeaNavigationEvent.NavigateBack)
-            is LogTeaIntent.LastTimeClicked ->
+            is LogTeaIntent.SourceBrewClicked ->
                 _navEvents.trySend(LogTeaNavigationEvent.NavigateToSession(intent.sessionId))
 
-            is LogTeaIntent.ChooseDifferentMethodClicked -> showChooseMethodDialog()
-            is LogTeaIntent.MethodSelected -> selectMethod(intent.configurationId)
-            is LogTeaIntent.DismissChooseMethodDialog -> dismissChooseMethodDialog()
+            is LogTeaIntent.SourceBrewSelected -> selectSourceBrew(intent.sessionId)
 
             // In-progress session conflict dialog
             is LogTeaIntent.ResumeInProgress -> inProgressDelegate.resume()
@@ -193,20 +190,45 @@ class LogTeaViewModel(
         }
     }
 
-    /** Follows whichever tea is selected, so the card is never another tea's or a deleted session. */
+    /**
+     * Follows the selected pair's sessions, so the switch is never stale and the source card
+     * never a deleted session. A list for a pair no longer selected is dropped.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun collectLastSession() = viewModelScope.launch {
-        _state.map { it.selectedTea?.id }
+    private fun collectPairBrews() = viewModelScope.launch {
+        _state.map { it.pair }
             .distinctUntilChanged()
-            .flatMapLatest { teaId ->
-                if (teaId == null) flowOf(null)
-                else teaSessionRepository.getSessionsByTeaFlow(teaId).map { it.lastCompleted() }
+            .flatMapLatest { pair ->
+                val (teaId, vesselId) = pair ?: return@flatMapLatest flowOf(null to emptyList())
+                teaSessionRepository.getSessionsByTeaFlow(teaId)
+                    .map { sessions -> pair to sessions.filter { it.session.vesselId == vesselId } }
             }
-            .map { session -> session to session?.dominantTags(tastingTagRepository.getAll()).orEmpty() }
             .catch { messages.failure(it, Res.string.couldnt_load) }
-            .collect { (session, tags) ->
-                _state.update { it.copy(lastSession = session, lastSessionTags = tags) }
+            .collect { (pair, sessions) ->
+                _state.update { state ->
+                    if (state.pair != pair) return@update state
+                    state.copy(
+                        lastBrew = sessions.lastCompleted(),
+                        bestBrew = sessions.best(),
+                        sourceBrew = state.sourceBrew?.let { source ->
+                            sessions.firstOrNull { it.session.id == source.session.id }
+                        },
+                    )
+                }
             }
+    }
+
+    private val LogTeaState.pair: Pair<String, String>?
+        get() {
+            val tea = selectedTea ?: return null
+            val vessel = selectedVessel ?: return null
+            return tea.id to vessel.id
+        }
+
+    private fun loadTagVocabulary() = viewModelScope.launch {
+        runCatching { tastingTagRepository.getAll() }
+            .onSuccess { tags -> _state.update { it.copy(tagVocabulary = tags) } }
+            .onFailure { messages.failure(it, Res.string.couldnt_load) }
     }
 
     private fun showTeaPicker() {
@@ -236,6 +258,7 @@ class LogTeaViewModel(
                 it.copy(
                     selectedTea = null,
                     selectedTeaType = null,
+                    sourceBrew = null,
                     teaError = null,
                     showTeaPicker = false,
                     hasUnsavedChanges = true,
@@ -269,73 +292,64 @@ class LogTeaViewModel(
      */
     private suspend fun prefillFor(tea: Tea?, vessel: BrewingVessel?): (LogTeaState) -> LogTeaState {
         if (tea == null || vessel == null) return { it }
-        val configurations = brewingConfigurationRepository.getByTeaAndVessel(tea.id, vessel.id)
         val prefill = getBrewingParametersPrefillUseCase(tea, vessel)
-        return { state ->
-            state.copy(
-                // A method that named no tea quantity means a bag. A bare default temperature is not a
-                // method, so it must not be read as one.
-                isTeaBag = prefill.source.isCompleteMethod && prefill.teaQuantityGrams == null,
-                teaQuantityGrams = prefill.teaQuantityGrams?.toDouble(),
-                waterQuantityMl = prefill.waterQuantityMl ?: vessel.capacityMl?.toDouble(),
-                temperatureCelsius = prefill.temperatureCelsius,
-                brewingTime = prefill.brewingTime,
-                selectedWaterType = prefill.waterType ?: state.selectedWaterType,
-                rinsed = prefill.rinsed,
-                prefillSource = prefill.source,
-                availableConfigurations = configurations,
-                usedConfigurationId = configurations.firstOrNull()?.id,
-            )
+        return { it.filledFrom(prefill) }
+    }
+
+    /** The form as [prefill] fills it; a past brew becomes the source the session replays. */
+    private fun LogTeaState.filledFrom(prefill: BrewingParametersPrefill): LogTeaState {
+        val source = (prefill.source as? PrefillSource.PastBrew)?.session
+        return copy(
+            // A past brew that named no tea quantity was a bag; a default temperature names nothing
+            isTeaBag = source != null && prefill.teaQuantityGrams == null,
+            teaQuantityGrams = prefill.teaQuantityGrams?.toDouble(),
+            waterQuantityMl = prefill.waterQuantityMl ?: selectedVessel?.capacityMl?.toDouble(),
+            temperatureCelsius = prefill.temperatureCelsius,
+            brewingTime = prefill.brewingTime,
+            selectedWaterType = prefill.waterType ?: selectedWaterType,
+            rinsed = prefill.rinsed,
+            prefillSource = if (source != null) PrefillSource.None else prefill.source,
+            sourceBrew = source,
+        )
+    }
+
+    /** Adjust from a Brew again sheet: [sessionId]'s tea and vessel, filled from it. */
+    private fun selectSourceSession(sessionId: String) = viewModelScope.launch {
+        state.first { !it.isLoading }
+
+        val brew = teaSessionRepository.getSession(sessionId) ?: return@launch
+        val tea = _state.value.availableTeas.firstOrNull { it.id == brew.session.teaId }
+        val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
+        val vessel = _state.value.availableVessels.firstOrNull { it.id == brew.session.vesselId }
+        _state.update {
+            it.copy(selectedTea = tea, selectedTeaType = teaType, selectedVessel = vessel)
+                .filledFrom(BrewingParametersPrefill.of(brew))
         }
     }
 
-    private fun showChooseMethodDialog() {
-        _state.update { it.copy(showChooseMethodDialog = true) }
+    /** Start from: refills the form from the pair's last or best brew, or clears it for scratch. */
+    private fun selectSourceBrew(sessionId: String?) {
+        if (sessionId == null) return startFromScratch()
+        _state.update { state ->
+            val brew = listOfNotNull(state.lastBrew, state.bestBrew)
+                .firstOrNull { it.session.id == sessionId } ?: return@update state
+            state.filledFrom(BrewingParametersPrefill.of(brew)).copy(hasUnsavedChanges = true)
+        }
     }
 
-    private fun dismissChooseMethodDialog() {
-        _state.update { it.copy(showChooseMethodDialog = false) }
-    }
-
-    private fun selectMethod(configurationId: String?) {
-        _state.update { it.copy(showChooseMethodDialog = false) }
-
-        if (configurationId == null) {
-            // User chose "Custom" - clear pre-filled parameters
-            _state.update {
-                it.copy(
-                    isTeaBag = false,
-                    teaQuantityGrams = null,
-                    waterQuantityMl = null,
-                    temperatureCelsius = null,
-                    brewingTime = null,
-                    usedConfigurationId = null,
-                    prefillSource = PrefillSource.None,
-                )
-            }
-        } else {
-            // Load and apply the selected configuration
-            // This is an explicit user action to use a configuration, so reset the edit flag
-            viewModelScope.launch {
-                val config = brewingConfigurationRepository.getById(configurationId)
-                if (config != null) {
-                    _state.update { currentState ->
-                        // Configuration values are already in storage units (Celsius/mL), store directly
-                        currentState.copy(
-                            isTeaBag = config.teaQuantityGrams == null,
-                            teaQuantityGrams = config.teaQuantityGrams?.toDouble(),
-                            waterQuantityMl = config.waterQuantityMl,
-                            temperatureCelsius = config.temperatureCelsius,
-                            brewingTime = config.brewingTime,
-                            selectedWaterType = config.waterType,
-                            rinsed = config.rinse,
-                            usedConfigurationId = configurationId,
-                            prefillSource = PrefillSource.SavedConfig,
-                        )
-                    }
-
-                }
-            }
+    /** Clears what a source filled, as typing every field fresh would start. */
+    private fun startFromScratch() {
+        _state.update {
+            it.copy(
+                isTeaBag = false,
+                teaQuantityGrams = null,
+                waterQuantityMl = null,
+                temperatureCelsius = null,
+                brewingTime = null,
+                prefillSource = PrefillSource.None,
+                sourceBrew = null,
+                hasUnsavedChanges = true,
+            )
         }
     }
 
@@ -368,13 +382,6 @@ class LogTeaViewModel(
                 teaQuantityGrams = if (isTeaBag) null else it.teaQuantityGrams,
                 teaQuantityError = null,
                 hasUnsavedChanges = true,
-                // Switching to a bag retires a saved method, but a default temperature still applies.
-                prefillSource = if (isTeaBag && it.prefillSource.isCompleteMethod) {
-                    PrefillSource.None
-                } else {
-                    it.prefillSource
-                },
-                usedConfigurationId = if (isTeaBag) null else it.usedConfigurationId,
             )
         }
     }
@@ -546,7 +553,7 @@ class LogTeaViewModel(
                 waterQuantityMl = waterQuantityMl,
                 photos = currentState.photos,
                 status = status,
-                usedConfigurationId = currentState.usedConfigurationId,
+                planSessionId = currentState.sourceBrew?.session?.id,
             )
                 .onSuccess {
                     _state.update { state -> state.copy(isSaving = false, hasUnsavedChanges = false) }

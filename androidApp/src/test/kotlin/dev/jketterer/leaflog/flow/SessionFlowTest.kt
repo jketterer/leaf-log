@@ -22,17 +22,12 @@ import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.prefill_best_brew
-import leaf_log.shared.generated.resources.prefill_saved_method
-import leaf_log.shared.generated.resources.review_update_method
 import leaf_log.shared.generated.resources.review_save_method
-import leaf_log.shared.generated.resources.review_method_updated
 import leaf_log.shared.generated.resources.review_method_saved
 import leaf_log.shared.generated.resources.review_method_label
 import leaf_log.shared.generated.resources.review_how_was_steep_n
@@ -44,6 +39,8 @@ import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.field_vessel_required
 import leaf_log.shared.generated.resources.begin_session
 import leaf_log.shared.generated.resources.brew_again
+import leaf_log.shared.generated.resources.last_time
+import leaf_log.shared.generated.resources.start_steep_n
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_session
 import leaf_log.shared.generated.resources.delete_steep
@@ -68,6 +65,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
@@ -235,35 +233,31 @@ class SessionFlowTest : FlowTest() {
     }
 
     @Test
-    fun `a method brewed longer than it says is updated from the review`() {
-        val method = runBlocking {
-            val session = session()
-            koin.get<CreateBrewingConfigurationUseCase>()(
-                teaId = session.session.teaId,
-                vesselId = session.session.vesselId,
-                teaQuantityGrams = 5f,
-                waterQuantityMl = 100.0,
-                temperatureCelsius = 80.0,
-                brewingTime = 30.seconds,
-                waterType = WaterType.FILTERED,
-                customLabel = "Morning",
-            ).getOrThrow()
-        }
+    fun `a session logged from a past brew suggests its next steep`() {
         launch()
         startLogging()
-        waitFor(text(Res.string.prefill_saved_method, "Dragon Well"))
+        waitFor(text(Res.string.last_time))
         click(text(Res.string.begin_session))
-        click(text(Res.string.start_brewing))
-        click("+10s")
-        clock.advance(40.seconds)
-        finish()
-        compose.onNode(hasText(text(Res.string.review_update_method)) and hasClickAction()).performScrollTo()
-        click(hasText(text(Res.string.review_update_method)) and hasClickAction())
+        brewFirstSteep(30.seconds)
 
-        waitFor(text(Res.string.review_method_updated))
-        val updated = runBlocking { koin.get<BrewingConfigurationRepository>().getById(method.id) }!!
-        assertEquals(40.seconds, updated.brewingTime)
-        assertEquals(method.id, latest().session.usedConfigurationId)
+        waitFor("0:45")
+        assertEquals(45.seconds, latest().steeps[1].brewingTime)
+    }
+
+    @Test
+    fun `a longer steep 1 than the past brew's moves its next steep as much`() {
+        launch()
+        startLogging()
+        waitFor(text(Res.string.last_time))
+        // Below the source card, where the action bar covers it
+        val preset = hasText("0:45") and hasClickAction()
+        scrollTo(preset)
+        compose.onNode(preset).performSemanticsAction(SemanticsActions.OnClick)
+        click(text(Res.string.begin_session))
+        brewFirstSteep(45.seconds)
+
+        waitFor("1:00")
+        assertEquals(60.seconds, latest().steeps[1].brewingTime)
     }
 
     private val row = hasText("Dragon Well") and hasClickAction()
@@ -290,11 +284,19 @@ class SessionFlowTest : FlowTest() {
     /** A new steep set up as the best brew, 0:30, rated 4 and finished, leaving its Session Review open. */
     private fun brewAndFinish() {
         startLogging()
-        waitFor(text(Res.string.prefill_best_brew, "Dragon Well", "4"))
+        waitFor(text(Res.string.last_time))
         click(text(Res.string.begin_session))
         click(text(Res.string.start_brewing))
         clock.advance(30.seconds)
         finish()
+    }
+
+    /** Steep 1 brewed for [time], then steep 2 started from its review, waiting on the Timer. */
+    private fun brewFirstSteep(time: Duration) {
+        click(text(Res.string.start_brewing))
+        clock.advance(time)
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+        click(text(Res.string.start_steep_n, 2))
     }
 
     private fun finish() {

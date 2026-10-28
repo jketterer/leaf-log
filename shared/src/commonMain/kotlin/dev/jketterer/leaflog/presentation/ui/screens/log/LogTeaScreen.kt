@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -44,11 +43,9 @@ import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.LeafQuantityField
 import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
-import dev.jketterer.leaflog.presentation.ui.components.session.PastBrewCard
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
 import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
-import dev.jketterer.leaflog.presentation.ui.components.configuration.ChooseMethodDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
@@ -57,7 +54,6 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.field_tea_quantity_required
 import leaf_log.shared.generated.resources.field_temperature_required
 import leaf_log.shared.generated.resources.field_water_quantity_required
-import leaf_log.shared.generated.resources.last_time
 import leaf_log.shared.generated.resources.rinsed
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -172,17 +168,6 @@ private fun LogTeaContent(
                     )
                 }
 
-                state.lastSession?.let { session ->
-                    item(key = "last_time") {
-                        PastBrewCard(
-                            title = stringResource(Res.string.last_time),
-                            session = session,
-                            tags = state.lastSessionTags,
-                            onClick = { onIntent(LogTeaIntent.LastTimeClicked(session.session.id)) },
-                        )
-                    }
-                }
-
                 item(key = "vessel") {
                     VesselSelector(
                         vessels = state.availableVessels,
@@ -211,30 +196,27 @@ private fun LogTeaContent(
                         BrewingParametersHeader()
                     }
 
+                    if (state.sourceBrew != null || state.lastBrew != null) {
+                        item(key = "source_brew") {
+                            SourceBrewSection(
+                                source = state.sourceBrew,
+                                tags = state.sourceBrewTags,
+                                lastBrew = state.lastBrew,
+                                bestBrew = state.bestBrew,
+                                onSourceSelected = { onIntent(LogTeaIntent.SourceBrewSelected(it?.session?.id)) },
+                                onSourceClicked = { onIntent(LogTeaIntent.SourceBrewClicked(it.session.id)) },
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
+                    }
+
                     if (state.prefillSource != PrefillSource.None) {
                         item(key = "prefill_banner") {
                             PrefillBanner(
                                 source = state.prefillSource,
                                 teaName = state.selectedTea.name,
-                                modifier = Modifier.fillMaxWidth(),
-                                hasMultipleMethods = state.availableConfigurations.isNotEmpty(),
-                                onChooseDifferentMethod = {
-                                    onIntent(LogTeaIntent.ChooseDifferentMethodClicked)
-                                }
+                                modifier = Modifier.fillMaxWidth().animateItem(),
                             )
-                        }
-                    }
-
-                    // Brewing Method Selector (when configurations exist but no banner shown)
-                    if (state.availableConfigurations.isNotEmpty() && state.prefillSource == PrefillSource.None
-                    ) {
-                        item(key = "method_selector") {
-                            OutlinedButton(
-                                onClick = { onIntent(LogTeaIntent.ChooseDifferentMethodClicked) },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text("Choose Saved Brewing Method")
-                            }
                         }
                     }
 
@@ -375,19 +357,6 @@ private fun LogTeaDialogs(
                 onIntent(LogTeaIntent.QuickAddTeaSaved(name, teaTypeId))
             },
             onDismiss = { onIntent(LogTeaIntent.HideTeaPicker) },
-        )
-    }
-
-    if (state.showChooseMethodDialog && state.availableConfigurations.isNotEmpty()) {
-        ChooseMethodDialog(
-            configurations = state.availableConfigurations,
-            selectedConfigurationId = state.usedConfigurationId,
-            onSelect = { configId ->
-                onIntent(LogTeaIntent.MethodSelected(configId))
-            },
-            onDismiss = {
-                onIntent(LogTeaIntent.DismissChooseMethodDialog)
-            },
         )
     }
 }

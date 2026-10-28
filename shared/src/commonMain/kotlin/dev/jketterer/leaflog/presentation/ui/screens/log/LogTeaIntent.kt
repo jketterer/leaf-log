@@ -35,12 +35,10 @@ sealed interface LogTeaIntent {
     data object SaveAsCompleted : LogTeaIntent
     data object StartTimerClicked : LogTeaIntent
     data object BackClicked : LogTeaIntent
-    data class LastTimeClicked(val sessionId: String) : LogTeaIntent
+    data class SourceBrewClicked(val sessionId: String) : LogTeaIntent
 
-    // Configuration selection
-    data object ChooseDifferentMethodClicked : LogTeaIntent
-    data class MethodSelected(val configurationId: String?) : LogTeaIntent
-    data object DismissChooseMethodDialog : LogTeaIntent
+    /** The brew a session started here replays: the pair's last or best, or null for scratch. */
+    data class SourceBrewSelected(val sessionId: String?) : LogTeaIntent
 
     // In-progress session conflict dialog
     data object ResumeInProgress : LogTeaIntent

@@ -1,6 +1,5 @@
 package dev.jketterer.leaflog.presentation.ui.screens.log
 
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
@@ -8,6 +7,7 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerFilter
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
@@ -25,9 +25,13 @@ data class LogTeaState(
     val teaPickerFilter: TeaPickerFilter = TeaPickerFilter.All,
     val availableTeaTypes: List<TeaType> = emptyList(),
 
-    // The selected tea's most recent completed session, and its dominant tags
-    val lastSession: SessionWithSteeps? = null,
-    val lastSessionTags: List<TastingTag> = emptyList(),
+    // The pair's last and best completed brews, which the source card switches between
+    val lastBrew: SessionWithSteeps? = null,
+    val bestBrew: SessionWithSteeps? = null,
+
+    // The brew a session started here replays, and every tag, to name its dominant ones
+    val sourceBrew: SessionWithSteeps? = null,
+    val tagVocabulary: List<TastingTag> = emptyList(),
 
     // Brewing parameters
     val teaQuantityGrams: Double? = null,
@@ -46,11 +50,8 @@ data class LogTeaState(
     // Available options
     val availableVessels: List<BrewingVessel> = emptyList(),
 
-    // Pre-fill information
+    // A default temperature the form started from, for the banner
     val prefillSource: PrefillSource = PrefillSource.None,
-    val usedConfigurationId: String? = null, // Track which configuration was used
-    val availableConfigurations: List<BrewingConfiguration> = emptyList(),
-    val showChooseMethodDialog: Boolean = false,
 
     // Validation errors
     val teaError: String? = null,
@@ -83,4 +84,8 @@ data class LogTeaState(
 
     val canSave: Boolean
         get() = isValid && !isSaving
+
+    /** Derived, not loaded, so the tags land in the same frame as the brew they belong to. */
+    val sourceBrewTags: List<TastingTag>
+        get() = sourceBrew?.dominantTags(tagVocabulary).orEmpty()
 }

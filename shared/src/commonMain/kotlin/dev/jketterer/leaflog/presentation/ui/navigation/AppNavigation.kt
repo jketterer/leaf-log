@@ -138,8 +138,8 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
         entry<NavRoute.HomeRoute> { route ->
             HomeScreen(
                 route = route,
-                onNavigateToLogTea = { teaId, vesselId, configurationId ->
-                    navigator.navigate(NavRoute.LogTeaRoute(teaId, vesselId, configurationId))
+                onNavigateToLogTea = { teaId, vesselId ->
+                    navigator.navigate(NavRoute.LogTeaRoute(teaId, vesselId))
                 },
                 onNavigateToSession = { sessionId ->
                     navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))

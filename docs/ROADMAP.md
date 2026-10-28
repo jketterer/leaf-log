@@ -1074,7 +1074,7 @@ Four phases; the app builds and the flow tests pass after each.
 
 **Log Tea:**
 
-3. [ ] `feat: log tea fills from a source brew`: the prefill rewritten, the source card and switch,
+3. [x] `feat: log tea fills from a source brew`: the prefill rewritten, the source card and switch,
    Start from scratch, `planSessionId` on start, `LogTeaRoute.sourceSessionId`; Choose method and
    the auto-attached method go. Tests: the prefill; a flow where steep 2 suggests the source's
    time, and one where steep 1 is changed and steep 2 shifts.

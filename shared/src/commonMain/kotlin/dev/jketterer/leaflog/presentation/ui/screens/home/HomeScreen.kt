@@ -84,7 +84,7 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun HomeScreen(
     route: NavRoute.HomeRoute,
-    onNavigateToLogTea: (teaId: String?, vesselId: String?, configurationId: String?) -> Unit,
+    onNavigateToLogTea: (teaId: String?, vesselId: String?) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
     onNavigateToCollection: () -> Unit,
@@ -107,7 +107,7 @@ fun HomeScreen(
         viewModel.navEvents.collect { event ->
             when (event) {
                 is HomeNavEvent.NavigateToLogTea -> {
-                    onNavigateToLogTea(event.teaId, event.vesselId, event.configurationId)
+                    onNavigateToLogTea(event.teaId, event.vesselId)
                 }
 
                 is HomeNavEvent.NavigateToSession -> {

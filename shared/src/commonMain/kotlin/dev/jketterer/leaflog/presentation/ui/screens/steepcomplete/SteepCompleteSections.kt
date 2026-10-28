@@ -1,15 +1,12 @@
 package dev.jketterer.leaflog.presentation.ui.screens.steepcomplete
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
@@ -22,14 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Droplet
@@ -55,6 +49,7 @@ import dev.jketterer.leaflog.presentation.ui.components.session.IconValue
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
 import dev.jketterer.leaflog.presentation.ui.components.session.TagChips
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaEyebrow
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -70,11 +65,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * Which tea and vessel, as a small line over the question it asks of this steep, then the steep's
- * parameters, tapped to change them. A long tea name wraps to two lines and pushes the vessel onto
- * its own, so neither is ever cut away whole.
- */
+/** Which tea and vessel, the question it asks of this steep, then the steep's parameters, tapped to change them. */
 @Composable
 internal fun SteepHeaderSection(
     teaName: String,
@@ -86,31 +77,7 @@ internal fun SteepHeaderSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val eyebrow = MaterialTheme.typography.labelMedium.copy(letterSpacing = 1.2.sp)
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            // Centred on the first line, however many the names take
-            val lineHeight = with(LocalDensity.current) { eyebrow.lineHeight.toDp() }
-            Box(modifier = Modifier.padding(top = (lineHeight - 8.dp) / 2).size(8.dp).background(teaColor, CircleShape))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = teaName.uppercase(),
-                    style = eyebrow,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                vesselName?.let {
-                    Text(
-                        text = it.uppercase(),
-                        style = eyebrow,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
+        TeaEyebrow(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
         Text(
             text = stringResource(Res.string.review_how_was_steep_n, steep.number),
             style = MaterialTheme.typography.displaySmall,

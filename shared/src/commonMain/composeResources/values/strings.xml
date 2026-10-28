@@ -434,6 +434,7 @@
     <string name="review_steep_n">Steep %1$d</string>
     <string name="steep_n_on_date">Steep %1$d on %2$s</string>
     <string name="review_how_was_steep_n">How was steep %1$d?</string>
+    <string name="review_session_complete">Session complete</string>
     <string name="review_rating">Rating</string>
     <string name="review_tasting_notes">Tasting notes</string>
     <string name="review_done">Done</string>
@@ -444,8 +445,8 @@
     <string name="review_new_best">A new best for this tea</string>
     <string name="review_same_as_best">Brewed the same as your best</string>
     <string name="review_best_from">Your best, %1$s</string>
-    <string name="review_this_session">This</string>
-    <string name="review_best_session">Best</string>
+    <string name="review_this_session">This session</string>
+    <string name="review_matched_best">Matched your best</string>
     <string name="review_diff_leaf">Leaf</string>
     <string name="review_diff_water">Water</string>
     <string name="review_diff_temperature">Temperature</string>

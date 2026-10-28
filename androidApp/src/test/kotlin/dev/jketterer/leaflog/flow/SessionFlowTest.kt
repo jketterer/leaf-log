@@ -2,14 +2,12 @@ package dev.jketterer.leaflog.flow
 
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.filter
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -209,13 +207,9 @@ class SessionFlowTest : FlowTest() {
         brewAndFinish()
         click(steep(1))
         rate(2)
-        // The review's own note is labeled the same, so type into the one the sheet adds
-        val note = hasSetTextAction() and hasText(text(Res.string.review_note_label))
-        val sessionNote = compose.onNode(note).fetchSemanticsNode().id
-        click(text(Res.string.review_add_note))
-        waitUntil("the steep's note opens") { compose.onAllNodes(note).fetchSemanticsNodes().size == 2 }
-        compose.onAllNodes(note).filter(SemanticsMatcher("not the session's") { it.id != sessionNote })
-            .onFirst().performTextReplacement("Too hot")
+        // The review's own note shows the same words as its placeholder, so tap the sheet's button
+        click(hasClickAction() and hasText(text(Res.string.review_add_note)) and !hasSetTextAction())
+        type(text(Res.string.review_note_label), "Too hot")
         dismissSheet()
         click(text(Res.string.review_done))
 

@@ -10,6 +10,7 @@ import dev.jketterer.leaflog.domain.usecases.session.VsBest
 data class SessionReviewState(
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
+    val teaTypeColorHex: String? = null,
     val vessel: BrewingVessel? = null,
     /** The best session's vessel, for a vessel difference to name. */
     val bestVessel: BrewingVessel? = null,

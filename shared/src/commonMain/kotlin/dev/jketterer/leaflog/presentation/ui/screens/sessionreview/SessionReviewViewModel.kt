@@ -12,6 +12,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.configuration.FindMethodUpdateUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
@@ -46,6 +47,7 @@ class SessionReviewViewModel(
     private val route: NavRoute.SessionReviewRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
+    private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val tastingTagRepository: TastingTagRepository,
     private val imageStorage: ImageStorage,
@@ -137,10 +139,12 @@ class SessionReviewViewModel(
                 val bestVesselId = (vsBest as? VsBest.Versus)?.best?.session?.vesselId
                 val offer = shouldOfferSaveAsMethodUseCase(session)
                 val methodToUpdate = findMethodUpdateUseCase(session)
+                val tea = teaRepository.getById(session.session.teaId)
                 _state.update {
                     it.copy(
                         session = session,
-                        tea = teaRepository.getById(session.session.teaId),
+                        tea = tea,
+                        teaTypeColorHex = tea?.let { t -> teaTypeRepository.getById(t.teaTypeId) }?.colorHex,
                         vessel = brewingVesselRepository.getById(session.session.vesselId),
                         bestVessel = bestVesselId?.let { id -> brewingVesselRepository.getById(id) },
                         vsBest = vsBest,

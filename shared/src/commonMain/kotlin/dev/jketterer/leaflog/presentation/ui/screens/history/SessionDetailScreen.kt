@@ -62,6 +62,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditSheet
+import dev.jketterer.leaflog.presentation.ui.components.session.SteepTimelineSection
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameterDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute

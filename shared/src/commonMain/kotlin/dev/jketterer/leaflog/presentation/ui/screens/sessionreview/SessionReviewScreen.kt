@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.ArrowLeft
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.SteepTag
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -283,6 +284,15 @@ private fun SessionReviewPreview() {
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
                 teaTypeColorHex = "#FF9800",
+                vessel = BrewingVessel(
+                    id = "vessel",
+                    name = "Gaiwan",
+                    iconName = null,
+                    isSystemDefault = false,
+                    displayOrder = 0,
+                    createdAt = PreviewInstant,
+                    updatedAt = PreviewInstant,
+                ),
                 vocabulary = listOf(
                     TastingTag(
                         "floral",

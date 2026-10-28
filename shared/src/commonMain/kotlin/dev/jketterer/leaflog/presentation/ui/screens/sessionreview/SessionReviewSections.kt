@@ -69,7 +69,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.IconValue
-import dev.jketterer.leaflog.presentation.ui.components.session.TeaEyebrow
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -119,7 +119,7 @@ internal fun SessionReviewHeaderSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TeaEyebrow(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
+        TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
         Text(
             text = stringResource(Res.string.review_session_complete),
             style = MaterialTheme.typography.displaySmall,

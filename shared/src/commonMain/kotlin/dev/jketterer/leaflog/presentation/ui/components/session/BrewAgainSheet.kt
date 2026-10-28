@@ -145,7 +145,7 @@ private fun BrewAgainContent(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            TeaEyebrow(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
+            TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
             Text(
                 text = stringResource(Res.string.brew_again),
                 style = MaterialTheme.typography.headlineSmall,

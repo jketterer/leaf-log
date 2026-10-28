@@ -49,7 +49,7 @@ import dev.jketterer.leaflog.presentation.ui.components.session.IconValue
 import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
 import dev.jketterer.leaflog.presentation.ui.components.session.TagChips
-import dev.jketterer.leaflog.presentation.ui.components.session.TeaEyebrow
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -77,7 +77,7 @@ internal fun SteepHeaderSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TeaEyebrow(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
+        TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
         Text(
             text = stringResource(Res.string.review_how_was_steep_n, steep.number),
             style = MaterialTheme.typography.displaySmall,

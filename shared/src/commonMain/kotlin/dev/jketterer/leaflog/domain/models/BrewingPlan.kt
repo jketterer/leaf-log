@@ -52,7 +52,7 @@ data class BrewingPlan(
     }
 }
 
-private val MIN_STEEP = 1.seconds
+internal val MIN_STEEP = 1.seconds
 private val ROUND_TO_5S_FROM = 15.seconds
 
 internal fun Duration.roundedForPlan(): Duration {

@@ -135,7 +135,8 @@ day.
 
 Timer across backgrounding and process death, notification delivery and tap routing, Live Activity,
 deep links, permission prompts, file pickers, Activity recreation (dark-mode switch, font scale),
-Doze-delayed reminders, and the audit's §7 list. Lives in a trimmed `TEST_CASES.md`.
+Doze-delayed reminders, and the audit's §7 list. Lives in a trimmed `TEST_CASES.md`, an Android pass
+and an iOS pass, each run on its own device.
 
 ### The rules, going forward
 
@@ -1074,7 +1075,7 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **`purchasePrice` is deleted, not built**                                      | Cost-per-cup analytics is a feature nobody asked for.                                                                                                                                                                                                                                     |
 | **Stock is `finishedAt`, not a quantity**                                      | Marking "I ran out" is the whole need, and it's what feeds the dormant-tea prompt.                                                                                                                                                                                                        |
 | **Finished teas stay in the Log Tea picker**                                   | Hiding them makes the auto-clear unreachable.                                                                                                                                                                                                                                             |
-| **Host-JVM tests; smoke tests from previews; app flows on Robolectric**        | Revisited 2026-10-27. Track B took too long for one person, so flows that a host can drive move to Track F; previews still catch crashes. Considered: an emulator suite, kept for whatever Track B has left once the flows land.                                                          |
+| **Host-JVM tests; smoke tests from previews; app flows on Robolectric**        | Revisited 2026-10-27. Track B took too long for one person, so flows a host can drive move to Track F; previews still catch crashes. Considered: an emulator suite. Measured 2026-10-28, it would automate about seven Android lines; every release still needs an iOS pass.              |
 | **Accessibility basics are definition-of-done, not a launch gate**             | Revisited 2026-09-23. Cheap per touch; the rating control — the loop's main input — is unusable with a screen reader today. One full screen-reader pass before store launch.                                                                                                              |
 | **Photos get safety, not features**                                            | The author doesn't reread photos. They matter only because unchecked they break backups and storage.                                                                                                                                                                                      |
 | **Freeform journal entries are rejected**                                      | The author rarely writes notes attached to sessions; detached entries would be emptier. Tags and session notes cover the journal.                                                                                                                                                         |

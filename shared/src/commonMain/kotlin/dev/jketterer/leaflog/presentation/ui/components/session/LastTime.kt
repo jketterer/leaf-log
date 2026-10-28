@@ -65,7 +65,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * A past session of a tea under [title], such as its last or its best: when, its rating, how
  * steep 1 brewed and, for a gongfu session, how the steeps grew, then its [tags] and the first
- * line of its note. Times come from the plan Brew Again would replay, which [onBrewAgain] starts.
+ * line of its note. Times come from the plan Brew Again would replay, which [onBrewAgain] opens.
  */
 @Composable
 fun PastBrewCard(

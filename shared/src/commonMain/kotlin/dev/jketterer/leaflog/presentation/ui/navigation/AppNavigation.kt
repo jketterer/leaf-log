@@ -197,8 +197,8 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToTimer = { sessionId ->
                     navigator.openOnHome(NavRoute.TimerRoute(sessionId))
                 },
-                onNavigateToLogTea = {
-                    navigator.navigate(NavRoute.LogTeaRoute())
+                onNavigateToLogTea = { sourceSessionId ->
+                    navigator.navigate(NavRoute.LogTeaRoute(sourceSessionId = sourceSessionId))
                 },
                 onNavigateUp = if (route == Tab.HISTORY.root) null else ({ navigator.navigateUp(route) }),
             )
@@ -273,9 +273,7 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToSession = { sessionId ->
                     navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
                 },
-                onNavigateToLogTea = { teaId, vesselId ->
-                    navigator.navigate(NavRoute.LogTeaRoute(teaId, vesselId))
-                },
+                onNavigateToLogTea = { navigator.navigate(it) },
                 onNavigateToTimer = { sessionId ->
                     navigator.openOnHome(NavRoute.TimerRoute(sessionId))
                 },
@@ -360,6 +358,9 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToTimer = { sessionId ->
                     navigator.navigateUp(route)
                     navigator.openOnHome(NavRoute.TimerRoute(sessionId))
+                },
+                onNavigateToLogTea = { sourceSessionId ->
+                    navigator.navigate(NavRoute.LogTeaRoute(sourceSessionId = sourceSessionId))
                 },
             )
         }

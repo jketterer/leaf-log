@@ -82,9 +82,8 @@ fun SessionCard(
     teaName: String,
     tags: List<TastingTag>,
     onSessionClick: () -> Unit,
-    onBrewAgainClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    canBrewAgain: Boolean = true,
+    onBrewAgainClick: (() -> Unit)? = null,
     timeOnly: Boolean = false,
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -198,7 +197,7 @@ fun SessionCard(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
                 ) {
-                    if (session.session.status == SessionStatus.COMPLETED && canBrewAgain) {
+                    if (session.session.status == SessionStatus.COMPLETED && onBrewAgainClick != null) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.brew_again)) },
                             onClick = {

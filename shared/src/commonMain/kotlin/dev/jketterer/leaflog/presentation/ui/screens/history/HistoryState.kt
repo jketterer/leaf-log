@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainSheetState
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -29,6 +30,7 @@ data class HistoryState(
     val isEmpty: Boolean = false,
     val showFilterSheet: Boolean = false,
     val sessionPendingDelete: String? = null,
+    val brewAgainSheet: BrewAgainSheetState? = null,
     val inProgressDialogState: InProgressDialogState? = null,
 )
 

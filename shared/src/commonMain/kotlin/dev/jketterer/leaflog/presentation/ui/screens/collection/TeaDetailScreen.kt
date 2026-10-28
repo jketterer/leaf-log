@@ -88,11 +88,13 @@ import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.PastBrewCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
+import dev.jketterer.leaflog.presentation.ui.components.session.BrewAgainSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainIntent
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -133,7 +135,7 @@ fun TeaDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEdit: (String) -> Unit,
     onNavigateToSession: (String) -> Unit,
-    onNavigateToLogTea: (String, String?) -> Unit,
+    onNavigateToLogTea: (NavRoute.LogTeaRoute) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: (String) -> Unit,
     onNavigateToCreateConfig: (String) -> Unit,
@@ -160,7 +162,7 @@ fun TeaDetailScreen(
                 }
 
                 is TeaDetailNavigationEvent.NavigateToLogTea -> {
-                    onNavigateToLogTea(route.teaId, event.vesselId)
+                    onNavigateToLogTea(event.route)
                 }
 
                 is TeaDetailNavigationEvent.NavigateToTimer -> {
@@ -591,6 +593,20 @@ private fun TeaDetailContent(
                 confirmLabel = stringResource(Res.string.delete),
                 onConfirm = { onIntent(TeaDetailIntent.ConfirmDeleteConfiguration) },
                 onDismiss = { onIntent(TeaDetailIntent.CancelDeleteConfiguration) },
+            )
+        }
+
+        state.brewAgainSheet?.let { sheet ->
+            val onBrewAgain = { intent: BrewAgainIntent -> onIntent(TeaDetailIntent.BrewAgain(intent)) }
+            BrewAgainSheet(
+                teaName = sheet.teaName,
+                teaTypeColorHex = sheet.teaTypeColorHex,
+                vesselName = sheet.vesselName,
+                brew = sheet.brew,
+                tagVocabulary = sheet.tagVocabulary,
+                onStart = { onBrewAgain(BrewAgainIntent.Start) },
+                onAdjust = { onBrewAgain(BrewAgainIntent.Adjust) },
+                onDismiss = { onBrewAgain(BrewAgainIntent.Dismiss) },
             )
         }
 

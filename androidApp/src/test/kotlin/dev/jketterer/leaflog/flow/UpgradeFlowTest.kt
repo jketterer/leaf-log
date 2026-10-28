@@ -155,6 +155,7 @@ class UpgradeFlowTest : FlowTest() {
         waitFor(hasText("Sencha") and hasText(text(Res.string.brewing_steep_n, 2)))
         click(hasContentDescription(text(Res.string.more_options)) and hasAnyAncestor(hasText("Dragon Well")))
         click(text(Res.string.brew_again))
+        click(text(Res.string.start_brewing))
         waitFor("Sencha")
         click("Complete & Start New")
 

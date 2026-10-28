@@ -10,6 +10,7 @@ import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
+import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
@@ -25,6 +26,7 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.DebouncedSave
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createBrewAgainDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -49,12 +51,14 @@ import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_save_changes
 import leaf_log.shared.generated.resources.couldnt_save_method
 import leaf_log.shared.generated.resources.couldnt_start_session
+import leaf_log.shared.generated.resources.failure_not_found
 import leaf_log.shared.generated.resources.method_already_saved
 
 class SessionDetailViewModel(
     private val route: NavRoute.SessionDetailsRoute,
     private val teaSessionRepository: TeaSessionRepository,
     private val teaRepository: TeaRepository,
+    private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val tastingTagRepository: TastingTagRepository,
     private val brewingConfigurationRepository: BrewingConfigurationRepository,
@@ -86,7 +90,8 @@ class SessionDetailViewModel(
     private val steepNotesSave = DebouncedSave(appScope)
 
     private sealed interface PendingAction {
-        data object BrewAgain : PendingAction
+        data class BrewAgain(val sessionId: String) : PendingAction
+        data class AdjustBrew(val sessionId: String) : PendingAction
     }
 
     private val inProgressDelegate =
@@ -104,10 +109,26 @@ class SessionDetailViewModel(
             },
             executePendingAction = { action ->
                 when (action) {
-                    is PendingAction.BrewAgain -> brewAgain()
+                    is PendingAction.BrewAgain -> brewAgain(action.sessionId)
+                    is PendingAction.AdjustBrew ->
+                        _navEvents.trySend(SessionDetailNavEvent.NavigateToLogTea(action.sessionId))
                 }
             },
         )
+
+    private val brewAgainDelegate = createBrewAgainDelegate(
+        teaSessionRepository = teaSessionRepository,
+        teaRepository = teaRepository,
+        teaTypeRepository = teaTypeRepository,
+        brewingVesselRepository = brewingVesselRepository,
+        tastingTagRepository = tastingTagRepository,
+        stateFlow = _state,
+        getSheetState = { it.brewAgainSheet },
+        setSheetState = { state, sheet -> state.copy(brewAgainSheet = sheet) },
+        onFailure = messages::failure,
+        onStart = { inProgressDelegate.checkAndProceed(PendingAction.BrewAgain(it)) },
+        onAdjust = { inProgressDelegate.checkAndProceed(PendingAction.AdjustBrew(it)) },
+    )
 
     /** Starts at the route's session; stepping moves it without leaving the screen. */
     private val shownSessionId = MutableStateFlow(route.sessionId)
@@ -131,9 +152,12 @@ class SessionDetailViewModel(
 
             is SessionDetailIntent.ConfirmDeleteSteep -> confirmDeleteSteep()
             is SessionDetailIntent.CancelDeleteSteep -> cancelDeleteSteep()
-            is SessionDetailIntent.BrewAgainClicked -> inProgressDelegate.checkAndProceed(
-                PendingAction.BrewAgain
-            )
+            is SessionDetailIntent.BrewAgainClicked -> {
+                val sessionId = _state.value.session?.session?.id ?: return
+                brewAgainDelegate.openSession(sessionId)
+            }
+
+            is SessionDetailIntent.BrewAgain -> brewAgainDelegate.onIntent(intent.intent)
 
             is SessionDetailIntent.AddSteepClicked -> showAddSteepDialog()
             is SessionDetailIntent.CancelAddSteep -> cancelAddSteep()
@@ -474,10 +498,13 @@ class SessionDetailViewModel(
         }
     }
 
-    private fun brewAgain() {
-        val session = _state.value.session ?: return
-
+    private fun brewAgain(sessionId: String) {
         viewModelScope.launch {
+            val session = teaSessionRepository.getSession(sessionId)
+            if (session == null) {
+                messages.show(Res.string.failure_not_found)
+                return@launch
+            }
             startSessionUseCase(session)
                 .onSuccess {
                     _navEvents.send(SessionDetailNavEvent.NavigateToTimer(it.session.id))
@@ -493,4 +520,5 @@ sealed interface SessionDetailNavEvent {
 
     data class NavigateToTeaDetails(val teaId: String) : SessionDetailNavEvent
     data class NavigateToTimer(val sessionId: String) : SessionDetailNavEvent
+    data class NavigateToLogTea(val sourceSessionId: String) : SessionDetailNavEvent
 }

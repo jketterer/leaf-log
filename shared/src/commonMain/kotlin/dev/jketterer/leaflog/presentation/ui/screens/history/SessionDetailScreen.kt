@@ -60,6 +60,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
+import dev.jketterer.leaflog.presentation.ui.components.session.BrewAgainSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepTimelineSection
@@ -67,6 +68,7 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepParameter
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainIntent
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.add_steep
 import leaf_log.shared.generated.resources.brew_again
@@ -97,6 +99,7 @@ fun SessionDetailScreen(
     onNavigateToEdit: (String) -> Unit,
     onNavigateToTea: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
+    onNavigateToLogTea: (sourceSessionId: String) -> Unit,
     viewModel: SessionDetailViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -109,6 +112,7 @@ fun SessionDetailScreen(
                 is SessionDetailNavEvent.NavigateToEditSession -> onNavigateToEdit(event.sessionId)
                 is SessionDetailNavEvent.NavigateToTeaDetails -> onNavigateToTea(event.teaId)
                 is SessionDetailNavEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId)
+                is SessionDetailNavEvent.NavigateToLogTea -> onNavigateToLogTea(event.sourceSessionId)
                 is SessionDetailNavEvent.NavigateBack -> onNavigateBack()
             }
         }
@@ -311,6 +315,20 @@ private fun SessionDetailDialogs(
             onDelete = if (editingSteep.number > 1) {
                 { onIntent(SessionDetailIntent.DeleteSteepClicked(editingSteep.id)) }
             } else null,
+        )
+    }
+
+    state.brewAgainSheet?.let { sheet ->
+        val onBrewAgain = { intent: BrewAgainIntent -> onIntent(SessionDetailIntent.BrewAgain(intent)) }
+        BrewAgainSheet(
+            teaName = sheet.teaName,
+            teaTypeColorHex = sheet.teaTypeColorHex,
+            vesselName = sheet.vesselName,
+            brew = sheet.brew,
+            tagVocabulary = sheet.tagVocabulary,
+            onStart = { onBrewAgain(BrewAgainIntent.Start) },
+            onAdjust = { onBrewAgain(BrewAgainIntent.Adjust) },
+            onDismiss = { onBrewAgain(BrewAgainIntent.Dismiss) },
         )
     }
 

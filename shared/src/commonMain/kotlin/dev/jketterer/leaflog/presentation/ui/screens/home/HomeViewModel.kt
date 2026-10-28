@@ -71,7 +71,6 @@ import kotlin.time.Duration.Companion.seconds
 private sealed interface HomePendingAction {
     data object NavigateToLogTea : HomePendingAction
     data object ShowDurationSheet : HomePendingAction
-    data class BrewAgain(val sessionId: String) : HomePendingAction
     data class QuickBrew(
         val teaId: String,
         val vesselId: String,
@@ -128,9 +127,6 @@ class HomeViewModel(
 
                 is HomePendingAction.ShowDurationSheet ->
                     _state.update { it.copy(showDurationSheet = true) }
-
-                is HomePendingAction.BrewAgain ->
-                    brewAgain(action.sessionId)
 
                 is HomePendingAction.QuickBrew ->
                     quickBrew(action.configurationId)
@@ -214,8 +210,6 @@ class HomeViewModel(
             }
 
             is HomeIntent.UndoFinishClicked -> undoFinish(intent.sessionId)
-            is HomeIntent.BrewAgainClicked ->
-                inProgressDelegate.checkAndProceed(HomePendingAction.BrewAgain(intent.sessionId))
 
             is HomeIntent.QuickBrewClicked -> {
                 inProgressDelegate.checkAndProceed(
@@ -521,16 +515,6 @@ class HomeViewModel(
             in 17..20 -> "Good evening"
             else -> "Good night"
         }
-    }
-
-    private fun brewAgain(sessionId: String) = viewModelScope.launch {
-        val source = teaSessionRepository.getSession(sessionId) ?: return@launch
-        startSessionUseCase(source)
-            .onSuccess {
-                _state.update { state -> state.copy(isFabExpanded = false) }
-                _navEvents.send(HomeNavEvent.NavigateToTimer(it.session.id))
-            }
-            .onFailure { messages.failure(it, Res.string.couldnt_start_session) }
     }
 
     private fun quickBrew(configurationId: String) = viewModelScope.launch {

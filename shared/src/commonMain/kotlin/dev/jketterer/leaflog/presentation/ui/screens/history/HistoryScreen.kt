@@ -15,10 +15,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -49,18 +47,22 @@ import compose.icons.feathericons.Filter
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
-import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
+import dev.jketterer.leaflog.presentation.ui.components.history.HistoryFilterSheet
+import dev.jketterer.leaflog.presentation.ui.components.session.BrewAgainSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
+import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainIntent
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.clear_filters
 import leaf_log.shared.generated.resources.clear_search
@@ -74,10 +76,8 @@ import leaf_log.shared.generated.resources.log_a_brew
 import leaf_log.shared.generated.resources.navigate_up
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
-import kotlin.time.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Instant
 
 /**
  * History Screen - displays all brewing sessions.
@@ -87,7 +87,7 @@ fun HistoryScreen(
     route: NavRoute.HistoryRoute,
     onNavigateToSession: (String) -> Unit,
     onNavigateToTimer: (String) -> Unit,
-    onNavigateToLogTea: () -> Unit,
+    onNavigateToLogTea: (sourceSessionId: String?) -> Unit,
     /** Null at the History tab's root; set when pushed with a filter from elsewhere. */
     onNavigateUp: (() -> Unit)?,
     viewModel: HistoryViewModel = koinViewModel { parametersOf(route) },
@@ -102,8 +102,13 @@ fun HistoryScreen(
                 is HistoryNavEvent.NavigateToSession -> {
                     onNavigateToSession(event.sessionId)
                 }
+
                 is HistoryNavEvent.NavigateToTimer -> {
                     onNavigateToTimer(event.sessionId)
+                }
+
+                is HistoryNavEvent.NavigateToLogTea -> {
+                    onNavigateToLogTea(event.sourceSessionId)
                 }
             }
         }
@@ -113,12 +118,11 @@ fun HistoryScreen(
         state = state,
         onIntent = viewModel::onIntent,
         snackbarHostState = snackbarHostState,
-        onNavigateToLogTea = onNavigateToLogTea,
+        onNavigateToLogTea = { onNavigateToLogTea(null) },
         onNavigateUp = onNavigateUp,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HistoryContent(
     state: HistoryState,
@@ -258,7 +262,10 @@ private fun HistoryContent(
                 )
 
                 state.isEmpty && state.searchQuery.isNotBlank() -> EmptyState(
-                    message = stringResource(Res.string.history_no_search_match, state.searchQuery.trim()),
+                    message = stringResource(
+                        Res.string.history_no_search_match,
+                        state.searchQuery.trim()
+                    ),
                     actionText = stringResource(Res.string.clear_search),
                     onActionClick = { onIntent(HistoryIntent.SearchQueryChanged("")) },
                 )
@@ -306,7 +313,7 @@ private fun HistoryContent(
                                         }
                                     },
                                     onBrewAgainClick = {
-                                        onIntent(HistoryIntent.BrewAgain(sessionId))
+                                        onIntent(HistoryIntent.BrewAgainClicked(sessionId))
                                     },
                                     onDeleteClick = {
                                         onIntent(HistoryIntent.DeleteSession(sessionId))
@@ -319,6 +326,21 @@ private fun HistoryContent(
                     }
                 }
             }
+        }
+
+        state.brewAgainSheet?.let { sheet ->
+            val onBrewAgain =
+                { intent: BrewAgainIntent -> onIntent(HistoryIntent.BrewAgain(intent)) }
+            BrewAgainSheet(
+                teaName = sheet.teaName,
+                teaTypeColorHex = sheet.teaTypeColorHex,
+                vesselName = sheet.vesselName,
+                brew = sheet.brew,
+                tagVocabulary = sheet.tagVocabulary,
+                onStart = { onBrewAgain(BrewAgainIntent.Start) },
+                onAdjust = { onBrewAgain(BrewAgainIntent.Adjust) },
+                onDismiss = { onBrewAgain(BrewAgainIntent.Dismiss) },
+            )
         }
 
         // In-progress session conflict dialog

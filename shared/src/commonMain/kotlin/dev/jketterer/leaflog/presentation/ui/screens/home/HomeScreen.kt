@@ -320,13 +320,9 @@ private fun HomeContent(
                                 onSessionClick = {
                                     onIntent(HomeIntent.SessionClicked(sessionData.session.session.id))
                                 },
-                                onBrewAgainClick = {
-                                    onIntent(HomeIntent.BrewAgainClicked(sessionData.session.session.id))
-                                },
                                 onDeleteClick = {
                                     onIntent(HomeIntent.DeleteSessionClicked(sessionData.session.session.id))
                                 },
-                                canBrewAgain = true,
                                 modifier = Modifier
                                     .animateItem()
                                     .padding(horizontal = 16.dp),

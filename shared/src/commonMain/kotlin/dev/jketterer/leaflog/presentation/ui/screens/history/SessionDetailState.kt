@@ -4,6 +4,7 @@ import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainSheetState
 import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 import kotlin.time.Duration
 
@@ -14,7 +15,7 @@ data class SessionDetailState(
     val usedConfigurationLabel: String? = null,
     val vocabulary: List<TastingTag> = emptyList(),
 
-    // Its chronological neighbours across every session, for stepping through
+    // Its chronological neighbors across every session, for stepping through
     val previousSessionId: String? = null,
     val nextSessionId: String? = null,
 
@@ -35,6 +36,8 @@ data class SessionDetailState(
     // Save as configuration dialog
     val showSaveConfigurationDialog: Boolean = false,
     val suggestedConfigurationLabel: String = "",
+
+    val brewAgainSheet: BrewAgainSheetState? = null,
 
     // In-progress session conflict dialog
     val inProgressDialogState: InProgressDialogState? = null,

@@ -137,8 +137,10 @@ internal fun SourceBrewSection(
                     selected = brew?.session?.id == source?.session?.id,
                     onClick = { onSourceSelected(brew) },
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = choices.size),
+                    // Up to four segments: a check beside the label crowds it, and the fill marks it
+                    icon = {},
                 ) {
-                    Text(stringResource(label), maxLines = 1)
+                    Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

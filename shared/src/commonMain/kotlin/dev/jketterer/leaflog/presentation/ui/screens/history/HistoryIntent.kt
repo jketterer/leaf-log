@@ -1,5 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainIntent
+
 sealed interface HistoryIntent {
     data object LoadData : HistoryIntent
 
@@ -17,7 +19,8 @@ sealed interface HistoryIntent {
     data class DeleteSession(val sessionId: String) : HistoryIntent
     data object ConfirmDeleteSession : HistoryIntent
     data object CancelDeleteSession : HistoryIntent
-    data class BrewAgain(val sessionId: String) : HistoryIntent
+    data class BrewAgainClicked(val sessionId: String) : HistoryIntent
+    data class BrewAgain(val intent: BrewAgainIntent) : HistoryIntent
 
     // In-progress completion - navigates to timer screen
     data class CompleteInProgress(val sessionId: String) : HistoryIntent

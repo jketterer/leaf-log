@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainIntent
 import kotlin.time.Duration
 
 sealed interface SessionDetailIntent {
@@ -11,6 +12,7 @@ sealed interface SessionDetailIntent {
     data object ConfirmDeleteSteep : SessionDetailIntent
     data object CancelDeleteSteep : SessionDetailIntent
     data object BrewAgainClicked : SessionDetailIntent
+    data class BrewAgain(val intent: BrewAgainIntent) : SessionDetailIntent
     data object AddSteepClicked : SessionDetailIntent
     data object CancelAddSteep : SessionDetailIntent
     data class UpdateNextSteepDuration(val duration: Duration?) : SessionDetailIntent

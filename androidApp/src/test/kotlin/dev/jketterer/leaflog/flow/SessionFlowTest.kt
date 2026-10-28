@@ -38,6 +38,7 @@ import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.field_vessel_required
 import leaf_log.shared.generated.resources.begin_session
+import leaf_log.shared.generated.resources.adjust
 import leaf_log.shared.generated.resources.brew_again
 import leaf_log.shared.generated.resources.last_time
 import leaf_log.shared.generated.resources.start_steep_n
@@ -171,10 +172,14 @@ class SessionFlowTest : FlowTest() {
     }
 
     @Test
-    fun `brew again starts a new session set up as this one on the Timer`() {
+    fun `brew again shows this session and its Start begins one set up as it on the Timer`() {
         openSession()
         click(text(Res.string.brew_again))
+        waitFor(text(Res.string.adjust))
+        assertEquals(1, runBlocking { koin.get<TeaSessionRepository>().getAllSessions() }.size)
 
+        click(text(Res.string.start_brewing))
+        waitUntilGone(text(Res.string.adjust))
         waitFor(text(Res.string.start_brewing))
         waitFor("0:30")
         val sessions = runBlocking { koin.get<TeaSessionRepository>().getAllSessions() }
@@ -182,6 +187,20 @@ class SessionFlowTest : FlowTest() {
         assertEquals(SessionStatus.IN_PROGRESS, again.session.status)
         assertEquals(5f, again.session.teaQuantityGrams)
         assertNull(again.steeps.single().rating)
+    }
+
+    @Test
+    fun `brew again's Adjust opens Log Tea filled from this session and replays it`() {
+        openSession()
+        click(text(Res.string.brew_again))
+        click(text(Res.string.adjust))
+
+        waitFor(text(Res.string.last_time))
+        click(text(Res.string.begin_session))
+        brewFirstSteep(30.seconds)
+
+        waitFor("0:45")
+        assertEquals(sessionId, latest().session.planSessionId)
     }
 
     @Test

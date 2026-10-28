@@ -23,6 +23,7 @@ import dev.jketterer.leaflog.presentation.ui.components.session.loadLabel
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.search.matchesQuery
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createBrewAgainDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -85,6 +86,7 @@ class HistoryViewModel(
 
     private sealed interface PendingAction {
         data class BrewAgain(val sessionId: String) : PendingAction
+        data class AdjustBrew(val sessionId: String) : PendingAction
     }
 
     private val inProgressDelegate = createInProgressSessionDelegate<HistoryState, PendingAction>(
@@ -102,8 +104,24 @@ class HistoryViewModel(
         executePendingAction = { action ->
             when (action) {
                 is PendingAction.BrewAgain -> brewAgain(action.sessionId)
+                is PendingAction.AdjustBrew ->
+                    _navEvents.trySend(HistoryNavEvent.NavigateToLogTea(action.sessionId))
             }
         },
+    )
+
+    private val brewAgainDelegate = createBrewAgainDelegate(
+        teaSessionRepository = teaSessionRepository,
+        teaRepository = teaRepository,
+        teaTypeRepository = teaTypeRepository,
+        brewingVesselRepository = brewingVesselRepository,
+        tastingTagRepository = tastingTagRepository,
+        stateFlow = _state,
+        getSheetState = { it.brewAgainSheet },
+        setSheetState = { state, sheet -> state.copy(brewAgainSheet = sheet) },
+        onFailure = messages::failure,
+        onStart = { inProgressDelegate.checkAndProceed(PendingAction.BrewAgain(it)) },
+        onAdjust = { inProgressDelegate.checkAndProceed(PendingAction.AdjustBrew(it)) },
     )
 
     init {
@@ -128,11 +146,8 @@ class HistoryViewModel(
             is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is HistoryIntent.ConfirmDeleteSession -> confirmDeleteSession()
             is HistoryIntent.CancelDeleteSession -> _state.update { it.copy(sessionPendingDelete = null) }
-            is HistoryIntent.BrewAgain -> inProgressDelegate.checkAndProceed(
-                PendingAction.BrewAgain(
-                    intent.sessionId
-                )
-            )
+            is HistoryIntent.BrewAgainClicked -> brewAgainDelegate.openSession(intent.sessionId)
+            is HistoryIntent.BrewAgain -> brewAgainDelegate.onIntent(intent.intent)
 
             is HistoryIntent.CompleteInProgress -> _navEvents.trySend(
                 HistoryNavEvent.NavigateToTimer(
@@ -321,6 +336,7 @@ private val SEARCH_DEBOUNCE = 300.milliseconds
 sealed interface HistoryNavEvent {
     data class NavigateToSession(val sessionId: String) : HistoryNavEvent
     data class NavigateToTimer(val sessionId: String) : HistoryNavEvent
+    data class NavigateToLogTea(val sourceSessionId: String) : HistoryNavEvent
 }
 
 private data class HistoryData(

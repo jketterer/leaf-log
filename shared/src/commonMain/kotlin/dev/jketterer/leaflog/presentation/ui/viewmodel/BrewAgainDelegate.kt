@@ -33,6 +33,15 @@ data class BrewAgainSheetState(
     val best: SessionWithSteeps? = null,
 )
 
+/** What the Brew again sheet sends its host, which hands it to [BrewAgainDelegate.onIntent]. */
+sealed interface BrewAgainIntent {
+    /** The switch: shows the pair's last or best. */
+    data class Select(val sessionId: String) : BrewAgainIntent
+    data object Start : BrewAgainIntent
+    data object Adjust : BrewAgainIntent
+    data object Dismiss : BrewAgainIntent
+}
+
 /**
  * Opens the Brew again sheet on one past session or on a pair's default brew, and hands its
  * choice to the host: [onStart] to start it, [onAdjust] to open Log Tea on it. Both get the
@@ -68,24 +77,20 @@ class BrewAgainDelegate<T>(
         sheetState(teaId, vesselId, brew).copy(last = best?.let { last }, best = best)
     }
 
-    /** The switch: shows the pair's last or best. */
-    fun select(sessionId: String) = stateFlow.update { state ->
+    fun onIntent(intent: BrewAgainIntent) {
+        when (intent) {
+            is BrewAgainIntent.Select -> select(intent.sessionId)
+            is BrewAgainIntent.Start -> close()?.let { onStart(it.session.id) }
+            is BrewAgainIntent.Adjust -> close()?.let { onAdjust(it.session.id) }
+            is BrewAgainIntent.Dismiss -> close()
+        }
+    }
+
+    private fun select(sessionId: String) = stateFlow.update { state ->
         val sheet = getSheetState(state) ?: return@update state
         val brew = listOfNotNull(sheet.last, sheet.best).firstOrNull { it.session.id == sessionId }
             ?: return@update state
         setSheetState(state, sheet.copy(brew = brew))
-    }
-
-    fun start() {
-        close()?.let { onStart(it.session.id) }
-    }
-
-    fun adjust() {
-        close()?.let { onAdjust(it.session.id) }
-    }
-
-    fun dismiss() {
-        close()
     }
 
     private fun open(load: suspend () -> BrewAgainSheetState) {

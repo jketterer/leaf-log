@@ -27,6 +27,7 @@ import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigat
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToEditTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToLogTea
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailNavigationEvent.NavigateToSession
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createBrewAgainDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -82,6 +83,7 @@ class TeaDetailViewModel(
     private sealed interface PendingAction {
         data class BrewThisTea(val vesselId: String?) : PendingAction
         data class BrewAgain(val sessionId: String) : PendingAction
+        data class AdjustBrew(val sessionId: String) : PendingAction
     }
 
     private val inProgressDelegate = createInProgressSessionDelegate<TeaDetailState, PendingAction>(
@@ -99,12 +101,29 @@ class TeaDetailViewModel(
         executePendingAction = { action ->
             when (action) {
                 is PendingAction.BrewThisTea ->
-                    _navEvents.trySend(NavigateToLogTea(action.vesselId))
+                    _navEvents.trySend(NavigateToLogTea(NavRoute.LogTeaRoute(route.teaId, action.vesselId)))
 
                 is PendingAction.BrewAgain ->
                     brewAgain(action.sessionId)
+
+                is PendingAction.AdjustBrew ->
+                    _navEvents.trySend(NavigateToLogTea(NavRoute.LogTeaRoute(sourceSessionId = action.sessionId)))
             }
         },
+    )
+
+    private val brewAgainDelegate = createBrewAgainDelegate(
+        teaSessionRepository = teaSessionRepository,
+        teaRepository = teaRepository,
+        teaTypeRepository = teaTypeRepository,
+        brewingVesselRepository = brewingVesselRepository,
+        tastingTagRepository = tastingTagRepository,
+        stateFlow = _state,
+        getSheetState = { it.brewAgainSheet },
+        setSheetState = { state, sheet -> state.copy(brewAgainSheet = sheet) },
+        onFailure = messages::failure,
+        onStart = { inProgressDelegate.checkAndProceed(PendingAction.BrewAgain(it)) },
+        onAdjust = { inProgressDelegate.checkAndProceed(PendingAction.AdjustBrew(it)) },
     )
 
     init {
@@ -128,11 +147,8 @@ class TeaDetailViewModel(
                 PendingAction.BrewThisTea(intent.vesselId)
             )
 
-            is TeaDetailIntent.BrewAgainClicked -> inProgressDelegate.checkAndProceed(
-                PendingAction.BrewAgain(
-                    intent.sessionId
-                )
-            )
+            is TeaDetailIntent.BrewAgainClicked -> brewAgainDelegate.openSession(intent.sessionId)
+            is TeaDetailIntent.BrewAgain -> brewAgainDelegate.onIntent(intent.intent)
 
             is TeaDetailIntent.ViewAllSessionsClicked -> {
                 val teaId = _state.value.tea?.id ?: return
@@ -354,7 +370,7 @@ class TeaDetailViewModel(
 sealed interface TeaDetailNavigationEvent {
     data object NavigateBack : TeaDetailNavigationEvent
     data class NavigateToSession(val sessionId: String) : TeaDetailNavigationEvent
-    data class NavigateToLogTea(val vesselId: String? = null) : TeaDetailNavigationEvent
+    data class NavigateToLogTea(val route: NavRoute.LogTeaRoute) : TeaDetailNavigationEvent
     data class NavigateToTimer(val sessionId: String) : TeaDetailNavigationEvent
     data object NavigateToEditTea : TeaDetailNavigationEvent
     data class NavigateToHistory(val teaId: String) : TeaDetailNavigationEvent

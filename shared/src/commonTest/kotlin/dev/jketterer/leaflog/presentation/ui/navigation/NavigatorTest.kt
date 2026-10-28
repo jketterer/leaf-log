@@ -131,6 +131,18 @@ class NavigatorTest {
     }
 
     @Test
+    fun `a brew screen for the session on top takes its place`() {
+        val timer = NavRoute.TimerRoute("s1")
+        val steepComplete = NavRoute.SteepCompleteRoute("s1")
+        navigator.openOnHome(timer)
+        navigator.replace(timer, steepComplete)
+
+        navigator.openOnHome(timer)
+
+        assertEquals(listOf<NavKey>(Tab.HOME.root, timer), stack(Tab.HOME))
+    }
+
+    @Test
     fun `leaving the brew loop resets Home only`() {
         val finished = NavRoute.HomeRoute(finishedSessionId = "s1")
         navigator.selectTab(Tab.COLLECTION)

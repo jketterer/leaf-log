@@ -246,6 +246,26 @@ class NotificationFlowTest : FlowTest() {
     }
 
     @Test
+    fun `a Timer tap after the steep ran out opens its review once`() {
+        launch()
+        beginSession("Dragon Well")
+        click(text(Res.string.start_brewing))
+        waitUntil("the ongoing notification is posted") { ongoing() != null }
+        val timerTap = ongoing()!!
+        clock.advance(30.seconds)
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+
+        background()
+        tap(timerTap)
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+        assertAbsent(text(Res.string.start_brewing))
+
+        click(text(Res.string.navigate_up))
+        waitFor(text(Res.string.tab_history))
+        assertAbsent(text(Res.string.review_how_was_steep_n, 1))
+    }
+
+    @Test
     fun `steep 2's ready alert opens steep 2's review from the background`() {
         launch()
         beginSession("Dragon Well")

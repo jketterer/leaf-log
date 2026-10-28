@@ -37,6 +37,7 @@ import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Clock
 import compose.icons.feathericons.Home
 import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsScreen
 import leaf_log.shared.generated.resources.Res
@@ -64,25 +65,33 @@ import dev.jketterer.leaflog.presentation.ui.screens.vessel.EditVesselScreen
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselDetailScreen
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
 
 @Composable
 fun AppNavigation() {
     val navigator = rememberNavigator()
 
     // Handle deep links from notification taps. A tap on one left over from a session since
-    // finished or discarded just opens the app
+    // finished or discarded just opens the app, and a Timer tap for a steep that has run out (the
+    // Live Activity sits at 0:00) opens Steep Complete
     val sessions: TeaSessionRepository = koinInject()
+    val clock: Clock = koinInject()
     val pendingRoute by DeepLinkHandler.pendingRoute.collectAsState()
     LaunchedEffect(pendingRoute) {
         val route = pendingRoute ?: return@LaunchedEffect
-        val sessionId = when (route) {
-            is NavRoute.TimerRoute -> route.sessionId
-            is NavRoute.SteepCompleteRoute -> route.sessionId
-            else -> null
+        val sessionId = route.brewSessionId
+        if (sessionId == null) {
+            navigator.openOnHome(route)
+        } else {
+            val session = sessions.getSessionOfSteep(sessionId)
+            if (session?.session?.status == SessionStatus.IN_PROGRESS) {
+                val finished = route is NavRoute.TimerRoute &&
+                    session.currentSteep.resolvedTimerStatus(clock.now()) == TimerStatus.COMPLETE
+                navigator.openOnHome(
+                    if (finished) NavRoute.SteepCompleteRoute(session.session.id) else route,
+                )
+            }
         }
-        val inProgress = sessionId == null ||
-            sessions.getSessionOfSteep(sessionId)?.session?.status == SessionStatus.IN_PROGRESS
-        if (inProgress) navigator.openOnHome(route)
         DeepLinkHandler.consume()
     }
 

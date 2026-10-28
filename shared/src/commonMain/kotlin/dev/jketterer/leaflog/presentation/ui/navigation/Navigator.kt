@@ -66,10 +66,19 @@ class Navigator(
         if (stack.size > 1) stack.removeAt(stack.lastIndex) else tab = Tab.HOME
     }
 
-    /** The brew loop and notification taps live on Home's stack; the origin tab keeps its own. */
+    /**
+     * The brew loop and notification taps live on Home's stack; the origin tab keeps its own. A
+     * brew screen for the session already on top takes its place, so a tap racing the Timer's own
+     * hand-off to Steep Complete can't stack one on the other.
+     */
     fun openOnHome(route: NavRoute) {
         tab = Tab.HOME
-        push(route)
+        val sessionId = route.brewSessionId
+        if (sessionId != null && stack.last().brewSessionId == sessionId) {
+            stack[stack.lastIndex] = route
+        } else {
+            push(route)
+        }
     }
 
     /** Leaves the brew loop for a fresh Home. */
@@ -83,6 +92,14 @@ class Navigator(
         if (stack.last() != route) stack.add(route)
     }
 }
+
+/** The session a brew loop screen shows, or null for any other screen and the Quick Timer. */
+internal val NavKey.brewSessionId: String?
+    get() = when (this) {
+        is NavRoute.TimerRoute -> sessionId
+        is NavRoute.SteepCompleteRoute -> sessionId
+        else -> null
+    }
 
 @Composable
 fun rememberNavigator(): Navigator {

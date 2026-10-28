@@ -7,11 +7,8 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.sqlite.SQLiteConnection
@@ -212,12 +209,6 @@ class UpgradeFlowTest : FlowTest() {
 
     private fun rated(rating: String) =
         hasContentDescription(text(Res.string.rating_out_of_five, rating), substring = true)
-
-    private fun scrollTo(matcher: SemanticsMatcher) {
-        waitFor(hasScrollToNodeAction())
-        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(matcher)
-        waitFor(matcher)
-    }
 
     private fun ago(duration: Duration) = (clock.now() - duration).toEpochMilliseconds()
 }

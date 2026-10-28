@@ -1,12 +1,14 @@
 package dev.jketterer.leaflog.flow
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Intent
+import android.net.Uri
 import android.os.Looper
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeTimeoutException
@@ -14,9 +16,12 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.printToString
 import android.os.Bundle
@@ -63,6 +68,7 @@ import org.robolectric.android.controller.ServiceController
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.shadows.ShadowActivity.IntentForResult
 import org.robolectric.shadows.ShadowAlarmManager.ScheduledAlarm
 import java.io.File
 import kotlin.reflect.KClass
@@ -269,6 +275,33 @@ abstract class FlowTest {
         if (running == null) launch(intent = intent) else running.newIntent(intent).restart().resume()
     }
 
+    /** Waits for the app to open a system screen for a result, a file picker or save dialog, left open. */
+    fun awaitPicker(): IntentForResult {
+        var picker: IntentForResult? = null
+        waitUntil("a picker is open") {
+            picker = shadowOf(activity!!.get()).nextStartedActivityForResult
+            picker != null
+        }
+        return picker!!
+    }
+
+    /** Fails if the app opened a system screen for a result since the last [awaitPicker]. */
+    fun assertNoPicker() {
+        compose.waitForIdle()
+        val picker = shadowOf(activity!!.get()).peekNextStartedActivityForResult()
+        check(picker == null) { "Expected no picker, but ${picker.intent} opened" }
+    }
+
+    /** The user leaves [picker] having chosen [uri], or backs out of it when null. */
+    fun answer(picker: IntentForResult, uri: Uri?) {
+        // Through the registry, which knows the request across a recreate; the Activity doesn't
+        activity!!.get().activityResultRegistry.dispatchResult(
+            picker.requestCode,
+            if (uri == null) Activity.RESULT_CANCELED else Activity.RESULT_OK,
+            uri?.let { Intent().setData(it) },
+        )
+    }
+
     /** Waits for [condition], naming [what] and printing the screen if it never holds. */
     fun waitUntil(what: String, condition: () -> Boolean) {
         try {
@@ -309,6 +342,13 @@ abstract class FlowTest {
         check(compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isEmpty()) {
             "Expected no \"$text\" on screen"
         }
+    }
+
+    /** Scrolls the screen's list until [matcher] shows. */
+    fun scrollTo(matcher: SemanticsMatcher) {
+        waitFor(hasScrollToNodeAction())
+        compose.onAllNodes(hasScrollToNodeAction()).onFirst().performScrollToNode(matcher)
+        waitFor(matcher)
     }
 
     /** From Home to the new session's Timer, not started: Gaiwan, 5 g, 0:30. */

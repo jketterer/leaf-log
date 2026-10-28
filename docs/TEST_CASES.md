@@ -80,32 +80,16 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
 
 ## 6. Files and backup
 
-- [ ] Export → system save dialog → file written under a name with today's date and time; a
-      "Backup exported" snackbar shows. Reopen it from the Files app; size is non-zero. Export
-      again in the same visit: the second file gets a later name.
-- [ ] Export → cancel the save dialog **[A]** or close the share sheet **[iOS]**. No snackbar,
-      no error, the Export button is usable again, and "Last backup" doesn't change.
-- [ ] Fresh install: Settings shows "Last backup: never" in red with "Back up now". Export →
-      "Last backup: today" in grey, the button reads "Export", and it survives an app restart.
+- [ ] **[iOS]** Export → close the share sheet. No snackbar, no error, the Export button is usable
+      again, and "Last backup" doesn't change.
 - [ ] **[iOS]** Export → share sheet stays open with no "Backup exported" until a destination
       (Save to Files, AirDrop) completes.
-- [ ] **[A]** Export → rotate or switch dark mode while the save dialog is open → save. The file
-      is written in full, the dialog opens only once, and the snackbar shows.
 - [ ] Export from [A], import on [iOS], and the reverse. All teas, sessions, vessels, methods,
       and photos arrive (F4 bug: DEFLATE vs STORE fails today).
-- [ ] Import a backup exported by `v0.5.0`. Steep 1's notes arrive as the sessions' notes.
-- [ ] Import a backup exported by `v0.4.0`. It imports with no plans, rinses or tags.
-- [ ] Import a backup exported by `v0.1.1`. It imports, and tea and method stats match the
-      sessions that arrived.
-- [ ] Import picker → cancel. Nothing changes, no error shown.
-- [ ] Import a non-backup file. A readable error; nothing changes.
-- [ ] Open the import picker → rotate or switch dark mode while it's open → pick a file. The
-      picker opens only once, and the preview dialog shows.
 - [ ] Photo picker on Log Tea and Edit Session: pick, cancel, and pick a very large photo.
 - [ ] Take a portrait photo with the camera app, then add it to a tea, a session and a vessel. It
       shows upright everywhere, and again after export → import on the other platform.
-- [ ] Settings → Data shows "Photos" with a size. Add a photo, reopen Settings: it grows. Import a
-      backup with photos: it grows without reopening.
+- [ ] Settings → Data shows "Photos" with a size. Add a photo, reopen Settings: it grows.
 - [ ] Add a HEIC **[iOS]** or PNG photo and a 48 MP+ photo. Each saves; the stored file is a JPEG no
       longer than 2048 px on its long edge.
 - [ ] **[A]** Auto Backup: `adb shell bmgr backupnow dev.jketterer.leaflog` with photos present.

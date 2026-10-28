@@ -118,7 +118,7 @@ kover {
         }
         verify {
             // A ratchet: raise it as tests land, toward 70
-            rule { minBound(78) }
+            rule { minBound(84) }
         }
     }
 }

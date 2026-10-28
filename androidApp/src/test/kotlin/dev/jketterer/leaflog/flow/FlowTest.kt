@@ -37,7 +37,7 @@ import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.presentation.ui.navigation.DeepLinkHandler
 import dev.jketterer.leaflog.services.TimerForegroundService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
@@ -225,8 +225,9 @@ abstract class FlowTest {
         foregroundService?.destroy()
         foregroundService = null
         shadowOf(app).clearStartedServices()
-        // The app scope outlives the Activity, and would keep a timer ticking into the next test
-        koin.get<CoroutineScope>().cancel()
+        // The app scope outlives the Activity, and would keep a timer ticking into the next test.
+        // Joined, as the preferences DataStore lets go of its file only once its scope is done.
+        runBlocking { koin.get<CoroutineScope>().coroutineContext.job.cancelAndJoin() }
         koin.get<LeafLogDatabase>().close()
         stopKoin()
     }
@@ -351,6 +352,11 @@ abstract class FlowTest {
     fun click(matcher: SemanticsMatcher) {
         waitFor(matcher)
         compose.onNode(matcher).performClick()
+    }
+
+    /** Waits for [text] to leave the screen, as after a change that has yet to show. */
+    fun waitUntilGone(text: String) = waitUntil("no \"$text\" is on screen") {
+        compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isEmpty()
     }
 
     fun assertAbsent(text: String) {

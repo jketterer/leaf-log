@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-26 (Bet 4 released as 0.7.0)
+> **Last updated:** 2026-10-28 (Bet 5, Brew again, planned)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -151,7 +151,7 @@ and an iOS pass, each run on its own device.
 
 ## 4. How this roadmap is shaped
 
-- **One thin foundation, then five bets in order.** The foundation is only what every bet stands on.
+- **One thin foundation, then six bets in order.** The foundation is only what every bet stands on.
   Everything else is paid for by the first bet that touches it — no multi-week invisible phase.
 - **Each bet has an outcome, exit criteria, and a design section.** Exit criteria are how you know
   it's done; the design section holds the decisions a later session would otherwise re-derive.
@@ -164,9 +164,9 @@ F0 Ground truth ─► F1 Fix now ─► F2 Session aggregate ─► F3 Tea life
                                                                      │
           ┌──────────────────────────────────────────────────────────┘
           ▼
-Bet 1 Design system & app shell ─► Bet 2 Brewing plans ─► Bet 3 Journal ─► Bet 4 Recap ─► Bet 5 Widgets
-          ▲                                                                                   │
-          └─────────────────────── Polish track (continuous) ─────────────────────────────────┘
+Bet 1 Design system & app shell ─► Bet 2 Brewing plans ─► Bet 3 Journal ─► Bet 4 Recap ─► Bet 5 Brew again ─► Bet 6 Widgets
+          ▲                                                                                                          │
+          └─────────────────────────────────────── Polish track (continuous) ────────────────────────────────────────┘
 ```
 
 ---
@@ -979,16 +979,139 @@ southern-region device and the pager across rotation and 2× font.
 
 ---
 
-## Bet 5 — Widgets
+## Bet 5 — Brew again
+
+**Outcome:** repeating a brew means picking it from your history and seeing exactly what it was
+before the timer starts. Saved methods go.
+
+Why, found in daily use on 2026-10-28:
+
+- Quick Brew starts a session on one tap in a scrolling row, so a mis-tap logs a session with the
+  wrong parameters.
+- Save as method is offered after nearly every session and Update method after any deviation, so
+  both are ignored.
+- Log Tea attaches the pair's method unasked and keeps it after edits, so the method's plan drives
+  the later steeps and the review then asks to update it.
+- Every method was saved from a session, and Brew Again (`planSessionId`) already replays a
+  session's whole plan. A method is a frozen, named copy of what Brew Again reads live.
+
+### Design
+
+Decided 2026-10-28.
+
+- **A pair replays a past brew.** A pair is a tea in a vessel. Its default brew is the pair's last
+  completed session, unless that is rated under 3★ and the pair has a best (`best()`): then the
+  best. One pure function in `Session.kt` beside `lastCompleted()` and `best()`; the row, the sheet
+  and Log Tea's prefill all read it.
+- **Home's "Brew again" row replaces Quick Brew.**
+    - One card per pair with a completed session, ordered by the pair's last completed session, at
+      most 8. Finished teas and archived vessels are left out. The row hides when empty.
+    - No pinning and no Manage sheet: recency keeps a daily brew first.
+    - A card shows the tea, the vessel, the default brew's steep 1 time and temperature, and its
+      date and rating (`LastTimeLine`).
+    - Home's recent sessions lose their Brew again button; the row is Home's way to brew again.
+- **Every Brew again opens a sheet; nothing starts a session on one tap.** From Home's row,
+  History, Tea Detail's Best brew and Session Detail.
+    - The sheet shows the tea and vessel, the date and rating, chips for leaf, water, temperature,
+      water type and rinse, one bar per brewed steep for a multi-steep brew (the method form's
+      `PlanRow`, kept read-only), the tags and the note's first line, then Adjust and Start brewing.
+    - Opened from a pair, it has a Last | Best switch, hidden when there is no best or it is the
+      last. Opened from one session, it shows that session with no switch.
+    - **Start brewing** is today's Brew Again: `StartSessionUseCase(source)`, then the Timer.
+    - **Adjust** opens Log Tea with the selected session as its source
+      (`LogTeaRoute.sourceSessionId`, replacing `configurationId`). Start on the Timer stays the
+      final step before brewing.
+    - Start and Adjust go through the in-progress check; opening the sheet doesn't.
+    - Wiring: a `BrewAgainSheet` component and a `createBrewAgainDelegate` beside
+      `createInProgressSessionDelegate`, hosted by the four ViewModels. No nav-level sheet.
+- **Log Tea fills from a source brew, not a method.**
+    - Choosing a tea and vessel fills the form from the pair's default brew and shows it as the
+      source card: `PastBrewCard` with the Last | Best switch, replacing the tea-wide "Last time"
+      card. The session it starts sets `planSessionId` to the source, so its steeps replay it.
+    - **Start from scratch** clears the values and the source, as Choose method's Custom did.
+    - Editing leaf, water, temperature, water type, rinse or the tea bag switch keeps the source.
+      Changing the tea or vessel takes that pair's default brew.
+    - A pair never brewed has no card; the prefill falls back to the tea's, then its type's default
+      temperature. The same-type method fallback goes. `PrefillBanner` stays for those defaults.
+    - Steep 1's prefilled time is the source's learned base, rounded as a plan rounds, so an
+      untouched form replays exactly.
+    - Quick Timer's Attach still takes values only: steeps brewed by feel stay by feel.
+- **A source's plan shifts with steep 1.** `ResolvePlanUseCase` returns the source's learned plan
+  with steep 1 taken from the session's own steep 1 and every override moved by the same
+  difference, at least 1s. Source 0:45 / 1:00 / 1:20 with steep 1 set to 1:00 gives
+  1:00 / 1:15 / 1:35. Untouched, the difference is zero. With no source, the session's own steeps,
+  as today. The method step goes.
+- **Steep Complete:** Finish leads when the source's plan is a single steep (`planSessionId` only).
+- **Methods are deleted.** Session Review's Save and Update method cards; Session Detail's Save as
+  method and its method line, with nothing in its place since nearly every session will have a
+  source; Tea Detail's Saved methods; the method form; `ChooseMethodDialog`; Quick Brew and its
+  Manage sheet; the configuration use cases, repository, DAO, entity and mapper; the method stats
+  recompute and delete cascades; `StartSessionUseCase`'s method overload.
+- **Migration v12 → v13.** On each parent row whose `planSessionId` is null, `usedConfigurationId`
+  becomes its method's `source_session_id` when that session still exists. Then the index, the
+  column and `brewing_configurations` are dropped (the bundled SQLite has `DROP COLUMN`). A session
+  in progress on a method keeps replaying. Method labels, and edits made after saving, are lost by
+  decision.
+- **Backup version 5** has no methods and no `usedConfigurationId`. Version 4 is frozen as
+  `BackupV4` and converted the same way, from the methods in the file; versions 2 and 3 read
+  through it.
+
+**Exit:** a tap on a Home card never starts a session; the sheet shows what Start replays; Adjust →
+Log Tea → Start replays the source, shifted when steep 1 changed; no screen offers to save or update
+a method; a version 4 backup with methods imports with its sessions replaying; Track B: install
+over 0.7.0 with methods and a session in progress on one, and it keeps replaying.
+
+### Commits
+
+Four phases; the app builds and the flow tests pass after each.
+
+**Domain**, with methods still in place:
+
+1. [ ] `feat: a pair's default brew`: the replay rule. Tests: the last; a last under 3★ gives the
+   best; an unrated last stays; no rated brew gives the last.
+2. [ ] `feat: a source's plan shifts with steep 1`: `ResolvePlanUseCase`. Tests: no shift; a shift
+   with an increment; overrides shift; the 1s floor.
+
+**Log Tea:**
+
+3. [ ] `feat: log tea fills from a source brew`: the prefill rewritten, the source card and switch,
+   Start from scratch, `planSessionId` on start, `LogTeaRoute.sourceSessionId`; Choose method and
+   the auto-attached method go. Tests: the prefill; a flow where steep 2 suggests the source's
+   time, and one where steep 1 is changed and steep 2 shifts.
+
+**The sheet and the row:**
+
+4. [ ] `feat: brew again sheet`: component, delegate, previews (pair with switch, one session,
+   western, gongfu).
+5. [ ] `feat: every brew again opens the sheet`: History, Tea Detail, Session Detail; Home's recent
+   cards lose the button. Flow: Session Detail → sheet → Start → Timer; Adjust → Log Tea filled.
+6. [ ] `feat: home brew again row`: replaces Quick Brew. Tests: the row builder (one card per pair,
+   order, the cap of 8, finished and archived left out). Flow: a tap opens the sheet and creates no
+   session.
+
+**Methods removed:**
+
+7. [ ] `refactor: remove methods from the UI`: the review cards, Session Detail, Tea Detail, the
+   method form and its routes, Quick Brew's remains, strings.
+8. [ ] `refactor: drop brewing methods`: domain, data, migration v13 and backup version 5 together,
+   since the model, the column and the backup move as one. Tests: `MigrationTest` 12 → 13 (a
+   living source, a deleted one, an existing `planSessionId` kept); version 4 import converted;
+   `KoinGraphTest`; Upgrade and Backup flows.
+9. [ ] `docs: brew again`: CLAUDE.md (Room v13, the session fields, the `RecomputeStatsUseCase`
+   example), README, TEST_CASES, CHANGELOG Unreleased, the Track B upgrade line.
+
+---
+
+## Bet 6 — Widgets
 
 Android Glance + iOS WidgetKit. Portfolio grounds: two native implementations demonstrate platform
 depth that shared Compose code can't. Neither shares code.
 
-Scope: today at a glance, start a pinned method, in-progress status. iOS's Live Activity already
-covers the in-brew case, so the iOS widget's value is the glance and the launch.
+Scope: today at a glance, brew again the first pair of Home's row, in-progress status. iOS's Live
+Activity already covers the in-brew case, so the iOS widget's value is the glance and the launch.
 
-**Open question:** whether "start a pinned method" from a widget can start the timer directly (App
-Intents on iOS; a broadcast into `TimerService` on Android) given the timer waits for Start.
+Brew again from a widget opens the app on the Brew again sheet (Bet 5: nothing starts a session on
+one tap).
 
 ---
 
@@ -1057,13 +1180,13 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **Stored derived stats are recomputed, never incremented**                     | Tea and configuration stats are rebuilt from sessions inside each mutation's transaction. Increments drifted: `timesUsed` rose once per steep and never fell on delete. Recomputing makes re-finish, Undo and delete correct with no special cases. Session ratings aren't stored at all. |
 | **Discarding steep N ≥ 2 finishes the session**                                | Steeps 1…N−1 happened; only the next one was abandoned. Discarding steep 1 deletes the session. Considered: discarding the whole session from any steep.                                                                                                                                  |
 | **Undo is the only way to re-open a finished session**                         | An accidental Finish needs a way back; re-opening old sessions doesn't. Session Detail's Add Steep records a forgotten steep without a timer instead.                                                                                                                                     |
-| **A brewing style lives on the method, not the tea**                           | A tea brewed both ways needs two methods; the vessel usually implies the style.                                                                                                                                                                                                           |
+| **A brewing style lives on the method, not the tea**                           | A tea brewed both ways needs two methods; the vessel usually implies the style. *Superseded by Bet 5: the pair, a tea in a vessel, carries it.*                                                                                                                                           |
 | **Plans are base + increment with overrides**                                  | Matches how the author actually brews gongfu. Each steep follows the previous one, so a deliberate push carries forward. Time only: the author rarely changes temperature mid-session and does it by hand. Considered: overrides carrying temperature.                                    |
 | **Timer waits for Start**                                                      | Pouring takes time. Auto-start considered and rejected.                                                                                                                                                                                                                                   |
 | **Review stays between steeps, slimmed**                                       | Considered: rating during the next countdown (no screen at all) and session-end-only (memory fades by steep 10). A one-screen stars + tags + Next keeps capture high at one tap.                                                                                                          |
 | **The ready alert's tap is Next, and opens the review**                        | Considered: advancing from the lock screen with the rating left null, rejected to keep rating capture in the loop; a separate Next button, which would do what the tap already does.                                                                                                      |
 | **Tags are per steep, carried forward unconfirmed**                            | Per-steep shows how flavor evolves; carry-forward makes it cost zero taps when nothing changed; "unconfirmed" keeps it honest. Vocabulary is curated plus custom.                                                                                                                         |
-| **A session resolves its plan; it never stores one**                           | From its method, the session Brew Again copied, or its own steeps. Considered: copying the plan onto the session, a second copy that drifts from the method. Brew Again points at its source session, not the method, so it replays what was brewed.                                      |
+| **A session resolves its plan; it never stores one**                           | From its method, the session Brew Again copied, or its own steeps. Considered: copying the plan onto the session, a second copy that drifts from the method. Brew Again points at its source session, not the method, so it replays what was brewed. *Bet 5 removes the method step.*     |
 | **Plans learn from actual time, rounded**                                      | "Poured early" is real brew time; "Already brewed" records none, so the planned time stands. Rounding stops a late tap becoming an override replayed forever; 1s under 15s keeps flash steeps.                                                                                            |
 | **Overrides are learned, never typed**                                         | Brewing it once and tapping Update does it better than a per-steep editor, which would be the bet's biggest piece of UI. Considered: tap-a-steep editing in the method form.                                                                                                              |
 | **Rinse is a flag, not timed**                                                 | The author rinses some teas and never times it. Considered: a timed rinse before steep 1, which the timer, notifications, Live Activity and review would all have to learn.                                                                                                               |
@@ -1086,7 +1209,7 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **Journal search runs in memory**                                              | Both screens already hold every row. Considered: SQL full-text search, an FTS table, migration and triggers for no gain at this size.                                                                                                                                                     |
 | **Parameters vs rating over time is cut**                                      | The session list, each row with its parameters and rating, answers it in reading form. A chart would belong to Recap.                                                                                                                                                                     |
 | **Note prompts are deferred**                                                  | Prompts seeded by tags need a tag system proven in use first. Considered: a tag-seeded placeholder question on the review's note.                                                                                                                                                         |
-| **Changing a session's tea clears its method link**                            | A method belongs to a tea; a session moved to another tea can't have used it.                                                                                                                                                                                                             |
+| **Changing a session's tea clears its method link**                            | A method belongs to a tea; a session moved to another tea can't have used it. *Since Bet 5, its source link.*                                                                                                                                                                             |
 | **History grouping revived; the rest of the stashed redesign stays dead**      | Three of its five summary fields were Analytics content in a History costume.                                                                                                                                                                                                             |
 | **No streaks**                                                                 | An engagement mechanic that says nothing about tea. The shipped streak insight is removed in F1.                                                                                                                                                                                          |
 | **The session reminder stays inexact**                                         | `setAndAllowWhileIdle`; Doze spaces these ~9 minutes apart. Not worth the exact-alarm allowance for a soft nudge. The fix if it annoys is `setExactAndAllowWhileIdle`, mirroring the completion alarm.                                                                                    |
@@ -1107,6 +1230,10 @@ Recorded so future sessions don't re-argue them. Each was decided against a real
 | **Recaps are for finished seasons, computed live**                             | A recap is an occasion, told once its season ends; computing it live means edits correct it with no table. Considered: a "so far" recap of the current season, and frozen snapshots.                                                                                                      |
 | **A session is gongfu when steep 1 brews under 2 minutes**                     | Pure and works for every session, method or not. Considered: 3+ steeps, which misses an abandoned gongfu session, and the resolved plan, which drags repositories into the aggregators.                                                                                                   |
 | **Dormant is 60 days unbrewed, shown on pull**                                 | A recap page and a Collection chip, never a Home card: not an engagement machine. Considered: a cadence-relative rule, and a Home suggestion.                                                                                                                                             |
+| **Repeating a brew replays a session, not a saved method**                     | Every method was saved from a session, and Brew Again already replays one live. Methods cost a form, two review prompts and an auto-attach that brewed the wrong plan. Considered: keeping methods with fewer prompts, and pinned sessions in their place.                                |
+| **Nothing starts a session on one tap**                                        | A card in a scrolling row is easy to hit by mistake, and the Timer's Start is the moment of brewing. Every Brew again opens a sheet with what it will replay. Considered: Quick Brew's one-tap start, kept for Home only.                                                                 |
+| **A pair's default brew is the last, unless it is rated under 3★**             | A routine repeats yesterday; a cup you disliked shouldn't be one tap from repeating. The sheet switches between Last and Best. Considered: always the last, always the best.                                                                                                              |
+| **A changed steep 1 shifts the source plan**                                   | Same curve, started later or earlier, with no stored plan. Considered: keeping the source's later times, which flattens the curve, and dropping the replay.                                                                                                                               |
 
 ---
 

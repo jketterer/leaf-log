@@ -93,22 +93,6 @@ Tags: **[A]** Android only · **[iOS]** iOS only · untagged = both.
       is written in full, the dialog opens only once, and the snackbar shows.
 - [ ] Export from [A], import on [iOS], and the reverse. All teas, sessions, vessels, methods,
       and photos arrive (F4 bug: DEFLATE vs STORE fails today).
-- [ ] Upgrade from `v0.1.1` (schema 6). Before installing over it, seed a single-steep session, a
-      gongfu session with a deleted middle steep, a parent edited after steeps were added, an
-      unrated session, a session left mid-steep and a saved method used across several steeps.
-      After: the app opens, the mid-steep session is still in progress, and History, Tea Detail,
-      Collection and the method agree on every count and rating.
-- [ ] Upgrade from `v0.1.2` (schema 7). Before installing over it, delete a tea that has sessions.
-      After: it is back in Collection, faded, last and marked Finished, and its sessions in History
-      show its name.
-- [ ] Upgrade from `v0.4.0` (schema 8). Before installing over it, save a method, brew a gongfu
-      session from it and leave another mid-steep. After: the app opens, the mid-steep session is
-      still in progress, the method plans a single steep, Brew Again on the gongfu session replays
-      every steep, and the tag sheet lists the 23 tags.
-- [ ] Upgrade from `v0.5.0` (schema 11). Before installing over it, finish a gongfu session with
-      a review note and a note on steep 2. After: History's card and Session Detail show the review
-      note as the session's, steep 1 has no note, steep 2 keeps its own, and the review note edits
-      from Edit Session.
 - [ ] Import a backup exported by `v0.5.0`. Steep 1's notes arrive as the sessions' notes.
 - [ ] Import a backup exported by `v0.4.0`. It imports with no plans, rinses or tags.
 - [ ] Import a backup exported by `v0.1.1`. It imports, and tea and method stats match the

@@ -21,6 +21,11 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.printToString
 import android.os.Bundle
 import android.os.Parcel
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import androidx.test.core.app.ApplicationProvider
 import dev.jketterer.leaflog.MainActivity
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
@@ -28,6 +33,7 @@ import dev.jketterer.leaflog.presentation.ui.navigation.DeepLinkHandler
 import dev.jketterer.leaflog.services.TimerForegroundService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.begin_session
@@ -39,6 +45,8 @@ import org.jetbrains.compose.resources.PluralStringResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
+import org.json.JSONArray
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -56,6 +64,7 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import org.robolectric.shadows.ShadowAlarmManager.ScheduledAlarm
+import java.io.File
 import kotlin.reflect.KClass
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -149,9 +158,42 @@ abstract class FlowTest {
         launch(saved.parceled())
     }
 
+    /**
+     * This build installed over the one at schema [version]: the process ends, its database is
+     * replaced by one as Room made it at [version], holding the rows [seed] writes raw, and the app
+     * starts again to migrate it. Call before [launch].
+     */
+    fun upgradeFrom(version: Int, seed: SQLiteConnection.() -> Unit) {
+        // The first start's defaults are still being written to the file about to be replaced
+        val startup = ProcessLifecycleOwner.get().lifecycleScope.coroutineContext.job
+        waitUntil("the app has started") { startup.children.none() }
+        restartProcess {
+            val file = app.getDatabasePath(DATABASE)
+            file.parentFile!!.mkdirs()
+            listOf("", "-wal", "-shm").forEach { File(file.path + it).delete() }
+            BundledSQLiteDriver().open(file.path).use { db ->
+                val schema = JSONObject(File(SCHEMAS, "$version.json").readText()).getJSONObject("database")
+                val entities = schema.getJSONArray("entities")
+                for (i in 0 until entities.length()) {
+                    val entity = entities.getJSONObject(i)
+                    val table = entity.getString("tableName")
+                    val indices = entity.optJSONArray("indices") ?: JSONArray()
+                    val statements = listOf(entity.getString("createSql")) +
+                        List(indices.length()) { indices.getJSONObject(it).getString("createSql") }
+                    statements.forEach { db.execSQL(it.replace("\${TABLE_NAME}", table)) }
+                }
+                val setup = schema.getJSONArray("setupQueries")
+                for (i in 0 until setup.length()) db.execSQL(setup.getString(i))
+                db.seed()
+                db.execSQL("PRAGMA user_version = $version")
+            }
+        }
+    }
+
     /** Statics survive in the JVM, so a new process is a new Koin graph on the same files. */
-    private fun restartProcess() {
+    private fun restartProcess(whileStopped: () -> Unit = {}) {
         endProcess()
+        whileStopped()
         DeepLinkHandler.consume()
         app.onCreate()
         swapClock()
@@ -290,5 +332,8 @@ abstract class FlowTest {
 
     private companion object {
         const val TIMEOUT_MS = 10_000L
+        const val DATABASE = "leaflog.db"
+        // Tests run in androidApp/
+        val SCHEMAS = File("../shared/schemas/${LeafLogDatabase::class.qualifiedName}")
     }
 }

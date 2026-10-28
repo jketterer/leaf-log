@@ -115,7 +115,7 @@ abstract class FlowTest {
 
     @Before
     fun startApp() {
-        shadowOf(app).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        allowNotifications(true)
         swapClock()
     }
 
@@ -150,6 +150,17 @@ abstract class FlowTest {
     /** Home pressed: the Activity stops, and the process and its timers carry on. */
     fun background() {
         activity!!.pause().stop()
+    }
+
+    /** Back to the stopped Activity from Home or Recents, the process as it was. */
+    fun foreground() {
+        activity!!.restart().resume()
+    }
+
+    /** Notifications allowed in system settings or not, which the user can change at any time. */
+    fun allowNotifications(allowed: Boolean) {
+        val permission = Manifest.permission.POST_NOTIFICATIONS
+        if (allowed) shadowOf(app).grantPermissions(permission) else shadowOf(app).denyPermissions(permission)
     }
 
     /** System back, as a gesture or the button, once the last tap's screen is up. */

@@ -146,7 +146,9 @@ class NotificationFlowTest : FlowTest() {
         launch()
         beginSession("Dragon Well")
         click(text(Res.string.start_brewing))
-        waitUntil("the alarms are set") { alarm(TimerCompletionReceiver::class) != null }
+        waitUntil("the alarms and the ongoing notification are set") {
+            alarm(TimerCompletionReceiver::class) != null && ongoing() != null
+        }
 
         click(text(Res.string.navigate_up))
         click(text(Res.string.tab_history))
@@ -154,9 +156,54 @@ class NotificationFlowTest : FlowTest() {
         click(text(Res.string.delete))
         click(hasText(text(Res.string.delete)) and hasAnyAncestor(isDialog()))
 
-        waitUntil("the backup alarm and the reminder are canceled") {
-            alarm(TimerCompletionReceiver::class) == null && alarm(SessionReminderReceiver::class) == null
+        waitUntil("the backup alarm, the reminder and the ongoing notification are gone") {
+            alarm(TimerCompletionReceiver::class) == null && alarm(SessionReminderReceiver::class) == null &&
+                ongoing() == null
         }
+    }
+
+    @Test
+    fun `taking 10s off a running steep moves its alarms and countdown and it alerts at the new end`() {
+        launch()
+        beginSession("Dragon Well")
+        click(text(Res.string.start_brewing))
+        waitUntil("the alarms are set") { alarm(SessionReminderReceiver::class) != null }
+        val backup = alarm(TimerCompletionReceiver::class)!!.triggerAtTime
+        val reminder = alarm(SessionReminderReceiver::class)!!.triggerAtTime
+        clock.advance(10.seconds)
+        waitFor("0:20")
+
+        click("-10s")
+        waitFor("0:10")
+        // The alarms' clock stands still, so each comes 20s sooner: the 10s gone and the 10s taken off
+        waitUntil("the alarms come 20s sooner") {
+            backup - alarm(TimerCompletionReceiver::class)!!.triggerAtTime in 19_000..21_000 &&
+                reminder - alarm(SessionReminderReceiver::class)!!.triggerAtTime in 19_000..21_000
+        }
+        clock.advance(1.seconds)
+        waitUntil("the ongoing countdown ends 9s from now") {
+            ongoing()!!.`when` - System.currentTimeMillis() in 8_500..9_500
+        }
+
+        clock.advance(9.seconds)
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+        waitUntil("the ready alert is posted") { ready() != null }
+    }
+
+    @Test
+    fun `with notifications denied a steep still completes and allowing them later needs no restart`() {
+        allowNotifications(false)
+        launch()
+        beginSession("Dragon Well")
+        waitFor(NOTIFICATIONS_DISABLED)
+        click(text(Res.string.start_brewing))
+        clock.advance(30.seconds)
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+
+        allowNotifications(true)
+        click(text(Res.string.start_steep_n, 2))
+        waitFor(text(Res.string.start_brewing))
+        assertAbsent(NOTIFICATIONS_DISABLED)
     }
 
     @Test
@@ -289,4 +336,9 @@ class NotificationFlowTest : FlowTest() {
     private val Notification.subText get() = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
     private val Notification.progress get() = extras.getInt(Notification.EXTRA_PROGRESS)
     private val Notification.showsChronometer get() = extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER)
+
+    private companion object {
+        const val NOTIFICATIONS_DISABLED =
+            "Notifications are disabled, so you won't be alerted when your tea is ready in the background"
+    }
 }

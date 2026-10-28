@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.flow
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsEnabled
@@ -12,6 +13,9 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
+import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
+import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.backup_exported
 import leaf_log.shared.generated.resources.brew_count
@@ -27,6 +31,7 @@ import leaf_log.shared.generated.resources.rinsed
 import leaf_log.shared.generated.resources.settings_title
 import leaf_log.shared.generated.resources.tab_collection
 import leaf_log.shared.generated.resources.tab_history
+import leaf_log.shared.generated.resources.tab_home
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -76,7 +81,7 @@ class BackupFlowTest : FlowTest() {
     fun `backing out of the save dialog leaves the last backup as it was`() {
         launch()
         click(text(Res.string.settings_title))
-        tapSetting("Back up now")
+        tapScrolled("Back up now")
         answer(awaitPicker(), null)
 
         compose.onNode(hasText("Back up now") and hasClickAction()).assertIsEnabled()
@@ -88,7 +93,7 @@ class BackupFlowTest : FlowTest() {
     fun `the save dialog opens once across a recreate and still saves`() {
         launch()
         click(text(Res.string.settings_title))
-        tapSetting("Back up now")
+        tapScrolled("Back up now")
         val picker = awaitPicker()
         recreate()
         assertNoPicker()
@@ -119,6 +124,35 @@ class BackupFlowTest : FlowTest() {
         scrollTo(hasText("Morning"))
         // How long ago is left off
         waitFor(hasText(text(Res.plurals.method_usage, 2, 2, "").trimEnd(), substring = true))
+    }
+
+    @Test
+    fun `a photo added to a tea counts toward Photos when Settings opens again`() {
+        runBlocking {
+            koin.get<InitializeDefaultsUseCase>()()
+            koin.get<CreateTeaUseCase>()(name = "Dragon Well", teaTypeId = "green").getOrThrow()
+        }
+        val photo = files.newFile("leaves.jpg")
+        photo.outputStream().use {
+            val pixels = IntArray(800 * 600) { Random.nextInt() }
+            Bitmap.createBitmap(pixels, 800, 600, Bitmap.Config.ARGB_8888).compress(Bitmap.CompressFormat.JPEG, 90, it)
+        }
+        launch()
+        click(text(Res.string.settings_title))
+        waitFor(hasText("0 KB") and hasAnySibling(hasText("Photos")))
+        systemBack()
+
+        click(text(Res.string.tab_collection))
+        click("Dragon Well")
+        click("Edit tea")
+        tapScrolled("Add Photo")
+        answer(awaitPicker(), Uri.fromFile(photo))
+        waitFor(hasContentDescription("Session photo"))
+        click("Save")
+
+        click(text(Res.string.tab_home))
+        click(text(Res.string.settings_title))
+        waitFor(hasText("KB", substring = true) and !hasText("0 KB") and hasAnySibling(hasText("Photos")))
     }
 
     @Test
@@ -162,7 +196,7 @@ class BackupFlowTest : FlowTest() {
     fun `backing out of the file picker changes nothing and says nothing`() {
         launch()
         click(text(Res.string.settings_title))
-        tapSetting("Import")
+        tapScrolled("Import")
         answer(awaitPicker(), null)
 
         compose.onNode(hasText("Import") and hasClickAction()).assertIsEnabled()
@@ -174,7 +208,7 @@ class BackupFlowTest : FlowTest() {
     fun `a file that isn't a backup is refused with the reason`() {
         launch()
         click(text(Res.string.settings_title))
-        tapSetting("Import")
+        tapScrolled("Import")
         val notes = files.newFile("notes.txt").apply { writeText("Dragon Well, 80°") }
         answer(awaitPicker(), Uri.fromFile(notes))
 
@@ -187,7 +221,7 @@ class BackupFlowTest : FlowTest() {
     fun `the file picker opens once across a recreate and still previews`() {
         launch()
         click(text(Res.string.settings_title))
-        tapSetting("Import")
+        tapScrolled("Import")
         val picker = awaitPicker()
         recreate()
         assertNoPicker()
@@ -198,7 +232,7 @@ class BackupFlowTest : FlowTest() {
 
     /** Saves an export through the dialog [button] opens, under the name it suggests, and returns it. */
     private fun export(button: String): File {
-        tapSetting(button)
+        tapScrolled(button)
         val picker = awaitPicker()
         val made = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneId.systemDefault())
             .format(java.time.Instant.ofEpochMilli(clock.now().toEpochMilliseconds()))
@@ -212,7 +246,7 @@ class BackupFlowTest : FlowTest() {
 
     /** Picks [backup] from Settings and imports all of it. */
     private fun import(backup: Uri) {
-        tapSetting("Import")
+        tapScrolled("Import")
         answer(awaitPicker(), backup)
         waitFor("Import this backup?")
         click(hasText("Import") and hasClickAction() and hasAnyAncestor(isDialog()))
@@ -220,8 +254,8 @@ class BackupFlowTest : FlowTest() {
         click("OK")
     }
 
-    /** Settings' rows run past the screen, so its buttons are scrolled to first. */
-    private fun tapSetting(label: String) {
+    /** Settings and Edit Tea run past the screen, so their buttons are scrolled to first. */
+    private fun tapScrolled(label: String) {
         val button = hasText(label) and hasClickAction()
         waitFor(button)
         compose.onNode(button).performScrollTo().performClick()

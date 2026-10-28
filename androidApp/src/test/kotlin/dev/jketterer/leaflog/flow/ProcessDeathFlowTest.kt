@@ -1,5 +1,7 @@
 package dev.jketterer.leaflog.flow
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -9,6 +11,8 @@ import androidx.compose.ui.test.performTextReplacement
 import dev.jketterer.leaflog.domain.services.TimerNotificationServiceImpl.Companion.COMPLETION_NOTIFICATION_ID
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
+import dev.jketterer.leaflog.services.SessionReminderReceiver
+import dev.jketterer.leaflog.services.TimerCompletionReceiver
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.edit_parameters
@@ -32,6 +36,8 @@ import leaf_log.shared.generated.resources.undo
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 // The in-progress banner, the timer's Reset and the Quick Timer sheet don't read strings.xml yet
@@ -78,10 +84,13 @@ class ProcessDeathFlowTest : FlowTest() {
         compose.onNode(water).performTextReplacement("150")
         click(text(Res.string.save))
         waitFor("150 mL")
+        click(text(Res.string.navigate_up))
+        waitUntil("the Home banner shows a third gone") { bannerProgress()?.let { abs(it - 1 / 3f) < 0.01f } == true }
 
         forceStop()
         clock.advance(5.seconds)
 
+        waitUntil("the Home banner shows half gone") { bannerProgress()?.let { abs(it - 0.5f) < 0.01f } == true }
         click("Resume")
         waitFor("0:15")
         waitFor(text(Res.string.pause))
@@ -109,6 +118,44 @@ class ProcessDeathFlowTest : FlowTest() {
         recreate()
         waitFor(text(Res.string.review_how_was_steep_n, 1))
         assertNull(notification(COMPLETION_NOTIFICATION_ID))
+    }
+
+    @Test
+    fun `a steep counts on in the background and is done on return once its time has passed`() {
+        launch()
+        beginSession("Dragon Well")
+        click(text(Res.string.start_brewing))
+        background()
+        clock.advance(10.seconds)
+        foreground()
+        waitFor("0:20")
+
+        background()
+        clock.advance(30.seconds)
+        foreground()
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+    }
+
+    @Test
+    fun `a paused steep holds through the background and nothing fires at its old end`() {
+        launch()
+        beginSession("Dragon Well")
+        click(text(Res.string.start_brewing))
+        waitUntil("the alarms are set") { alarm(TimerCompletionReceiver::class) != null }
+        clock.advance(10.seconds)
+        click(text(Res.string.pause))
+        waitUntil("pausing cancels the alarms") {
+            alarm(TimerCompletionReceiver::class) == null && alarm(SessionReminderReceiver::class) == null
+        }
+
+        background()
+        clock.advance(1.minutes)
+        foreground()
+        waitFor("0:20")
+        waitFor("Resume")
+        assertAbsent(text(Res.string.review_how_was_steep_n, 1))
+        assertNull(notification(COMPLETION_NOTIFICATION_ID))
+        assertNull(alarm(TimerCompletionReceiver::class))
     }
 
     @Test
@@ -210,4 +257,13 @@ class ProcessDeathFlowTest : FlowTest() {
         assertAbsent(text(Res.string.undo))
         assertAbsent(text(Res.string.session_finished))
     }
+
+    /** How far the Home banner's progress bar has filled, 0 to 1, or null if it shows none. */
+    private fun bannerProgress(): Float? = compose
+        .onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ProgressBarRangeInfo))
+        .fetchSemanticsNodes()
+        .singleOrNull()
+        ?.config
+        ?.get(SemanticsProperties.ProgressBarRangeInfo)
+        ?.current
 }

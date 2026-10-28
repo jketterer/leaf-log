@@ -29,6 +29,7 @@ import dev.jketterer.leaflog.domain.usecases.session.GetDailyStatsUseCase
 import dev.jketterer.leaflog.domain.usecases.session.GetInProgressSessionInfoUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ReopenSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
+import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessage
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.messages.UiText
@@ -95,6 +96,7 @@ class HomeViewModel(
     private val discardSteepUseCase: DiscardSteepUseCase,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
     private val pinBrewingConfigurationUseCase: PinBrewingConfigurationUseCase,
+    private val restoreTimerStateUseCase: RestoreTimerStateUseCase,
     private val timerService: TimerService,
     private val clock: Clock,
 ) : ViewModel() {
@@ -437,6 +439,8 @@ class HomeViewModel(
                     it.copy(
                         mostRecentInProgress = inProgressInfo,
                         inProgressTimerStatus = resolvedStatus,
+                        resolvedTimerProgress = inProgressInfo?.let { info -> restoreTimerStateUseCase(info.session) }
+                            ?.progress,
                     )
                 }
                 loaded.value = true

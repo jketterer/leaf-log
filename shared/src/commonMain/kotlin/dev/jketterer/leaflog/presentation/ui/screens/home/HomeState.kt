@@ -19,6 +19,8 @@ data class HomeState(
     val mostRecentInProgress: InProgressSessionDetails? = null,
     // Timer status of mostRecentInProgress resolved against the clock, not as last persisted
     val inProgressTimerStatus: TimerStatus? = null,
+    // Its progress resolved the same way, for when no live timer is tracking it
+    val resolvedTimerProgress: Float? = null,
     val liveTimerState: TimerState? = null, // Live timer progress from TimerService
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
@@ -46,9 +48,11 @@ data class HomeState(
     /**
      * Live progress for the banner, but only when the running timer belongs to the session the
      * banner is showing. Otherwise one session's countdown renders on another session's card.
+     * With no live timer, as after the process dies, the saved timer resolved at load.
      */
     val inProgressTimerProgress: Float?
         get() = liveTimerState
             ?.takeIf { it.sessionId == mostRecentInProgress?.session?.session?.id }
             ?.progress
+            ?: resolvedTimerProgress
 }

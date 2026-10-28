@@ -46,6 +46,7 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.navigate_up
+import leaf_log.shared.generated.resources.save
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -144,11 +145,11 @@ private fun EditTeaContent(
                 exit = scaleOut() + fadeOut(),
             ) {
                 ExtendedFloatingActionButton(
-                    text = { Text("Save") },
+                    text = { Text(stringResource(Res.string.save)) },
                     icon = {
                         Icon(
                             imageVector = FeatherIcons.Save,
-                            contentDescription = null,
+                            contentDescription = stringResource(Res.string.save),
                         )
                     },
                     // Always enabled. A dead button explains nothing; tapping an invalid form

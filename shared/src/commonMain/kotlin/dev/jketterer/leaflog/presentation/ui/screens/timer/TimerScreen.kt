@@ -1,5 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.timer
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -382,11 +384,11 @@ private fun TimerRunningContent(
             }
 
             // Circular timer ring + quick adjustment buttons. The ring grows into the space left
-            // over, up to 240dp; what it doesn't use falls below the buttons
+            // over, up to 240dp; what it doesn't use falls below the buttons. What's around it
+            // animates its height, so the ring resizes smoothly rather than jumping
             Column(
                 modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 CircularTimerRing(
                     progress = state.timerState.progress,
@@ -396,33 +398,36 @@ private fun TimerRunningContent(
                         .sizeIn(maxWidth = 240.dp, maxHeight = 240.dp)
                         .aspectRatio(1f),
                 )
-                if (!state.timerState.isComplete) {
+                AnimatedVisibility(visible = !state.timerState.isComplete) {
                     QuickAdjustButtons(
                         onAdjust = { adjustment ->
                             onIntent(TimerIntent.AdjustTime(adjustment))
                         },
+                        modifier = Modifier.padding(top = 16.dp),
                     )
                 }
             }
 
             // Only a Quick Timer stays here once done: a session's steep moves on to its review
-            if (state.timerState.isComplete) {
-                QuickTimerDoneButtons(
-                    nextTime = state.timerState.nextByFeel().totalDuration,
-                    onIntent = onIntent,
-                )
-            } else {
-                TimerControlButtons(
-                    isRunning = state.timerState.isRunning,
-                    isPaused = state.timerState.status == TimerStatus.PAUSED,
-                    onStartClick = { onIntent(TimerIntent.StartTimer) },
-                    onPauseClick = { onIntent(TimerIntent.PauseTimer) },
-                    onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
-                    onResetClick = { onIntent(TimerIntent.ResetTimer) },
-                    // A Quick Timer has no steep to record
-                    onAlreadyBrewedClick = { onIntent(TimerIntent.CompleteNow) }
-                        .takeUnless { state.isQuickTimer },
-                )
+            AnimatedContent(targetState = state.timerState.isComplete) { isComplete ->
+                if (isComplete) {
+                    QuickTimerDoneButtons(
+                        nextTime = state.timerState.nextByFeel().totalDuration,
+                        onIntent = onIntent,
+                    )
+                } else {
+                    TimerControlButtons(
+                        isRunning = state.timerState.isRunning,
+                        isPaused = state.timerState.status == TimerStatus.PAUSED,
+                        onStartClick = { onIntent(TimerIntent.StartTimer) },
+                        onPauseClick = { onIntent(TimerIntent.PauseTimer) },
+                        onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
+                        onResetClick = { onIntent(TimerIntent.ResetTimer) },
+                        // A Quick Timer has no steep to record
+                        onAlreadyBrewedClick = { onIntent(TimerIntent.CompleteNow) }
+                            .takeUnless { state.isQuickTimer },
+                    )
+                }
             }
         }
     }

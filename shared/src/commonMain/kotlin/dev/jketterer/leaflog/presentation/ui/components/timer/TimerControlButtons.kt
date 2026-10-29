@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.components.timer
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,37 +33,44 @@ fun TimerControlButtons(
     // Records the steep without timing it; null where there's no steep to record
     onAlreadyBrewedClick: (() -> Unit)? = null,
 ) {
-    Row(
+    // Animates the height change too, so the timer ring above resizes smoothly
+    AnimatedContent(
+        targetState = isRunning to isPaused,
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-    ) {
-        when {
-            isRunning -> {
-                Button(onClick = onPauseClick) {
-                    Text(stringResource(Res.string.pause))
+        contentAlignment = Alignment.TopCenter,
+    ) { (running, paused) ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        ) {
+            when {
+                running -> {
+                    Button(onClick = onPauseClick) {
+                        Text(stringResource(Res.string.pause))
+                    }
                 }
-            }
 
-            isPaused -> {
-                OutlinedButton(onClick = onResetClick) {
-                    Text("Reset")
+                paused -> {
+                    OutlinedButton(onClick = onResetClick) {
+                        Text("Reset")
+                    }
+                    Button(onClick = onResumeClick) {
+                        Text("Resume")
+                    }
                 }
-                Button(onClick = onResumeClick) {
-                    Text("Resume")
-                }
-            }
 
-            // Already brewed is for a steep timed elsewhere, or not at all
-            else -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Button(
-                    onClick = onStartClick,
-                    modifier = Modifier.fillMaxWidth(0.7f),
-                ) {
-                    Text(stringResource(Res.string.start_brewing))
-                }
-                if (onAlreadyBrewedClick != null) {
-                    TextButton(onClick = onAlreadyBrewedClick) {
-                        Text(stringResource(Res.string.already_brewed))
+                // Already brewed is for a steep timed elsewhere, or not at all
+                else -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Button(
+                        onClick = onStartClick,
+                        modifier = Modifier.fillMaxWidth(0.7f),
+                    ) {
+                        Text(stringResource(Res.string.start_brewing))
+                    }
+                    if (onAlreadyBrewedClick != null) {
+                        TextButton(onClick = onAlreadyBrewedClick) {
+                            Text(stringResource(Res.string.already_brewed))
+                        }
                     }
                 }
             }

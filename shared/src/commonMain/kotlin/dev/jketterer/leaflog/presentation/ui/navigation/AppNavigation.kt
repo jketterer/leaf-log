@@ -48,7 +48,6 @@ import leaf_log.shared.generated.resources.tab_home
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailScreen
-import dev.jketterer.leaflog.presentation.ui.screens.configuration.CreateBrewingConfigurationScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.EditSessionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailScreen
@@ -275,19 +274,6 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToHistory = { teaId ->
                     navigator.navigate(NavRoute.HistoryRoute(filterTeaId = teaId))
                 },
-                onNavigateToCreateConfig = { teaId ->
-                    navigator.navigate(NavRoute.CreateBrewingConfigurationRoute(teaId))
-                },
-                onNavigateToEditConfig = { configId, teaId ->
-                    navigator.navigate(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
-                },
-            )
-        }
-
-        entry<NavRoute.CreateBrewingConfigurationRoute> { route ->
-            CreateBrewingConfigurationScreen(
-                route = route,
-                onNavigateBack = { navigator.navigateUp(route) },
             )
         }
 
@@ -420,7 +406,6 @@ private fun NavKey.hidesBottomBar() = when (this) {
     is NavRoute.EditSessionRoute,
     is NavRoute.EditVesselRoute,
     is NavRoute.EditTeaTypeRoute,
-    is NavRoute.CreateBrewingConfigurationRoute,
     is NavRoute.TimerRoute,
     is NavRoute.SteepCompleteRoute,
     is NavRoute.SessionReviewRoute,

@@ -6,7 +6,6 @@ import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.best
 import dev.jketterer.leaflog.domain.models.flavorProfile
 import dev.jketterer.leaflog.domain.models.steepCurve
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
@@ -15,7 +14,6 @@ import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
@@ -41,7 +39,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.couldnt_delete_method
 import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_delete_tea
 import leaf_log.shared.generated.resources.couldnt_load_tea
@@ -56,13 +53,11 @@ class TeaDetailViewModel(
     private val teaRepository: TeaRepository,
     private val teaTypeRepository: TeaTypeRepository,
     private val teaSessionRepository: TeaSessionRepository,
-    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val tastingTagRepository: TastingTagRepository,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
     private val deleteTeaUseCase: DeleteTeaUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
-    private val deleteBrewingConfigurationUseCase: DeleteBrewingConfigurationUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
@@ -129,8 +124,6 @@ class TeaDetailViewModel(
     init {
         loadTea(route.teaId)
         loadRecentSessions(route.teaId)
-        loadConfigurations(route.teaId)
-        loadVessels()
     }
 
     fun onIntent(intent: TeaDetailIntent) {
@@ -156,34 +149,6 @@ class TeaDetailViewModel(
             }
 
             is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
-
-            is TeaDetailIntent.EditConfigurationClicked -> {
-                val teaId = _state.value.tea?.id ?: return
-                _navEvents.trySend(
-                    TeaDetailNavigationEvent.NavigateToEditConfig(
-                        intent.configId,
-                        teaId
-                    )
-                )
-            }
-
-            is TeaDetailIntent.DeleteConfigurationClicked -> _state.update {
-                it.copy(
-                    configurationPendingDelete = intent.configId
-                )
-            }
-
-            is TeaDetailIntent.ConfirmDeleteConfiguration -> confirmDeleteConfiguration()
-            is TeaDetailIntent.CancelDeleteConfiguration -> _state.update {
-                it.copy(
-                    configurationPendingDelete = null
-                )
-            }
-
-            is TeaDetailIntent.AddConfigurationClicked -> {
-                val teaId = _state.value.tea?.id ?: return
-                _navEvents.trySend(TeaDetailNavigationEvent.NavigateToCreateConfig(teaId))
-            }
 
             is TeaDetailIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is TeaDetailIntent.ConfirmDeleteSession -> confirmDeleteSession()
@@ -262,26 +227,6 @@ class TeaDetailViewModel(
         }
     }
 
-    private fun loadConfigurations(teaId: String) {
-        viewModelScope.launch {
-            brewingConfigurationRepository.getByTeaIdFlow(teaId)
-                .catchError(Res.string.couldnt_load_tea)
-                .collect { configurations ->
-                    _state.update { it.copy(configurations = configurations) }
-                }
-        }
-    }
-
-    private fun loadVessels() {
-        viewModelScope.launch {
-            brewingVesselRepository.getAllFlow()
-                .catchError(Res.string.couldnt_load_tea)
-                .collect { vessels ->
-                    _state.update { it.copy(vessels = vessels) }
-                }
-        }
-    }
-
     private fun showDeleteConfirmation() {
         _state.update { it.copy(showDeleteConfirmation = true) }
     }
@@ -320,15 +265,6 @@ class TeaDetailViewModel(
         viewModelScope.launch {
             runCatching { teaRepository.setFinished(tea.id, finished = tea.finishedAt == null) }
                 .onFailure { messages.failure(it, Res.string.couldnt_update_tea) }
-        }
-    }
-
-    private fun confirmDeleteConfiguration() {
-        viewModelScope.launch {
-            val configId = _state.value.configurationPendingDelete ?: return@launch
-            _state.update { it.copy(configurationPendingDelete = null) }
-            deleteBrewingConfigurationUseCase(configId)
-                .onFailure { messages.failure(it, Res.string.couldnt_delete_method) }
         }
     }
 
@@ -374,7 +310,4 @@ sealed interface TeaDetailNavigationEvent {
     data class NavigateToTimer(val sessionId: String) : TeaDetailNavigationEvent
     data object NavigateToEditTea : TeaDetailNavigationEvent
     data class NavigateToHistory(val teaId: String) : TeaDetailNavigationEvent
-    data class NavigateToCreateConfig(val teaId: String) : TeaDetailNavigationEvent
-    data class NavigateToEditConfig(val configId: String, val teaId: String) :
-        TeaDetailNavigationEvent
 }

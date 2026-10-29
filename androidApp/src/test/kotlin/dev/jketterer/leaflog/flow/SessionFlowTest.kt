@@ -4,19 +4,16 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -27,9 +24,6 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.review_save_method
-import leaf_log.shared.generated.resources.review_method_saved
-import leaf_log.shared.generated.resources.review_method_label
 import leaf_log.shared.generated.resources.review_how_was_steep_n
 import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_done
@@ -247,21 +241,6 @@ class SessionFlowTest : FlowTest() {
         val brewed = latest().steeps.single()
         assertEquals(2f, brewed.rating)
         assertEquals("Too hot", brewed.notes)
-    }
-
-    @Test
-    fun `a method named and saved on the review is kept for its tea and vessel`() {
-        launch()
-        brewAndFinish()
-        compose.onNode(hasText(text(Res.string.review_save_method)) and hasClickAction()).performScrollTo()
-        type(text(Res.string.review_method_label), "Morning")
-        click(text(Res.string.review_save_method))
-
-        waitFor(text(Res.string.review_method_saved))
-        val method = runBlocking { koin.get<BrewingConfigurationRepository>().getAll() }.single()
-        assertEquals("Morning", method.label)
-        assertEquals(latest().session.vesselId, method.vesselId)
-        assertEquals(30.seconds, method.brewingTime)
     }
 
     @Test

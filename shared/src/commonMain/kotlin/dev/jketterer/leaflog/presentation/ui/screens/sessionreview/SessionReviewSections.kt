@@ -1,43 +1,25 @@
 package dev.jketterer.leaflog.presentation.ui.screens.sessionreview
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.scaleIn
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -85,20 +67,11 @@ import leaf_log.shared.generated.resources.review_diff_vessel
 import leaf_log.shared.generated.resources.review_diff_water
 import leaf_log.shared.generated.resources.review_diff_water_type
 import leaf_log.shared.generated.resources.review_matched_best
-import leaf_log.shared.generated.resources.review_method_label
-import leaf_log.shared.generated.resources.review_method_saved
-import leaf_log.shared.generated.resources.review_method_saved_detail
 import leaf_log.shared.generated.resources.review_new_best
 import leaf_log.shared.generated.resources.review_same_as_best
-import leaf_log.shared.generated.resources.review_save_method
-import leaf_log.shared.generated.resources.review_save_method_header
-import leaf_log.shared.generated.resources.review_save_method_text
 import leaf_log.shared.generated.resources.review_session_complete
 import leaf_log.shared.generated.resources.review_tea_bag
 import leaf_log.shared.generated.resources.review_this_session
-import leaf_log.shared.generated.resources.review_update_method
-import leaf_log.shared.generated.resources.review_update_method_header
-import leaf_log.shared.generated.resources.review_update_method_text
 import leaf_log.shared.generated.resources.review_vs_best_header
 import leaf_log.shared.generated.resources.rinsed
 import org.jetbrains.compose.resources.stringResource
@@ -299,134 +272,6 @@ private fun BrewDifference.valueOf(session: SessionWithSteeps, vessel: BrewingVe
     }
 }
 
-/** Offered once; the card goes away when the method is saved. */
-@Composable
-internal fun SaveMethodCard(
-    label: String,
-    onLabelChange: (String) -> Unit,
-    onSave: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val focusManager = LocalFocusManager.current
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = stringResource(Res.string.review_save_method_header),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = stringResource(Res.string.review_save_method_text),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            OutlinedTextField(
-                value = label,
-                onValueChange = onLabelChange,
-                label = { Text(stringResource(Res.string.review_method_label)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = {
-                    focusManager.clearFocus()
-                    onSave()
-                }),
-            )
-            Button(onClick = onSave, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(Res.string.review_save_method))
-            }
-        }
-    }
-}
-
-/** The card that replaces a method offer once it's acted on; the badge pops in. */
-@Composable
-internal fun MethodDoneCard(
-    title: String,
-    detail: String,
-    modifier: Modifier = Modifier,
-) {
-    val visible = remember { MutableTransitionState(false).apply { targetState = true } }
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-    ) {
-        Row(
-            modifier = Modifier.padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            AnimatedVisibility(
-                visibleState = visible,
-                enter = scaleIn(spring(Spring.DampingRatioMediumBouncy)) + fadeIn()
-            ) {
-                Box(
-                    modifier = Modifier.size(40.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        FeatherIcons.Check,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                Text(
-                    text = detail,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
-        }
-    }
-}
-
-/** Offered once, when the brew deviated from the method it used; the card goes away when updated. */
-@Composable
-internal fun UpdateMethodCard(
-    methodName: String,
-    onUpdate: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Column(
-            modifier = Modifier.padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                text = stringResource(Res.string.review_update_method_header),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = stringResource(Res.string.review_update_method_text, methodName),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Button(onClick = onUpdate, modifier = Modifier.align(Alignment.End)) {
-                Text(stringResource(Res.string.review_update_method))
-            }
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun SessionReviewHeaderSectionPreview() {
@@ -506,40 +351,3 @@ private fun previewVessel(name: String) = BrewingVessel(
     isSystemDefault = false,
     displayOrder = 0,
 )
-
-@Preview(showBackground = true)
-@Composable
-private fun SaveMethodCardPreview() {
-    LeafLogTheme {
-        SaveMethodCard(
-            label = "5g · 100ml · 25s",
-            onLabelChange = {},
-            onSave = {},
-            modifier = Modifier.padding(24.dp)
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun MethodDoneCardPreview() {
-    LeafLogTheme {
-        MethodDoneCard(
-            title = stringResource(Res.string.review_method_saved),
-            detail = stringResource(Res.string.review_method_saved_detail),
-            modifier = Modifier.padding(24.dp),
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun UpdateMethodCardPreview() {
-    LeafLogTheme {
-        UpdateMethodCard(
-            methodName = "Morning gaiwan",
-            onUpdate = {},
-            modifier = Modifier.padding(24.dp)
-        )
-    }
-}

@@ -63,15 +63,12 @@ import compose.icons.feathericons.Heart
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SteepCurve
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimeFormatter
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.cellarAge
 import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.domain.models.formatRelativeTimestamp
@@ -85,7 +82,6 @@ import dev.jketterer.leaflog.presentation.ui.components.common.currentInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
-import dev.jketterer.leaflog.presentation.ui.components.configuration.SavedMethodsSection
 import dev.jketterer.leaflog.presentation.ui.components.session.PastBrewCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewAgainSheet
@@ -104,8 +100,6 @@ import leaf_log.shared.generated.resources.cellar_age
 import leaf_log.shared.generated.resources.cellar_age_years_months
 import leaf_log.shared.generated.resources.day_count
 import leaf_log.shared.generated.resources.delete
-import leaf_log.shared.generated.resources.delete_method_text
-import leaf_log.shared.generated.resources.delete_method_title
 import leaf_log.shared.generated.resources.delete_session_text
 import leaf_log.shared.generated.resources.delete_session_title
 import leaf_log.shared.generated.resources.delete_tea_text
@@ -138,8 +132,6 @@ fun TeaDetailScreen(
     onNavigateToLogTea: (NavRoute.LogTeaRoute) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: (String) -> Unit,
-    onNavigateToCreateConfig: (String) -> Unit,
-    onNavigateToEditConfig: (configId: String, teaId: String) -> Unit,
     viewModel: TeaDetailViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -171,14 +163,6 @@ fun TeaDetailScreen(
 
                 is TeaDetailNavigationEvent.NavigateToHistory -> {
                     onNavigateToHistory(event.teaId)
-                }
-
-                is TeaDetailNavigationEvent.NavigateToCreateConfig -> {
-                    onNavigateToCreateConfig(event.teaId)
-                }
-
-                is TeaDetailNavigationEvent.NavigateToEditConfig -> {
-                    onNavigateToEditConfig(event.configId, event.teaId)
                 }
             }
         }
@@ -460,29 +444,6 @@ private fun TeaDetailContent(
                             item(key = "steep_curve") { SteepCurveSection(curve) }
                         }
 
-                        // Saved brewing methods
-                        item(key = "saved_methods") {
-                            SavedMethodsSection(
-                                configurations = state.configurations,
-                                getVesselName = { vesselId ->
-                                    state.vessels.find { it.id == vesselId }?.name ?: "Unknown"
-                                },
-                                getSource = { config ->
-                                    config.sourceSessionId?.let { state.sessionsById[it] }
-                                },
-                                onAdd = { onIntent(TeaDetailIntent.AddConfigurationClicked) },
-                                onEdit = { configId ->
-                                    onIntent(TeaDetailIntent.EditConfigurationClicked(configId))
-                                },
-                                onDelete = { configId ->
-                                    onIntent(TeaDetailIntent.DeleteConfigurationClicked(configId))
-                                },
-                                onSourceClick = { sessionId ->
-                                    onIntent(TeaDetailIntent.SessionClicked(sessionId))
-                                },
-                            )
-                        }
-
                         // Recent sessions
                         item(key = "sessions_header") {
                             SectionHeader(stringResource(Res.string.header_recent_sessions)) {
@@ -582,17 +543,6 @@ private fun TeaDetailContent(
                 confirmLabel = stringResource(Res.string.delete),
                 onConfirm = { onIntent(TeaDetailIntent.ConfirmDeleteSession) },
                 onDismiss = { onIntent(TeaDetailIntent.CancelDeleteSession) },
-            )
-        }
-
-        // Delete configuration confirmation dialog
-        if (state.configurationPendingDelete != null) {
-            ConfirmDestructiveDialog(
-                title = stringResource(Res.string.delete_method_title),
-                text = stringResource(Res.string.delete_method_text),
-                confirmLabel = stringResource(Res.string.delete),
-                onConfirm = { onIntent(TeaDetailIntent.ConfirmDeleteConfiguration) },
-                onDismiss = { onIntent(TeaDetailIntent.CancelDeleteConfiguration) },
             )
         }
 
@@ -731,36 +681,6 @@ private fun TeaDetailScreenPreview() {
                 sessionsById = mapOf(previewBest.session.id to previewBest),
                 bestBrew = previewBest,
                 steepCurve = SteepCurve(meanRatings = mapOf(1 to 4f, 2 to 4.5f, 3 to 3.5f), peak = 2),
-                configurations = listOf(
-                    BrewingConfiguration(
-                        id = "config-1",
-                        teaId = "tea-1",
-                        vesselId = "vessel-1",
-                        teaQuantityGrams = 5f,
-                        waterQuantityMl = 100.0,
-                        temperatureCelsius = 80.0,
-                        brewingTime = 2.minutes + 30.seconds,
-                        waterType = WaterType.FILTERED,
-                        sourceSessionId = previewBest.session.id,
-                        rating = 4.75f,
-                        timesUsed = 3,
-                        lastUsedAt = PreviewInstant,
-                        label = "Gaiwan gongfu",
-                        createdAt = PreviewInstant,
-                        updatedAt = PreviewInstant,
-                    ),
-                ),
-                vessels = listOf(
-                    BrewingVessel(
-                        id = "vessel-1",
-                        name = "Gaiwan",
-                        iconName = null,
-                        isSystemDefault = true,
-                        displayOrder = 0,
-                        createdAt = PreviewInstant,
-                        updatedAt = PreviewInstant,
-                    ),
-                ),
             ),
             onIntent = {},
         )

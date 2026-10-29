@@ -45,7 +45,6 @@
     <string name="field_tea_quantity">Tea Quantity</string>
     <string name="field_tea_quantity_required">Tea Quantity *</string>
     <string name="field_vessel_required">Brewing Vessel *</string>
-    <string name="field_tea_quantity_hint">Optional - leave empty for tea bags</string>
     <string name="field_rinse">Rinse</string>
     <string name="answer_yes">Yes</string>
     <string name="rinsed">Rinsed</string>
@@ -94,16 +93,6 @@
         <item quantity="one">%1$d session</item>
         <item quantity="other">%1$d sessions</item>
     </plurals>
-    <string name="method_source">From your %1$s brew</string>
-    <string name="unnamed_method">Unnamed method</string>
-    <string name="add_method">Add brewing method</string>
-    <string name="edit">Edit</string>
-    <plurals name="method_usage">
-        <item quantity="one">Brewed once, most recently %2$s</item>
-        <item quantity="other">Brewed %1$d times, most recently %2$s</item>
-    </plurals>
-    <string name="method_not_brewed">Not brewed yet</string>
-    <string name="no_saved_methods">No saved methods yet.</string>
     <plurals name="sessions_label">
         <item quantity="one">Session</item>
         <item quantity="other">Sessions</item>
@@ -133,7 +122,6 @@
     <string name="header_todays_stats">Today's stats</string>
     <string name="header_recent_sessions">Recent sessions</string>
     <string name="header_brewing_parameters">Brewing parameters</string>
-    <string name="header_steep_plan">Steep plan</string>
     <string name="header_optional_details">Optional details</string>
     <string name="edit_parameters">Edit parameters</string>
     <string name="loose_leaf">Loose leaf</string>
@@ -142,7 +130,6 @@
     <string name="header_photos">Photos</string>
     <string name="header_photo">Photo</string>
     <string name="header_details">Details</string>
-    <string name="header_saved_methods">Saved brewing methods</string>
     <string name="header_brewing">Brewing</string>
     <string name="header_notifications">Notifications</string>
     <string name="header_management">Management</string>
@@ -309,7 +296,6 @@
     <string name="session_finished">Session finished</string>
     <string name="undo">Undo</string>
     <string name="backup_exported">Backup exported</string>
-    <string name="method_already_saved">This method is already saved</string>
 
     <!-- Confirmations -->
     <string name="cancel">Cancel</string>
@@ -322,8 +308,6 @@
     <string name="delete_session_text">This will delete the session and all steeps. This action cannot be undone.</string>
     <string name="delete_steep_title">Delete Steep?</string>
     <string name="delete_steep_text">This will delete this steep. Remaining steeps will be renumbered. This action cannot be undone.</string>
-    <string name="delete_method_title">Delete Brewing Method?</string>
-    <string name="delete_method_text">This will permanently delete the saved brewing method. This action cannot be undone.</string>
     <string name="delete_tea_title">Delete Tea?</string>
     <string name="delete_tea_text">This will delete the tea and all its information.</string>
     <string name="delete_vessel_title">Delete Vessel?</string>
@@ -389,14 +373,8 @@
     <string name="couldnt_save_tea">Couldn't save the tea</string>
     <string name="couldnt_delete_tea">Couldn't delete the tea</string>
     <string name="couldnt_save_photo">Couldn't save the photo</string>
-    <string name="couldnt_load_method">Couldn't load the method</string>
-    <string name="field_steep_increment">Added each steep</string>
-    <string name="field_steep_increment_hint">Leave empty for a single steep</string>
     <string name="plan_steep_label">Steep %1$d</string>
     <string name="plan_adjusted">Adjusted</string>
-    <string name="plan_clear_adjusted">Clear adjusted steeps</string>
-    <string name="couldnt_save_method">Couldn't save the method</string>
-    <string name="couldnt_delete_method">Couldn't delete the method</string>
     <string name="couldnt_load_vessels">Couldn't load your vessels</string>
     <string name="couldnt_load_vessel">Couldn't load the vessel</string>
     <string name="couldnt_save_vessel">Couldn't save the vessel</string>
@@ -445,17 +423,6 @@
     <string name="review_diff_vessel">Vessel</string>
     <string name="review_diff_water_type">Water type</string>
     <string name="review_tea_bag">Tea bag</string>
-    <string name="review_save_method_header">Save as method</string>
-    <string name="review_save_method_text">Brew this tea this way again, with its steeps planned.</string>
-    <string name="review_method_label">Name</string>
-    <string name="review_save_method">Save method</string>
-    <string name="review_method_saved">Method saved</string>
-    <string name="review_method_saved_detail">Find it under this tea's saved methods.</string>
-    <string name="review_method_updated_detail">Next time it brews the way you did today.</string>
-    <string name="review_update_method_header">Update method</string>
-    <string name="review_update_method_text">Brew %1$s the way you did today from now on.</string>
-    <string name="review_update_method">Update method</string>
-    <string name="review_method_updated">Method updated</string>
 
     <!-- Tasting tags -->
     <string name="tag_floral">Floral</string>
@@ -524,7 +491,6 @@
         <item quantity="other">%1$d steeps</item>
     </plurals>
     <string name="couldnt_create_tag">Couldn't create the tag</string>
-    <string name="couldnt_update_method">Couldn't update the method</string>
     <string name="more_options">More options</string>
     <string name="brew_again">Brew again</string>
     <string name="adjust">Adjust</string>

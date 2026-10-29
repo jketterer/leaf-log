@@ -19,14 +19,6 @@ sealed interface TeaDetailIntent {
     data object ViewAllSessionsClicked : TeaDetailIntent
     data object BackClicked : TeaDetailIntent
 
-    // Configuration management
-    data class EditConfigurationClicked(val configId: String) : TeaDetailIntent
-    data class DeleteConfigurationClicked(val configId: String) : TeaDetailIntent
-    data object ConfirmDeleteConfiguration : TeaDetailIntent
-    data object CancelDeleteConfiguration : TeaDetailIntent
-
-    data object AddConfigurationClicked : TeaDetailIntent
-
     // In-progress session conflict dialog
     data object ResumeInProgress : TeaDetailIntent
     data object DismissInProgressDialog : TeaDetailIntent

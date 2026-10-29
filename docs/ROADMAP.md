@@ -1091,7 +1091,7 @@ Four phases; the app builds and the flow tests pass after each.
 
 **Methods removed:**
 
-7. [ ] `refactor: remove methods from the UI`: the review cards, Session Detail, Tea Detail, the
+7. [x] `refactor: remove methods from the UI`: the review cards, Session Detail, Tea Detail, the
    method form and its routes, Quick Brew's remains, strings.
 8. [ ] `refactor: drop brewing methods`: domain, data, migration v13 and backup version 5 together,
    since the model, the column and the backup move as one. Tests: `MigrationTest` 12 → 13 (a

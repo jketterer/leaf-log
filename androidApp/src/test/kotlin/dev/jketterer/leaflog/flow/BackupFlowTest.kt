@@ -20,12 +20,7 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.backup_exported
 import leaf_log.shared.generated.resources.brew_count
 import leaf_log.shared.generated.resources.couldnt_open_backup
-import leaf_log.shared.generated.resources.edit
 import leaf_log.shared.generated.resources.failure_not_a_backup
-import leaf_log.shared.generated.resources.field_steep_increment
-import leaf_log.shared.generated.resources.method_usage
-import leaf_log.shared.generated.resources.more_options
-import leaf_log.shared.generated.resources.plan_steep_label
 import leaf_log.shared.generated.resources.review_steep_n
 import leaf_log.shared.generated.resources.rinsed
 import leaf_log.shared.generated.resources.settings_title
@@ -121,9 +116,6 @@ class BackupFlowTest : FlowTest() {
         click("Dragon Well")
         waitFor(hasText("2") and hasAnySibling(hasText("Total Sessions")))
         waitFor(hasText("4.5") and hasAnySibling(hasText("Average Rating")))
-        scrollTo(hasText("Morning"))
-        // How long ago is left off
-        waitFor(hasText(text(Res.plurals.method_usage, 2, 2, "").trimEnd(), substring = true))
     }
 
     @Test
@@ -156,7 +148,7 @@ class BackupFlowTest : FlowTest() {
     }
 
     @Test
-    fun `a v0_4_0 backup imports with no plans or rinses`() {
+    fun `a v0_4_0 backup imports with no rinses`() {
         launch()
         click(text(Res.string.settings_title))
         import(backup(V0_4_0))
@@ -166,15 +158,6 @@ class BackupFlowTest : FlowTest() {
         click(hasText("Dragon Well") and hasClickAction())
         waitFor(hasText(text(Res.string.review_steep_n, 2)) and hasClickAction())
         assertAbsent(text(Res.string.rinsed))
-        systemBack()
-
-        click(text(Res.string.tab_collection))
-        click("Dragon Well")
-        scrollTo(hasText("Morning"))
-        click(hasContentDescription(text(Res.string.more_options)) and hasAnySibling(hasText("Morning")))
-        click(text(Res.string.edit))
-        waitFor(text(Res.string.field_steep_increment))
-        assertAbsent(text(Res.string.plan_steep_label, 2))
     }
 
     @Test

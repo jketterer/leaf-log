@@ -21,13 +21,9 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.brew_again
 import leaf_log.shared.generated.resources.brew_count
 import leaf_log.shared.generated.resources.brewing_steep_n
-import leaf_log.shared.generated.resources.edit
 import leaf_log.shared.generated.resources.edit_session
 import leaf_log.shared.generated.resources.field_session_note
-import leaf_log.shared.generated.resources.field_steep_increment
-import leaf_log.shared.generated.resources.method_usage
 import leaf_log.shared.generated.resources.more_options
-import leaf_log.shared.generated.resources.plan_steep_label
 import leaf_log.shared.generated.resources.rating_out_of_five
 import leaf_log.shared.generated.resources.rating_unrated
 import leaf_log.shared.generated.resources.review_how_was_steep_n
@@ -96,10 +92,6 @@ class UpgradeFlowTest : FlowTest() {
         click("Dragon Well")
         waitFor(hasText("4") and hasAnySibling(hasText("Total Sessions")))
         waitFor(hasText("3.5") and hasAnySibling(hasText("Average Rating")))
-        scrollTo(hasText("Morning"))
-        waitFor(rated("5") and hasAnySibling(hasText("Morning")))
-        // How long ago is left off
-        waitFor(hasText(text(Res.plurals.method_usage, 3, 3, "").trimEnd(), substring = true))
     }
 
     @Test
@@ -127,7 +119,7 @@ class UpgradeFlowTest : FlowTest() {
     }
 
     @Test
-    fun `v0_4_0 methods plan one steep and Brew Again replays every steep of an old session`() {
+    fun `v0_4_0 Brew Again replays every steep of an old session`() {
         upgradeFrom(8) {
             defaults()
             tea("dw", "Dragon Well")
@@ -140,16 +132,6 @@ class UpgradeFlowTest : FlowTest() {
             steep("mid-2", "sencha", ago(1.days) + 60_000, "status" to "IN_PROGRESS", parent = "mid", number = 2)
         }
         launch()
-
-        click(text(Res.string.tab_collection))
-        click("Dragon Well")
-        scrollTo(hasText("Morning"))
-        click(hasContentDescription(text(Res.string.more_options)) and hasAnySibling(hasText("Morning")))
-        click(text(Res.string.edit))
-        waitFor(text(Res.string.field_steep_increment))
-        assertAbsent(text(Res.string.plan_steep_label, 2))
-        systemBack()
-        systemBack()
 
         click(text(Res.string.tab_history))
         waitFor(hasText("Sencha") and hasText(text(Res.string.brewing_steep_n, 2)))

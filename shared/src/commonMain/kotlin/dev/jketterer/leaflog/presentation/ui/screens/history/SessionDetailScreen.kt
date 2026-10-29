@@ -59,7 +59,6 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.LocalUnits
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
-import dev.jketterer.leaflog.presentation.ui.components.configuration.SaveConfigurationDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.BrewAgainSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditSheet
@@ -83,7 +82,6 @@ import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.next_session
 import leaf_log.shared.generated.resources.previous_session
-import leaf_log.shared.generated.resources.review_save_method_header
 import leaf_log.shared.generated.resources.session_not_found
 import leaf_log.shared.generated.resources.session_title
 import org.jetbrains.compose.resources.stringResource
@@ -203,14 +201,6 @@ private fun SessionDetailContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (state.session != null && state.usedConfigurationLabel == null) {
-                    OutlinedButton(
-                        onClick = { onIntent(SessionDetailIntent.SaveAsConfigurationClicked) },
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(stringResource(Res.string.review_save_method_header))
-                    }
-                }
                 Button(
                     onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
                     modifier = Modifier.weight(1f),
@@ -257,7 +247,6 @@ private fun SessionDetailBody(
                 rating = session.effectiveRating,
                 session = session.session,
                 vesselName = state.vessel?.name,
-                methodLabel = state.usedConfigurationLabel,
                 photos = session.steeps.flatMap { it.photos },
             )
             SteepTimelineSection(
@@ -366,22 +355,6 @@ private fun SessionDetailDialogs(
             onTemperatureChange = { onIntent(SessionDetailIntent.UpdateNextSteepTemperature(it)) },
             onConfirm = { onIntent(SessionDetailIntent.ConfirmAddSteep) },
             onDismiss = { onIntent(SessionDetailIntent.CancelAddSteep) },
-        )
-    }
-
-    if (state.showSaveConfigurationDialog && state.session != null) {
-        val first = state.session.steeps.first()
-        SaveConfigurationDialog(
-            teaName = state.tea?.name ?: "",
-            vesselName = state.vessel?.name ?: "",
-            teaQuantityGrams = state.session.session.teaQuantityGrams,
-            waterQuantityMl = first.waterQuantityMl,
-            temperatureCelsius = first.temperatureCelsius,
-            brewingTimeSeconds = first.brewingTime.inWholeSeconds.toInt(),
-            rating = state.session.effectiveRating,
-            suggestedLabel = state.suggestedConfigurationLabel,
-            onSave = { label -> onIntent(SessionDetailIntent.ConfirmSaveConfiguration(label)) },
-            onDismiss = { onIntent(SessionDetailIntent.DismissSaveConfiguration) },
         )
     }
 

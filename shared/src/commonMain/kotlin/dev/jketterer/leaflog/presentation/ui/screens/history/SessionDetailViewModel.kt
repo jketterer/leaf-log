@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.presentation.ui.screens.history
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.toggled
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -12,9 +11,6 @@ import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
-import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSteepUseCase
@@ -49,10 +45,8 @@ import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_delete_steep
 import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_save_changes
-import leaf_log.shared.generated.resources.couldnt_save_method
 import leaf_log.shared.generated.resources.couldnt_start_session
 import leaf_log.shared.generated.resources.failure_not_found
-import leaf_log.shared.generated.resources.method_already_saved
 
 class SessionDetailViewModel(
     private val route: NavRoute.SessionDetailsRoute,
@@ -61,15 +55,11 @@ class SessionDetailViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val brewingVesselRepository: BrewingVesselRepository,
     private val tastingTagRepository: TastingTagRepository,
-    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     private val deleteSteepUseCase: DeleteSteepUseCase,
     private val editSteepUseCase: EditSteepUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val addSteepUseCase: AddSteepUseCase,
-    private val checkDuplicateConfigurationUseCase: CheckDuplicateConfigurationUseCase,
-    private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
-    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
     private val finishSessionUseCase: FinishSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
     private val timerService: TimerService,
@@ -198,14 +188,6 @@ class SessionDetailViewModel(
 
             is SessionDetailIntent.StepToSession -> shownSessionId.value = intent.sessionId
 
-            is SessionDetailIntent.SaveAsConfigurationClicked -> saveAsConfiguration()
-            is SessionDetailIntent.ConfirmSaveConfiguration -> confirmSaveConfiguration(intent.label)
-            is SessionDetailIntent.DismissSaveConfiguration -> _state.update {
-                it.copy(
-                    showSaveConfigurationDialog = false
-                )
-            }
-
             is SessionDetailIntent.SteepClicked -> openSteep(intent.steepId)
             is SessionDetailIntent.SteepRatingChanged -> {
                 val id = _state.value.editingSteepId ?: return
@@ -258,13 +240,11 @@ class SessionDetailViewModel(
                             // appears beside the last one's tea
                             val tea = loadTea(session.session.teaId)
                             val vessel = loadVessel(session.session.vesselId)
-                            val label = session.session.usedConfigurationId?.let { loadConfigurationLabel(it) }
                             _state.update {
                                 it.copy(
                                     session = session,
                                     tea = tea,
                                     vessel = vessel,
-                                    usedConfigurationLabel = label,
                                     isLoading = false,
                                 )
                             }
@@ -314,13 +294,6 @@ class SessionDetailViewModel(
                 Logger.w(tag = "SessionDetail") { "Failed to load tags: ${e.message}" }
             }
         }
-    }
-
-    private suspend fun loadConfigurationLabel(configurationId: String): String? = try {
-        brewingConfigurationRepository.getById(configurationId)?.label
-    } catch (e: Exception) {
-        Logger.w(tag = "SessionDetail") { "Failed to load configuration: ${e.message}" }
-        null
     }
 
     private fun showDeleteConfirmation() {
@@ -457,44 +430,6 @@ class SessionDetailViewModel(
                 temperatureCelsius = temperature,
                 waterQuantityMl = session.currentSteep.waterQuantityMl,
             ).onFailure { messages.failure(it, Res.string.couldnt_add_steep) }
-        }
-    }
-
-    private fun saveAsConfiguration() {
-        val session = _state.value.session ?: return
-
-        viewModelScope.launch {
-            val isDuplicate = checkDuplicateConfigurationUseCase(session)
-            if (isDuplicate) {
-                messages.show(Res.string.method_already_saved)
-                return@launch
-            }
-
-            val first = session.steeps.first()
-            val label = generateConfigurationLabelUseCase(
-                teaQuantityGrams = session.session.teaQuantityGrams,
-                waterQuantityMl = first.waterQuantityMl,
-                brewingTime = first.brewedTime,
-            )
-            _state.update {
-                it.copy(
-                    showSaveConfigurationDialog = true,
-                    suggestedConfigurationLabel = label,
-                )
-            }
-        }
-    }
-
-    private fun confirmSaveConfiguration(label: String) {
-        val session = _state.value.session ?: return
-
-        viewModelScope.launch {
-            _state.update { it.copy(showSaveConfigurationDialog = false) }
-            saveBrewingConfigurationUseCase(
-                session = session,
-                customLabel = label,
-                skipRatingCheck = true,
-            ).onFailure { messages.failure(it, Res.string.couldnt_save_method) }
         }
     }
 

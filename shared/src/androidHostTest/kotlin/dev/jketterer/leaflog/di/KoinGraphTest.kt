@@ -31,7 +31,6 @@ class KoinGraphTest {
                 NavRoute.VesselDetailRoute::class,
                 NavRoute.EditVesselRoute::class,
                 NavRoute.EditTeaTypeRoute::class,
-                NavRoute.CreateBrewingConfigurationRoute::class,
                 NavRoute.SteepCompleteRoute::class,
                 NavRoute.SessionReviewRoute::class,
                 NavRoute.RecapRoute::class,

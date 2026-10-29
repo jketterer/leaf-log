@@ -1,6 +1,5 @@
 package dev.jketterer.leaflog.presentation.ui.screens.sessionreview
 
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
@@ -18,13 +17,6 @@ data class SessionReviewState(
     val vocabulary: List<TastingTag> = emptyList(),
     // The session's note, apart from each steep's
     val notes: String = "",
-    // Save as method: offered until saved
-    val offerMethod: Boolean = false,
-    val methodLabel: String = "",
-    val methodSaved: Boolean = false,
-    // Update method: the method this brew deviated from, offered until updated
-    val methodToUpdate: BrewingConfiguration? = null,
-    val methodUpdated: Boolean = false,
     // The steep row being edited
     val editingSteepId: String? = null,
     val editRating: Float = 0f,

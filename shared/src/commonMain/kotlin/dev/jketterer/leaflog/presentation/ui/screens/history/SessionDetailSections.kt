@@ -17,7 +17,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Bookmark
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Droplet
 import compose.icons.feathericons.MapPin
@@ -53,7 +52,6 @@ internal fun SessionHeaderSection(
     rating: Float?,
     session: Session,
     vesselName: String?,
-    methodLabel: String?,
     photos: List<String>,
     modifier: Modifier = Modifier,
 ) {
@@ -110,7 +108,6 @@ internal fun SessionHeaderSection(
                 )
             }
             session.location?.let { IconValue(FeatherIcons.MapPin, it, style, iconSize = 16.dp) }
-            methodLabel?.let { IconValue(FeatherIcons.Bookmark, it, style, iconSize = 16.dp) }
         }
 
         session.notes?.let {
@@ -141,7 +138,6 @@ private fun SessionHeaderSectionPreview() {
             rating = session.effectiveRating,
             session = session.session.copy(rinsed = true, location = "Home"),
             vesselName = "Gaiwan",
-            methodLabel = "Gongfu 7g",
             photos = emptyList(),
             modifier = Modifier.padding(16.dp),
         )

@@ -5,7 +5,6 @@ import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsViewMode
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailViewModel
-import dev.jketterer.leaflog.presentation.ui.screens.configuration.CreateBrewingConfigurationViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.history.EditSessionViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.history.SessionDetailViewModel
@@ -50,7 +49,6 @@ val appModule = module {
     viewModelOf(::TeaCollectionViewModel)
     viewModelOf(::TeaDetailViewModel)
     viewModelOf(::EditTeaViewModel)
-    viewModelOf(::CreateBrewingConfigurationViewModel)
 
     viewModelOf(::VesselListViewModel)
     viewModelOf(::VesselDetailViewModel)

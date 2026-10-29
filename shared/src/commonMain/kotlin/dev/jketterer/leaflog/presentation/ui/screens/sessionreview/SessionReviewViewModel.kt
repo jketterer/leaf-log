@@ -3,9 +3,7 @@ package dev.jketterer.leaflog.presentation.ui.screens.sessionreview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.data.local.ImageStorage
-import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.Session
-import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.toggled
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
@@ -13,11 +11,6 @@ import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
-import dev.jketterer.leaflog.domain.usecases.configuration.FindMethodUpdateUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.ShouldOfferSaveAsMethodUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.UpdateMethodFromSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.CompareWithBestUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
@@ -37,9 +30,7 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_create_tag
 import leaf_log.shared.generated.resources.couldnt_load_session
 import leaf_log.shared.generated.resources.couldnt_save_changes
-import leaf_log.shared.generated.resources.couldnt_save_method
 import leaf_log.shared.generated.resources.couldnt_save_photo
-import leaf_log.shared.generated.resources.couldnt_update_method
 import leaf_log.shared.generated.resources.failure_not_found
 import kotlin.uuid.Uuid
 
@@ -54,11 +45,6 @@ class SessionReviewViewModel(
     private val editSessionUseCase: EditSessionUseCase,
     private val editSteepUseCase: EditSteepUseCase,
     private val compareWithBestUseCase: CompareWithBestUseCase,
-    private val shouldOfferSaveAsMethodUseCase: ShouldOfferSaveAsMethodUseCase,
-    private val generateConfigurationLabelUseCase: GenerateConfigurationLabelUseCase,
-    private val saveBrewingConfigurationUseCase: SaveBrewingConfigurationUseCase,
-    private val findMethodUpdateUseCase: FindMethodUpdateUseCase,
-    private val updateMethodFromSessionUseCase: UpdateMethodFromSessionUseCase,
     appScope: CoroutineScope,
 ) : ViewModel() {
 
@@ -113,9 +99,6 @@ class SessionReviewViewModel(
             }
 
             is SessionReviewIntent.DismissSteepEdit -> _state.update { it.copy(editingSteepId = null) }
-            is SessionReviewIntent.MethodLabelChanged -> _state.update { it.copy(methodLabel = intent.label) }
-            is SessionReviewIntent.SaveMethod -> saveMethod()
-            is SessionReviewIntent.UpdateMethod -> updateMethod()
             is SessionReviewIntent.Done -> viewModelScope.launch {
                 notesSave.flush()
                 steepNotesSave.flush()
@@ -137,8 +120,6 @@ class SessionReviewViewModel(
                 }
                 val vsBest = compareWithBestUseCase(session)
                 val bestVesselId = (vsBest as? VsBest.Versus)?.best?.session?.vesselId
-                val offer = shouldOfferSaveAsMethodUseCase(session)
-                val methodToUpdate = findMethodUpdateUseCase(session)
                 val tea = teaRepository.getById(session.session.teaId)
                 _state.update {
                     it.copy(
@@ -149,9 +130,6 @@ class SessionReviewViewModel(
                         bestVessel = bestVesselId?.let { id -> brewingVesselRepository.getById(id) },
                         vsBest = vsBest,
                         notes = session.session.notes ?: "",
-                        offerMethod = offer,
-                        methodToUpdate = methodToUpdate,
-                        methodLabel = if (offer) suggestedLabel(session) else "",
                         vocabulary = tastingTagRepository.getAll(),
                         isLoading = false,
                     )
@@ -162,13 +140,6 @@ class SessionReviewViewModel(
             }
         }
     }
-
-    private fun suggestedLabel(session: SessionWithSteeps): String =
-        generateConfigurationLabelUseCase(
-            teaQuantityGrams = session.session.teaQuantityGrams,
-            waterQuantityMl = session.steeps.first().waterQuantityMl,
-            brewingTime = BrewingPlan.learnedFrom(session.steeps).base,
-        )
 
     private suspend fun saveSession(edit: (Session) -> Session) {
         editSessionUseCase(route.sessionId, edit = edit)
@@ -234,34 +205,6 @@ class SessionReviewViewModel(
                 imageStorage.deleteImage(path)
             } catch (_: Exception) {
             }
-        }
-    }
-
-    private fun updateMethod() {
-        val state = _state.value
-        val session = state.session ?: return
-        val method = state.methodToUpdate ?: return
-        viewModelScope.launch {
-            updateMethodFromSessionUseCase(method.id, session)
-                .onSuccess {
-                    _state.update {
-                        it.copy(
-                            methodToUpdate = null,
-                            methodUpdated = true
-                        )
-                    }
-                }
-                .onFailure { messages.failure(it, Res.string.couldnt_update_method) }
-        }
-    }
-
-    private fun saveMethod() {
-        val state = _state.value
-        val session = state.session ?: return
-        viewModelScope.launch {
-            saveBrewingConfigurationUseCase(session, state.methodLabel.ifBlank { null })
-                .onSuccess { _state.update { it.copy(offerMethod = false, methodSaved = true) } }
-                .onFailure { messages.failure(it, Res.string.couldnt_save_method) }
         }
     }
 }

@@ -58,10 +58,6 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.review_add_note
 import leaf_log.shared.generated.resources.review_done
-import leaf_log.shared.generated.resources.review_method_saved
-import leaf_log.shared.generated.resources.review_method_saved_detail
-import leaf_log.shared.generated.resources.review_method_updated
-import leaf_log.shared.generated.resources.review_method_updated_detail
 import leaf_log.shared.generated.resources.review_note_header
 import leaf_log.shared.generated.resources.review_photos_header
 import leaf_log.shared.generated.resources.tea_not_found
@@ -227,29 +223,6 @@ private fun SessionReviewBody(
         (state.vsBest as? VsBest.Versus)?.let {
             VsBestSection(it, session, state.vessel, state.bestVessel)
         }
-
-        when {
-            state.offerMethod -> SaveMethodCard(
-                label = state.methodLabel,
-                onLabelChange = { onIntent(SessionReviewIntent.MethodLabelChanged(it)) },
-                onSave = { onIntent(SessionReviewIntent.SaveMethod) },
-            )
-
-            state.methodToUpdate != null -> UpdateMethodCard(
-                methodName = state.methodToUpdate.label ?: state.tea?.name.orEmpty(),
-                onUpdate = { onIntent(SessionReviewIntent.UpdateMethod) },
-            )
-
-            state.methodSaved -> MethodDoneCard(
-                title = stringResource(Res.string.review_method_saved),
-                detail = stringResource(Res.string.review_method_saved_detail),
-            )
-
-            state.methodUpdated -> MethodDoneCard(
-                title = stringResource(Res.string.review_method_updated),
-                detail = stringResource(Res.string.review_method_updated_detail),
-            )
-        }
     }
 }
 
@@ -317,8 +290,6 @@ private fun SessionReviewPreview() {
                     ),
                 ),
                 vsBest = VsBest.Versus(best, listOf(BrewDifference.TEMPERATURE)),
-                offerMethod = true,
-                methodLabel = "5g · 200ml · 2:00",
                 isLoading = false,
             ),
             onIntent = {},

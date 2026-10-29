@@ -12,7 +12,6 @@ data class SessionDetailState(
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
     val vessel: BrewingVessel? = null,
-    val usedConfigurationLabel: String? = null,
     val vocabulary: List<TastingTag> = emptyList(),
 
     // Its chronological neighbors across every session, for stepping through
@@ -32,10 +31,6 @@ data class SessionDetailState(
     val editingSteepId: String? = null,
     val editRating: Float = 0f,
     val editNotes: String = "",
-
-    // Save as configuration dialog
-    val showSaveConfigurationDialog: Boolean = false,
-    val suggestedConfigurationLabel: String = "",
 
     val brewAgainSheet: BrewAgainSheetState? = null,
 

@@ -6,26 +6,15 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
-import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.add_method
 import leaf_log.shared.generated.resources.delete
-import leaf_log.shared.generated.resources.edit
 import leaf_log.shared.generated.resources.field_capacity
-import leaf_log.shared.generated.resources.field_temperature_required
-import leaf_log.shared.generated.resources.field_water_quantity_required
-import leaf_log.shared.generated.resources.more_options
-import leaf_log.shared.generated.resources.no_saved_methods
 import leaf_log.shared.generated.resources.save
 import leaf_log.shared.generated.resources.settings_title
 import leaf_log.shared.generated.resources.tab_collection
@@ -34,10 +23,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import kotlin.time.Duration.Companion.seconds
 
-/** Teas' methods, tea types and vessels, changed where the user keeps them: Dragon Well, never brewed. */
-// The method form, tea and vessel menus and the tea type dialogs don't read strings.xml yet
+/** Teas, tea types and vessels, changed where the user keeps them: Dragon Well, never brewed. */
+// The tea and vessel menus and the tea type dialogs don't read strings.xml yet
 class LibraryFlowTest : FlowTest() {
 
     private lateinit var teaId: String
@@ -46,55 +34,6 @@ class LibraryFlowTest : FlowTest() {
     fun seed() = runBlocking {
         koin.get<InitializeDefaultsUseCase>()()
         teaId = koin.get<CreateTeaUseCase>()(name = "Dragon Well", teaTypeId = "green").getOrThrow().id
-    }
-
-    @Test
-    fun `a method added from a tea is saved to it with what was entered`() {
-        openTea()
-        click(text(Res.string.add_method))
-        type("Name (optional)", "Morning")
-        click("0:30")
-        type(text(Res.string.field_temperature_required), "85")
-        type(text(Res.string.field_water_quantity_required), "100")
-        click(text(Res.string.save))
-
-        // The form's own name field reads Morning too
-        waitFor(text(Res.string.add_method))
-        waitFor("Morning")
-        val method = methods().single()
-        assertEquals(teaId, method.teaId)
-        assertEquals("Morning", method.label)
-        assertEquals(30.seconds, method.brewingTime)
-        assertEquals(85.0, method.temperatureCelsius, 0.0)
-        assertEquals(100.0, method.waterQuantityMl, 0.0)
-    }
-
-    @Test
-    fun `a method edited from its tea keeps its identity and takes the change`() {
-        val method = seedMethod()
-        openTea()
-        click(onMethod(text(Res.string.more_options)))
-        click(text(Res.string.edit))
-        waitFor(field(text(Res.string.field_temperature_required)) and hasText("85"))
-        type(text(Res.string.field_temperature_required), "90")
-        click(text(Res.string.save))
-
-        waitFor(text(Res.string.add_method))
-        val edited = methods().single()
-        assertEquals(method.id, edited.id)
-        assertEquals(90.0, edited.temperatureCelsius, 0.0)
-    }
-
-    @Test
-    fun `a method deleted after confirming leaves its tea`() {
-        seedMethod()
-        openTea()
-        click(onMethod(text(Res.string.more_options)))
-        click(text(Res.string.delete))
-        click(inDialog(text(Res.string.delete)))
-
-        waitFor(text(Res.string.no_saved_methods))
-        assertEquals(emptyList<BrewingConfiguration>(), methods())
     }
 
     @Test
@@ -199,22 +138,6 @@ class LibraryFlowTest : FlowTest() {
         assertTrue(vessels().none { it.name == "Gaiwan" })
     }
 
-    private fun seedMethod() = runBlocking {
-        val gaiwan = koin.get<BrewingVesselRepository>().getActiveFlow().first().first { it.name == "Gaiwan" }
-        koin.get<CreateBrewingConfigurationUseCase>()(
-            teaId = teaId,
-            vesselId = gaiwan.id,
-            teaQuantityGrams = 5f,
-            waterQuantityMl = 100.0,
-            temperatureCelsius = 85.0,
-            brewingTime = 30.seconds,
-            waterType = WaterType.FILTERED,
-            customLabel = "Morning",
-        ).getOrThrow()
-    }
-
-    private fun methods() = runBlocking { koin.get<BrewingConfigurationRepository>().getAll() }
-
     private fun vessels() = runBlocking { koin.get<BrewingVesselRepository>().getAll() }
 
     private fun openTea() {
@@ -235,11 +158,6 @@ class LibraryFlowTest : FlowTest() {
         click(text(Res.string.tab_collection))
         click("Vessels")
     }
-
-    /** [text] on the Morning method's card. */
-    private fun onMethod(text: String) =
-        (hasText(text) or androidx.compose.ui.test.hasContentDescription(text)) and
-            hasAnyAncestor(androidx.compose.ui.test.hasAnyDescendant(hasText("Morning")))
 
     private fun field(label: String) = hasSetTextAction() and hasText(label)
 

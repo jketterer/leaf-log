@@ -130,7 +130,6 @@
     </plurals>
 
     <!-- Section headers, written in sentence case; SectionHeader uppercases them -->
-    <string name="header_quick_brew">Quick Brew</string>
     <string name="header_todays_stats">Today's stats</string>
     <string name="header_recent_sessions">Recent sessions</string>
     <string name="header_brewing_parameters">Brewing parameters</string>
@@ -144,8 +143,6 @@
     <string name="header_photo">Photo</string>
     <string name="header_details">Details</string>
     <string name="header_saved_methods">Saved brewing methods</string>
-    <string name="header_pinned">Pinned</string>
-    <string name="header_by_usage">By usage</string>
     <string name="header_brewing">Brewing</string>
     <string name="header_notifications">Notifications</string>
     <string name="header_management">Management</string>
@@ -159,7 +156,6 @@
     <string name="history_filter_choose_tea">Choose a tea</string>
     <string name="clear_all">Clear all</string>
     <string name="view_all">View All</string>
-    <string name="manage">Manage</string>
 
     <!-- Empty states -->
     <string name="home_empty_title">Welcome to Leaf Log</string>
@@ -386,7 +382,6 @@
     <string name="couldnt_resume_timer">Couldn't resume the timer</string>
     <string name="couldnt_adjust_timer">Couldn't change the time</string>
     <string name="couldnt_load_analytics">Couldn't load your stats</string>
-    <string name="couldnt_update_quick_brew">Couldn't update Quick Brew</string>
     <string name="couldnt_load_teas">Couldn't load your teas</string>
     <string name="couldnt_update_favorite">Couldn't update favorites</string>
     <string name="couldnt_load_tea">Couldn't load the tea</string>

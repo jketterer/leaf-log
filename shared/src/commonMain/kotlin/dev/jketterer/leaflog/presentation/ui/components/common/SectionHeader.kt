@@ -15,9 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.header_quick_brew
 import leaf_log.shared.generated.resources.header_recent_sessions
-import leaf_log.shared.generated.resources.manage
+import leaf_log.shared.generated.resources.view_all
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -59,9 +58,9 @@ private fun SectionHeaderPreview() {
 @Composable
 private fun SectionHeaderWithActionPreview() {
     LeafLogTheme {
-        SectionHeader(title = stringResource(Res.string.header_quick_brew)) {
+        SectionHeader(title = stringResource(Res.string.header_recent_sessions)) {
             TextButton(onClick = {}) {
-                Text(stringResource(Res.string.manage))
+                Text(stringResource(Res.string.view_all))
             }
         }
     }

@@ -1,5 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.screens.home
 
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainIntent
+
 sealed interface HomeIntent {
     data object LoadData : HomeIntent
     data object Refresh : HomeIntent
@@ -10,19 +12,8 @@ sealed interface HomeIntent {
     data object DismissDurationSheet : HomeIntent
     data class FabExpandedChanged(val expanded: Boolean) : HomeIntent
     data class UndoFinishClicked(val sessionId: String) : HomeIntent
-    data class QuickBrewClicked(
-        val configurationId: String,
-        val teaId: String,
-        val vesselId: String,
-    ) : HomeIntent
-
-    data class EditQuickBrewClicked(val teaId: String, val configurationId: String) : HomeIntent
-    data object ManageQuickBrewClicked : HomeIntent
-    data object DismissManageQuickBrewSheet : HomeIntent
-    data class PinConfigurationToggled(val configurationId: String, val isPinned: Boolean) :
-        HomeIntent
-
-    data class PinnedConfigurationsReordered(val orderedIds: List<String>) : HomeIntent
+    data class BrewAgainCardClicked(val teaId: String, val vesselId: String) : HomeIntent
+    data class BrewAgain(val intent: BrewAgainIntent) : HomeIntent
 
     data class DeleteSessionClicked(val sessionId: String) : HomeIntent
     data object ConfirmDeleteSession : HomeIntent

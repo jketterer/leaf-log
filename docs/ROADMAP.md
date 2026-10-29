@@ -1085,7 +1085,7 @@ Four phases; the app builds and the flow tests pass after each.
    western, gongfu).
 5. [x] `feat: every brew again opens the sheet`: History, Tea Detail, Session Detail; Home's recent
    cards lose the button. Flow: Session Detail → sheet → Start → Timer; Adjust → Log Tea filled.
-6. [ ] `feat: home brew again row`: replaces Quick Brew. Tests: the row builder (one card per pair,
+6. [x] `feat: home brew again row`: replaces Quick Brew. Tests: the row builder (one card per pair,
    order, the cap of 8, finished and archived left out). Flow: a tap opens the sheet and creates no
    session.
 

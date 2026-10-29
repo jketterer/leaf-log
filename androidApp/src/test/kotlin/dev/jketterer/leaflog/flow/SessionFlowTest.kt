@@ -190,6 +190,19 @@ class SessionFlowTest : FlowTest() {
     }
 
     @Test
+    fun `a tap on Home's brew again card shows the pair's brew and starts nothing until Start`() {
+        launch()
+        click(hasText("Dragon Well") and hasText("Gaiwan") and hasClickAction())
+        waitFor(text(Res.string.adjust))
+        assertEquals(1, runBlocking { koin.get<TeaSessionRepository>().getAllSessions() }.size)
+
+        click(text(Res.string.start_brewing))
+        waitUntilGone(text(Res.string.adjust))
+        waitFor("0:30")
+        assertEquals(sessionId, latest().session.planSessionId)
+    }
+
+    @Test
     fun `brew again's Adjust opens Log Tea filled from this session and replays it`() {
         openSession()
         click(text(Res.string.brew_again))

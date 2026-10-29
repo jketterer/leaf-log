@@ -133,7 +133,7 @@ fun PastBrewCard(
     }
 }
 
-/** A tea's last completed session in one line, for a small card: when, and its rating. */
+/** A past session in one line, for a small card: when and how many steeps on the left, its rating on the right. */
 @Composable
 fun LastTimeLine(
     session: SessionWithSteeps,
@@ -141,15 +141,32 @@ fun LastTimeLine(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = timeAgo(session.startedAt),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-        )
+        // Fills the line so the rating stays on the card's end edge
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = timeAgo(session.startedAt).replaceFirstChar { it.titlecase() },
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            val steeps = session.steeps.size
+            if (steeps > 1) {
+                IconValue(
+                    icon = FeatherIcons.Layers,
+                    text = pluralStringResource(Res.plurals.steep_count, steeps, steeps),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+        }
         session.effectiveRating?.let { rating ->
             val description = ratingDescription(rating)
             Row(
@@ -163,7 +180,7 @@ fun LastTimeLine(
                     modifier = Modifier.size(12.dp),
                     tint = MaterialTheme.colorScheme.primary,
                 )
-                Text(formatRating(rating), style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                Text(formatRating(rating), style = MaterialTheme.typography.labelMedium, maxLines = 1)
             }
         }
     }

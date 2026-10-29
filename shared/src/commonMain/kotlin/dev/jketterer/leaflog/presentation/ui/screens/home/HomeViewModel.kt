@@ -4,24 +4,19 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.touchlab.kermit.Logger
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
-import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.dominantTags
-import dev.jketterer.leaflog.domain.models.lastCompleted
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.TeaTypeRepository
 import dev.jketterer.leaflog.domain.services.TimerService
-import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DiscardSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
@@ -34,6 +29,7 @@ import dev.jketterer.leaflog.presentation.ui.messages.UiMessage
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.messages.UiText
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.viewmodel.createBrewAgainDelegate
 import dev.jketterer.leaflog.presentation.ui.viewmodel.createInProgressSessionDelegate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -59,7 +55,6 @@ import leaf_log.shared.generated.resources.couldnt_delete_session
 import leaf_log.shared.generated.resources.couldnt_load
 import leaf_log.shared.generated.resources.couldnt_start_session
 import leaf_log.shared.generated.resources.couldnt_undo
-import leaf_log.shared.generated.resources.couldnt_update_quick_brew
 import leaf_log.shared.generated.resources.session_finished
 import leaf_log.shared.generated.resources.undo
 import kotlin.time.Clock
@@ -71,11 +66,8 @@ import kotlin.time.Duration.Companion.seconds
 private sealed interface HomePendingAction {
     data object NavigateToLogTea : HomePendingAction
     data object ShowDurationSheet : HomePendingAction
-    data class QuickBrew(
-        val teaId: String,
-        val vesselId: String,
-        val configurationId: String,
-    ) : HomePendingAction
+    data class BrewAgain(val sessionId: String) : HomePendingAction
+    data class AdjustBrew(val sessionId: String) : HomePendingAction
 }
 
 class HomeViewModel(
@@ -86,7 +78,6 @@ class HomeViewModel(
     private val teaTypeRepository: TeaTypeRepository,
     private val vesselRepository: BrewingVesselRepository,
     private val tastingTagRepository: TastingTagRepository,
-    private val brewingConfigurationRepository: BrewingConfigurationRepository,
     private val getDailyStatsUseCase: GetDailyStatsUseCase,
     private val startSessionUseCase: StartSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
@@ -94,7 +85,6 @@ class HomeViewModel(
     private val reopenSessionUseCase: ReopenSessionUseCase,
     private val discardSteepUseCase: DiscardSteepUseCase,
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
-    private val pinBrewingConfigurationUseCase: PinBrewingConfigurationUseCase,
     private val restoreTimerStateUseCase: RestoreTimerStateUseCase,
     private val timerService: TimerService,
     private val clock: Clock,
@@ -123,15 +113,34 @@ class HomeViewModel(
         executePendingAction = { action ->
             when (action) {
                 is HomePendingAction.NavigateToLogTea ->
-                    _navEvents.trySend(HomeNavEvent.NavigateToLogTea())
+                    _navEvents.trySend(HomeNavEvent.NavigateToLogTea(NavRoute.LogTeaRoute()))
 
                 is HomePendingAction.ShowDurationSheet ->
                     _state.update { it.copy(showDurationSheet = true) }
 
-                is HomePendingAction.QuickBrew ->
-                    quickBrew(action.configurationId)
+                is HomePendingAction.BrewAgain ->
+                    brewAgain(action.sessionId)
+
+                is HomePendingAction.AdjustBrew ->
+                    _navEvents.trySend(
+                        HomeNavEvent.NavigateToLogTea(NavRoute.LogTeaRoute(sourceSessionId = action.sessionId)),
+                    )
             }
         },
+    )
+
+    private val brewAgainDelegate = createBrewAgainDelegate(
+        teaSessionRepository = teaSessionRepository,
+        teaRepository = teaRepository,
+        teaTypeRepository = teaTypeRepository,
+        brewingVesselRepository = vesselRepository,
+        tastingTagRepository = tastingTagRepository,
+        stateFlow = _state,
+        getSheetState = { it.brewAgainSheet },
+        setSheetState = { state, sheet -> state.copy(brewAgainSheet = sheet) },
+        onFailure = messages::failure,
+        onStart = { inProgressDelegate.checkAndProceed(HomePendingAction.BrewAgain(it)) },
+        onAdjust = { inProgressDelegate.checkAndProceed(HomePendingAction.AdjustBrew(it)) },
     )
 
     init {
@@ -211,37 +220,8 @@ class HomeViewModel(
 
             is HomeIntent.UndoFinishClicked -> undoFinish(intent.sessionId)
 
-            is HomeIntent.QuickBrewClicked -> {
-                inProgressDelegate.checkAndProceed(
-                    HomePendingAction.QuickBrew(
-                        teaId = intent.teaId,
-                        vesselId = intent.vesselId,
-                        configurationId = intent.configurationId,
-                    )
-                )
-            }
-
-            is HomeIntent.EditQuickBrewClicked -> {
-                _navEvents.trySend(
-                    HomeNavEvent.NavigateToEditBrewingMethod(
-                        intent.teaId,
-                        intent.configurationId
-                    )
-                )
-            }
-
-            is HomeIntent.ManageQuickBrewClicked ->
-                _state.update { it.copy(showManageQuickBrewSheet = true) }
-
-            is HomeIntent.DismissManageQuickBrewSheet ->
-                _state.update { it.copy(showManageQuickBrewSheet = false) }
-
-            is HomeIntent.PinConfigurationToggled -> pinConfiguration(
-                intent.configurationId,
-                intent.isPinned
-            )
-
-            is HomeIntent.PinnedConfigurationsReordered -> reorderPinnedConfigurations(intent.orderedIds)
+            is HomeIntent.BrewAgainCardClicked -> brewAgainDelegate.openPair(intent.teaId, intent.vesselId)
+            is HomeIntent.BrewAgain -> brewAgainDelegate.onIntent(intent.intent)
 
             is HomeIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
             is HomeIntent.ConfirmDeleteSession -> confirmDeleteSession()
@@ -320,13 +300,13 @@ class HomeViewModel(
                 val sessionsLoaded = MutableStateFlow(false)
                 val inProgressCountLoaded = MutableStateFlow(false)
                 val inProgressRecentLoaded = MutableStateFlow(false)
-                val configsLoaded = MutableStateFlow(false)
+                val brewAgainLoaded = MutableStateFlow(false)
 
                 launch { collectDailyStats(statsLoaded) }
                 launch { collectRecentSessions(sessionsLoaded) }
                 launch { collectInProgressCount(inProgressCountLoaded) }
                 launch { collectMostRecentInProgress(inProgressRecentLoaded) }
-                launch { collectQuickBrewConfigurations(configsLoaded) }
+                launch { collectBrewAgainCards(brewAgainLoaded) }
 
                 // Clear loading state once all collectors have emitted at least once
                 launch {
@@ -335,7 +315,7 @@ class HomeViewModel(
                         sessionsLoaded,
                         inProgressCountLoaded,
                         inProgressRecentLoaded,
-                        configsLoaded,
+                        brewAgainLoaded,
                     ) { loaded -> loaded.all { it } }
                         .first { it }
                     _state.update { it.copy(isLoading = false) }
@@ -441,60 +421,23 @@ class HomeViewModel(
             }
     }
 
-    private suspend fun collectQuickBrewConfigurations(loaded: MutableStateFlow<Boolean>) {
+    private suspend fun collectBrewAgainCards(loaded: MutableStateFlow<Boolean>) {
         combine(
-            brewingConfigurationRepository.getAllActiveFlow(),
+            // reads every session for the pairs' lasts; a recent-pairs query if History ever pages
+            teaSessionRepository.getAllSessionsFlow(),
             teaRepository.getAllFlow(),
             teaTypeRepository.getAllFlow(),
             vesselRepository.getAllFlow(),
-            // reads every session for each tea's last; a per-tea query if History ever pages
-            teaSessionRepository.getAllSessionsFlow(),
-        ) { configs, teas, types, vessels, sessions ->
-            val teaMap = teas.associateBy { it.id }
-            val typeMap = types.associateBy { it.id }
-            val vesselMap = vessels.associateBy { it.id }
-            val lastByTea =
-                sessions.groupBy { it.session.teaId }.mapValues { it.value.lastCompleted() }
-            configs.mapNotNull { config ->
-                val tea = teaMap[config.teaId] ?: return@mapNotNull null
-                val type = typeMap[tea.teaTypeId]
-                val vessel = vesselMap[config.vesselId] ?: return@mapNotNull null
-                QuickBrewCardData(
-                    configuration = config,
-                    teaName = tea.name,
-                    teaTypeName = type?.name ?: "Unknown",
-                    teaTypeColorHex = type?.colorHex,
-                    vesselName = vessel.name,
-                    isFinished = tea.finishedAt != null,
-                    lastSession = lastByTea[tea.id],
-                )
-            }
-        }
+            ::brewAgainCards,
+        )
             .catch { e ->
-                Logger.w(tag = "Home") { "Failed to load quick brew configs: ${e.message}" }
+                Logger.w(tag = "Home") { "Failed to load brew again cards: ${e.message}" }
                 loaded.value = true
             }
-            .collect { allConfigs ->
-                _state.update {
-                    it.copy(
-                        allBrewingConfigurations = allConfigs,
-                        quickBrewConfigurations = allConfigs.filter { data ->
-                            data.configuration.isPinned || data.configuration.timesUsed > 0
-                        },
-                    )
-                }
+            .collect { cards ->
+                _state.update { it.copy(brewAgainCards = cards) }
                 loaded.value = true
             }
-    }
-
-    private fun pinConfiguration(configId: String, isPinned: Boolean) = viewModelScope.launch {
-        pinBrewingConfigurationUseCase(configId, isPinned)
-            .onFailure { messages.failure(it, Res.string.couldnt_update_quick_brew) }
-    }
-
-    private fun reorderPinnedConfigurations(orderedIds: List<String>) = viewModelScope.launch {
-        runCatching { brewingConfigurationRepository.reorderPinnedConfigurations(orderedIds) }
-            .onFailure { messages.failure(it, Res.string.couldnt_update_quick_brew) }
     }
 
     private fun refresh() {
@@ -517,16 +460,11 @@ class HomeViewModel(
         }
     }
 
-    private fun quickBrew(configurationId: String) = viewModelScope.launch {
-        brewingConfigurationRepository.getById(configurationId)?.let {
-            startSessionUseCase(it)
-        }?.onSuccess {
-            _navEvents.trySend(
-                HomeNavEvent.NavigateToTimer(
-                    sessionId = it.session.id
-                )
-            )
-        }?.onFailure { messages.failure(it, Res.string.couldnt_start_session) }
+    private fun brewAgain(sessionId: String) = viewModelScope.launch {
+        val source = teaSessionRepository.getSession(sessionId) ?: return@launch
+        startSessionUseCase(source)
+            .onSuccess { _navEvents.send(HomeNavEvent.NavigateToTimer(it.session.id)) }
+            .onFailure { messages.failure(it, Res.string.couldnt_start_session) }
     }
 
     private fun confirmDeleteSession() = viewModelScope.launch {
@@ -544,17 +482,6 @@ data class SessionWithTeaData(
     val tags: List<TastingTag> = emptyList(),
 )
 
-data class QuickBrewCardData(
-    val configuration: BrewingConfiguration,
-    val teaName: String,
-    val teaTypeName: String,
-    val teaTypeColorHex: String?,
-    val vesselName: String,
-    val isFinished: Boolean = false,
-    /** The tea's last completed session, the same for every method of the tea. */
-    val lastSession: SessionWithSteeps? = null,
-)
-
 sealed interface HomeNavEvent {
     data class NavigateToHistory(
         val filterDateStart: String? = null,
@@ -563,19 +490,13 @@ sealed interface HomeNavEvent {
 
     data object NavigateToCollection : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
-    data class NavigateToLogTea(
-        val teaId: String? = null,
-        val vesselId: String? = null,
-    ) :
-        HomeNavEvent
+    data class NavigateToLogTea(val route: NavRoute.LogTeaRoute) : HomeNavEvent
 
     data object NavigateToSettings : HomeNavEvent
     data class CompleteSession(val sessionId: String) : HomeNavEvent
     data class NavigateToTimer(val sessionId: String) : HomeNavEvent
     data object NavigateToQuickTimer : HomeNavEvent
     data object NavigateToAnalytics : HomeNavEvent
-    data class NavigateToEditBrewingMethod(val teaId: String, val configurationId: String) :
-        HomeNavEvent
 }
 
 private const val UNDO_OFFERED_KEY = "undoOffered"

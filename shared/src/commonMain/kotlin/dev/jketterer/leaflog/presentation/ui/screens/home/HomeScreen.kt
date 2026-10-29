@@ -34,31 +34,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Settings
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.DailyStats
 import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
-import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
-import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
+import dev.jketterer.leaflog.presentation.ui.components.home.BrewAgainRow
 import dev.jketterer.leaflog.presentation.ui.components.home.DailyStatsSection
 import dev.jketterer.leaflog.presentation.ui.components.home.ExpandableFAB
 import dev.jketterer.leaflog.presentation.ui.components.home.GreetingHeader
 import dev.jketterer.leaflog.presentation.ui.components.home.InProgressSessionsBanner
-import dev.jketterer.leaflog.presentation.ui.components.home.ManageQuickBrewSheet
-import dev.jketterer.leaflog.presentation.ui.components.home.QuickBrewSection
 import dev.jketterer.leaflog.presentation.ui.components.quicktimer.QuickTimerDurationSheet
+import dev.jketterer.leaflog.presentation.ui.components.session.BrewAgainSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionCard
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIcons
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.viewmodel.BrewAgainIntent
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.delete
@@ -78,13 +77,15 @@ import kotlin.time.Duration.Companion.seconds
 import leaf_log.shared.generated.resources.settings_title
 import org.koin.core.parameter.parametersOf
 
+private val SECTION_SPACING = 16.dp
+
 /**
  * Home Screen - main dashboard with stats and recent sessions.
  */
 @Composable
 fun HomeScreen(
     route: NavRoute.HomeRoute,
-    onNavigateToLogTea: (teaId: String?, vesselId: String?) -> Unit,
+    onNavigateToLogTea: (NavRoute.LogTeaRoute) -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
     onNavigateToCollection: () -> Unit,
@@ -93,7 +94,6 @@ fun HomeScreen(
     onNavigateToSteepComplete: (String) -> Unit,
     onNavigateToQuickTimer: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
-    onNavigateToEditBrewingMethod: (String, String) -> Unit,
     viewModel: HomeViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -107,7 +107,7 @@ fun HomeScreen(
         viewModel.navEvents.collect { event ->
             when (event) {
                 is HomeNavEvent.NavigateToLogTea -> {
-                    onNavigateToLogTea(event.teaId, event.vesselId)
+                    onNavigateToLogTea(event.route)
                 }
 
                 is HomeNavEvent.NavigateToSession -> {
@@ -143,10 +143,6 @@ fun HomeScreen(
 
                 is HomeNavEvent.NavigateToAnalytics -> {
                     onNavigateToAnalytics()
-                }
-
-                is HomeNavEvent.NavigateToEditBrewingMethod -> {
-                    onNavigateToEditBrewingMethod(event.teaId, event.configurationId)
                 }
             }
         }
@@ -226,7 +222,7 @@ private fun HomeContent(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(bottom = 80.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(SECTION_SPACING),
                     ) {
                         // Greeting
                         item(key = "greeting") {
@@ -265,29 +261,14 @@ private fun HomeContent(
                             )
                         }
 
-                        // Quick brew configurations
-                        if (state.quickBrewConfigurations.isNotEmpty()) {
-                            item(key = "quick_brew") {
-                                QuickBrewSection(
-                                    configurations = state.quickBrewConfigurations,
-                                    onConfigClick = { data ->
-                                        onIntent(
-                                            HomeIntent.QuickBrewClicked(
-                                                configurationId = data.configuration.id,
-                                                teaId = data.configuration.teaId,
-                                                vesselId = data.configuration.vesselId,
-                                            )
-                                        )
+                        if (state.brewAgainCards.isNotEmpty()) {
+                            item(key = "brew_again") {
+                                BrewAgainRow(
+                                    cards = state.brewAgainCards,
+                                    onCardClick = { card ->
+                                        onIntent(HomeIntent.BrewAgainCardClicked(card.teaId, card.vesselId))
                                     },
-                                    onEditClick = { data ->
-                                        onIntent(
-                                            HomeIntent.EditQuickBrewClicked(
-                                                teaId = data.configuration.teaId,
-                                                configurationId = data.configuration.id
-                                            )
-                                        )
-                                    },
-                                    onManageClick = { onIntent(HomeIntent.ManageQuickBrewClicked) },
+                                    modifier = Modifier.animateItem(),
                                 )
                             }
                         }
@@ -296,7 +277,17 @@ private fun HomeContent(
                         item(key = "recent_header") {
                             SectionHeader(
                                 title = stringResource(Res.string.header_recent_sessions),
-                                modifier = Modifier.padding(horizontal = 16.dp),
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    // Takes back the list's spacing, so the cards sit right under it as
+                                    // in the sections above
+                                    .layout { measurable, constraints ->
+                                        val placeable = measurable.measure(constraints)
+                                        val spacing = SECTION_SPACING.roundToPx()
+                                        layout(placeable.width, placeable.height - spacing) {
+                                            placeable.place(0, 0)
+                                        }
+                                    },
                             ) {
                                 TextButton(
                                     onClick = {
@@ -398,17 +389,20 @@ private fun HomeContent(
         )
     }
 
-    // Manage Quick Brew Sheet
-    if (state.showManageQuickBrewSheet) {
-        ManageQuickBrewSheet(
-            configurations = state.allBrewingConfigurations,
-            onPinToggled = { id, isPinned ->
-                onIntent(HomeIntent.PinConfigurationToggled(id, isPinned))
-            },
-            onReorder = { orderedIds ->
-                onIntent(HomeIntent.PinnedConfigurationsReordered(orderedIds))
-            },
-            onDismiss = { onIntent(HomeIntent.DismissManageQuickBrewSheet) },
+    state.brewAgainSheet?.let { sheet ->
+        val onBrewAgain = { intent: BrewAgainIntent -> onIntent(HomeIntent.BrewAgain(intent)) }
+        BrewAgainSheet(
+            teaName = sheet.teaName,
+            teaTypeColorHex = sheet.teaTypeColorHex,
+            vesselName = sheet.vesselName,
+            brew = sheet.brew,
+            tagVocabulary = sheet.tagVocabulary,
+            onStart = { onBrewAgain(BrewAgainIntent.Start) },
+            onAdjust = { onBrewAgain(BrewAgainIntent.Adjust) },
+            onDismiss = { onBrewAgain(BrewAgainIntent.Dismiss) },
+            last = sheet.last,
+            best = sheet.best,
+            onSelect = { onBrewAgain(BrewAgainIntent.Select(it)) },
         )
     }
 }
@@ -416,7 +410,6 @@ private fun HomeContent(
 @Preview(showBackground = true)
 @Composable
 private fun HomeScreenPreview() {
-    val now = PreviewInstant
     LeafLogTheme {
         HomeContent(
             state = HomeState(
@@ -426,75 +419,32 @@ private fun HomeScreenPreview() {
                     totalWaterMl = 946.0,
                     differentTeasCount = 2,
                 ),
-                quickBrewConfigurations = listOf(
-                    QuickBrewCardData(
-                        configuration = BrewingConfiguration(
-                            id = "config-1",
-                            teaId = "tea-1",
-                            vesselId = "gaiwan",
-                            teaQuantityGrams = 5f,
-                            waterQuantityMl = 100.0,
-                            temperatureCelsius = 95.0,
-                            brewingTime = 30.seconds,
-                            waterType = WaterType.FILTERED,
-                            sourceSessionId = null,
-                            rating = null,
-                            label = "Gaiwan · Gong-fu",
-                            timesUsed = 24,
-                            lastUsedAt = null,
-                            createdAt = now,
-                            updatedAt = now,
-                        ),
+                brewAgainCards = listOf(
+                    BrewAgainCardData(
+                        teaId = "tea-1",
+                        vesselId = "gaiwan",
                         teaName = "Tie Guan Yin",
-                        teaTypeName = "Oolong",
                         teaTypeColorHex = "#FF9800",
                         vesselName = "Gaiwan",
-                    ),
-                    QuickBrewCardData(
-                        configuration = BrewingConfiguration(
-                            id = "config-2",
-                            teaId = "tea-2",
-                            vesselId = "mug",
-                            teaQuantityGrams = 2f,
-                            waterQuantityMl = 350.0,
-                            temperatureCelsius = 80.0,
-                            brewingTime = 3.minutes,
-                            waterType = WaterType.FILTERED,
-                            sourceSessionId = null,
-                            rating = null,
-                            label = "Mug · Western",
-                            timesUsed = 8,
-                            lastUsedAt = null,
-                            createdAt = now,
-                            updatedAt = now,
+                        brew = previewSession(
+                            id = "brew-1",
+                            ratings = listOf(4f, 5f),
+                            status = SessionStatus.COMPLETED,
+                            brewingTime = 30.seconds,
+                            temperatureCelsius = 95.0,
                         ),
+                    ),
+                    BrewAgainCardData(
+                        teaId = "tea-2",
+                        vesselId = "mug",
                         teaName = "Sencha",
-                        teaTypeName = "Green",
                         teaTypeColorHex = "#4CAF50",
                         vesselName = "Mug",
-                    ),
-                    QuickBrewCardData(
-                        configuration = BrewingConfiguration(
-                            id = "config-3",
-                            teaId = "tea-3",
-                            vesselId = "kyusu",
-                            teaQuantityGrams = null,
-                            waterQuantityMl = 250.0,
-                            temperatureCelsius = 100.0,
-                            brewingTime = 5.minutes,
-                            waterType = WaterType.SPRING,
-                            sourceSessionId = null,
-                            rating = null,
-                            label = "Kyusu · Bag Method",
-                            timesUsed = 3,
-                            lastUsedAt = null,
-                            createdAt = now,
-                            updatedAt = now,
+                        brew = previewSession(
+                            id = "brew-2",
+                            status = SessionStatus.COMPLETED,
+                            brewingTime = 3.minutes,
                         ),
-                        teaName = "English Breakfast",
-                        teaTypeName = "Black",
-                        teaTypeColorHex = "#795548",
-                        vesselName = "Kyusu",
                     ),
                 ),
                 recentSessionsWithTea = listOf(

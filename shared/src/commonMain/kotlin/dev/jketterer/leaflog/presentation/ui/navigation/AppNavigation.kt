@@ -138,9 +138,7 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
         entry<NavRoute.HomeRoute> { route ->
             HomeScreen(
                 route = route,
-                onNavigateToLogTea = { teaId, vesselId ->
-                    navigator.navigate(NavRoute.LogTeaRoute(teaId, vesselId))
-                },
+                onNavigateToLogTea = { navigator.navigate(it) },
                 onNavigateToSession = { sessionId ->
                     navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
                 },
@@ -165,9 +163,6 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 },
                 onNavigateToQuickTimer = { navigator.openOnHome(NavRoute.TimerRoute()) },
                 onNavigateToAnalytics = { navigator.navigate(NavRoute.AnalyticsRoute) },
-                onNavigateToEditBrewingMethod = { teaId, configId ->
-                    navigator.navigate(NavRoute.CreateBrewingConfigurationRoute(teaId, configId))
-                }
             )
         }
 

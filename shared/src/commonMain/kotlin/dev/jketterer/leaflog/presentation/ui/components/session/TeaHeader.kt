@@ -48,7 +48,8 @@ fun TeaHeader(
                 tint = teaColor,
             )
         }
-        Column {
+        // Weighted so a Row measuring its intrinsic height wraps the name as it will lay out
+        Column(modifier = Modifier.weight(1f, fill = false)) {
             Text(
                 text = teaName,
                 style = MaterialTheme.typography.titleMedium,

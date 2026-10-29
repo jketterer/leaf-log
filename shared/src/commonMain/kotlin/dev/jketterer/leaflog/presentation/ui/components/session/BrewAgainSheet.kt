@@ -179,7 +179,7 @@ private fun BrewAgainContent(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(Res.string.adjust))
             }
-            Button(onClick = onStart, modifier = Modifier.weight(1f)) {
+            Button(onClick = onStart) {
                 Icon(FeatherIcons.Play, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(Res.string.start_brewing))

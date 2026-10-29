@@ -1,6 +1,6 @@
 # Leaf Log — Roadmap
 
-> **Last updated:** 2026-10-29 (Bet 5, Brew again, built)
+> **Last updated:** 2026-10-29 (Bet 5 released as 0.8.0)
 > **Inputs:** the code audit in `docs/audit/` (2026-09-23) and a vision interview the same day.
 > **Supersedes:** PRD.md, FEATURES.md, ARCHITECTURE.md, DATA_MODEL.md, DOMAIN_LOGIC.md,
 > DESIGN_SYSTEM.md, architecture-audit.md, punch-list.md — to be deleted in F0. CLAUDE.md carries
@@ -981,6 +981,8 @@ southern-region device and the pager across rotation and 2× font.
 
 ## Bet 5 — Brew again
 
+**Done, released as 0.8.0.**
+
 **Outcome:** repeating a brew means picking it from your history and seeing exactly what it was
 before the timer starts. Saved methods go.
 
@@ -1099,6 +1101,7 @@ Four phases; the app builds and the flow tests pass after each.
    `KoinGraphTest`; Upgrade and Backup flows.
 9. [x] `docs: brew again`: CLAUDE.md (Room v13, the session fields, the `RecomputeStatsUseCase`
    example), README, TEST_CASES, CHANGELOG Unreleased, the Track B upgrade line.
+10. [x] `chore: release 0.8.0`
 
 ---
 

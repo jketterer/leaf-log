@@ -16,6 +16,8 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-29
+
 Brew again: repeat a past brew by picking it from your history and seeing exactly what it was
 before the timer starts. Saved methods are gone.
 
@@ -30,6 +32,9 @@ before the timer starts. Saved methods are gone.
   first.
 - Log Tea fills from the brew Brew again would repeat for the tea and vessel you pick. Start from
   switches it to your last time, your best brew, or Scratch.
+- A Flavors tab in Collection: the tags you've tasted, most used first, and the ones you haven't
+  yet. A flavor opens to how often you've tasted it and the teas you taste it in most, from there
+  or from Tea Detail's top flavors. Your own tags can be renamed, merged into another or deleted.
 
 ### Changed
 
@@ -40,6 +45,10 @@ before the timer starts. Saved methods are gone.
 - Home's recent sessions no longer have a Brew again button; the row replaces it.
 - Session complete is redesigned, and the tea and vessel sit beside a leaf in the tea's color on
   the brew screens.
+- Log Tea picks the tea and vessel together at the top, the vessel from a row of chips, and only
+  shows the brew parameters once both are chosen.
+- New vessel icons.
+- Backups carry tag renames, merges and deletes, and importing an older backup doesn't undo them.
 
 ### Removed
 
@@ -51,6 +60,9 @@ before the timer starts. Saved methods are gone.
 
 - Home's stats for today update when you come back to the app.
 - The Timer no longer opens over Steep Complete once a steep has finished.
+- The Timer's ring resizes smoothly when its buttons change instead of jumping.
+- Bottom sheets open fully instead of stopping halfway, where the keyboard could hide their
+  bottom.
 
 ## [0.7.0] - 2026-10-26
 

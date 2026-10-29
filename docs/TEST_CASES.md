@@ -31,9 +31,10 @@ pass's export (Photos and backup) serves; import it after the fresh-install run.
 ### 0. Upgrade from 0.7.0
 
 Once, for the release after 0.7.0. On 0.7.0, save a method from a gongfu session, start a session
-on it and leave it after steep 1.
+on it and leave it after steep 1. Tag a steep with a custom tag.
 
 - [ ] Install over it. The session is still in progress, and steep 2 suggests the method's time.
+- [ ] Rename the custom tag in Collection → Flavors. The tagged session shows the new name.
 
 ### 1. Fresh install
 

@@ -92,7 +92,7 @@ di/ (Dependency Injection)
   NOT ViewModels
 - Should NEVER be simple wrappers for a lone single repository function
     - ViewModels can use repository calls directly instead
-- Example: `RecomputeStatsUseCase` rebuilds a tea's and a method's stats from their sessions
+- Example: `RecomputeStatsUseCase` rebuilds a tea's stats from its sessions
 
 **Repository Pattern**
 
@@ -110,7 +110,7 @@ di/ (Dependency Injection)
 
 ### Database
 
-**Room Database (Version 12)**
+**Room Database (Version 13)**
 
 - Entities in `data/local/database/entities/`
 - DAOs in `data/local/database/dao/`
@@ -122,8 +122,9 @@ di/ (Dependency Injection)
     - `parentSessionId`: Links child steeps to parent session
     - `steepNumber`: Order of steeps (1 = parent/first steep)
     - `rating`: Individual steep rating
-    - Session fields (vessel, water type, leaf, location, `usedConfigurationId`, `sessionNotes`):
-      parent row only, NULL on children. `notes` is each steep's own, steep 1 included
+    - Session fields (vessel, water type, leaf, location, rinse, `planSessionId`, `sessionNotes`):
+      parent row only, NULL (rinse false) on children. `notes` is each steep's own, steep 1
+      included
 - `TeaTypeEntity`: Tea categories
 - `BrewingVesselEntity`: Brewing vessels
 - `TastingTagEntity`: Curated and custom tasting tags; `SteepTagEntity` puts one on a steep,
@@ -149,6 +150,8 @@ Tea sessions can have multiple steeps:
 - Subsequent steeps are children (`parentSessionId = parent.id`, `steepNumber = 2, 3, ...`)
 - The domain reads them as `SessionWithSteeps(session, steeps)`; `Session.id` is steep 1's id
 - A session's rating is `effectiveRating`, computed from its steeps and never stored
+- Brew again replays a past session: `planSessionId` points at it and `ResolvePlanUseCase` plans
+  the later steeps from it. A pair (a tea in a vessel) replays its `defaultBrew()`
 - Every session write goes through a use case in `usecases/session/`, inside a `Transactor`
 
 ## Platform-Specific Code

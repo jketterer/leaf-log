@@ -16,6 +16,42 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+Brew again: repeat a past brew by picking it from your history and seeing exactly what it was
+before the timer starts. Saved methods are gone.
+
+### Added
+
+- A Brew again row on Home: one card for each tea and vessel you've brewed together, most recent
+  first, showing the brew it repeats. It replays your last brew, or your best when the last was
+  rated under 3★.
+- A Brew again sheet, from Home, History, Tea Detail's best brew and Session Detail. It shows the
+  brew's leaf, water, temperature, rinse, each steep, tags and note, with Last time and Best brew to
+  switch between when they differ. Start Brewing begins the session; Adjust opens it in Log Tea
+  first.
+- Log Tea fills from the brew Brew again would repeat for the tea and vessel you pick. Start from
+  switches it to your last time, your best brew, or Scratch.
+
+### Changed
+
+- Nothing starts a session on one tap: Brew again always opens the sheet first.
+- A repeated brew's later steeps follow the brew it repeats, moved by however much you changed
+  steep 1.
+- Steep Complete leads with Finish when the brew you repeated was a single steep.
+- Home's recent sessions no longer have a Brew again button; the row replaces it.
+- Session complete is redesigned, and the tea and vessel sit beside a leaf in the tea's color on
+  the brew screens.
+
+### Removed
+
+- Saved methods, Quick Brew and the offers to save or update a method. A session started from a
+  method keeps replaying the session the method was saved from, and older backups import the same
+  way. Method names are not kept.
+
+### Fixed
+
+- Home's stats for today update when you come back to the app.
+- The Timer no longer opens over Steep Complete once a steep has finished.
+
 ## [0.7.0] - 2026-10-26
 
 Recaps: once a season ends, "Your autumn in tea" pages through what you brewed, and from January,

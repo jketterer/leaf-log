@@ -27,9 +27,9 @@ and detailed tea profiles including origin, producer, and brewing defaults.
 
 **Brewing Vessels:** Track teapots, gaiwans, and other vessels with capacity info.
 
-**Brewing Configurations:** Save and reuse brewing parameters (temperature, water quantity, brew
-time, tea quantity) for specific tea + vessel combinations. Configurations can be learned from
-previous sessions.
+**Brew Again:** Repeat a past brew of a tea in a vessel: its last session, or its best when the
+last went poorly. A sheet shows exactly what it was before the timer starts, steep by steep, and
+Adjust opens it in the log form first.
 
 **Session History:** Browse and filter past sessions by tea type, specific tea, date range, or
 rating.
@@ -76,11 +76,10 @@ persistent UI state.
 
 ### Use Cases
 
-Business logic lives in dedicated use cases organized by domain (session, timer, vessel,
-configuration, data). Each use case has a single responsibility and returns `Result<T>` for
-structured error
-handling. Use cases are only introduced when they encapsulate meaningful logic; simple repository
-calls go directly through the ViewModel.
+Business logic lives in dedicated use cases organized by domain (session, timer, vessel). Each use
+case has a single responsibility and returns `Result<T>` for structured error handling. Use cases
+are only introduced when they encapsulate meaningful logic; simple repository calls go directly
+through the ViewModel.
 
 Examples:
 

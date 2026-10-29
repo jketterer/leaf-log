@@ -28,6 +28,13 @@ pass's export (Photos and backup) serves; import it after the fresh-install run.
 
 ## Android
 
+### 0. Upgrade from 0.7.0
+
+Once, for the release after 0.7.0. On 0.7.0, save a method from a gongfu session, start a session
+on it and leave it after steep 1.
+
+- [ ] Install over it. The session is still in progress, and steep 2 suggests the method's time.
+
 ### 1. Fresh install
 
 Uninstall first; system in dark mode; an API 34+ device.
@@ -75,7 +82,7 @@ reference backup.
 Font scale to max (Settings → Display). It and dark mode recreate the Activity, which is
 portrait-locked, so rotation doesn't.
 
-- [ ] Timer ring, Quick Timer duration sheet, and Quick Brew cards with long tea names stay
+- [ ] Timer ring, Quick Timer duration sheet, and Brew again cards with long tea names stay
       readable, with nothing clipped.
 - [ ] A recap: every page scrolls rather than clips, and the close button and page dots clear the
       status and navigation bars.
@@ -177,7 +184,7 @@ Then:
 
 Text size to max (Settings → Accessibility → Display & Text Size → Larger Text).
 
-- [ ] Timer ring, Quick Timer duration sheet, and Quick Brew cards with long tea names stay
+- [ ] Timer ring, Quick Timer duration sheet, and Brew again cards with long tea names stay
       readable, with nothing clipped.
 - [ ] A recap: every page scrolls rather than clips, and the close button and page dots clear the
       status bar and home indicator.
@@ -200,5 +207,5 @@ Text size back to default.
 
 ## Across platforms
 
-- [ ] Import Android's export on iOS, and iOS's on Android. All teas, sessions, vessels, methods,
-      and photos arrive, portrait photos still upright (F4 bug: DEFLATE vs STORE fails today).
+- [ ] Import Android's export on iOS, and iOS's on Android. All teas, sessions, vessels and
+      photos arrive, portrait photos still upright (F4 bug: DEFLATE vs STORE fails today).

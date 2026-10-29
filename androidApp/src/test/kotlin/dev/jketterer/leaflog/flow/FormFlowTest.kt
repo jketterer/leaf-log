@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.flow
 
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
@@ -22,9 +23,9 @@ import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_changes_title
 import leaf_log.shared.generated.resources.edit_session
 import leaf_log.shared.generated.resources.field_location_optional
-import leaf_log.shared.generated.resources.field_tea_quantity_required
-import leaf_log.shared.generated.resources.field_temperature_required
-import leaf_log.shared.generated.resources.field_vessel_required
+import leaf_log.shared.generated.resources.field_tea_name_required
+import leaf_log.shared.generated.resources.field_tea_quantity
+import leaf_log.shared.generated.resources.field_temperature
 import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
@@ -68,7 +69,7 @@ class FormFlowTest : FlowTest() {
         click("Dragon Well")
         assertGuarded(
             open = { click("Edit tea") },
-            field = "Tea Name *",
+            field = text(Res.string.field_tea_name_required),
             was = "Dragon Well",
             typed = "Longjing",
             behind = "Edit tea",
@@ -135,17 +136,17 @@ class FormFlowTest : FlowTest() {
         // Under Recent and under All
         waitFor("Dragon Well")
         compose.onAllNodes(hasClickAction() and hasText("Dragon Well"))[0].performClick()
-        click(text(Res.string.field_vessel_required))
         click("Gaiwan")
-        type(text(Res.string.field_tea_quantity_required), "4")
-        type(text(Res.string.field_temperature_required), "85")
+        type(text(Res.string.field_tea_quantity), "4")
+        scrollTo(field(text(Res.string.field_temperature)))
+        type(text(Res.string.field_temperature), "85")
 
         recreate()
 
-        waitFor(field(text(Res.string.field_tea_quantity_required)) and hasText("4"))
-        waitFor(field(text(Res.string.field_temperature_required)) and hasText("85"))
+        scrollTo(field(text(Res.string.field_temperature)) and hasText("85"))
+        scrollTo(field(text(Res.string.field_tea_quantity)) and hasText("4"))
+        scrollTo(isSelected() and hasText("Gaiwan"))
         waitFor("Dragon Well")
-        waitFor(hasText(text(Res.string.field_vessel_required)) and hasText("Gaiwan"))
     }
 
     @Test

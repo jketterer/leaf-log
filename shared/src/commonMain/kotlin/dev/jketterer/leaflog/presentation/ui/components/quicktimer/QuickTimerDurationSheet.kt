@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.components.quicktimer
 
+import leaf_log.shared.generated.resources.field_timer_duration
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -102,7 +103,7 @@ private fun QuickTimerDurationSheetContent(
         DurationPicker(
             duration = duration,
             onDurationChange = onDurationChange,
-            label = "Timer Duration",
+            label = stringResource(Res.string.field_timer_duration),
             isError = duration != null && duration <= Duration.ZERO,
             errorMessage = if (duration != null && duration <= Duration.ZERO) {
                 "Duration must be greater than 0"

@@ -1,19 +1,16 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselChipRow
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -49,10 +46,10 @@ import dev.jketterer.leaflog.presentation.ui.components.common.DiscardChangesGua
 import dev.jketterer.leaflog.presentation.ui.components.common.LeafQuantityField
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RinseSwitch
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionDivider
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.TimePickerField
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
-import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
 import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
@@ -201,7 +198,7 @@ private fun EditSessionContent(
             }
 
             item(key = "vessel") {
-                VesselSelector(
+                VesselChipRow(
                     vessels = state.availableVessels,
                     selectedVessel = state.selectedVessel,
                     onVesselSelected = { vessel ->
@@ -317,15 +314,6 @@ private fun EditSessionContent(
             onTeaCreated = null,
             onDismiss = { showTeaPicker = false },
         )
-    }
-}
-
-@Composable
-private fun SectionDivider() {
-    Column {
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

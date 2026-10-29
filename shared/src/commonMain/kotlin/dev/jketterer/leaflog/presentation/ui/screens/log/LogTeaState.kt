@@ -54,8 +54,6 @@ data class LogTeaState(
     val prefillSource: PrefillSource = PrefillSource.None,
 
     // Validation errors
-    val teaError: String? = null,
-    val vesselError: String? = null,
     val teaQuantityError: StringResource? = null,
     val waterQuantityError: StringResource? = null,
     val temperatureError: StringResource? = null,
@@ -75,8 +73,6 @@ data class LogTeaState(
     val isValid: Boolean
         get() = selectedTea != null &&
                 selectedVessel != null &&
-                teaError == null &&
-                vesselError == null &&
                 (isTeaBag || (teaQuantityGrams != null && teaQuantityError == null)) &&
                 waterQuantityMl != null && waterQuantityError == null &&
                 temperatureCelsius != null && temperatureError == null &&

@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.components.common
 
+import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselChipRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -150,7 +151,7 @@ internal fun BrewParametersContent(
         }
 
         if (vessels != null) {
-            VesselSelector(
+            VesselChipRow(
                 vessels = vessels,
                 selectedVessel = selectedVessel,
                 onVesselSelected = onVesselSelected,

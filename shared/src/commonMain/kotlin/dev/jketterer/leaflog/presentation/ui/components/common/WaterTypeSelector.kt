@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.components.common
 
+import org.jetbrains.compose.resources.stringResource
+import leaf_log.shared.generated.resources.field_water_type
+import leaf_log.shared.generated.resources.Res
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,10 +30,10 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WaterTypeSelector(
+    modifier: Modifier = Modifier,
     selectedWaterType: WaterType,
     onWaterTypeSelected: (WaterType) -> Unit,
-    label: String = "Water Type",
-    modifier: Modifier = Modifier,
+    label: String = stringResource(Res.string.field_water_type),
 ) {
     var expanded by remember { mutableStateOf(false) }
 

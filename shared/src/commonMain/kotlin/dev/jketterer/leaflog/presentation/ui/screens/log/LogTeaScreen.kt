@@ -39,27 +39,24 @@ import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
 import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.LeafQuantityField
-import dev.jketterer.leaflog.presentation.ui.components.common.PrefillBanner
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
-import dev.jketterer.leaflog.presentation.ui.components.common.VesselSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionDivider
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.field_tea_quantity_required
-import leaf_log.shared.generated.resources.field_temperature_required
-import leaf_log.shared.generated.resources.field_water_quantity_required
-import leaf_log.shared.generated.resources.rinsed
+import leaf_log.shared.generated.resources.field_temperature
+import leaf_log.shared.generated.resources.field_water_quantity
+import leaf_log.shared.generated.resources.start_from
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import leaf_log.shared.generated.resources.field_vessel_required
 import leaf_log.shared.generated.resources.log_tea_title
 import leaf_log.shared.generated.resources.navigate_up
 import org.koin.compose.viewmodel.koinViewModel
@@ -130,13 +127,6 @@ private fun LogTeaContent(
         }
     }
 
-    val optionalSummaryParts = buildList {
-        if (state.selectedWaterType != WaterType.FILTERED) add(state.selectedWaterType.displayName)
-        if (state.rinsed) add(stringResource(Res.string.rinsed))
-        if (state.location.isNotEmpty()) add(state.location)
-    }
-    val optionalSummary = optionalSummaryParts.joinToString(" · ")
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
@@ -157,28 +147,16 @@ private fun LogTeaContent(
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                item(key = "tea_selection") {
-                    TeaSelectionSection(
+                item(key = "tea_and_vessel") {
+                    TeaAndVesselSection(
                         selectedTea = state.selectedTea,
-                        teaTypeName = state.selectedTeaType?.name ?: "",
                         teaTypeColorHex = state.selectedTeaType?.colorHex,
-                        errorMessage = state.teaError,
-                        onSelectTeaClicked = { onIntent(LogTeaIntent.ShowTeaPicker) },
-                        imageStorage = imageStorage,
-                    )
-                }
-
-                item(key = "vessel") {
-                    VesselSelector(
                         vessels = state.availableVessels,
                         selectedVessel = state.selectedVessel,
+                        onSelectTeaClicked = { onIntent(LogTeaIntent.ShowTeaPicker) },
                         onVesselSelected = { vessel ->
                             onIntent(LogTeaIntent.VesselSelected(vessel.id))
                         },
-                        label = stringResource(Res.string.field_vessel_required),
-                        isError = state.vesselError != null,
-                        errorMessage = state.vesselError,
-                        modifier = Modifier.fillMaxWidth(),
                         imageStorage = imageStorage,
                     )
                 }
@@ -186,17 +164,20 @@ private fun LogTeaContent(
                 // Prompt when tea or vessel not yet selected
                 if (state.selectedTea == null || state.selectedVessel == null) {
                     item(key = "parameters_hint") {
-                        SelectTeaAndVesselPrompt()
+                        SelectTeaAndVesselPrompt(modifier = Modifier.animateItem())
                     }
                 }
 
                 // Brewing Parameters Section (gated behind tea + vessel selection)
                 if (state.selectedTea != null && state.selectedVessel != null) {
-                    item(key = "parameters_header") {
-                        BrewingParametersHeader()
-                    }
-
                     if (state.sourceBrew != null || state.lastBrew != null) {
+                        item(key = "source_header") {
+                            Column(modifier = Modifier.animateItem()) {
+                                SectionDivider()
+                                SectionHeader(stringResource(Res.string.start_from))
+                            }
+                        }
+
                         item(key = "source_brew") {
                             SourceBrewSection(
                                 source = state.sourceBrew,
@@ -210,14 +191,12 @@ private fun LogTeaContent(
                         }
                     }
 
-                    if (state.prefillSource != PrefillSource.None) {
-                        item(key = "prefill_banner") {
-                            PrefillBanner(
-                                source = state.prefillSource,
-                                teaName = state.selectedTea.name,
-                                modifier = Modifier.fillMaxWidth().animateItem(),
-                            )
-                        }
+                    item(key = "parameters_header") {
+                        BrewingParametersHeader(
+                            prefillSource = state.prefillSource,
+                            teaName = state.selectedTea.name,
+                            modifier = Modifier.animateItem(),
+                        )
                     }
 
                     item(key = "tea_quantity") {
@@ -226,10 +205,10 @@ private fun LogTeaContent(
                             teaQuantityGrams = state.teaQuantityGrams,
                             onTeaBagModeChanged = { onIntent(LogTeaIntent.TeaBagModeChanged(it)) },
                             onTeaQuantityChanged = { onIntent(LogTeaIntent.TeaQuantityChanged(it)) },
-                            label = stringResource(Res.string.field_tea_quantity_required),
                             errorMessage = state.teaQuantityError,
                             presets = true,
                             weightUnit = state.userPreferences.weightUnit,
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -238,6 +217,7 @@ private fun LogTeaContent(
                             brewingTime = state.brewingTime,
                             errorMessage = state.brewingTimeError,
                             onBrewingTimeChanged = { onIntent(LogTeaIntent.BrewingTimeChanged(it)) },
+                            modifier = Modifier.animateItem(),
                         )
                     }
 
@@ -246,11 +226,11 @@ private fun LogTeaContent(
                             value = state.temperatureCelsius,
                             onValueChange = { onIntent(LogTeaIntent.TemperatureChanged(it)) },
                             unit = state.userPreferences.temperatureUnit,
-                            label = stringResource(Res.string.field_temperature_required),
+                            label = stringResource(Res.string.field_temperature),
                             isError = state.temperatureError != null,
                             supportingText = state.temperatureError?.let { stringResource(it) },
                             presets = true,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().animateItem(),
                         )
                     }
 
@@ -259,11 +239,11 @@ private fun LogTeaContent(
                             value = state.waterQuantityMl,
                             onValueChange = { onIntent(LogTeaIntent.WaterQuantityChanged(it)) },
                             unit = state.userPreferences.volumeUnit,
-                            label = stringResource(Res.string.field_water_quantity_required),
+                            label = stringResource(Res.string.field_water_quantity),
                             isError = state.waterQuantityError != null,
                             supportingText = state.waterQuantityError?.let { stringResource(it) },
                             presets = true,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().animateItem(),
                         )
                     }
 
@@ -271,7 +251,6 @@ private fun LogTeaContent(
                         OptionalDetailsSection(
                             expanded = showOptionalFields,
                             onExpandedChange = { showOptionalFields = it },
-                            summary = optionalSummary,
                             selectedWaterType = state.selectedWaterType,
                             rinsed = state.rinsed,
                             location = state.location,
@@ -280,6 +259,7 @@ private fun LogTeaContent(
                                 onIntent(LogTeaIntent.WaterTypeSelected(waterType))
                             },
                             onLocationChanged = { onIntent(LogTeaIntent.LocationChanged(it)) },
+                            modifier = Modifier.animateItem(),
                         )
                     }
 

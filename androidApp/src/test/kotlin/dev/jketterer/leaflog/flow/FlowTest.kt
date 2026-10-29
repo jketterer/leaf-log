@@ -42,7 +42,6 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.begin_session
-import leaf_log.shared.generated.resources.field_vessel_required
 import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.select_tea
@@ -379,7 +378,6 @@ abstract class FlowTest {
         click(text(Res.string.log_session))
         click(text(Res.string.select_tea))
         click(tea)
-        click(text(Res.string.field_vessel_required))
         click("Gaiwan")
         click("5 g")
         click("0:30")

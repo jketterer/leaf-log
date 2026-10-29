@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.components.collection
 
+import org.jetbrains.compose.resources.stringResource
+import leaf_log.shared.generated.resources.field_tea_name_required
+import leaf_log.shared.generated.resources.Res
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -91,7 +94,7 @@ internal fun QuickAddTeaForm(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Tea Name *") },
+            label = { Text(stringResource(Res.string.field_tea_name_required)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)

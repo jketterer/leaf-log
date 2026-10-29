@@ -14,6 +14,7 @@ import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.delete
+import leaf_log.shared.generated.resources.change
 import leaf_log.shared.generated.resources.field_capacity
 import leaf_log.shared.generated.resources.save
 import leaf_log.shared.generated.resources.settings_title
@@ -54,7 +55,9 @@ class LibraryFlowTest : FlowTest() {
         click("Brew This Tea")
 
         waitFor("Log Tea Session")
-        waitFor(hasText("Dragon Well") and hasText("Green"))
+        waitFor("Dragon Well")
+        // Change only shows once a tea is chosen
+        waitFor(text(Res.string.change))
     }
 
     @Test

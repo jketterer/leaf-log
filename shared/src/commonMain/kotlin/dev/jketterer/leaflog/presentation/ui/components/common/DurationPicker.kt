@@ -1,5 +1,10 @@
 package dev.jketterer.leaflog.presentation.ui.components.common
 
+import org.jetbrains.compose.resources.stringResource
+import leaf_log.shared.generated.resources.field_seconds
+import leaf_log.shared.generated.resources.field_minutes
+import leaf_log.shared.generated.resources.field_brewing_time
+import leaf_log.shared.generated.resources.Res
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
@@ -51,7 +56,7 @@ internal fun durationToFields(duration: Duration): Pair<String, String> =
 fun DurationPicker(
     duration: Duration?,
     onDurationChange: (Duration?) -> Unit,
-    label: String = "Brewing Time",
+    label: String = stringResource(Res.string.field_brewing_time),
     modifier: Modifier = Modifier,
     isError: Boolean = false,
     errorMessage: String? = null,
@@ -107,7 +112,8 @@ fun DurationPicker(
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Row(
@@ -122,7 +128,7 @@ fun DurationPicker(
                         parseDurationFields(newValue.text, secondsFieldValue.text),
                     )
                 },
-                label = { Text("Min") },
+                label = { Text(stringResource(Res.string.field_minutes)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
@@ -140,7 +146,7 @@ fun DurationPicker(
                         parseDurationFields(minutesFieldValue.text, newValue.text),
                     )
                 },
-                label = { Text("Sec") },
+                label = { Text(stringResource(Res.string.field_seconds)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),

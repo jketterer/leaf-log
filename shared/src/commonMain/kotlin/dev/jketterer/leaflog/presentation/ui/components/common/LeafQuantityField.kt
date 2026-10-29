@@ -44,12 +44,14 @@ fun LeafQuantityField(
                 onClick = { onTeaBagModeChanged(false) },
                 selected = !isTeaBag,
                 label = { Text(stringResource(Res.string.loose_leaf)) },
+                icon = {},
             )
             SegmentedButton(
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                 onClick = { onTeaBagModeChanged(true) },
                 selected = isTeaBag,
                 label = { Text(stringResource(Res.string.review_tea_bag)) },
+                icon = {},
             )
         }
         if (!isTeaBag) {

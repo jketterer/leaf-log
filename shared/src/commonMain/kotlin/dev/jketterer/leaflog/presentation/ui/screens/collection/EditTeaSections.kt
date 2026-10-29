@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
+import leaf_log.shared.generated.resources.field_tea_name_required
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -70,7 +71,7 @@ internal fun TeaIdentitySection(
         OutlinedTextField(
             value = name,
             onValueChange = onNameChanged,
-            label = { Text("Tea Name *") },
+            label = { Text(stringResource(Res.string.field_tea_name_required)) },
             isError = nameError != null,
             supportingText = nameError?.let { { Text(it) } },
             modifier = Modifier

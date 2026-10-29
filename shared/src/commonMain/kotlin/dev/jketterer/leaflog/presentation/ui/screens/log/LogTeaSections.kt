@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,7 +42,6 @@ import compose.icons.feathericons.ChevronDown
 import compose.icons.feathericons.ChevronUp
 import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.Play
-import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.SyncStatus
@@ -51,7 +49,12 @@ import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.WeightUnit
-import dev.jketterer.leaflog.presentation.ui.components.collection.TeaCard
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
+import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselChipRow
+import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
+import androidx.compose.ui.graphics.isSpecified
 import dev.jketterer.leaflog.presentation.ui.components.common.DurationPicker
 import dev.jketterer.leaflog.presentation.ui.components.common.LeafQuantityField
 import dev.jketterer.leaflog.presentation.ui.components.common.Preset
@@ -65,8 +68,17 @@ import dev.jketterer.leaflog.presentation.ui.components.session.TagChips
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.begin_session
+import leaf_log.shared.generated.resources.change
+import leaf_log.shared.generated.resources.collapse_optional_details
+import leaf_log.shared.generated.resources.expand_optional_details
+import leaf_log.shared.generated.resources.field_location_optional
+import leaf_log.shared.generated.resources.log_tea_choose_body
+import leaf_log.shared.generated.resources.log_tea_choose_title
+import leaf_log.shared.generated.resources.prefill_tea_default
+import leaf_log.shared.generated.resources.prefill_type_default
+import dev.jketterer.leaflog.domain.usecases.session.PrefillSource
+import dev.jketterer.leaflog.presentation.ui.components.common.SectionDivider
 import leaf_log.shared.generated.resources.best_brew
-import leaf_log.shared.generated.resources.field_tea_quantity_required
 import leaf_log.shared.generated.resources.header_brewing_parameters
 import leaf_log.shared.generated.resources.header_optional_details
 import leaf_log.shared.generated.resources.last_time
@@ -74,7 +86,6 @@ import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.past_brew
 import leaf_log.shared.generated.resources.select_tea
 import leaf_log.shared.generated.resources.scratch
-import leaf_log.shared.generated.resources.start_from
 import leaf_log.shared.generated.resources.steep_count
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
@@ -126,11 +137,6 @@ internal fun SourceBrewSection(
         modifier = modifier.animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = stringResource(Res.string.start_from),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-        )
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             choices.forEachIndexed { index, (brew, label) ->
                 SegmentedButton(
@@ -197,42 +203,37 @@ private fun SourceBrewSummary(
 }
 
 /**
- * Tea picker row - shows the selected tea, or a button to open the search dialog.
+ * The tea and vessel being brewed, named as the brew screens name them, over the vessels to pick
+ * from. With no tea yet, a button to pick one.
  */
 @Composable
-internal fun TeaSelectionSection(
+internal fun TeaAndVesselSection(
     selectedTea: Tea?,
-    teaTypeName: String,
     teaTypeColorHex: String?,
-    errorMessage: String?,
+    vessels: List<BrewingVessel>,
+    selectedVessel: BrewingVessel?,
     onSelectTeaClicked: () -> Unit,
+    onVesselSelected: (BrewingVessel) -> Unit,
     modifier: Modifier = Modifier,
     imageStorage: ImageStorage? = null,
 ) {
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(
-            text = "Tea *",
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-        )
-
         if (selectedTea != null) {
-            TeaCard(
-                tea = selectedTea,
-                teaTypeName = teaTypeName,
-                teaTypeColorHex = teaTypeColorHex,
-                onTeaClick = {},
-                trailingContent = {
-                    TextButton(onClick = onSelectTeaClicked) {
-                        Text("Change")
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                imageStorage = imageStorage,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TeaHeader(
+                    teaName = selectedTea.name,
+                    vesselName = selectedVessel?.name,
+                    teaColor = teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
+                        ?: MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = onSelectTeaClicked) {
+                    Text(stringResource(Res.string.change))
+                }
+            }
         } else {
             Button(
                 onClick = onSelectTeaClicked,
@@ -241,14 +242,12 @@ internal fun TeaSelectionSection(
                 Text(stringResource(Res.string.select_tea))
             }
         }
-
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
+        VesselChipRow(
+            vessels = vessels,
+            selectedVessel = selectedVessel,
+            onVesselSelected = onVesselSelected,
+            imageStorage = imageStorage,
+        )
     }
 }
 
@@ -273,32 +272,45 @@ internal fun SelectTeaAndVesselPrompt(
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
         )
         Text(
-            text = "Select a tea and vessel",
+            text = stringResource(Res.string.log_tea_choose_title),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-            text = "to set up your brew parameters",
+            text = stringResource(Res.string.log_tea_choose_body),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
         )
     }
 }
 
+/** The parameters' header, saying underneath where the fields were filled from when it was a default. */
 @Composable
 internal fun BrewingParametersHeader(
+    prefillSource: PrefillSource,
+    teaName: String,
     modifier: Modifier = Modifier,
 ) {
+    val prefill = when (prefillSource) {
+        is PrefillSource.TeaDefault -> stringResource(Res.string.prefill_tea_default, teaName)
+        is PrefillSource.TypeDefault -> stringResource(Res.string.prefill_type_default, prefillSource.typeName)
+        // A past brew shows under Start from; nothing to say without a pre-fill
+        is PrefillSource.PastBrew, PrefillSource.None -> null
+    }
+
     Column(
-        modifier = modifier,
+        modifier = modifier.animateContentSize(),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
+        SectionDivider()
         SectionHeader(stringResource(Res.string.header_brewing_parameters))
-        Text(
-            text = "* Required",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        prefill?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -328,7 +340,6 @@ internal fun BrewingTimeSection(
             onDurationChange = { duration ->
                 duration?.let { onBrewingTimeChanged(it) }
             },
-            label = "Brewing Time *",
             isError = errorMessage != null,
             errorMessage = errorMessage,
             modifier = Modifier.fillMaxWidth(),
@@ -343,13 +354,12 @@ internal fun BrewingTimeSection(
 }
 
 /**
- * Collapsible section for water type and location, summarizing its contents when collapsed.
+ * Collapsible section for the rinse, water type and location.
  */
 @Composable
 internal fun OptionalDetailsSection(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    summary: String,
     selectedWaterType: WaterType,
     rinsed: Boolean,
     location: String,
@@ -361,27 +371,23 @@ internal fun OptionalDetailsSection(
     val focusManager = LocalFocusManager.current
 
     Column(modifier = modifier) {
+        SectionDivider()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { onExpandedChange(!expanded) }
                 .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                SectionHeader(stringResource(Res.string.header_optional_details))
-                if (!expanded && summary.isNotEmpty()) {
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            SectionHeader(
+                title = stringResource(Res.string.header_optional_details),
+                modifier = Modifier.weight(1f),
+            )
             Icon(
                 imageVector = if (expanded) FeatherIcons.ChevronUp else FeatherIcons.ChevronDown,
-                contentDescription = if (expanded) "Collapse optional fields" else "Expand optional fields",
+                contentDescription = stringResource(
+                    if (expanded) Res.string.collapse_optional_details else Res.string.expand_optional_details,
+                ),
             )
         }
 
@@ -404,7 +410,7 @@ internal fun OptionalDetailsSection(
                 OutlinedTextField(
                     value = location,
                     onValueChange = onLocationChanged,
-                    label = { Text("Location (optional)") },
+                    label = { Text(stringResource(Res.string.field_location_optional)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -459,10 +465,21 @@ internal fun LogTeaActionButtons(
 
 @Preview(showBackground = true)
 @Composable
-private fun TeaSelectionSectionPreview() {
+private fun TeaAndVesselSectionPreview() {
+    val vessels = listOf("gaiwan", "kyusu", "mug", "teapot").mapIndexed { index, id ->
+        BrewingVessel(
+            id = id,
+            name = id.replaceFirstChar { it.uppercase() },
+            iconName = id,
+            isSystemDefault = true,
+            displayOrder = index,
+            createdAt = PreviewInstant,
+            updatedAt = PreviewInstant,
+        )
+    }
     LeafLogTheme {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            TeaSelectionSection(
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            TeaAndVesselSection(
                 selectedTea = Tea(
                     id = "tea-1",
                     name = "Dragon Well",
@@ -473,17 +490,19 @@ private fun TeaSelectionSectionPreview() {
                     updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
-                teaTypeName = "Green",
                 teaTypeColorHex = "#4CAF50",
-                errorMessage = null,
+                vessels = vessels,
+                selectedVessel = vessels.first(),
                 onSelectTeaClicked = {},
+                onVesselSelected = {},
             )
-            TeaSelectionSection(
+            TeaAndVesselSection(
                 selectedTea = null,
-                teaTypeName = "",
                 teaTypeColorHex = null,
-                errorMessage = "Please select a tea",
+                vessels = vessels,
+                selectedVessel = null,
                 onSelectTeaClicked = {},
+                onVesselSelected = {},
             )
         }
     }
@@ -494,13 +513,12 @@ private fun TeaSelectionSectionPreview() {
 private fun BrewingParameterSectionsPreview() {
     LeafLogTheme {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            BrewingParametersHeader()
+            BrewingParametersHeader(prefillSource = PrefillSource.TeaDefault, teaName = "Dragon Well")
             LeafQuantityField(
                 isTeaBag = false,
                 teaQuantityGrams = 5.0,
                 onTeaBagModeChanged = {},
                 onTeaQuantityChanged = {},
-                label = stringResource(Res.string.field_tea_quantity_required),
                 presets = true,
                 weightUnit = WeightUnit.GRAMS,
             )
@@ -520,7 +538,6 @@ private fun OptionalDetailsSectionPreview() {
         OptionalDetailsSection(
             expanded = true,
             onExpandedChange = {},
-            summary = "Spring · Kitchen",
             selectedWaterType = WaterType.SPRING,
             rinsed = true,
             location = "Kitchen",

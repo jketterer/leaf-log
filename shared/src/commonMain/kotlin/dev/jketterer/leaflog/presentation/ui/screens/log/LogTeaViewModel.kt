@@ -259,7 +259,6 @@ class LogTeaViewModel(
                     selectedTea = null,
                     selectedTeaType = null,
                     sourceBrew = null,
-                    teaError = null,
                     showTeaPicker = false,
                     hasUnsavedChanges = true,
                 ).withPickerReset()
@@ -278,7 +277,6 @@ class LogTeaViewModel(
                 it.copy(
                     selectedTea = tea,
                     selectedTeaType = teaType,
-                    teaError = null,
                     showTeaPicker = false,
                     hasUnsavedChanges = true,
                 ).withPickerReset(),
@@ -364,7 +362,6 @@ class LogTeaViewModel(
                             it.copy(
                                 selectedTea = tea,
                                 selectedTeaType = teaType,
-                                teaError = null,
                                 showTeaPicker = false,
                                 hasUnsavedChanges = true,
                             ).withPickerReset(),
@@ -450,7 +447,6 @@ class LogTeaViewModel(
             val selected = prefill(
                 currentState.copy(
                     selectedVessel = vessel,
-                    vesselError = null, // Clear error when vessel is selected
                     hasUnsavedChanges = true
                 ),
             )
@@ -511,8 +507,6 @@ class LogTeaViewModel(
         if (!currentState.isValid) {
             _state.update {
                 it.copy(
-                    teaError = if (it.selectedTea == null) "Tea is required" else null,
-                    vesselError = if (it.selectedVessel == null) "Brewing vessel is required" else null,
                     teaQuantityError = if (!it.isTeaBag && it.teaQuantityGrams == null) {
                         Res.string.error_tea_quantity_required
                     } else {

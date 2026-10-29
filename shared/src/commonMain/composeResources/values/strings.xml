@@ -38,13 +38,11 @@
 
     <!-- Form fields -->
     <string name="field_temperature">Temperature</string>
-    <string name="field_temperature_required">Temperature *</string>
-    <string name="field_default_temperature">Default Temperature</string>
-    <string name="field_water_quantity">Water Quantity</string>
-    <string name="field_water_quantity_required">Water Quantity *</string>
-    <string name="field_tea_quantity">Tea Quantity</string>
-    <string name="field_tea_quantity_required">Tea Quantity *</string>
-    <string name="field_vessel_required">Brewing Vessel *</string>
+    <string name="field_default_temperature">Default temperature</string>
+    <string name="field_water_quantity">Water quantity</string>
+    <string name="field_water_quantity_required">Water quantity *</string>
+    <string name="field_tea_quantity">Tea quantity</string>
+    <string name="field_tea_quantity_required">Tea quantity *</string>
     <string name="field_rinse">Rinse</string>
     <string name="answer_yes">Yes</string>
     <string name="rinsed">Rinsed</string>
@@ -511,6 +509,16 @@
     <string name="field_date">Date</string>
     <string name="field_time">Time</string>
     <string name="field_location_optional">Location (optional)</string>
+    <string name="field_brewing_time">Brewing time</string>
+    <string name="field_minutes">Min</string>
+    <string name="field_seconds">Sec</string>
+    <string name="field_water_type">Water type</string>
+    <string name="field_tea_name_required">Tea name *</string>
+    <string name="field_timer_duration">Timer duration</string>
+    <string name="log_tea_choose_title">Select a tea and vessel</string>
+    <string name="log_tea_choose_body">to set up your brew parameters</string>
+    <string name="expand_optional_details">Expand optional details</string>
+    <string name="collapse_optional_details">Collapse optional details</string>
     <string name="field_session_note">Session note (optional)</string>
     <string name="ok">OK</string>
     <string name="change">Change</string>

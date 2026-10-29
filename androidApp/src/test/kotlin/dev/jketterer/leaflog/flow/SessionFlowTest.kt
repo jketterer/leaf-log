@@ -30,7 +30,6 @@ import leaf_log.shared.generated.resources.review_done
 import leaf_log.shared.generated.resources.select_tea
 import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.log_session
-import leaf_log.shared.generated.resources.field_vessel_required
 import leaf_log.shared.generated.resources.begin_session
 import leaf_log.shared.generated.resources.adjust
 import leaf_log.shared.generated.resources.brew_again
@@ -288,7 +287,6 @@ class SessionFlowTest : FlowTest() {
         // Under Recent and under All
         waitFor(row)
         compose.onAllNodes(row)[0].performClick()
-        click(text(Res.string.field_vessel_required))
         click("Gaiwan")
     }
 

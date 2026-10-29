@@ -3,9 +3,34 @@ package dev.jketterer.leaflog.data.local.database
 import androidx.room.migration.Migration
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.execSQL
-import dev.jketterer.leaflog.data.local.database.dao.RECOMPUTE_CONFIGURATION_STATS
+import dev.jketterer.leaflog.data.local.database.dao.COMPLETED_SESSIONS
 import dev.jketterer.leaflog.data.local.database.dao.RECOMPUTE_TEA_STATS
 import dev.jketterer.leaflog.data.local.database.dao.REPAIRS
+
+// The method SQL the v7 and v8 migrations ran, kept for them: v13 drops the table
+
+private const val RECOMPUTE_CONFIGURATION_STATS = """
+    UPDATE brewing_configurations SET
+        times_used = (
+            SELECT COUNT(*) $COMPLETED_SESSIONS
+            AND s.usedConfigurationId = brewing_configurations.id
+            AND s.teaId = brewing_configurations.tea_id
+        ),
+        last_used_at = (
+            SELECT MAX(s.timestamp) $COMPLETED_SESSIONS
+            AND s.usedConfigurationId = brewing_configurations.id
+            AND s.teaId = brewing_configurations.tea_id
+        )
+"""
+
+/** A method goes with its tea or vessel, stamped the same so they restore together. */
+private const val DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS = """
+    UPDATE brewing_configurations SET deleted_at = COALESCE(
+        (SELECT deletedAt FROM tea WHERE id = tea_id),
+        (SELECT deletedAt FROM brewing_vessel WHERE id = vessel_id)
+    )
+    WHERE deleted_at IS NULL
+"""
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
@@ -266,7 +291,7 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         )
         connection.execSQL("ALTER TABLE `brewing_configurations` DROP COLUMN `is_active`")
 
-        REPAIRS.forEach(connection::execSQL)
+        (REPAIRS + DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS).forEach(connection::execSQL)
     }
 }
 
@@ -313,5 +338,30 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
             "UPDATE `tea_session` SET `sessionNotes` = `notes`, `notes` = NULL " +
                 "WHERE `parentSessionId` IS NULL",
         )
+    }
+}
+
+/**
+ * Methods go. A session brewed from one replays the session the method was saved from, as Brew
+ * Again does, when that session is still live. That session counted as the method's first use, and
+ * stays without a source. A method's label, and edits made after saving it, are lost.
+ */
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            """
+            UPDATE `tea_session` SET `planSessionId` = (
+                SELECT m.`source_session_id` FROM `brewing_configurations` m
+                JOIN `tea_session` source ON source.`id` = m.`source_session_id`
+                WHERE m.`id` = `tea_session`.`usedConfigurationId` AND source.`deletedAt` IS NULL
+                AND source.`id` <> `tea_session`.`id`
+            )
+            WHERE `parentSessionId` IS NULL AND `planSessionId` IS NULL
+            AND `usedConfigurationId` IS NOT NULL
+            """,
+        )
+        connection.execSQL("DROP INDEX `index_tea_session_usedConfigurationId`")
+        connection.execSQL("ALTER TABLE `tea_session` DROP COLUMN `usedConfigurationId`")
+        connection.execSQL("DROP TABLE `brewing_configurations`")
     }
 }

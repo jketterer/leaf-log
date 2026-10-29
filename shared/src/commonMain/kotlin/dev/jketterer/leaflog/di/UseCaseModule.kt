@@ -7,16 +7,6 @@ import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.MergeTeaTypeUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.CheckDuplicateConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.ShouldOfferSaveAsMethodUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.CreateBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.DeleteBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.FindMethodUpdateUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.PinBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.UpdateBrewingConfigurationUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.UpdateMethodFromSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AttachTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.session.DeleteSessionUseCase
@@ -93,16 +83,4 @@ val useCaseModule = module {
     factoryOf(::CreateBrewingVesselUseCase)
     factoryOf(::DeleteBrewingVesselUseCase)
     factoryOf(::UpdateBrewingVesselUseCase)
-
-    // Brewing configuration use cases
-    factoryOf(::CheckDuplicateConfigurationUseCase)
-    factoryOf(::ShouldOfferSaveAsMethodUseCase)
-    factoryOf(::GenerateConfigurationLabelUseCase)
-    factoryOf(::SaveBrewingConfigurationUseCase)
-    factoryOf(::FindMethodUpdateUseCase)
-    factoryOf(::UpdateMethodFromSessionUseCase)
-    factoryOf(::CreateBrewingConfigurationUseCase)
-    factoryOf(::UpdateBrewingConfigurationUseCase)
-    factoryOf(::DeleteBrewingConfigurationUseCase)
-    factoryOf(::PinBrewingConfigurationUseCase)
 }

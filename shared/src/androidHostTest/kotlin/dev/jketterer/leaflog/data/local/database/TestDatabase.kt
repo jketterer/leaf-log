@@ -58,7 +58,6 @@ internal fun row(
     waterType = WaterType.FILTERED,
     location = null,
     rating = null,
-    usedConfigurationId = null,
     timestamp = timestamp,
     brewingTime = 20.seconds,
     temperatureCelsius = 95.0,

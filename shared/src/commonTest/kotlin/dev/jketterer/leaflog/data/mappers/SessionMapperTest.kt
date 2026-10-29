@@ -57,7 +57,7 @@ class SessionMapperTest {
         val child = aggregate.steeps[1].toEntity(aggregate.session)
 
         val sessionColumns = with(child) {
-            listOf(teaQuantityGrams, vesselId, waterType, location, usedConfigurationId)
+            listOf(teaQuantityGrams, vesselId, waterType, location, planSessionId)
         }
         assertEquals(List(5) { null }, sessionColumns)
         assertEquals("vessel", aggregate.session.vesselId)
@@ -89,8 +89,8 @@ private fun entity(
     vesselId = "vessel".takeIf { parentSessionId == null },
     waterType = WaterType.FILTERED.takeIf { parentSessionId == null },
     location = "desk".takeIf { parentSessionId == null },
+    planSessionId = "source".takeIf { parentSessionId == null },
     rating = rating,
-    usedConfigurationId = "config".takeIf { parentSessionId == null },
     timestamp = start + (steepNumber * 60).seconds,
     brewingTime = 20.seconds,
     temperatureCelsius = 95.0,

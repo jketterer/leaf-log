@@ -21,9 +21,8 @@ class AttachTeaUseCaseTest {
 
     private val sessions = FakeTeaSessionRepository()
     private val teas = FakeTeaRepository(listOf(TEA))
-    private val configurations = FakeBrewingConfigurationRepository()
     private val transactor = FakeTransactor()
-    private val recomputeStats = RecomputeStatsUseCase(sessions, teas, configurations)
+    private val recomputeStats = RecomputeStatsUseCase(sessions, teas)
     private val startSession = StartSessionUseCase(transactor, sessions, teas, recomputeStats, Clock.System)
     private val attachTea = AttachTeaUseCase(
         transactor = transactor,

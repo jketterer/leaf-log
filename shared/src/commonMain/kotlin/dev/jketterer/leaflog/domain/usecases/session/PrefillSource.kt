@@ -10,8 +10,8 @@ sealed interface PrefillSource {
     data class PastBrew(val session: SessionWithSteeps) : PrefillSource
 
     /**
-     * Pre-filled from this tea's own default temperature. Temperature only - there is no method
-     * behind it, just a number the user recorded on the tea.
+     * Pre-filled from this tea's own default temperature. Temperature only - there is no past
+     * brew behind it, just a number the user recorded on the tea.
      */
     data object TeaDefault : PrefillSource
 

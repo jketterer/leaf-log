@@ -12,7 +12,7 @@ import kotlin.time.Instant
 /**
  * Applies [edit] to the session as stored, so callers name only what they change and `null` clears.
  * Only the tea, the set-up and the note can change: tea, vessel, water type, leaf, location, rinse
- * and notes. A session moved to another tea no longer used that tea's method or plan.
+ * and notes. A session moved to another tea loses its source, a brew of the old tea.
  *
  * [startedAt] moves the session: every steep shifts by the same amount, so the gaps between them
  * stay as brewed.
@@ -51,11 +51,7 @@ class EditSessionUseCase(
             edited.requireValid()
 
             val teaChanged = edited.teaId != session.teaId
-            val moved = if (teaChanged) {
-                edited.copy(usedConfigurationId = null, planSessionId = null)
-            } else {
-                edited
-            }
+            val moved = if (teaChanged) edited.copy(planSessionId = null) else edited
 
             val now = clock.now()
             val shift = startedAt?.let { it - current.startedAt }

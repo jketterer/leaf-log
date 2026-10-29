@@ -45,7 +45,6 @@ import kotlin.time.Instant
         Index(value = ["timestamp"]),
         Index(value = ["userId"]),
         Index(value = ["deletedAt"]),
-        Index(value = ["usedConfigurationId"]),
     ]
 )
 data class TeaSessionEntity(
@@ -61,7 +60,6 @@ data class TeaSessionEntity(
     val vesselId: String?,
     val waterType: WaterType?,
     val location: String?,
-    val usedConfigurationId: String?, // Configuration that was used for this session
     val planSessionId: String? = null, // Session Brew Again copied; no FK, it may be gone
     @ColumnInfo(defaultValue = "0")
     val rinsed: Boolean = false, // parent row only, false on children

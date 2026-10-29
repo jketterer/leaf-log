@@ -9,7 +9,6 @@ import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.database.LeafLogDatabase
 import dev.jketterer.leaflog.data.local.database.RoomTransactor
 import dev.jketterer.leaflog.data.local.database.at
-import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEntity
 import dev.jketterer.leaflog.data.local.database.entities.SteepTagEntity
 import dev.jketterer.leaflog.data.local.database.inMemoryDatabase
 import dev.jketterer.leaflog.data.local.database.row
@@ -50,7 +49,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
 class BackupRepositoryImplTest {
@@ -83,7 +81,6 @@ class BackupRepositoryImplTest {
         assertEquals(0, result.skipped)
         // Stats are recomputed rather than carried
         assertEquals(1, fresh.database.teaDao().getById("tea")?.totalSessions)
-        assertEquals(1, fresh.database.brewingConfigurationDao().getById("method")?.timesUsed)
     }
 
     @Test
@@ -132,8 +129,8 @@ class BackupRepositoryImplTest {
 
         assertEquals(emptyList(), fresh.database.teaDao().getAllIncludingDeleted())
         assertTrue(fileSystem.exists(zip.toPath()), "kept for the import")
-        // Type, tea, two vessels, two steeps and the method; the mug arrives deleted
-        assertEquals(7, preview.added)
+        // Type, tea, two vessels and two steeps; the mug arrives deleted
+        assertEquals(6, preview.added)
         assertEquals(preview, fresh.repository.import(zip).getOrThrow())
     }
 
@@ -184,12 +181,11 @@ class BackupRepositoryImplTest {
         phone.seedJournal()
         val fresh = Device("fresh")
         fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
-        phone.database.brewingConfigurationDao()
-            .softDelete("method", timestamp = at(5).toEpochMilliseconds())
+        phone.database.teaSessionDao().softDelete("s2", timestamp = at(5).toEpochMilliseconds())
 
         fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
 
-        assertNull(fresh.database.brewingConfigurationDao().getById("method"))
+        assertNotNull(fresh.database.teaSessionDao().getById("s2")?.deletedAt)
     }
 
     @Test
@@ -377,7 +373,6 @@ class BackupRepositoryImplTest {
             vesselDao = database.brewingVesselDao(),
             teaDao = database.teaDao(),
             sessionDao = database.teaSessionDao(),
-            methodDao = database.brewingConfigurationDao(),
             tastingTagDao = database.tastingTagDao(),
             transactor = transactor(RoomTransactor(database)),
             imageStorage = storage,
@@ -390,7 +385,7 @@ class BackupRepositoryImplTest {
 
         /**
          * A gaiwan session of two steeps with a photo, notes on the session and each steep, and
-         * tags, one of them custom; its method, and a deleted vessel.
+         * tags, one of them custom; and a deleted vessel.
          */
         suspend fun seedJournal() {
             database.seedForeignKeys()
@@ -401,7 +396,6 @@ class BackupRepositoryImplTest {
                     row("s1", null, 1, SessionStatus.COMPLETED, "gaiwan", at(0))
                         .copy(
                             photos = listOf("session_images/a.jpg"),
-                            usedConfigurationId = "method",
                             sessionNotes = "Rainy morning",
                             notes = "Floral",
                         ),
@@ -424,27 +418,7 @@ class BackupRepositoryImplTest {
                     ),
                 )
             }
-            database.brewingConfigurationDao().upsert(
-                BrewingConfigurationEntity(
-                    id = "method",
-                    teaId = "tea",
-                    vesselId = "gaiwan",
-                    teaQuantityGrams = 5f,
-                    waterQuantityMl = 100.0,
-                    temperatureCelsius = 95.0,
-                    brewingTime = 20.seconds,
-                    waterType = WaterType.FILTERED,
-                    sourceSessionId = "s1",
-                    rating = null,
-                    timesUsed = 0,
-                    lastUsedAt = null,
-                    label = null,
-                    createdAt = at(0),
-                    updatedAt = at(0),
-                ),
-            )
             database.teaSessionDao().recomputeTeaStats()
-            database.teaSessionDao().recomputeConfigurationStats()
             database.brewingVesselDao().softDelete("mug", timestamp = 3)
         }
 
@@ -463,9 +437,6 @@ class BackupRepositoryImplTest {
                     .map { it.toBackup(tags[it.id].orEmpty().sortedBy { tag -> tag.tagId }) }
                     .sortedBy { it.id }
             },
-            methods = database.brewingConfigurationDao().getAllIncludingDeleted()
-                .map { it.toBackup() }
-                .sortedBy { it.id },
             tastingTags = database.tastingTagDao().getAllIncludingDeleted().map { it.toBackup() }
                 .sortedBy { it.id },
         )

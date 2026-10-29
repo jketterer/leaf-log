@@ -17,9 +17,8 @@ data class Session(
     val waterType: WaterType,
     val teaQuantityGrams: Float? = null,
     val location: String? = null,
-    val usedConfigurationId: String? = null,
     val rinsed: Boolean = false,
-    /** The session Brew Again copied; its steeps are this one's plan when no method is used. */
+    /** The session Brew Again copied; its steeps are this one's plan. */
     val planSessionId: String? = null,
     /** The note on the session as a whole; each steep has its own. */
     val notes: String? = null,
@@ -171,7 +170,7 @@ fun List<SessionWithSteeps>.steepCurve(): SteepCurve? {
     return SteepCurve(means, peak = means.maxBy { it.value }.key)
 }
 
-/** What a tea or a brewing configuration stores about the sessions that used it. */
+/** What a tea stores about its sessions. */
 data class SessionStats(
     val count: Int,
     val averageRating: Float?,

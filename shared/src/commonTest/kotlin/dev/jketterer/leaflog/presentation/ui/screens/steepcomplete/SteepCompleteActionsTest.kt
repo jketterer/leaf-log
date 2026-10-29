@@ -17,8 +17,8 @@ class SteepCompleteActionsTest {
     private val single = BrewingPlan(base = 180.seconds)
     private val gongfu = BrewingPlan(base = 20.seconds, increment = 5.seconds)
 
-    private fun withMethod(planSessionId: String? = null, methodId: String? = null) = previewSession().let {
-        it.copy(session = it.session.copy(usedConfigurationId = methodId, planSessionId = planSessionId))
+    private fun withSource(planSessionId: String? = null) = previewSession().let {
+        it.copy(session = it.session.copy(planSessionId = planSessionId))
     }
 
     private fun vessel(capacityMl: Int?) = BrewingVessel(
@@ -33,39 +33,34 @@ class SteepCompleteActionsTest {
     )
 
     @Test
-    fun `finish leads a single steep method`() {
-        assertTrue(finishLeads(withMethod(methodId = "m"), single))
-    }
-
-    @Test
     fun `finish leads a single steep brew again`() {
-        assertTrue(finishLeads(withMethod(planSessionId = "s"), single))
+        assertTrue(finishLeads(withSource(planSessionId = "s"), single))
     }
 
     @Test
     fun `next leads a session with no plan even when it looks like a single steep`() {
-        assertFalse(finishLeads(withMethod(), single))
+        assertFalse(finishLeads(withSource(), single))
     }
 
     @Test
-    fun `next leads a gongfu method`() {
-        assertFalse(finishLeads(withMethod(methodId = "m"), gongfu))
+    fun `next leads a gongfu brew again`() {
+        assertFalse(finishLeads(withSource(planSessionId = "s"), gongfu))
     }
 
     @Test
     fun `the next steep follows the plan from the current one`() {
-        val second = withMethod(methodId = "m").let { it.copy(steeps = previewSession(ratings = listOf(null, null)).steeps) }
+        val second = withSource(planSessionId = "s").let { it.copy(steeps = previewSession(ratings = listOf(null, null)).steeps) }
         assertEquals(30.seconds, nextSteepTime(second, gongfu))
     }
 
     @Test
     fun `a single steep method offers no next steep`() {
-        assertNull(nextSteepTime(withMethod(methodId = "m"), single))
+        assertNull(nextSteepTime(withSource(planSessionId = "s"), single))
     }
 
     @Test
     fun `a session with no plan offers the same steep again`() {
-        assertEquals(180.seconds, nextSteepTime(withMethod(), single))
+        assertEquals(180.seconds, nextSteepTime(withSource(), single))
     }
 
     @Test

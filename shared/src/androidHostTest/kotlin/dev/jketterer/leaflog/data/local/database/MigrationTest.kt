@@ -247,6 +247,39 @@ class MigrationTest {
         )
         connection.close()
     }
+
+    @Test
+    fun `12 to 13 produces the exported version 13 schema and replays a method's session`() {
+        val connection = createFromSchema(12)
+        connection.execSQL(
+            "INSERT INTO brewing_configurations (id, tea_id, vessel_id, water_quantity_ml, " +
+                "temperature_celsius, brewing_time, water_type, source_session_id, times_used, " +
+                "is_pinned, pinned_sort_order, created_at, updated_at) VALUES " +
+                "('saved', 't1', 'v1', 100.0, 95.0, 30000, 'FILTERED', 'source', 0, 0, 0, 0, 0), " +
+                "('orphaned', 't1', 'v1', 100.0, 95.0, 30000, 'FILTERED', 'deleted', 0, 0, 0, 0, 0)",
+        )
+        // Saving a method counted its session as the method's first use
+        connection.insertV12Session("source", method = "saved")
+        connection.insertV12Session("deleted", deletedAt = 1)
+        connection.insertV12Session("on-method", method = "saved")
+        connection.insertV12Session("on-orphaned", method = "orphaned")
+        connection.insertV12Session("brewed-again", method = "saved", plan = "deleted")
+
+        MIGRATION_12_13.migrate(connection)
+
+        assertSchemaMatches(connection, 13)
+        assertEquals(
+            mapOf(
+                "brewed-again" to listOf("deleted"),
+                "deleted" to listOf(null),
+                "on-method" to listOf("source"),
+                "on-orphaned" to listOf(null),
+                "source" to listOf(null),
+            ),
+            connection.rows("SELECT id, planSessionId FROM tea_session"),
+        )
+        connection.close()
+    }
 }
 
 private fun SQLiteStatement.textOrNull(index: Int) = if (isNull(index)) null else getText(index)
@@ -276,6 +309,21 @@ private fun SQLiteConnection.insertV7Method(
         pinned_sort_order, created_at, updated_at)
     VALUES ('$id', '$teaId', '$vesselId', 100.0, 95.0, 30000, 'FILTERED', 0,
         ${if (isActive) 1 else 0}, 0, 0, 0, $updatedAt)
+    """,
+)
+
+private fun SQLiteConnection.insertV12Session(
+    id: String,
+    method: String? = null,
+    plan: String? = null,
+    deletedAt: Long? = null,
+) = execSQL(
+    """
+    INSERT INTO tea_session (id, teaId, parentSessionId, steepNumber, status, vesselId,
+        waterType, usedConfigurationId, planSessionId, timestamp, brewingTime,
+        temperatureCelsius, waterQuantityMl, photos, syncStatus, createdAt, updatedAt, deletedAt)
+    VALUES ('$id', 't1', NULL, 1, 'COMPLETED', 'v1', 'FILTERED', ${method?.let { "'$it'" }},
+        ${plan?.let { "'$it'" }}, 0, 30000, 95.0, 100.0, '[]', 'LOCAL_ONLY', 0, 0, $deletedAt)
     """,
 )
 

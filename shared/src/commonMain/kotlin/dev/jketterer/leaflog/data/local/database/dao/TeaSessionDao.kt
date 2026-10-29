@@ -11,10 +11,10 @@ import dev.jketterer.leaflog.data.local.database.entities.TeaSessionEntity
 import kotlinx.coroutines.flow.Flow
 
 // The stats rules of `List<SessionWithSteeps>.stats()` in SQL, for the v7 migration and import,
-// where there are no aggregates to hand. MigrationTest checks the two agree.
+// where there are no aggregates to hand. StatsSqlTest checks the two agree.
 
 /** The parent rows of completed, live sessions. */
-private const val COMPLETED_SESSIONS = """
+internal const val COMPLETED_SESSIONS = """
     FROM tea_session s
     WHERE s.parentSessionId IS NULL AND s.deletedAt IS NULL AND s.status = 'COMPLETED'
 """
@@ -30,20 +30,6 @@ internal const val RECOMPUTE_TEA_STATS = """
         totalSessions = (SELECT COUNT(*) $COMPLETED_SESSIONS AND s.teaId = tea.id),
         averageRating = (SELECT AVG($SESSION_RATING) $COMPLETED_SESSIONS AND s.teaId = tea.id),
         lastBrewedAt = (SELECT MAX(s.timestamp) $COMPLETED_SESSIONS AND s.teaId = tea.id)
-"""
-
-internal const val RECOMPUTE_CONFIGURATION_STATS = """
-    UPDATE brewing_configurations SET
-        times_used = (
-            SELECT COUNT(*) $COMPLETED_SESSIONS
-            AND s.usedConfigurationId = brewing_configurations.id
-            AND s.teaId = brewing_configurations.tea_id
-        ),
-        last_used_at = (
-            SELECT MAX(s.timestamp) $COMPLETED_SESSIONS
-            AND s.usedConfigurationId = brewing_configurations.id
-            AND s.teaId = brewing_configurations.tea_id
-        )
 """
 
 // Deletes before schema 8 ignored what still pointed at the row, and an old backup can bring such rows
@@ -73,20 +59,10 @@ internal const val RESTORE_TYPES_WITH_LIVE_TEAS = """
     )
 """
 
-/** A method goes with its tea or vessel, stamped the same so they restore together. */
-internal const val DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS = """
-    UPDATE brewing_configurations SET deleted_at = COALESCE(
-        (SELECT deletedAt FROM tea WHERE id = tea_id),
-        (SELECT deletedAt FROM brewing_vessel WHERE id = vessel_id)
-    )
-    WHERE deleted_at IS NULL
-"""
-
 internal val REPAIRS = listOf(
     RESTORE_TEAS_WITH_LIVE_SESSIONS,
     RESTORE_VESSELS_WITH_LIVE_SESSIONS,
     RESTORE_TYPES_WITH_LIVE_TEAS,
-    DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS,
 )
 
 @Dao
@@ -253,9 +229,6 @@ interface TeaSessionDao {
     @Query(RECOMPUTE_TEA_STATS)
     suspend fun recomputeTeaStats()
 
-    @Query(RECOMPUTE_CONFIGURATION_STATS)
-    suspend fun recomputeConfigurationStats()
-
     // The REPAIRS, one statement per query, called in the same order
 
     @Query(RESTORE_TEAS_WITH_LIVE_SESSIONS)
@@ -266,9 +239,6 @@ interface TeaSessionDao {
 
     @Query(RESTORE_TYPES_WITH_LIVE_TEAS)
     suspend fun restoreTypesWithLiveTeas()
-
-    @Query(DELETE_METHODS_OF_DELETED_TEAS_AND_VESSELS)
-    suspend fun deleteMethodsOfDeletedTeasAndVessels()
 
     @Upsert
     suspend fun upsertAll(teaSessions: List<TeaSessionEntity>)

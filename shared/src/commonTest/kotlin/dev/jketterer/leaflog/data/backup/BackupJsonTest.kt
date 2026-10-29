@@ -27,12 +27,9 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a method's plan and rinse and a session's source and rinse and note and tags survive a round trip`() {
+    fun `a session's source and rinse and note and tags survive a round trip`() {
         val backup = decodeBackup(V1).let {
             it.copy(
-                methods = listOf(
-                    METHOD.copy(steepIncrement = 5.seconds, steepOverrides = mapOf(4 to 45.seconds), rinse = true),
-                ),
                 steeps = it.steeps.mapIndexed { i, steep ->
                     if (i == 0) {
                         steep.copy(
@@ -55,13 +52,12 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a version 2 backup reads with no plans or rinses or tags`() {
-        val backup = decodeBackup(V1).copy(methods = listOf(METHOD))
-        val v2 = encodeBackup(backup).replace("\"version\": $BACKUP_VERSION", "\"version\": 2")
+    fun `a version 2 backup reads with no rinses or tags`() {
+        val backup = decodeBackup(V1)
+        val v2 = encodeBackup(backup).asVersion(2)
 
-        assertEquals(backup.copy(version = 2), decodeBackup(v2))
-        assertNull(decodeBackup(v2).methods.single().steepIncrement)
-        assertFalse(decodeBackup(v2).methods.single().rinse)
+        assertEquals(backup, decodeBackup(v2))
+        assertFalse(decodeBackup(v2).steeps.any { it.rinsed })
         assertEquals(emptyList(), decodeBackup(v2).tastingTags)
         assertEquals(emptyList(), decodeBackup(v2).steeps.flatMap { it.tags })
     }
@@ -71,7 +67,7 @@ class BackupJsonTest {
         val backup = decodeBackup(V1).let {
             it.copy(steeps = it.steeps.mapIndexed { i, steep -> steep.copy(notes = "note ${i + 1}") })
         }
-        val v3 = encodeBackup(backup).replace("\"version\": $BACKUP_VERSION", "\"version\": 3")
+        val v3 = encodeBackup(backup).asVersion(3)
 
         val (parent, child) = decodeBackup(v3).steeps
 
@@ -106,11 +102,31 @@ class BackupJsonTest {
     }
 
     @Test
-    fun `a version 1 inactive method arrives deleted at its last update`() {
-        val (active, inactive) = decodeBackup(V1).methods
+    fun `a version 4 session on a method replays the session the method was saved from`() {
+        val steeps = decodeBackup(v4(v4Steep("source"), v4Steep("brewed", method = "m1"))).steeps
 
-        assertNull(active.deletedAt)
-        assertEquals(inactive.updatedAt, inactive.deletedAt)
+        assertEquals("source", steeps.last().planSessionId)
+    }
+
+    @Test
+    fun `a version 4 session a method was saved from stays without a source`() {
+        val backup = v4(v4Steep("source", method = "m1"), v4Steep("brewed", method = "m1"))
+
+        assertNull(decodeBackup(backup).steeps.first().planSessionId)
+    }
+
+    @Test
+    fun `a version 4 method saved from a deleted session leaves its sessions without a source`() {
+        val backup = v4(v4Steep("source", deleted = true), v4Steep("brewed", method = "m1"))
+
+        assertNull(decodeBackup(backup).steeps.last().planSessionId)
+    }
+
+    @Test
+    fun `a version 4 session brewed again keeps its source`() {
+        val backup = v4(v4Steep("source"), v4Steep("earlier"), v4Steep("brewed", method = "m1", plan = "earlier"))
+
+        assertEquals("earlier", decodeBackup(backup).steeps.last().planSessionId)
     }
 
     @Test
@@ -150,18 +166,6 @@ private val PREFERENCES = BackupPreferences(
     defaultWaterType = WaterType.FILTERED,
     timerCompletionNotificationsEnabled = true,
     sessionReminderNotificationsEnabled = true,
-)
-
-private val METHOD = BackupMethod(
-    id = "method",
-    teaId = "tieguanyin",
-    vesselId = "gaiwan",
-    waterQuantityMl = 100.0,
-    temperatureCelsius = 95.0,
-    brewingTime = 20.seconds,
-    waterType = WaterType.FILTERED,
-    createdAt = Instant.fromEpochSeconds(0),
-    updatedAt = Instant.fromEpochSeconds(0),
 )
 
 private val V1 = """
@@ -220,3 +224,34 @@ private val V1 = """
   ]
 }
 """
+
+/** A backup of version 2, 3 or 4 is version 5 with methods. */
+private fun String.asVersion(version: Int) =
+    replace("\"version\": $BACKUP_VERSION", "\"version\": $version, \"methods\": []")
+
+/** A version 4 backup whose method `m1` was saved from session `source`. */
+private fun v4(vararg steeps: String) = """
+{
+  "version": 4, "exportedAt": "2026-10-01T09:00:00Z",
+  "teaTypes": [], "vessels": [], "teas": [],
+  "steeps": [${steeps.joinToString()}],
+  "methods": [{
+    "id": "m1", "teaId": "tieguanyin", "vesselId": "gaiwan", "waterQuantityMl": 100.0,
+    "temperatureCelsius": 95.0, "brewingTime": "PT20S", "waterType": "FILTERED",
+    "sourceSessionId": "source", "label": "Mine",
+    "createdAt": "2026-09-02T09:05:00Z", "updatedAt": "2026-09-02T09:05:00Z"
+  }]
+}
+"""
+
+private fun v4Steep(id: String, method: String? = null, plan: String? = null, deleted: Boolean = false) = """
+{
+  "id": "$id", "teaId": "tieguanyin", "steepNumber": 1, "status": "COMPLETED",
+  "vesselId": "gaiwan", "waterType": "FILTERED", "usedConfigurationId": ${method?.quoted()},
+  "planSessionId": ${plan?.quoted()}, "timestamp": "2026-09-02T09:00:00Z", "brewingTime": "PT20S",
+  "temperatureCelsius": 95.0, "waterQuantityMl": 100.0, "createdAt": "2026-09-02T09:00:00Z",
+  "updatedAt": "2026-09-02T09:00:00Z", "deletedAt": ${"2026-09-03T09:00:00Z".quoted().takeIf { deleted }}
+}
+"""
+
+private fun String.quoted() = "\"$this\""

@@ -1,6 +1,5 @@
 package dev.jketterer.leaflog.data.backup
 
-import dev.jketterer.leaflog.data.local.database.entities.BrewingConfigurationEntity
 import dev.jketterer.leaflog.data.local.database.entities.BrewingVesselEntity
 import dev.jketterer.leaflog.data.local.database.entities.SteepTagEntity
 import dev.jketterer.leaflog.data.local.database.entities.TastingTagEntity
@@ -109,7 +108,6 @@ internal fun TeaSessionEntity.toBackup(tags: List<SteepTagEntity>) = BackupSteep
     vesselId = vesselId,
     waterType = waterType,
     location = location,
-    usedConfigurationId = usedConfigurationId,
     planSessionId = planSessionId,
     rinsed = rinsed,
     sessionNotes = sessionNotes,
@@ -142,7 +140,6 @@ internal fun BackupSteep.toEntity() = TeaSessionEntity(
     vesselId = vesselId,
     waterType = waterType,
     location = location,
-    usedConfigurationId = usedConfigurationId,
     planSessionId = planSessionId,
     rinsed = rinsed,
     sessionNotes = sessionNotes,
@@ -164,52 +161,6 @@ internal fun BackupSteep.toEntity() = TeaSessionEntity(
     timerRemainingMs = timerRemainingMs,
     timerTotalMs = timerTotalMs,
     actualBrewingTimeMs = actualBrewingTimeMs,
-)
-
-internal fun BrewingConfigurationEntity.toBackup() = BackupMethod(
-    id = id,
-    teaId = teaId,
-    vesselId = vesselId,
-    teaQuantityGrams = teaQuantityGrams,
-    waterQuantityMl = waterQuantityMl,
-    temperatureCelsius = temperatureCelsius,
-    brewingTime = brewingTime,
-    steepIncrement = steepIncrement,
-    steepOverrides = steepOverrides,
-    waterType = waterType,
-    rinse = rinse,
-    sourceSessionId = sourceSessionId,
-    rating = rating,
-    label = label,
-    isPinned = isPinned,
-    pinnedSortOrder = pinnedSortOrder,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-    deletedAt = deletedAt,
-)
-
-internal fun BackupMethod.toEntity() = BrewingConfigurationEntity(
-    id = id,
-    teaId = teaId,
-    vesselId = vesselId,
-    teaQuantityGrams = teaQuantityGrams,
-    waterQuantityMl = waterQuantityMl,
-    temperatureCelsius = temperatureCelsius,
-    brewingTime = brewingTime,
-    steepIncrement = steepIncrement,
-    steepOverrides = steepOverrides,
-    waterType = waterType,
-    rinse = rinse,
-    sourceSessionId = sourceSessionId,
-    rating = rating,
-    timesUsed = 0,
-    lastUsedAt = null,
-    label = label,
-    isPinned = isPinned,
-    pinnedSortOrder = pinnedSortOrder,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-    deletedAt = deletedAt,
 )
 
 internal fun UserPreferences.toBackup() = BackupPreferences(

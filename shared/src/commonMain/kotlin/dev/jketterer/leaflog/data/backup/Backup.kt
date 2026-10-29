@@ -17,8 +17,8 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 
 /**
- * The backup format, version 4: `data.json` in the archive. Frozen, like a migration: a change
- * here is version 5, with a reader for this one.
+ * The backup format, version 5: `data.json` in the archive. Frozen, like a migration: a change
+ * here is version 6, with a reader for this one.
  *
  * It carries facts only. Stats are recomputed on import, and deleted rows travel so that what
  * points at them still restores. Photo paths name entries in the archive.
@@ -33,14 +33,13 @@ data class Backup(
     val teas: List<BackupTea>,
     /** Rows of `tea_session`: a session is its steep 1, the parent of steeps 2…n. */
     val steeps: List<BackupSteep>,
-    val methods: List<BackupMethod>,
     /** Curated and custom; a steep's tags travel on the steep. */
     val tastingTags: List<BackupTastingTag> = emptyList(),
     /** Null in backups made before settings traveled, version 1 among them. */
     val preferences: BackupPreferences? = null,
 )
 
-const val BACKUP_VERSION = 4
+const val BACKUP_VERSION = 5
 
 // Field names match the entities, so version 1 (the entities themselves) decodes into these.
 // Defaults cover what version 1 lacked, what version 2 lacked: plans, rinses and tags, and what
@@ -104,7 +103,6 @@ data class BackupSteep(
     val vesselId: String? = null,
     val waterType: WaterType? = null,
     val location: String? = null,
-    val usedConfigurationId: String? = null,
     val planSessionId: String? = null,
     val rinsed: Boolean = false,
     val sessionNotes: String? = null,
@@ -131,29 +129,6 @@ data class BackupSteep(
 data class BackupSteepTag(
     val tagId: String,
     val confirmed: Boolean,
-)
-
-@Serializable
-data class BackupMethod(
-    val id: String,
-    val teaId: String,
-    val vesselId: String,
-    val teaQuantityGrams: Float? = null,
-    val waterQuantityMl: Double,
-    val temperatureCelsius: Double,
-    val brewingTime: Duration,
-    val steepIncrement: Duration? = null,
-    val steepOverrides: Map<Int, Duration> = emptyMap(),
-    val waterType: WaterType,
-    val rinse: Boolean = false,
-    val sourceSessionId: String? = null,
-    val rating: Float? = null,
-    val label: String? = null,
-    val isPinned: Boolean = false,
-    val pinnedSortOrder: Int = 0,
-    val createdAt: Instant,
-    val updatedAt: Instant,
-    val deletedAt: Instant? = null,
 )
 
 @Serializable
@@ -206,11 +181,8 @@ internal fun Backup.withoutOrphans(local: LocalRows): Pair<Backup, Int> {
         .map { it.id }
         .toSet()
     val keptSteeps = steeps.filter { (it.parentSessionId ?: it.id) in keptParents }
-    val keptMethods = methods.filter { it.teaId in teaIds && it.vesselId in vesselIds }
-    val kept = copy(teas = keptTeas, steeps = keptSteeps, methods = keptMethods)
-    val dropped = (teas.size - keptTeas.size) + (steeps.size - keptSteeps.size) +
-            (methods.size - keptMethods.size)
-    return kept to dropped
+    val kept = copy(teas = keptTeas, steeps = keptSteeps)
+    return kept to (teas.size - keptTeas.size) + (steeps.size - keptSteeps.size)
 }
 
 /**
@@ -230,7 +202,6 @@ internal fun planMerge(incoming: Backup, local: LocalRows): Backup {
             .filter { (it.parentSessionId ?: it.id) !in local.inProgressSessions }
             .newerThan(local.steeps) { it.id to it.updatedAt }
             .map { if ((it.parentSessionId ?: it.id) in brewing) it.landedCompleted() else it },
-        methods = incoming.methods.newerThan(local.methods) { it.id to it.updatedAt },
     )
 }
 
@@ -250,8 +221,7 @@ internal fun Backup.summarize(local: LocalRows, skipped: Int): ImportSummary {
     val changes = teaTypes.map { change(local.teaTypes[it.id], it.deletedAt) } +
             vessels.map { change(local.vessels[it.id], it.deletedAt) } +
             teas.map { change(local.teas[it.id], it.deletedAt) } +
-            steeps.map { change(local.steeps[it.id], it.deletedAt) } +
-            methods.map { change(local.methods[it.id], it.deletedAt) }
+            steeps.map { change(local.steeps[it.id], it.deletedAt) }
     return ImportSummary(
         exportedAt = exportedAt,
         added = changes.count { it == Change.ADDED },
@@ -293,7 +263,6 @@ internal data class LocalRows(
     val vessels: Map<String, LocalRow> = emptyMap(),
     val teas: Map<String, LocalRow> = emptyMap(),
     val steeps: Map<String, LocalRow> = emptyMap(),
-    val methods: Map<String, LocalRow> = emptyMap(),
     /** The ids of live sessions being brewed. */
     val inProgressSessions: Set<String> = emptySet(),
 )

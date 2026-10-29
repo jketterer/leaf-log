@@ -190,6 +190,36 @@ class UpgradeFlowTest : FlowTest() {
         compose.onNode(steep(1)).assert(!hasText("Lovely, sweeter cooled"))
     }
 
+    @Test
+    fun `a v0_7_0 session brewing on a method replays the session the method was saved from`() {
+        upgradeFrom(12) {
+            defaults()
+            tea("dw", "Dragon Well")
+            // The method plans one 0:20 steep; the session it was saved from went on to 0:25 and 0:40
+            method("m1", "dw", "label" to "Morning", "source_session_id" to "source", "times_used" to 2)
+            steep("source", "dw", ago(2.days), "brewingTime" to 20_000, "usedConfigurationId" to "m1")
+            steep("source-2", "dw", ago(2.days) + 60_000, "brewingTime" to 25_000, parent = "source", number = 2)
+            steep("source-3", "dw", ago(2.days) + 120_000, "brewingTime" to 40_000, parent = "source", number = 3)
+            steep(
+                "brewing", "dw", ago(1.days), "brewingTime" to 20_000, "status" to "IN_PROGRESS",
+                "usedConfigurationId" to "m1",
+            )
+        }
+        launch()
+
+        // The in-progress banner doesn't read strings.xml yet
+        click("Resume")
+        waitFor("0:20")
+        click(text(Res.string.start_brewing))
+        clock.advance(20.seconds)
+        click(text(Res.string.start_steep_n, 2))
+        waitFor("0:25")
+        click(text(Res.string.start_brewing))
+        clock.advance(25.seconds)
+        click(text(Res.string.start_steep_n, 3))
+        waitFor("0:40")
+    }
+
     private fun rated(rating: String) =
         hasContentDescription(text(Res.string.rating_out_of_five, rating), substring = true)
 

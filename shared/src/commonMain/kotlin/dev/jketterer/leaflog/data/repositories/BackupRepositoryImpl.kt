@@ -17,7 +17,6 @@ import dev.jketterer.leaflog.data.backup.toEntity
 import dev.jketterer.leaflog.data.backup.withoutOrphans
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.data.local.ZipWriter
-import dev.jketterer.leaflog.data.local.database.dao.BrewingConfigurationDao
 import dev.jketterer.leaflog.data.local.database.dao.BrewingVesselDao
 import dev.jketterer.leaflog.data.local.database.dao.TastingTagDao
 import dev.jketterer.leaflog.data.local.database.dao.TeaDao
@@ -73,7 +72,6 @@ class BackupRepositoryImpl(
     private val vesselDao: BrewingVesselDao,
     private val teaDao: TeaDao,
     private val sessionDao: TeaSessionDao,
-    private val methodDao: BrewingConfigurationDao,
     private val tastingTagDao: TastingTagDao,
     private val transactor: Transactor,
     private val imageStorage: ImageStorage,
@@ -95,7 +93,6 @@ class BackupRepositoryImpl(
                     vessels = vesselDao.getAllIncludingDeleted().map { it.toBackup() },
                     teas = teaDao.getAllIncludingDeleted().map { it.toBackup() },
                     steeps = sessionDao.getAllIncludingDeleted().map { it.toBackup(tags[it.id].orEmpty()) },
-                    methods = methodDao.getAllIncludingDeleted().map { it.toBackup() },
                     tastingTags = tastingTagDao.getAllIncludingDeleted().map { it.toBackup() },
                     preferences = preferencesRepository.getPreferences().toBackup(),
                 )
@@ -166,14 +163,11 @@ class BackupRepositoryImpl(
                 // Chunked to stay under SQLite's limit on bound variables
                 backup.steeps.map { it.id }.chunked(1_000).forEach { sessionDao.deleteTags(it) }
                 sessionDao.insertTags(backup.steeps.flatMap { it.tagEntities() })
-                methodDao.upsertAll(backup.methods.map { it.toEntity() })
 
                 sessionDao.restoreTeasWithLiveSessions()
                 sessionDao.restoreVesselsWithLiveSessions()
                 sessionDao.restoreTypesWithLiveTeas()
-                sessionDao.deleteMethodsOfDeletedTeasAndVessels()
                 sessionDao.recomputeTeaStats()
-                sessionDao.recomputeConfigurationStats()
 
                 backup.summarize(local, skipped)
             }
@@ -258,8 +252,6 @@ class BackupRepositoryImpl(
             teas = teaDao.getAllIncludingDeleted()
                 .associate { it.id to LocalRow(it.updatedAt, it.deletedAt != null) },
             steeps = steeps.associate { it.id to LocalRow(it.updatedAt, it.deletedAt != null) },
-            methods = methodDao.getAllIncludingDeleted()
-                .associate { it.id to LocalRow(it.updatedAt, it.deletedAt != null) },
             inProgressSessions = steeps
                 .filter { it.parentSessionId == null && it.deletedAt == null }
                 .filter { it.status == SessionStatus.IN_PROGRESS }

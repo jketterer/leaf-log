@@ -1,6 +1,5 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.SteepTag
@@ -8,8 +7,6 @@ import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.domain.usecases.configuration.GenerateConfigurationLabelUseCase
-import dev.jketterer.leaflog.domain.usecases.configuration.SaveBrewingConfigurationUseCase
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,9 +22,8 @@ class SessionAggregateUseCasesTest {
 
     private val sessions = FakeTeaSessionRepository()
     private val teas = FakeTeaRepository(listOf(TEA))
-    private val configurations = FakeBrewingConfigurationRepository(listOf(CONFIG))
     private val transactor = FakeTransactor()
-    private val recomputeStats = RecomputeStatsUseCase(sessions, teas, configurations)
+    private val recomputeStats = RecomputeStatsUseCase(sessions, teas)
 
     private val startSession = StartSessionUseCase(transactor, sessions, teas, recomputeStats, Clock.System)
     private val addSteep = AddSteepUseCase(transactor, sessions, recomputeStats, Clock.System)
@@ -39,14 +35,6 @@ class SessionAggregateUseCasesTest {
     private val deleteSession = DeleteSessionUseCase(transactor, sessions, recomputeStats)
     private val saveTimerState = SaveTimerStateUseCase(transactor, sessions, Clock.System)
     private val discardSteep = DiscardSteepUseCase(sessions, deleteSession, deleteSteep, finishSession)
-    private val saveConfiguration = SaveBrewingConfigurationUseCase(
-        transactor,
-        configurations,
-        sessions,
-        recomputeStats,
-        GenerateConfigurationLabelUseCase(),
-        Clock.System,
-    )
 
     @Test
     fun `a new session is in progress and unrated and its first steep shares its id`() = runTest {
@@ -79,7 +67,7 @@ class SessionAggregateUseCasesTest {
         addSteep(id, 30.seconds, 95.0, 100.0).getOrThrow()
 
         val again = startSession(sessions.getSession(id)!!).getOrThrow()
-        val plan = ResolvePlanUseCase(configurations, sessions)(again)
+        val plan = ResolvePlanUseCase(sessions)(again)
 
         assertEquals(id, again.session.planSessionId)
         assertEquals(20.seconds, again.steeps.single().brewingTime)
@@ -220,7 +208,7 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `moving a session to another tea recomputes both teas and clears its method and plan`() = runTest {
+    fun `moving a session to another tea recomputes both teas and clears its source`() = runTest {
         teas.upsert(OTHER_TEA)
         val source = start(status = SessionStatus.COMPLETED).session.id
         val id = startSession(
@@ -231,18 +219,15 @@ class SessionAggregateUseCasesTest {
             temperatureCelsius = 95.0,
             waterQuantityMl = 100.0,
             status = SessionStatus.COMPLETED,
-            usedConfigurationId = CONFIG.id,
             planSessionId = source,
         ).getOrThrow().session.id
 
         val moved = editSession(id) { it.copy(teaId = OTHER_TEA.id) }.getOrThrow()
 
         assertEquals(OTHER_TEA.id, moved.session.teaId)
-        assertNull(moved.session.usedConfigurationId)
         assertNull(moved.session.planSessionId)
         assertEquals(1, tea().totalSessions)
         assertEquals(1, teas.getById(OTHER_TEA.id)!!.totalSessions)
-        assertEquals(0, config().timesUsed)
     }
 
     @Test
@@ -268,8 +253,8 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `a finished session counts once for its tea and method however many steeps`() = runTest {
-        val id = startSession(CONFIG).getOrThrow().session.id
+    fun `a finished session counts once for its tea however many steeps`() = runTest {
+        val id = start().session.id
         editSteep(id) { it.copy(rating = 3f) }.getOrThrow()
         val second = addSteep(id, 25.seconds, 95.0, 100.0).getOrThrow().currentSteep
         editSteep(second.id) { it.copy(rating = 5f) }.getOrThrow()
@@ -279,38 +264,34 @@ class SessionAggregateUseCasesTest {
         assertEquals(1, tea().totalSessions)
         assertEquals(4f, tea().averageRating)
         assertEquals(finished.startedAt, tea().lastBrewedAt)
-        assertEquals(1, config().timesUsed)
-        assertEquals(finished.startedAt, config().lastUsedAt)
     }
 
     @Test
     fun `sessions still brewing stay out of the stats`() = runTest {
-        startSession(CONFIG).getOrThrow()
+        start()
 
         assertEquals(0, tea().totalSessions)
         assertNull(tea().lastBrewedAt)
-        assertEquals(0, config().timesUsed)
     }
 
     @Test
     fun `finishing twice changes nothing the second time`() = runTest {
-        val id = startSession(CONFIG).getOrThrow().session.id
+        val id = start().session.id
         val finished = finishSession(id).getOrThrow()
 
         assertEquals(finished, finishSession(id).getOrThrow())
-        assertEquals(1, config().timesUsed)
+        assertEquals(1, tea().totalSessions)
     }
 
     @Test
     fun `reopening takes the session back out of the stats`() = runTest {
-        val id = startSession(CONFIG).getOrThrow().session.id
+        val id = start().session.id
         finishSession(id).getOrThrow()
 
         val reopened = reopenSession(id).getOrThrow()
 
         assertEquals(SessionStatus.IN_PROGRESS, reopened.session.status)
         assertEquals(0, tea().totalSessions)
-        assertEquals(0, config().timesUsed)
     }
 
     @Test
@@ -444,16 +425,8 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `quick brew starts unrated and remembers the method`() = runTest {
-        val started = startSession(CONFIG).getOrThrow()
-
-        assertNull(started.effectiveRating)
-        assertEquals(CONFIG.id, started.session.usedConfigurationId)
-    }
-
-    @Test
-    fun `a session starts rinsed when its method is and brew again keeps that`() = runTest {
-        val started = startSession(CONFIG.copy(rinse = true)).getOrThrow()
+    fun `a session starts rinsed when asked and brew again keeps that`() = runTest {
+        val started = start(rinsed = true)
         assertTrue(started.session.rinsed)
 
         val again = startSession(sessions.getSession(started.session.id)!!).getOrThrow()
@@ -462,14 +435,12 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
-    fun `a session's rinse can be edited and a method saved from it keeps it`() = runTest {
+    fun `a session's rinse can be edited`() = runTest {
         val id = start(status = SessionStatus.COMPLETED).session.id
 
         editSession(id) { it.copy(rinsed = true) }.getOrThrow()
-        val saved = saveConfiguration(sessions.getSession(id)!!, customLabel = "Mine").getOrThrow()
 
         assertTrue(sessions.getSession(id)!!.session.rinsed)
-        assertTrue(saved.rinse)
     }
 
     @Test
@@ -494,35 +465,11 @@ class SessionAggregateUseCasesTest {
         assertEquals(1, tea().totalSessions)
     }
 
-    @Test
-    fun `a method saved from a session counts that session as its first use`() = runTest {
-        val id = start(status = SessionStatus.COMPLETED).session.id
-        editSteep(id) { it.copy(rating = 4f) }.getOrThrow()
-
-        val saved = saveConfiguration(sessions.getSession(id)!!, customLabel = "Mine").getOrThrow()
-
-        assertEquals(1, saved.timesUsed)
-        assertEquals(4f, saved.rating)
-        assertEquals(saved.id, sessions.getSession(id)!!.session.usedConfigurationId)
-    }
-
-    @Test
-    fun `a method saved from a session that used another takes that use from it`() = runTest {
-        val id = startSession(CONFIG).getOrThrow().session.id
-        editSteep(id) { it.copy(rating = 4f) }.getOrThrow()
-        finishSession(id).getOrThrow()
-
-        val saved = saveConfiguration(sessions.getSession(id)!!, customLabel = "Mine").getOrThrow()
-
-        assertEquals(1, saved.timesUsed)
-        assertEquals(0, config().timesUsed)
-        assertEquals(saved.id, sessions.getSession(id)!!.session.usedConfigurationId)
-    }
-
     private suspend fun start(
         status: SessionStatus = SessionStatus.IN_PROGRESS,
         location: String? = null,
         notes: String? = null,
+        rinsed: Boolean = false,
     ): SessionWithSteeps = startSession(
         teaId = TEA.id,
         vesselId = "gaiwan",
@@ -534,10 +481,10 @@ class SessionAggregateUseCasesTest {
         location = location,
         notes = notes,
         status = status,
+        rinsed = rinsed,
     ).getOrThrow()
 
     private suspend fun tea() = teas.getById(TEA.id)!!
-    private suspend fun config() = configurations.getById(CONFIG.id)!!
 
     private companion object {
         val EPOCH = Instant.fromEpochMilliseconds(0)
@@ -551,23 +498,5 @@ class SessionAggregateUseCasesTest {
         )
 
         val OTHER_TEA = TEA.copy(id = "other", name = "Da Hong Pao")
-
-        val CONFIG = BrewingConfiguration(
-            id = "config",
-            teaId = TEA.id,
-            vesselId = "gaiwan",
-            teaQuantityGrams = 5f,
-            waterQuantityMl = 100.0,
-            temperatureCelsius = 95.0,
-            brewingTime = 20.seconds,
-            waterType = WaterType.FILTERED,
-            sourceSessionId = null,
-            rating = null,
-            timesUsed = 7,
-            lastUsedAt = EPOCH,
-            label = null,
-            createdAt = EPOCH,
-            updatedAt = EPOCH,
-        )
     }
 }

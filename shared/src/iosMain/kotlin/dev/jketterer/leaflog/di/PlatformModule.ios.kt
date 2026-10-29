@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.data.local.database.MIGRATION_8_9
 import dev.jketterer.leaflog.data.local.database.MIGRATION_9_10
 import dev.jketterer.leaflog.data.local.database.MIGRATION_10_11
 import dev.jketterer.leaflog.data.local.database.MIGRATION_11_12
+import dev.jketterer.leaflog.data.local.database.MIGRATION_12_13
 import dev.jketterer.leaflog.data.local.preferences.PreferencesDataStore
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.services.TimerLifecycleHandler
@@ -44,6 +45,7 @@ actual fun platformModule() = module {
                 MIGRATION_9_10,
                 MIGRATION_10_11,
                 MIGRATION_11_12,
+                MIGRATION_12_13,
             )
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
@@ -55,7 +57,6 @@ actual fun platformModule() = module {
     single { get<LeafLogDatabase>().teaSessionDao() }
     single { get<LeafLogDatabase>().teaTypeDao() }
     single { get<LeafLogDatabase>().brewingVesselDao() }
-    single { get<LeafLogDatabase>().brewingConfigurationDao() }
     single { get<LeafLogDatabase>().tastingTagDao() }
 
     // Platform-specific services

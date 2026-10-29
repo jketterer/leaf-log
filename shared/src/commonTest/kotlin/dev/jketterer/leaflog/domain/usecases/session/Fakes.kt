@@ -3,12 +3,10 @@ package dev.jketterer.leaflog.domain.usecases.session
 import dev.jketterer.leaflog.data.local.database.entities.SteepRow
 import dev.jketterer.leaflog.data.mappers.toAggregates
 import dev.jketterer.leaflog.data.mappers.toRow
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.domain.repositories.BrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
@@ -139,47 +137,6 @@ class FakeTeaSessionRepository(
     override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getSessionIdsFlow(): Flow<List<String>> = TODO("unused by these tests")
 
-}
-
-class FakeBrewingConfigurationRepository(
-    configurations: List<BrewingConfiguration> = emptyList(),
-) : BrewingConfigurationRepository {
-    private val configurations = configurations.associateBy { it.id }.toMutableMap()
-
-    override suspend fun getBestByTeaAndVessel(
-        teaId: String,
-        vesselId: String,
-    ): BrewingConfiguration? =
-        configurations.values.firstOrNull { it.teaId == teaId && it.vesselId == vesselId }
-
-    override suspend fun getByTeaId(teaId: String): List<BrewingConfiguration> =
-        configurations.values.filter { it.teaId == teaId && it.deletedAt == null }
-
-    override suspend fun getById(id: String): BrewingConfiguration? =
-        configurations[id]?.takeIf { it.deletedAt == null }
-
-    override suspend fun deleteWithTea(teaId: String) = deleteWhere { it.teaId == teaId }
-    override suspend fun deleteWithVessel(vesselId: String) = deleteWhere { it.vesselId == vesselId }
-
-    private fun deleteWhere(predicate: (BrewingConfiguration) -> Boolean) {
-        configurations.values.filter { it.deletedAt == null && predicate(it) }
-            .forEach { configurations[it.id] = it.copy(deletedAt = DELETED_AT) }
-    }
-    override suspend fun upsert(configuration: BrewingConfiguration) {
-        configurations[configuration.id] = configuration
-    }
-
-    override suspend fun getAll(): List<BrewingConfiguration> = TODO("unused by these tests")
-    override suspend fun getByTeaAndVessel(teaId: String, vesselId: String): List<BrewingConfiguration> =
-        configurations.values.filter { it.teaId == teaId && it.vesselId == vesselId && it.deletedAt == null }
-    override fun getByTeaIdFlow(teaId: String): Flow<List<BrewingConfiguration>> = TODO("unused by these tests")
-    override fun getByIdFlow(id: String): Flow<BrewingConfiguration?> = TODO("unused by these tests")
-    override suspend fun delete(id: String) = TODO("unused by these tests")
-    override fun getMostUsedFlow(limit: Int): Flow<List<BrewingConfiguration>> = TODO("unused by these tests")
-    override fun getAllActiveFlow(): Flow<List<BrewingConfiguration>> = TODO("unused by these tests")
-    override suspend fun getMaxPinnedSortOrder(): Int? = TODO("unused by these tests")
-    override suspend fun setPinned(id: String, isPinned: Boolean, pinnedSortOrder: Int) = TODO("unused by these tests")
-    override suspend fun reorderPinnedConfigurations(orderedIds: List<String>) = TODO("unused by these tests")
 }
 
 private val DELETED_AT = Instant.fromEpochMilliseconds(1)

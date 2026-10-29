@@ -3,7 +3,6 @@ package dev.jketterer.leaflog.data.backup
 import dev.jketterer.leaflog.domain.models.ImportSummary
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.TimerStatus
-import dev.jketterer.leaflog.domain.models.WaterType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.seconds
@@ -26,8 +25,7 @@ class BackupTest {
         val (kept, dropped) = backup.withoutOrphans(LocalRows())
 
         assertEquals(emptyList(), kept.steeps)
-        assertEquals(emptyList(), kept.methods)
-        assertEquals(3, dropped) // two steeps and the method
+        assertEquals(2, dropped)
     }
 
     @Test
@@ -43,15 +41,15 @@ class BackupTest {
         val (kept, dropped) = backup(vessels = emptyList()).withoutOrphans(LocalRows())
 
         assertEquals(emptyList(), kept.steeps)
-        assertEquals(3, dropped)
+        assertEquals(2, dropped)
     }
 
     @Test
-    fun `a tea whose type is nowhere takes its sessions and methods with it`() {
+    fun `a tea whose type is nowhere takes its sessions with it`() {
         val (kept, dropped) = backup(teaTypes = emptyList()).withoutOrphans(LocalRows())
 
         assertEquals(emptyList(), kept.teas)
-        assertEquals(4, dropped)
+        assertEquals(3, dropped)
     }
 
     @Test
@@ -96,7 +94,6 @@ class BackupTest {
                 tea("still-deleted", deleted = true),
             ),
             steeps = emptyList(),
-            methods = emptyList(),
         )
         val local = LocalRows(
             teas = mapOf(
@@ -152,19 +149,6 @@ private fun backup(
     steeps = listOf(
         steep("s1", null, vesselId = "vessel", photos = listOf("steep.jpg")),
         steep("s2", "s1"),
-    ),
-    methods = listOf(
-        BackupMethod(
-            id = "method",
-            teaId = "tea",
-            vesselId = "vessel",
-            waterQuantityMl = 100.0,
-            temperatureCelsius = 95.0,
-            brewingTime = 20.seconds,
-            waterType = WaterType.FILTERED,
-            createdAt = at,
-            updatedAt = at,
-        ),
     ),
 )
 

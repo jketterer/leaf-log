@@ -1,6 +1,5 @@
 package dev.jketterer.leaflog.domain.usecases.session
 
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.BrewingPlan
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.SessionStatus
@@ -40,7 +39,6 @@ class StartSessionUseCase(
         rating: Float? = null,
         photos: List<String> = emptyList(),
         status: SessionStatus = SessionStatus.IN_PROGRESS,
-        usedConfigurationId: String? = null,
         planSessionId: String? = null,
         rinsed: Boolean = false,
     ): Result<SessionWithSteeps> = runCatching {
@@ -57,7 +55,6 @@ class StartSessionUseCase(
                 waterType = waterType,
                 teaQuantityGrams = teaQuantityGrams,
                 location = location.blankToNull(),
-                usedConfigurationId = usedConfigurationId,
                 planSessionId = planSessionId,
                 rinsed = rinsed,
                 notes = notes.blankToNull(),
@@ -88,19 +85,6 @@ class StartSessionUseCase(
         }
         started
     }
-
-    /** Quick brew from a saved method. */
-    suspend operator fun invoke(configuration: BrewingConfiguration) = invoke(
-        teaId = configuration.teaId,
-        vesselId = configuration.vesselId,
-        waterType = configuration.waterType,
-        brewingTime = configuration.brewingTime,
-        temperatureCelsius = configuration.temperatureCelsius,
-        waterQuantityMl = configuration.waterQuantityMl,
-        teaQuantityGrams = configuration.teaQuantityGrams,
-        usedConfigurationId = configuration.id,
-        rinsed = configuration.rinse,
-    )
 
     /**
      * Brew Again: [source]'s set-up, with nothing it recorded about how it went. Its steeps become

@@ -1,10 +1,8 @@
 package dev.jketterer.leaflog.domain.usecases
 
-import dev.jketterer.leaflog.domain.models.BrewingConfiguration
 import dev.jketterer.leaflog.domain.models.DomainFailure
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.WaterType
-import dev.jketterer.leaflog.domain.usecases.session.FakeBrewingConfigurationRepository
 import dev.jketterer.leaflog.domain.usecases.session.FakeTeaRepository
 import dev.jketterer.leaflog.domain.usecases.session.FakeTeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.session.FakeTransactor
@@ -24,36 +22,40 @@ class DeleteTeaUseCaseTest {
 
     private val sessions = FakeTeaSessionRepository()
     private val teas = FakeTeaRepository(listOf(TEA))
-    private val configurations = FakeBrewingConfigurationRepository(listOf(METHOD))
     private val transactor = FakeTransactor()
 
-    private val deleteTea = DeleteTeaUseCase(transactor, teas, sessions, configurations)
+    private val deleteTea = DeleteTeaUseCase(transactor, teas, sessions)
     private val startSession = StartSessionUseCase(
         transactor,
         sessions,
         teas,
-        RecomputeStatsUseCase(sessions, teas, configurations),
+        RecomputeStatsUseCase(sessions, teas),
         Clock.System,
     )
 
     @Test
-    fun `a tea never brewed is deleted with its methods`() = runTest {
+    fun `a tea never brewed is deleted`() = runTest {
         deleteTea(TEA.id).getOrThrow()
 
         assertNull(teas.getById(TEA.id))
-        assertNull(configurations.getById(METHOD.id))
     }
 
     @Test
     fun `a tea with only an in-progress session is refused and kept`() = runTest {
-        startSession(METHOD).getOrThrow()
+        startSession(
+            teaId = TEA.id,
+            vesselId = "gaiwan",
+            waterType = WaterType.FILTERED,
+            brewingTime = 20.seconds,
+            temperatureCelsius = 95.0,
+            waterQuantityMl = 100.0,
+        ).getOrThrow()
 
         val result = deleteTea(TEA.id)
 
         val failure = assertIs<DomainFailure.InUse>(result.exceptionOrNull())
         assertEquals(1, failure.count)
         assertNotNull(teas.getById(TEA.id))
-        assertNotNull(configurations.getById(METHOD.id))
     }
 
     private companion object {
@@ -63,24 +65,6 @@ class DeleteTeaUseCaseTest {
             id = "tea",
             name = "Tieguanyin",
             teaTypeId = "oolong",
-            createdAt = EPOCH,
-            updatedAt = EPOCH,
-        )
-
-        val METHOD = BrewingConfiguration(
-            id = "method",
-            teaId = TEA.id,
-            vesselId = "gaiwan",
-            teaQuantityGrams = 5f,
-            waterQuantityMl = 100.0,
-            temperatureCelsius = 95.0,
-            brewingTime = 20.seconds,
-            waterType = WaterType.FILTERED,
-            sourceSessionId = null,
-            rating = null,
-            timesUsed = 0,
-            lastUsedAt = null,
-            label = null,
             createdAt = EPOCH,
             updatedAt = EPOCH,
         )

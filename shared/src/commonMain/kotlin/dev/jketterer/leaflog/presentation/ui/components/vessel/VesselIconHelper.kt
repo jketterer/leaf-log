@@ -3,18 +3,14 @@ package dev.jketterer.leaflog.presentation.ui.components.vessel
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.ic_french_press
-import leaf_log.shared.generated.resources.ic_teapot
-import org.jetbrains.compose.resources.painterResource
 
 object VesselIconHelper {
     @Composable
     fun getIconForVessel(iconName: String?): Painter {
         return when (iconName) {
             "gaiwan" -> rememberVectorPainter(VesselIcons.Gaiwan)
-            "teapot" -> painterResource(Res.drawable.ic_teapot)
-            "ic_french_press" -> painterResource(Res.drawable.ic_french_press)
+            "teapot" -> rememberVectorPainter(VesselIcons.Teapot)
+            "ic_french_press" -> rememberVectorPainter(VesselIcons.FrenchPress)
             "mug" -> rememberVectorPainter(VesselIcons.Mug)
             "kyusu" -> rememberVectorPainter(VesselIcons.Kyusu)
             "generic" -> rememberVectorPainter(VesselIcons.TeaCup)
@@ -25,11 +21,11 @@ object VesselIconHelper {
     fun getAllIcons(): List<VesselIconOption> {
         return listOf(
             VesselIconOption("gaiwan", "Gaiwan") { rememberVectorPainter(VesselIcons.Gaiwan) },
-            VesselIconOption("teapot", "Teapot") { painterResource(Res.drawable.ic_teapot) },
+            VesselIconOption("teapot", "Teapot") { rememberVectorPainter(VesselIcons.Teapot) },
             VesselIconOption(
                 "ic_french_press",
                 "French Press"
-            ) { painterResource(Res.drawable.ic_french_press) },
+            ) { rememberVectorPainter(VesselIcons.FrenchPress) },
             VesselIconOption("kyusu", "Kyusu") { rememberVectorPainter(VesselIcons.Kyusu) },
             VesselIconOption("mug", "Mug") { rememberVectorPainter(VesselIcons.Mug) },
             VesselIconOption("generic", "Tea Cup") { rememberVectorPainter(VesselIcons.TeaCup) },

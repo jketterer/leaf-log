@@ -47,6 +47,7 @@ import leaf_log.shared.generated.resources.tab_history
 import leaf_log.shared.generated.resources.tab_home
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionScreen
+import dev.jketterer.leaflog.presentation.ui.screens.flavors.FlavorDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaDetailScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.EditSessionScreen
 import dev.jketterer.leaflog.presentation.ui.screens.history.HistoryScreen
@@ -179,6 +180,7 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToAddVessel = {
                     navigator.navigate(NavRoute.EditVesselRoute())
                 },
+                onNavigateToFlavor = { tagId -> navigator.navigate(NavRoute.FlavorDetailRoute(tagId)) },
             )
         }
 
@@ -274,6 +276,17 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToHistory = { teaId ->
                     navigator.navigate(NavRoute.HistoryRoute(filterTeaId = teaId))
                 },
+                onNavigateToFlavor = { tagId -> navigator.navigate(NavRoute.FlavorDetailRoute(tagId)) },
+            )
+        }
+
+        entry<NavRoute.FlavorDetailRoute> { route ->
+            FlavorDetailScreen(
+                route = route,
+                onNavigateBack = { navigator.navigateUp(route) },
+                onNavigateToFlavor = { tagId -> navigator.replace(route, NavRoute.FlavorDetailRoute(tagId)) },
+                onNavigateToTea = { teaId -> navigator.navigate(NavRoute.TeaDetailsRoute(teaId)) },
+                onNavigateToSession = { sessionId -> navigator.navigate(NavRoute.SessionDetailsRoute(sessionId)) },
             )
         }
 

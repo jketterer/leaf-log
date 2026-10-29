@@ -132,6 +132,7 @@ fun TeaDetailScreen(
     onNavigateToLogTea: (NavRoute.LogTeaRoute) -> Unit,
     onNavigateToTimer: (String) -> Unit,
     onNavigateToHistory: (String) -> Unit,
+    onNavigateToFlavor: (tagId: String) -> Unit,
     viewModel: TeaDetailViewModel = koinViewModel { parametersOf(route) },
 ) {
     val state by viewModel.state.collectAsState()
@@ -163,6 +164,10 @@ fun TeaDetailScreen(
 
                 is TeaDetailNavigationEvent.NavigateToHistory -> {
                     onNavigateToHistory(event.teaId)
+                }
+
+                is TeaDetailNavigationEvent.NavigateToFlavor -> {
+                    onNavigateToFlavor(event.tagId)
                 }
             }
         }
@@ -437,7 +442,9 @@ private fun TeaDetailContent(
                         }
 
                         state.flavorProfile?.let { profile ->
-                            item(key = "flavor_profile") { FlavorProfileSection(profile) }
+                            item(key = "flavor_profile") {
+                                FlavorProfileSection(profile, onTagClick = { onIntent(TeaDetailIntent.FlavorClicked(it)) })
+                            }
                         }
 
                         state.steepCurve?.let { curve ->

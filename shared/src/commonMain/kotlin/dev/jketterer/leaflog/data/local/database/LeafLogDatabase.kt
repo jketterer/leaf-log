@@ -32,7 +32,7 @@ expect object LeafLogDatabaseConstructor : RoomDatabaseConstructor<LeafLogDataba
         TastingTagEntity::class,
         SteepTagEntity::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 @ConstructedBy(LeafLogDatabaseConstructor::class)

@@ -451,6 +451,49 @@
     <string name="tags_search">Find or create a tag</string>
     <string name="tags_create">Create “%1$s”</string>
     <string name="tags_carried_over">From the last steep, tap to keep</string>
+    <string name="collection_tab_teas">Teas</string>
+    <string name="collection_tab_vessels">Vessels</string>
+    <string name="collection_tab_flavors">Flavors</string>
+    <plurals name="flavors_top">
+        <item quantity="one">session tasted %2$s</item>
+        <item quantity="other">sessions tasted %2$s</item>
+    </plurals>
+    <plurals name="flavors_top_out_of">
+        <item quantity="one">Your most used flavor, of %1$d tagged session</item>
+        <item quantity="other">Your most used flavor, of %1$d tagged sessions</item>
+    </plurals>
+    <string name="flavors_intro">Your flavors build up as you tag steeps</string>
+    <string name="header_flavors_tasted">Tasted</string>
+    <string name="header_flavors_not_tasted">Not tasted yet</string>
+    <string name="header_flavors_all">All flavors</string>
+    <string name="your_tag">Your tag</string>
+    <plurals name="flavor_detail_sessions">
+        <item quantity="one">session tasted it, of %2$d tagged</item>
+        <item quantity="other">sessions tasted it, of %2$d tagged</item>
+    </plurals>
+    <string name="header_most_with">Most with</string>
+    <string name="flavor_not_tasted">Not tasted yet</string>
+    <string name="flavor_not_tasted_body">Tag it on a steep and it shows up here</string>
+    <string name="tag_rename">Rename</string>
+    <string name="tag_rename_title">Rename tag</string>
+    <string name="tag_name">Name</string>
+    <string name="tag_name_taken">There's already a tag called “%1$s”</string>
+    <string name="tag_merge_instead">Merge instead</string>
+    <string name="tag_merge_into">Merge into…</string>
+    <string name="tag_merge_into_title">Merge “%1$s” into</string>
+    <string name="tag_merge_search">Find a tag</string>
+    <string name="tag_merge">Merge</string>
+    <string name="tag_merge_title">Merge “%1$s” into “%2$s”?</string>
+    <plurals name="tag_merge_text">
+        <item quantity="one">Its %1$d session will have “%2$s” instead.</item>
+        <item quantity="other">Its %1$d sessions will have “%2$s” instead.</item>
+    </plurals>
+    <string name="tag_delete_title">Delete “%1$s”?</string>
+    <plurals name="tag_delete_text">
+        <item quantity="one">It'll be removed from its %1$d session.</item>
+        <item quantity="other">It'll be removed from its %1$d sessions.</item>
+    </plurals>
+    <string name="tag_no_sessions">No session has it yet.</string>
     <string name="prefill_tea_default">Starting from your usual temperature for %1$s</string>
     <string name="prefill_type_default">Starting from your usual temperature for %1$s tea</string>
     <string name="last_time">Last time</string>
@@ -489,6 +532,9 @@
         <item quantity="other">%1$d steeps</item>
     </plurals>
     <string name="couldnt_create_tag">Couldn't create the tag</string>
+    <string name="couldnt_rename_tag">Couldn't rename the tag</string>
+    <string name="couldnt_merge_tag">Couldn't merge the tag</string>
+    <string name="couldnt_delete_tag">Couldn't delete the tag</string>
     <string name="more_options">More options</string>
     <string name="brew_again">Brew again</string>
     <string name="adjust">Adjust</string>

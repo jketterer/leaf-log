@@ -116,15 +116,41 @@ class TastingTagTest {
         assertEquals(emptySet(), current.newSince(null))
     }
 
+    @Test
+    fun `a tag's usage ranks the teas that confirmed it most and keeps the latest sessions`() {
+        val floral = listOf(SteepTag("floral", true))
+        val sessions = listOf(
+            session(floral, id = "newest", teaId = "dragon-well"),
+            session(listOf(SteepTag("floral", false)), teaId = "dragon-well"),
+            session(floral, teaId = "tieguanyin"),
+            session(floral, teaId = "tieguanyin"),
+            session(listOf(SteepTag("sweet", true)), teaId = "sencha"),
+            session(floral, teaId = "sencha", status = SessionStatus.IN_PROGRESS),
+        )
+
+        val usage = sessions.usageOf("floral")
+
+        assertEquals(3, usage.sessions)
+        assertEquals(4, usage.tagged)
+        assertEquals(listOf("tieguanyin" to 2, "dragon-well" to 1), usage.teas)
+        assertEquals("newest", usage.recent.first().session.id)
+        assertEquals(3, usage.recent.size)
+    }
+
     private val vocabulary = CURATED_TAG_KEYS.mapIndexed { i, key ->
         TastingTag(id = key, key = key, name = null, isCustom = false, displayOrder = i)
     }
 
-    private fun session(vararg steepTags: List<SteepTag>) = SessionWithSteeps(
+    private fun session(
+        vararg steepTags: List<SteepTag>,
+        id: String = "s1",
+        teaId: String = "tea",
+        status: SessionStatus = SessionStatus.COMPLETED,
+    ) = SessionWithSteeps(
         session = Session(
-            id = "s1",
-            teaId = "tea",
-            status = SessionStatus.COMPLETED,
+            id = id,
+            teaId = teaId,
+            status = status,
             vesselId = "vessel",
             waterType = WaterType.FILTERED,
             syncStatus = SyncStatus.LOCAL_ONLY,

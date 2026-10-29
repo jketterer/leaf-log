@@ -17,8 +17,8 @@ import kotlin.time.Duration
 import kotlin.time.Instant
 
 /**
- * The backup format, version 5: `data.json` in the archive. Frozen, like a migration: a change
- * here is version 6, with a reader for this one.
+ * The backup format, version 6: `data.json` in the archive. Frozen, like a migration: a change
+ * here is version 7, with a reader for this one.
  *
  * It carries facts only. Stats are recomputed on import, and deleted rows travel so that what
  * points at them still restores. Photo paths name entries in the archive.
@@ -39,11 +39,11 @@ data class Backup(
     val preferences: BackupPreferences? = null,
 )
 
-const val BACKUP_VERSION = 5
+const val BACKUP_VERSION = 6
 
 // Field names match the entities, so version 1 (the entities themselves) decodes into these.
 // Defaults cover what version 1 lacked, what version 2 lacked: plans, rinses and tags, and what
-// version 3 lacked: session notes.
+// version 3 lacked: session notes, and what version 5 lacked: when a tag was last edited.
 
 @Serializable
 data class BackupTeaType(
@@ -139,6 +139,7 @@ data class BackupTastingTag(
     val isCustom: Boolean,
     val displayOrder: Int,
     val deletedAt: Instant? = null,
+    val updatedAt: Instant = Instant.fromEpochMilliseconds(0),
 )
 
 @Serializable
@@ -198,6 +199,7 @@ internal fun planMerge(incoming: Backup, local: LocalRows): Backup {
         teaTypes = incoming.teaTypes.newerThan(local.teaTypes) { it.id to it.updatedAt },
         vessels = incoming.vessels.newerThan(local.vessels) { it.id to it.updatedAt },
         teas = incoming.teas.newerThan(local.teas) { it.id to it.updatedAt },
+        tastingTags = incoming.tastingTags.newerThan(local.tastingTags) { it.id to it.updatedAt },
         steeps = incoming.steeps
             .filter { (it.parentSessionId ?: it.id) !in local.inProgressSessions }
             .newerThan(local.steeps) { it.id to it.updatedAt }
@@ -263,6 +265,7 @@ internal data class LocalRows(
     val vessels: Map<String, LocalRow> = emptyMap(),
     val teas: Map<String, LocalRow> = emptyMap(),
     val steeps: Map<String, LocalRow> = emptyMap(),
+    val tastingTags: Map<String, LocalRow> = emptyMap(),
     /** The ids of live sessions being brewed. */
     val inProgressSessions: Set<String> = emptySet(),
 )

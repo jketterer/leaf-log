@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -148,6 +148,8 @@ class TeaDetailViewModel(
                 _navEvents.trySend(TeaDetailNavigationEvent.NavigateToHistory(teaId))
             }
 
+            is TeaDetailIntent.FlavorClicked -> _navEvents.trySend(TeaDetailNavigationEvent.NavigateToFlavor(intent.tagId))
+
             is TeaDetailIntent.BackClicked -> _navEvents.trySend(NavigateBack)
 
             is TeaDetailIntent.DeleteSessionClicked -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
@@ -209,8 +211,7 @@ class TeaDetailViewModel(
     private fun loadRecentSessions(teaId: String) {
         viewModelScope.launch {
             teaSessionRepository.getSessionsByTeaFlow(teaId)
-                // The vocabulary is read again each time, so a tag made since shows by name
-                .map { sessions -> sessions to tastingTagRepository.getAll() }
+                .combine(tastingTagRepository.getAllFlow(), ::Pair)
                 .catchError(Res.string.couldnt_load_tea)
                 .collect { (sessions, vocabulary) ->
                     _state.update {
@@ -310,4 +311,5 @@ sealed interface TeaDetailNavigationEvent {
     data class NavigateToTimer(val sessionId: String) : TeaDetailNavigationEvent
     data object NavigateToEditTea : TeaDetailNavigationEvent
     data class NavigateToHistory(val teaId: String) : TeaDetailNavigationEvent
+    data class NavigateToFlavor(val tagId: String) : TeaDetailNavigationEvent
 }

@@ -1,6 +1,8 @@
 package dev.jketterer.leaflog.di
 
 import dev.jketterer.leaflog.domain.services.TimerService
+import dev.jketterer.leaflog.presentation.ui.screens.flavors.FlavorDetailViewModel
+import dev.jketterer.leaflog.presentation.ui.screens.flavors.FlavorsViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.analytics.AnalyticsViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.collection.EditTeaViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.collection.TeaCollectionViewModel
@@ -51,6 +53,8 @@ val appModule = module {
     viewModelOf(::EditTeaViewModel)
 
     viewModelOf(::VesselListViewModel)
+    viewModelOf(::FlavorsViewModel)
+    viewModelOf(::FlavorDetailViewModel)
     viewModelOf(::VesselDetailViewModel)
     viewModelOf(::EditVesselViewModel)
 

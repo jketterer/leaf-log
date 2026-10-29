@@ -156,7 +156,7 @@ class BackupRepositoryImpl(
                 teaTypeDao.upsertAll(backup.teaTypes.map { it.toEntity() })
                 vesselDao.upsertAll(backup.vessels.map { it.toEntity() })
                 teaDao.upsertAll(backup.teas.map { it.toEntity() })
-                tastingTagDao.insertMissing(backup.tastingTags.map { it.toEntity() })
+                tastingTagDao.upsertAll(backup.tastingTags.map { it.toEntity() })
                 // Parents first: children point at them
                 sessionDao.upsertAll(backup.steeps.sortedBy { it.parentSessionId != null }.map { it.toEntity() })
                 // A steep that's written brings its tags, replacing those it had here
@@ -252,6 +252,8 @@ class BackupRepositoryImpl(
             teas = teaDao.getAllIncludingDeleted()
                 .associate { it.id to LocalRow(it.updatedAt, it.deletedAt != null) },
             steeps = steeps.associate { it.id to LocalRow(it.updatedAt, it.deletedAt != null) },
+            tastingTags = tastingTagDao.getAllIncludingDeleted()
+                .associate { it.id to LocalRow(it.updatedAt, it.deletedAt != null) },
             inProgressSessions = steeps
                 .filter { it.parentSessionId == null && it.deletedAt == null }
                 .filter { it.status == SessionStatus.IN_PROGRESS }

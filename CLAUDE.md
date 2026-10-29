@@ -110,7 +110,7 @@ di/ (Dependency Injection)
 
 ### Database
 
-**Room Database (Version 13)**
+**Room Database (Version 14)**
 
 - Entities in `data/local/database/entities/`
 - DAOs in `data/local/database/dao/`
@@ -176,6 +176,8 @@ Use `expect`/`actual` pattern for platform differences.
   pattern like `"MMM d"` or a month-name array
 - Corners come from `MaterialTheme.shapes` (4/8/12/16/28dp), never a `RoundedCornerShape` literal;
   circles use `CircleShape`
+- A `ModalBottomSheet` takes `sheetState = rememberExpandedSheetState()`. A partly expanded sheet
+  holds at half the screen while the keyboard or its content grows it, hiding what's at the bottom
 - An action that loses data asks through `ConfirmDestructiveDialog`. A form with unsaved changes
   wraps its content in `DiscardChangesGuardDialog`, which guards the toolbar arrow and system back
   alike

@@ -365,3 +365,10 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
         connection.execSQL("DROP TABLE `brewing_configurations`")
     }
 }
+
+// Tags become editable, so a backup's copy needs a time to be compared by
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `tasting_tag` ADD COLUMN `updatedAt` INTEGER NOT NULL DEFAULT 0")
+    }
+}

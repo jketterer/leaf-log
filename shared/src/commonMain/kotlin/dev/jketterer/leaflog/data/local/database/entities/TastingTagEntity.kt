@@ -1,5 +1,6 @@
 package dev.jketterer.leaflog.data.local.database.entities
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -20,6 +21,9 @@ data class TastingTagEntity(
     val isCustom: Boolean,
     val displayOrder: Int,
     val deletedAt: Instant? = null,
+    /** The epoch on a curated tag, which is never edited, and on rows from before tags were. */
+    @ColumnInfo(defaultValue = "0")
+    val updatedAt: Instant = Instant.fromEpochMilliseconds(0),
 )
 
 @Entity(

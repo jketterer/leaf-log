@@ -85,6 +85,7 @@ import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import dev.jketterer.leaflog.presentation.ui.components.common.rememberExpandedSheetState
 
 /**
  * A past [brew] of a tea in a vessel, shown in full before brewing it again: [onStart] replays it,
@@ -105,7 +106,7 @@ fun BrewAgainSheet(
     best: SessionWithSteeps? = null,
     onSelect: (sessionId: String) -> Unit = {},
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberExpandedSheetState()) {
         BrewAgainContent(
             teaName = teaName,
             teaTypeColorHex = teaTypeColorHex,

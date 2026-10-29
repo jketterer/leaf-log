@@ -72,6 +72,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import dev.jketterer.leaflog.presentation.ui.components.common.rememberExpandedSheetState
 
 /**
  * One steep's [SteepEditBody] in a sheet. [rating] and [notes] are the caller's edits in progress;
@@ -96,7 +97,7 @@ fun SteepEditSheet(
 ) {
     var editingParameters by remember(steep.id) { mutableStateOf(false) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier) {
+    ModalBottomSheet(onDismissRequest = onDismiss, modifier = modifier, sheetState = rememberExpandedSheetState()) {
         // Must live inside the sheet's own window, or the sheet consumes back before this sees it.
         // Back returns to the steep; swipe-down and scrim tap still close the sheet outright.
         val backState = rememberNavigationEventState(NavigationEventInfo.None)

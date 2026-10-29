@@ -346,10 +346,9 @@ class HomeViewModel(
         combine(
             teaSessionRepository.getRecentSessionsFlow(limit = 5),
             teaRepository.getAllFlow(),
-        ) { sessions, teas ->
-            // The vocabulary is read again each time, so a tag made since shows by name
-            Triple(sessions, teas, tastingTagRepository.getAll())
-        }
+            tastingTagRepository.getAllFlow(),
+            ::Triple,
+        )
             .catch { e ->
                 messages.failure(e, Res.string.couldnt_load)
                 loaded.value = true

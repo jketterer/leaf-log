@@ -13,13 +13,16 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
+import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.repositories.BrewingVesselRepository
 import dev.jketterer.leaflog.domain.repositories.TastingTagRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.usecases.CreateTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
+import dev.jketterer.leaflog.domain.models.SteepTag
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
+import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -51,12 +54,27 @@ import leaf_log.shared.generated.resources.review_steep_n
 import leaf_log.shared.generated.resources.save
 import leaf_log.shared.generated.resources.start_brewing
 import leaf_log.shared.generated.resources.tab_history
+import leaf_log.shared.generated.resources.tag_delete_text
+import leaf_log.shared.generated.resources.collection_tab_flavors
+import leaf_log.shared.generated.resources.flavor_detail_sessions
+import leaf_log.shared.generated.resources.flavor_in_sessions
+import leaf_log.shared.generated.resources.flavors_intro
+import leaf_log.shared.generated.resources.header_flavors_tasted
+import leaf_log.shared.generated.resources.header_most_with
+import leaf_log.shared.generated.resources.tab_collection
+import leaf_log.shared.generated.resources.tag_merge_into
+import leaf_log.shared.generated.resources.tag_name
+import leaf_log.shared.generated.resources.tag_rename
 import leaf_log.shared.generated.resources.tag_floral
+import leaf_log.shared.generated.resources.tag_fruity
+import leaf_log.shared.generated.resources.tag_merge
+import leaf_log.shared.generated.resources.tag_merge_text
 import leaf_log.shared.generated.resources.tags_add
 import leaf_log.shared.generated.resources.tags_create
 import leaf_log.shared.generated.resources.tags_search
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import kotlin.time.Duration
@@ -270,7 +288,92 @@ class SessionFlowTest : FlowTest() {
         assertEquals(60.seconds, latest().steeps[1].brewingTime)
     }
 
+    @Test
+    fun `a tag renamed from its flavor page shows by its new name on the session left open`() {
+        tagSteeps("Peahcy", 2)
+        openSession()
+        waitFor(steep(2) and hasText("Peahcy"))
+
+        openFlavor("Peahcy")
+        click(text(Res.string.more_options))
+        click(text(Res.string.tag_rename))
+        type(text(Res.string.tag_name), "Peachy")
+        click(text(Res.string.save))
+        waitFor("Peachy")
+        click(text(Res.string.tab_history))
+
+        waitFor(steep(2) and hasText("Peachy"))
+    }
+
+    @Test
+    fun `a tag merged into another lands on that one's page and leaves its sessions the other`() {
+        tagSteeps("Peachy", 1, 2)
+        launch()
+        openFlavor("Peachy")
+        click(text(Res.string.more_options))
+        click(text(Res.string.tag_merge_into))
+        val fruity = text(Res.string.tag_fruity)
+        click(fruity)
+        waitFor(text(Res.plurals.tag_merge_text, 1, 1, fruity))
+        click(inDialog(text(Res.string.tag_merge)))
+
+        waitFor(text(Res.plurals.flavor_detail_sessions, 1, 1, 1))
+        assertEquals(listOf(setOf("fruity"), setOf("fruity")), session().steeps.map { it.confirmedTagIds() })
+        assertTrue(runBlocking { koin.get<TastingTagRepository>().getAll() }.none { it.name == "Peachy" })
+        systemBack()
+        waitFor(text(Res.string.header_flavors_tasted).uppercase())
+        waitUntilGone("Peachy")
+    }
+
+    @Test
+    fun `a tag deleted after confirming leaves its sessions and the Flavors tab`() {
+        tagSteeps("Peachy", 2)
+        launch()
+        openFlavor("Peachy")
+        click(text(Res.string.more_options))
+        click(text(Res.string.delete))
+        waitFor(text(Res.plurals.tag_delete_text, 1, 1))
+        click(inDialog(text(Res.string.delete)))
+
+        waitFor(text(Res.string.flavors_intro))
+        waitUntilGone("Peachy")
+        assertEquals(listOf(emptySet<String>(), emptySet()), session().steeps.map { it.confirmedTagIds() })
+    }
+
+    @Test
+    fun `a flavor tapped in a tea's profile opens its page with the tea it came from`() {
+        tagSteeps("Peachy", 2)
+        launch()
+        click(text(Res.string.tab_collection))
+        click(row)
+        // The session card shows the tag too; the profile's row is the one with its share
+        val profileRow = hasText("Peachy") and hasText(text(Res.plurals.flavor_in_sessions, 1, 1, 1)) and hasClickAction()
+        scrollTo(profileRow)
+        click(profileRow)
+
+        waitFor(text(Res.string.header_most_with).uppercase())
+        waitFor(hasText("Dragon Well") and hasText(text(Res.plurals.flavor_in_sessions, 1, 1, 1)))
+    }
+
     private val row = hasText("Dragon Well") and hasClickAction()
+
+    /** A custom tag called [name], confirmed on each of [steeps]. */
+    private fun tagSteeps(name: String, vararg steeps: Int) = runBlocking {
+        val tag = koin.get<TastingTagRepository>().createCustom(name)
+        session().steeps.filter { it.number in steeps }.forEach { steep ->
+            koin.get<EditSteepUseCase>()(steep.id) { it.copy(tags = it.tags + SteepTag(tag.id, confirmed = true)) }
+                .getOrThrow()
+        }
+    }
+
+    /** Collection's Flavors tab, then [label]'s page. */
+    private fun openFlavor(label: String) {
+        click(text(Res.string.tab_collection))
+        click(text(Res.string.collection_tab_flavors))
+        click(hasText(label) and hasClickAction())
+    }
+
+    private fun Steep.confirmedTagIds() = tags.filter { it.confirmed }.map { it.tagId }.toSet()
 
     private fun openSession(index: Int = 0) {
         launch()

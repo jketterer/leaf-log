@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,57 +27,33 @@ import dev.jketterer.leaflog.domain.models.SteepCurve
 import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
+import dev.jketterer.leaflog.presentation.ui.components.session.FlavorRow
 import dev.jketterer.leaflog.presentation.ui.components.session.label
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.flavor_in_sessions
 import leaf_log.shared.generated.resources.header_flavor_profile
 import leaf_log.shared.generated.resources.header_steep_curve
 import leaf_log.shared.generated.resources.steep_curve_bar
 import leaf_log.shared.generated.resources.steep_curve_peak
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
-/** Each of the tea's top tags with how many of its tagged sessions confirmed it, as words and a bar. */
+/** Each of the tea's top tags with how many of its tagged sessions confirmed it; tapping one opens it. */
 @Composable
 internal fun FlavorProfileSection(
     profile: FlavorProfile,
+    onTagClick: (tagId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionHeader(stringResource(Res.string.header_flavor_profile))
         profile.tags.forEach { (tag, count) ->
-            Column(
-                modifier = Modifier.semantics(mergeDescendants = true) {},
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(tag.label(), style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        text = pluralStringResource(Res.plurals.flavor_in_sessions, profile.sessions, count, profile.sessions),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                // Tertiary, as tags read everywhere else
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
-                ) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth(count.toFloat() / profile.sessions)
-                            .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.tertiary, CircleShape),
-                    )
-                }
-            }
+            FlavorRow(
+                label = tag.label(),
+                count = count,
+                outOf = profile.sessions,
+                isCustom = tag.isCustom,
+                onClick = { onTagClick(tag.id) },
+            )
         }
     }
 }
@@ -153,6 +127,7 @@ internal fun SteepCurveSection(
 private fun FlavorProfileSectionPreview() {
     LeafLogTheme {
         FlavorProfileSection(
+            onTagClick = {},
             profile = FlavorProfile(
                 tags = listOf("floral" to 7, "returning_sweetness" to 5, "smooth" to 3, "astringent" to 1).map { (key, count) ->
                     TastingTag(id = key, key = key, name = null, isCustom = false, displayOrder = CURATED_TAG_KEYS.indexOf(key)) to count

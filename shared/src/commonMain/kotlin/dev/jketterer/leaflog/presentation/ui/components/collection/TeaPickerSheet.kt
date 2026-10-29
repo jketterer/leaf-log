@@ -27,11 +27,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,6 +70,7 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.brew_count
 import org.jetbrains.compose.resources.pluralStringResource
 import kotlin.time.Instant
+import dev.jketterer.leaflog.presentation.ui.components.common.rememberExpandedSheetState
 
 /** How many teas the shortcut sections show before falling through to "All teas". */
 private const val SHORTCUT_LIMIT = 5
@@ -167,10 +166,7 @@ fun TeaPickerSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberBottomSheetState(
-        initialValue = SheetValue.Hidden,
-        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
-    )
+    val sheetState = rememberExpandedSheetState()
     val scope = rememberCoroutineScope()
     val hideThen: (() -> Unit) -> Unit = { action ->
         scope.launch { sheetState.hide() }.invokeOnCompletion { action() }

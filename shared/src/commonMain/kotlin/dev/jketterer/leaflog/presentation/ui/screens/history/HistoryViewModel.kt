@@ -178,15 +178,10 @@ class HistoryViewModel(
             teaRepository.getAllFlow(),
             teaTypeRepository.getAllFlow(),
             brewingVesselRepository.getAllFlow(),
-            ::HistoryData,
-        )
-            // Read again on each emission, so a tag made since shows by name
-            .map { data ->
-                val vocabulary = tastingTagRepository.getAll()
-                data.copy(
-                    vocabulary = vocabulary,
-                    tagLabels = vocabulary.associate { it.id to it.loadLabel() })
-            }
+            tastingTagRepository.getAllFlow(),
+        ) { sessions, teas, types, vessels, vocabulary ->
+            HistoryData(sessions, teas, types, vessels, vocabulary, vocabulary.associate { it.id to it.loadLabel() })
+        }
         val filters = _state.map { it.filters }.distinctUntilChanged()
         // Typing settles before the search runs; clearing it shows everything at once
         val query = _state.map { it.searchQuery }.distinctUntilChanged()
@@ -344,6 +339,6 @@ private data class HistoryData(
     val teas: List<Tea>,
     val types: List<TeaType>,
     val vessels: List<BrewingVessel>,
-    val vocabulary: List<TastingTag> = emptyList(),
-    val tagLabels: Map<String, String> = emptyMap(),
+    val vocabulary: List<TastingTag>,
+    val tagLabels: Map<String, String>,
 )

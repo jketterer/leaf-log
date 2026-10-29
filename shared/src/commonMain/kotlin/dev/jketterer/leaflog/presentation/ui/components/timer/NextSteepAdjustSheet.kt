@@ -23,6 +23,7 @@ import leaf_log.shared.generated.resources.start_steep_n
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import dev.jketterer.leaflog.presentation.ui.components.common.rememberExpandedSheetState
 
 /** The next steep's time and temperature, changed for that steep and those after it. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +38,7 @@ fun NextSteepAdjustSheet(
     onStart: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberExpandedSheetState()) {
         NextSteepAdjustContent(
             nextSteepNumber = nextSteepNumber,
             duration = duration,

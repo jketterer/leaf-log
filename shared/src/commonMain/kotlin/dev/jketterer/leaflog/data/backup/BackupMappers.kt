@@ -199,6 +199,7 @@ internal fun TastingTagEntity.toBackup() = BackupTastingTag(
     isCustom = isCustom,
     displayOrder = displayOrder,
     deletedAt = deletedAt,
+    updatedAt = updatedAt,
 )
 
 internal fun BackupTastingTag.toEntity() = TastingTagEntity(
@@ -208,4 +209,5 @@ internal fun BackupTastingTag.toEntity() = TastingTagEntity(
     isCustom = isCustom,
     displayOrder = displayOrder,
     deletedAt = deletedAt,
+    updatedAt = updatedAt,
 )

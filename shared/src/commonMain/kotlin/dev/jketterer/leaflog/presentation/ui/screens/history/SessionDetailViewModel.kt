@@ -287,12 +287,9 @@ class SessionDetailViewModel(
 
     private fun loadVocabulary() {
         viewModelScope.launch {
-            try {
-                val vocabulary = tastingTagRepository.getAll()
-                _state.update { it.copy(vocabulary = vocabulary) }
-            } catch (e: Exception) {
-                Logger.w(tag = "SessionDetail") { "Failed to load tags: ${e.message}" }
-            }
+            tastingTagRepository.getAllFlow()
+                .catch { e -> Logger.w(tag = "SessionDetail") { "Failed to load tags: ${e.message}" } }
+                .collect { vocabulary -> _state.update { it.copy(vocabulary = vocabulary) } }
         }
     }
 

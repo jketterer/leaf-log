@@ -19,8 +19,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +36,7 @@ import kotlin.time.Duration.Companion.seconds
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.quick_timer
 import org.jetbrains.compose.resources.stringResource
+import dev.jketterer.leaflog.presentation.ui.components.common.rememberExpandedSheetState
 
 /**
  * Bottom sheet for selecting quick timer duration.
@@ -47,7 +46,7 @@ import org.jetbrains.compose.resources.stringResource
 fun QuickTimerDurationSheet(
     onDismiss: () -> Unit,
     onStartTimer: (durationSeconds: Int) -> Unit,
-    sheetState: SheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden),
+    sheetState: SheetState = rememberExpandedSheetState(),
 ) {
     var duration by remember { mutableStateOf<Duration?>(2.minutes) }
 

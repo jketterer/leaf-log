@@ -57,6 +57,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselCard
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListIntent
+import dev.jketterer.leaflog.presentation.ui.screens.flavors.FlavorsState
+import dev.jketterer.leaflog.presentation.ui.screens.flavors.FlavorsTab
+import dev.jketterer.leaflog.presentation.ui.screens.flavors.FlavorsViewModel
 import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListViewModel
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
@@ -65,6 +68,9 @@ import leaf_log.shared.generated.resources.collection_empty
 import leaf_log.shared.generated.resources.collection_no_favorites
 import leaf_log.shared.generated.resources.collection_no_type
 import leaf_log.shared.generated.resources.collection_none_dormant
+import leaf_log.shared.generated.resources.collection_tab_flavors
+import leaf_log.shared.generated.resources.collection_tab_teas
+import leaf_log.shared.generated.resources.collection_tab_vessels
 import leaf_log.shared.generated.resources.no_teas_found
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -75,18 +81,23 @@ fun TeaCollectionScreen(
     onNavigateToAddTea: () -> Unit,
     onNavigateToVesselDetail: (String) -> Unit,
     onNavigateToAddVessel: () -> Unit,
+    onNavigateToFlavor: (tagId: String) -> Unit,
     viewModel: TeaCollectionViewModel = koinViewModel(),
     vesselListViewModel: VesselListViewModel = koinViewModel(),
+    flavorsViewModel: FlavorsViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val vesselState by vesselListViewModel.state.collectAsState()
+    val flavorsState by flavorsViewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
     UiMessageEffect(vesselListViewModel.messages, snackbarHostState)
+    UiMessageEffect(flavorsViewModel.messages, snackbarHostState)
 
     TeaCollectionContent(
         state = state,
         vesselState = vesselState,
+        flavorsState = flavorsState,
         onIntent = viewModel::onIntent,
         onVesselIntent = vesselListViewModel::onIntent,
         snackbarHostState = snackbarHostState,
@@ -94,20 +105,22 @@ fun TeaCollectionScreen(
         onNavigateToAddTea = onNavigateToAddTea,
         onNavigateToVesselDetail = onNavigateToVesselDetail,
         onNavigateToAddVessel = onNavigateToAddVessel,
+        onNavigateToFlavor = onNavigateToFlavor,
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TeaCollectionContent(
     state: TeaCollectionState,
     vesselState: dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState,
+    flavorsState: FlavorsState,
     onIntent: (TeaCollectionIntent) -> Unit,
     onVesselIntent: (VesselListIntent) -> Unit,
     onNavigateToTeaDetail: (String) -> Unit,
     onNavigateToAddTea: () -> Unit,
     onNavigateToVesselDetail: (String) -> Unit,
     onNavigateToAddVessel: () -> Unit,
+    onNavigateToFlavor: (tagId: String) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showSearchBar by remember { mutableStateOf(false) }
@@ -218,30 +231,32 @@ private fun TeaCollectionContent(
                     Tab(
                         selected = state.selectedTab == CollectionTab.TEAS,
                         onClick = { onIntent(TeaCollectionIntent.TabSelected(CollectionTab.TEAS)) },
-                        text = { Text("Teas") },
+                        text = { Text(stringResource(Res.string.collection_tab_teas)) },
                     )
                     Tab(
                         selected = state.selectedTab == CollectionTab.VESSELS,
                         onClick = { onIntent(TeaCollectionIntent.TabSelected(CollectionTab.VESSELS)) },
-                        text = { Text("Vessels") },
+                        text = { Text(stringResource(Res.string.collection_tab_vessels)) },
+                    )
+                    Tab(
+                        selected = state.selectedTab == CollectionTab.FLAVORS,
+                        onClick = { onIntent(TeaCollectionIntent.TabSelected(CollectionTab.FLAVORS)) },
+                        text = { Text(stringResource(Res.string.collection_tab_flavors)) },
                     )
                 }
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = when (state.selectedTab) {
-                    CollectionTab.TEAS -> onNavigateToAddTea
-                    CollectionTab.VESSELS -> onNavigateToAddVessel
-                },
-            ) {
-                Icon(
-                    imageVector = FeatherIcons.Plus,
-                    contentDescription = when (state.selectedTab) {
-                        CollectionTab.TEAS -> "Add tea"
-                        CollectionTab.VESSELS -> "Add vessel"
-                    },
-                )
+            // Flavors come from tagging steeps, not from here
+            val add = when (state.selectedTab) {
+                CollectionTab.TEAS -> onNavigateToAddTea to "Add tea"
+                CollectionTab.VESSELS -> onNavigateToAddVessel to "Add vessel"
+                CollectionTab.FLAVORS -> null
+            }
+            if (add != null) {
+                FloatingActionButton(onClick = add.first) {
+                    Icon(imageVector = FeatherIcons.Plus, contentDescription = add.second)
+                }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -265,6 +280,8 @@ private fun TeaCollectionContent(
                     onNavigateToVesselDetail = onNavigateToVesselDetail,
                     onNavigateToAddVessel = onNavigateToAddVessel,
                 )
+
+                CollectionTab.FLAVORS -> FlavorsTab(state = flavorsState, onFlavorClick = onNavigateToFlavor)
             }
         }
     }
@@ -440,12 +457,14 @@ private fun TeaCollectionScreenPreview() {
         TeaCollectionContent(
             state = TeaCollectionState(),
             vesselState = dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState(),
+            flavorsState = FlavorsState(),
             onIntent = { _ -> },
             onVesselIntent = { _ -> },
             onNavigateToTeaDetail = { _ -> },
             onNavigateToAddTea = {},
             onNavigateToVesselDetail = { _ -> },
             onNavigateToAddVessel = {},
+            onNavigateToFlavor = {},
         )
     }
 }

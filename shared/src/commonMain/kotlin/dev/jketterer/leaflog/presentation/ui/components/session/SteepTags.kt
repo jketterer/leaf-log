@@ -71,6 +71,7 @@ import leaf_log.shared.generated.resources.tags_search
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
+import dev.jketterer.leaflog.presentation.ui.components.common.rememberExpandedSheetState
 
 /** Each curated tag's name, by its key. */
 internal val CURATED_TAG_NAMES: Map<String, StringResource> = mapOf(
@@ -246,7 +247,7 @@ private fun TagPickerSheet(
     onCreate: (name: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberExpandedSheetState()) {
         TagPickerContent(tags, vocabulary, onToggle, onCreate)
     }
 }

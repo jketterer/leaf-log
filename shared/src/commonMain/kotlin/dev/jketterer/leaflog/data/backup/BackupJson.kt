@@ -22,6 +22,8 @@ internal fun decodeBackup(text: String): Backup =
         1 -> json.decodeFromString<BackupV1>(text).toV4().toBackup().withSessionNotes()
         2, 3 -> json.decodeFromString<BackupV4>(text).toBackup().withSessionNotes()
         4 -> json.decodeFromString<BackupV4>(text).toBackup()
+        // Version 5 lacked only tags' updatedAt, which defaults
+        5 -> json.decodeFromString<Backup>(text).copy(version = BACKUP_VERSION)
         BACKUP_VERSION -> json.decodeFromString<Backup>(text)
         else -> throw if (version > BACKUP_VERSION) {
             DomainFailure.NewerBackup(version)

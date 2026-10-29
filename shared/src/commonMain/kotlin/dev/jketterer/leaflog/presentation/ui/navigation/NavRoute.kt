@@ -78,6 +78,9 @@ sealed interface NavRoute : NavKey {
     data class EditTeaTypeRoute(val teaTypeId: String? = null) : NavRoute
 
     @Serializable
+    data class FlavorDetailRoute(val tagId: String) : NavRoute
+
+    @Serializable
     data class SteepCompleteRoute(val sessionId: String) : NavRoute
 
     /** [logged]: saved from Log Tea, so leaving returns to where Log Tea was opened, with no Undo. */

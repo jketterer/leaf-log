@@ -17,6 +17,7 @@ sealed interface TeaDetailIntent {
     data class BrewAgainClicked(val sessionId: String) : TeaDetailIntent
     data class BrewAgain(val intent: BrewAgainIntent) : TeaDetailIntent
     data object ViewAllSessionsClicked : TeaDetailIntent
+    data class FlavorClicked(val tagId: String) : TeaDetailIntent
     data object BackClicked : TeaDetailIntent
 
     // In-progress session conflict dialog

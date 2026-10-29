@@ -189,6 +189,44 @@ class BackupRepositoryImplTest {
     }
 
     @Test
+    fun `an older backup doesn't revert a tag renamed since or put back one merged away`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val old = phone.repository.export().getOrThrow()
+        val orchid = phone.tags.getAll().single { it.name == "Orchid" }
+        phone.now = at(5)
+        phone.tags.rename(orchid.id, "Wild orchid")
+        phone.tags.copyToSteeps(fromId = "floral", toId = orchid.id)
+        phone.tags.delete("floral")
+
+        phone.repository.import(old).getOrThrow()
+
+        assertEquals("Wild orchid", phone.tags.getAll().single { it.id == orchid.id }.name)
+        assertTrue(phone.tags.getAll().none { it.id == "floral" })
+        assertEquals(
+            setOf(SteepTagEntity("s1", orchid.id, confirmed = true), SteepTagEntity("s2", orchid.id, confirmed = false)),
+            phone.database.teaSessionDao().getAllTags().toSet(),
+        )
+    }
+
+    @Test
+    fun `a newer backup's tag rename and delete land`() = runTest {
+        val phone = Device("phone")
+        phone.seedJournal()
+        val fresh = Device("fresh")
+        fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
+        val orchid = phone.tags.getAll().single { it.name == "Orchid" }
+        phone.now = at(5)
+        phone.tags.rename(orchid.id, "Wild orchid")
+        phone.tags.delete("floral")
+
+        fresh.repository.import(phone.repository.export().getOrThrow()).getOrThrow()
+
+        assertEquals("Wild orchid", fresh.tags.getAll().single { it.id == orchid.id }.name)
+        assertTrue(fresh.database.teaSessionDao().getAllTags().none { it.tagId == "floral" })
+    }
+
+    @Test
     fun `a session being brewed here is left alone`() = runTest {
         val phone = Device("phone")
         phone.seedJournal()
@@ -359,6 +397,14 @@ class BackupRepositoryImplTest {
     ) {
         val preferences = InMemoryPreferences()
         val database = inMemoryDatabase().also { databases += it }
+        /** When this device's tags are edited. */
+        var now = at(2)
+        val tags = TastingTagRepositoryImpl(
+            database.tastingTagDao(),
+            object : Clock {
+                override fun now() = this@Device.now
+            },
+        )
         val files: Path = root / name / "files"
         val cache: Path = root / name / "cache"
         private val storage = ImageStorage(
@@ -407,7 +453,7 @@ class BackupRepositoryImplTest {
                     ),
                 ),
             )
-            TastingTagRepositoryImpl(database.tastingTagDao()).run {
+            tags.run {
                 initializeDefaults()
                 val custom = createCustom("Orchid")
                 database.teaSessionDao().insertTags(

@@ -43,12 +43,28 @@ class BackupJsonTest {
                 },
                 tastingTags = listOf(
                     BackupTastingTag("floral", key = "floral", isCustom = false, displayOrder = 0),
-                    BackupTastingTag("t1", name = "Orchid", isCustom = true, displayOrder = 23),
+                    BackupTastingTag(
+                        "t1",
+                        name = "Orchid",
+                        isCustom = true,
+                        displayOrder = 23,
+                        updatedAt = Instant.fromEpochSeconds(1_790_000_000L),
+                    ),
                 ),
             )
         }
 
         assertEquals(backup, decodeBackup(encodeBackup(backup)))
+    }
+
+    @Test
+    fun `a version 5 backup reads its tags as never edited`() {
+        val backup = decodeBackup(V1).copy(
+            tastingTags = listOf(BackupTastingTag("t1", name = "Orchid", isCustom = true, displayOrder = 23)),
+        )
+        val v5 = encodeBackup(backup).replace("\"version\": $BACKUP_VERSION", "\"version\": 5")
+
+        assertEquals(backup, decodeBackup(v5))
     }
 
     @Test
@@ -225,7 +241,7 @@ private val V1 = """
 }
 """
 
-/** A backup of version 2, 3 or 4 is version 5 with methods. */
+/** A backup of version 2, 3 or 4 is version 6 with methods. */
 private fun String.asVersion(version: Int) =
     replace("\"version\": $BACKUP_VERSION", "\"version\": $version, \"methods\": []")
 

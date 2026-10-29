@@ -280,6 +280,24 @@ class MigrationTest {
         )
         connection.close()
     }
+
+    @Test
+    fun `13 to 14 produces the exported version 14 schema and dates every tag to the epoch`() {
+        val connection = createFromSchema(13)
+        connection.execSQL(
+            "INSERT INTO tasting_tag (id, key, name, isCustom, displayOrder) VALUES " +
+                "('floral', 'floral', NULL, 0, 0), ('t1', NULL, 'Orchid', 1, 23)",
+        )
+
+        MIGRATION_13_14.migrate(connection)
+
+        assertSchemaMatches(connection, 14)
+        assertEquals(
+            mapOf("floral" to listOf("0"), "t1" to listOf("0")),
+            connection.rows("SELECT id, updatedAt FROM tasting_tag"),
+        )
+        connection.close()
+    }
 }
 
 private fun SQLiteStatement.textOrNull(index: Int) = if (isNull(index)) null else getText(index)

@@ -82,7 +82,7 @@ fun SessionCard(
     teaName: String,
     tags: List<TastingTag>,
     onSessionClick: () -> Unit,
-    onDeleteClick: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null,
     onBrewAgainClick: (() -> Unit)? = null,
     timeOnly: Boolean = false,
 ) {
@@ -183,7 +183,9 @@ fun SessionCard(
                 }
             }
 
-            Box(
+            val canBrewAgain = session.session.status == SessionStatus.COMPLETED && onBrewAgainClick != null
+            // Without an action there's no menu
+            if (canBrewAgain || onDeleteClick != null) Box(
                 modifier = Modifier.align(Alignment.CenterVertically)
             ) {
                 IconButton(onClick = { showMenu = true }) {
@@ -197,22 +199,24 @@ fun SessionCard(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
                 ) {
-                    if (session.session.status == SessionStatus.COMPLETED && onBrewAgainClick != null) {
+                    if (canBrewAgain) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.brew_again)) },
                             onClick = {
                                 showMenu = false
-                                onBrewAgainClick()
+                                onBrewAgainClick?.invoke()
                             },
                         )
                     }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.delete)) },
-                        onClick = {
-                            showMenu = false
-                            onDeleteClick()
-                        },
-                    )
+                    if (onDeleteClick != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.delete)) },
+                            onClick = {
+                                showMenu = false
+                                onDeleteClick()
+                            },
+                        )
+                    }
                 }
             }
         }

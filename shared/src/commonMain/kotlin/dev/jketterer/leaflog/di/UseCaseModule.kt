@@ -5,6 +5,7 @@ import dev.jketterer.leaflog.domain.usecases.DeleteTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.DeleteTeaTypeUseCase
 import dev.jketterer.leaflog.domain.usecases.EditTeaUseCase
 import dev.jketterer.leaflog.domain.usecases.MergeTeaTypeUseCase
+import dev.jketterer.leaflog.domain.usecases.RemoveTastingTagUseCase
 import dev.jketterer.leaflog.domain.usecases.InitializeDefaultsUseCase
 import dev.jketterer.leaflog.domain.usecases.ToggleFavoriteUseCase
 import dev.jketterer.leaflog.domain.usecases.session.AddSteepUseCase
@@ -46,6 +47,7 @@ val useCaseModule = module {
     factoryOf(::DeleteTeaTypeUseCase)
     factoryOf(::EditTeaUseCase)
     factoryOf(::MergeTeaTypeUseCase)
+    factoryOf(::RemoveTastingTagUseCase)
     factoryOf(::ToggleFavoriteUseCase)
 
     // Session use cases

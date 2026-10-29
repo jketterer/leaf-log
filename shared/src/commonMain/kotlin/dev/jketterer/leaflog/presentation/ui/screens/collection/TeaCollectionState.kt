@@ -20,6 +20,7 @@ data class TeaCollectionState(
 enum class CollectionTab {
     TEAS,
     VESSELS,
+    FLAVORS,
 }
 
 enum class FilterType {

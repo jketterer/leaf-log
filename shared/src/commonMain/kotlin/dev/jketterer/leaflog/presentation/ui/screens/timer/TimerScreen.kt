@@ -299,16 +299,13 @@ private fun TimerContent(
     }
 
     if (state.showTeaPicker) {
-        var query by remember { mutableStateOf("") }
         var filter by remember { mutableStateOf<TeaPickerFilter>(TeaPickerFilter.All) }
         TeaPickerSheet(
             teas = state.pickerTeas,
             recentTeas = state.recentTeas,
             teaTypes = state.teaTypes,
-            query = query,
             filter = filter,
             selectedTeaId = null,
-            onQueryChanged = { query = it },
             onFilterChanged = { filter = it },
             onTeaSelected = { onIntent(TimerIntent.TeaPicked(it.id)) },
             onTeaCreated = { name, teaTypeId -> onIntent(TimerIntent.QuickAddTea(name, teaTypeId)) },

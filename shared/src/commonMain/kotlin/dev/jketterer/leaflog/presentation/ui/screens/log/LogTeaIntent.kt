@@ -10,7 +10,6 @@ sealed interface LogTeaIntent {
     // Tea selection
     data object ShowTeaPicker : LogTeaIntent
     data object HideTeaPicker : LogTeaIntent
-    data class TeaPickerQueryChanged(val query: String) : LogTeaIntent
     data class TeaPickerFilterChanged(val filter: TeaPickerFilter) : LogTeaIntent
     data class TeaSelected(val teaId: String?) : LogTeaIntent
     data class QuickAddTeaSaved(val name: String, val teaTypeId: String) : LogTeaIntent

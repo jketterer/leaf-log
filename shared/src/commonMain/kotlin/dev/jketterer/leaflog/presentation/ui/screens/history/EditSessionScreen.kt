@@ -296,16 +296,13 @@ private fun EditSessionContent(
 
     if (showTeaPicker) {
         // The picker's search and filter start fresh each time it opens
-        var query by remember { mutableStateOf("") }
         var filter by remember { mutableStateOf<TeaPickerFilter>(TeaPickerFilter.All) }
         TeaPickerSheet(
             teas = state.availableTeas,
             recentTeas = state.recentTeas,
             teaTypes = state.teaTypes,
-            query = query,
             filter = filter,
             selectedTeaId = state.tea?.id,
-            onQueryChanged = { query = it },
             onFilterChanged = { filter = it },
             onTeaSelected = { tea ->
                 onIntent(EditSessionIntent.TeaSelected(tea))

@@ -17,8 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -156,10 +159,8 @@ fun TeaPickerSheet(
     teas: List<Tea>,
     recentTeas: List<Tea>,
     teaTypes: List<TeaType>,
-    query: String,
     filter: TeaPickerFilter,
     selectedTeaId: String?,
-    onQueryChanged: (String) -> Unit,
     onFilterChanged: (TeaPickerFilter) -> Unit,
     onTeaSelected: (Tea) -> Unit,
     onTeaCreated: ((name: String, teaTypeId: String) -> Unit)?,
@@ -172,6 +173,9 @@ fun TeaPickerSheet(
         scope.launch { sheetState.hide() }.invokeOnCompletion { action() }
     }
     var addingTea by rememberSaveable { mutableStateOf(false) }
+    // The field owns its text and cursor. Round-tripping the query through a caller lets a stale
+    // value land between keystrokes, which on iOS throws the cursor back to the start
+    val queryState = rememberTextFieldState()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -190,7 +194,7 @@ fun TeaPickerSheet(
         if (addingTea && onTeaCreated != null) {
             QuickAddTeaForm(
                 teaTypes = teaTypes,
-                initialName = query.trim(),
+                initialName = queryState.text.trim().toString(),
                 onCancel = { addingTea = false },
                 onSave = { name, teaTypeId -> hideThen { onTeaCreated(name, teaTypeId) } },
             )
@@ -199,10 +203,9 @@ fun TeaPickerSheet(
                 teas = teas,
                 recentTeas = recentTeas,
                 teaTypes = teaTypes,
-                query = query,
+                queryState = queryState,
                 filter = filter,
                 selectedTeaId = selectedTeaId,
-                onQueryChanged = onQueryChanged,
                 onFilterChanged = onFilterChanged,
                 onTeaSelected = { tea -> hideThen { onTeaSelected(tea) } },
                 onAddTeaClicked = onTeaCreated?.let { { addingTea = true } },
@@ -217,16 +220,16 @@ fun TeaPickerContent(
     teas: List<Tea>,
     recentTeas: List<Tea>,
     teaTypes: List<TeaType>,
-    query: String,
+    queryState: TextFieldState,
     filter: TeaPickerFilter,
     selectedTeaId: String?,
-    onQueryChanged: (String) -> Unit,
     onFilterChanged: (TeaPickerFilter) -> Unit,
     onTeaSelected: (Tea) -> Unit,
     onAddTeaClicked: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
+    val query = queryState.text.toString()
     val teaTypesById = remember(teaTypes) { teaTypes.associateBy { it.id } }
     val sections = remember(teas, recentTeas, teaTypes, query, filter) {
         buildTeaPickerSections(teas, recentTeas, teaTypes, query, filter)
@@ -234,23 +237,22 @@ fun TeaPickerContent(
 
     Column(modifier = modifier.fillMaxWidth()) {
         OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChanged,
+            state = queryState,
             label = { Text("Search teas") },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            singleLine = true,
+            lineLimits = TextFieldLineLimits.SingleLine,
             leadingIcon = { Icon(FeatherIcons.Search, contentDescription = null) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
-                    IconButton(onClick = { onQueryChanged("") }) {
+                    IconButton(onClick = { queryState.clearText() }) {
                         Icon(FeatherIcons.X, contentDescription = "Clear search")
                     }
                 }
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
+            onKeyboardAction = { focusManager.clearFocus() },
         )
 
         TeaPickerChips(
@@ -521,10 +523,9 @@ private fun TeaPickerSectionsPreview() {
                 teas = previewTeas,
                 recentTeas = previewTeas.take(2),
                 teaTypes = previewTeaTypes,
-                query = "",
+                queryState = rememberTextFieldState(""),
                 filter = TeaPickerFilter.All,
                 selectedTeaId = "tea-2",
-                onQueryChanged = {},
                 onFilterChanged = {},
                 onTeaSelected = {},
                 onAddTeaClicked = {},
@@ -543,10 +544,9 @@ private fun TeaPickerResultsPreview() {
                 teas = previewTeas,
                 recentTeas = previewTeas.take(2),
                 teaTypes = previewTeaTypes,
-                query = "se",
+                queryState = rememberTextFieldState("se"),
                 filter = TeaPickerFilter.All,
                 selectedTeaId = null,
-                onQueryChanged = {},
                 onFilterChanged = {},
                 onTeaSelected = {},
                 onAddTeaClicked = {},
@@ -565,10 +565,9 @@ private fun TeaPickerNoResultsPreview() {
                 teas = previewTeas,
                 recentTeas = previewTeas.take(2),
                 teaTypes = previewTeaTypes,
-                query = "Genmaicha",
+                queryState = rememberTextFieldState("Genmaicha"),
                 filter = TeaPickerFilter.All,
                 selectedTeaId = null,
-                onQueryChanged = {},
                 onFilterChanged = {},
                 onTeaSelected = {},
                 onAddTeaClicked = {},
@@ -587,10 +586,9 @@ private fun TeaPickerEmptyCollectionPreview() {
                 teas = emptyList(),
                 recentTeas = emptyList(),
                 teaTypes = previewTeaTypes,
-                query = "",
+                queryState = rememberTextFieldState(""),
                 filter = TeaPickerFilter.All,
                 selectedTeaId = null,
-                onQueryChanged = {},
                 onFilterChanged = {},
                 onTeaSelected = {},
                 onAddTeaClicked = {},

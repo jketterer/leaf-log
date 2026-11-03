@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.DropdownMenu
@@ -96,6 +99,7 @@ fun TeaCollectionScreen(
 
     TeaCollectionContent(
         state = state,
+        searchQuery = viewModel.searchQuery,
         vesselState = vesselState,
         flavorsState = flavorsState,
         onIntent = viewModel::onIntent,
@@ -112,6 +116,7 @@ fun TeaCollectionScreen(
 @Composable
 private fun TeaCollectionContent(
     state: TeaCollectionState,
+    searchQuery: TextFieldState,
     vesselState: dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState,
     flavorsState: FlavorsState,
     onIntent: (TeaCollectionIntent) -> Unit,
@@ -138,7 +143,7 @@ private fun TeaCollectionContent(
                         navigationIcon = {
                             IconButton(onClick = {
                                 showSearchBar = false
-                                onIntent(TeaCollectionIntent.SearchQueryChanged(""))
+                                onIntent(TeaCollectionIntent.ClearSearch)
                             }) {
                                 Icon(
                                     imageVector = FeatherIcons.ArrowLeft,
@@ -148,12 +153,9 @@ private fun TeaCollectionContent(
                         },
                         title = {
                             TextField(
-                                value = state.searchQuery,
-                                onValueChange = { query ->
-                                    onIntent(TeaCollectionIntent.SearchQueryChanged(query))
-                                },
+                                state = searchQuery,
                                 placeholder = { Text("Search teas...") },
-                                singleLine = true,
+                                lineLimits = TextFieldLineLimits.SingleLine,
                                 colors = TextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
                                     unfocusedContainerColor = Color.Transparent,
@@ -166,9 +168,9 @@ private fun TeaCollectionContent(
                             )
                         },
                         actions = {
-                            if (state.searchQuery.isNotEmpty()) {
+                            if (searchQuery.text.isNotEmpty()) {
                                 IconButton(onClick = {
-                                    onIntent(TeaCollectionIntent.SearchQueryChanged(""))
+                                    onIntent(TeaCollectionIntent.ClearSearch)
                                 }) {
                                     Icon(
                                         imageVector = FeatherIcons.X,
@@ -456,6 +458,7 @@ private fun TeaCollectionScreenPreview() {
     LeafLogTheme(useDarkTheme = false) {
         TeaCollectionContent(
             state = TeaCollectionState(),
+            searchQuery = rememberTextFieldState(),
             vesselState = dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListState(),
             flavorsState = FlavorsState(),
             onIntent = { _ -> },

@@ -399,7 +399,6 @@ private fun TeaFilterChip(
     )
 
     if (showPicker) {
-        var query by remember { mutableStateOf("") }
         var pickerFilter by remember {
             mutableStateOf(
                 filters.teaTypeIds.singleOrNull()?.let(TeaPickerFilter::Type) ?: TeaPickerFilter.All,
@@ -409,10 +408,8 @@ private fun TeaFilterChip(
             teas = brewedTeas,
             recentTeas = brewedTeas,
             teaTypes = teaTypes,
-            query = query,
             filter = pickerFilter,
             selectedTeaId = filters.teaId,
-            onQueryChanged = { query = it },
             onFilterChanged = { pickerFilter = it },
             onTeaSelected = { tea ->
                 showPicker = false

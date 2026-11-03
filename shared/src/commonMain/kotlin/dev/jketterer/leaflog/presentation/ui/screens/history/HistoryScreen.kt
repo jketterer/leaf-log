@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
@@ -116,6 +118,7 @@ fun HistoryScreen(
 
     HistoryContent(
         state = state,
+        searchQuery = viewModel.searchQuery,
         onIntent = viewModel::onIntent,
         snackbarHostState = snackbarHostState,
         onNavigateToLogTea = { onNavigateToLogTea(null) },
@@ -126,6 +129,7 @@ fun HistoryScreen(
 @Composable
 private fun HistoryContent(
     state: HistoryState,
+    searchQuery: TextFieldState,
     onIntent: (HistoryIntent) -> Unit,
     onNavigateToLogTea: () -> Unit = {},
     onNavigateUp: (() -> Unit)? = null,
@@ -153,7 +157,7 @@ private fun HistoryContent(
                         IconButton(
                             onClick = {
                                 showSearchBar = false
-                                onIntent(HistoryIntent.SearchQueryChanged(""))
+                                onIntent(HistoryIntent.ClearSearch)
                                 keyboardController?.hide()
                             }
                         ) {
@@ -165,16 +169,11 @@ private fun HistoryContent(
                     },
                     title = {
                         TextField(
-                            value = state.searchQuery,
-                            onValueChange = { query ->
-                                onIntent(HistoryIntent.SearchQueryChanged(query))
-                            },
+                            state = searchQuery,
                             placeholder = { Text("Search sessions...") },
-                            singleLine = true,
+                            lineLimits = TextFieldLineLimits.SingleLine,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = KeyboardActions(
-                                onSearch = { keyboardController?.hide() }
-                            ),
+                            onKeyboardAction = { keyboardController?.hide() },
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
@@ -187,9 +186,9 @@ private fun HistoryContent(
                         )
                     },
                     actions = {
-                        if (state.searchQuery.isNotEmpty()) {
+                        if (searchQuery.text.isNotEmpty()) {
                             IconButton(
-                                onClick = { onIntent(HistoryIntent.SearchQueryChanged("")) }
+                                onClick = { onIntent(HistoryIntent.ClearSearch) }
                             ) {
                                 Icon(
                                     imageVector = FeatherIcons.X,
@@ -267,7 +266,7 @@ private fun HistoryContent(
                         state.searchQuery.trim()
                     ),
                     actionText = stringResource(Res.string.clear_search),
-                    onActionClick = { onIntent(HistoryIntent.SearchQueryChanged("")) },
+                    onActionClick = { onIntent(HistoryIntent.ClearSearch) },
                 )
 
                 state.isEmpty -> EmptyState(
@@ -421,6 +420,7 @@ private fun HistoryScreenPreview() {
                     ),
                 ),
             ),
+            searchQuery = rememberTextFieldState(),
             onIntent = {},
         )
     }

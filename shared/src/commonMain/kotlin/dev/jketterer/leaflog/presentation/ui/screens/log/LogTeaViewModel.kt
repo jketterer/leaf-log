@@ -115,7 +115,6 @@ class LogTeaViewModel(
             is LogTeaIntent.LoadData -> loadData()
             is LogTeaIntent.ShowTeaPicker -> showTeaPicker()
             is LogTeaIntent.HideTeaPicker -> hideTeaPicker()
-            is LogTeaIntent.TeaPickerQueryChanged -> updateTeaPickerQuery(intent.query)
             is LogTeaIntent.TeaPickerFilterChanged -> updateTeaPickerFilter(intent.filter)
             is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
             is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.name, intent.teaTypeId)
@@ -239,16 +238,11 @@ class LogTeaViewModel(
         _state.update { it.copy(showTeaPicker = false).withPickerReset() }
     }
 
-    private fun updateTeaPickerQuery(query: String) {
-        _state.update { it.copy(teaPickerQuery = query) }
-    }
-
     private fun updateTeaPickerFilter(filter: TeaPickerFilter) {
         _state.update { it.copy(teaPickerFilter = filter) }
     }
 
     private fun LogTeaState.withPickerReset() = copy(
-        teaPickerQuery = "",
         teaPickerFilter = TeaPickerFilter.All,
     )
 

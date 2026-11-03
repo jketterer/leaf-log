@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.screens.collection
 
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.jketterer.leaflog.domain.models.Tea
@@ -48,6 +51,9 @@ class TeaCollectionViewModel(
 
     val messages = UiMessages<Nothing>()
 
+    /** The search bar's text, held here so the field keeps its own text and cursor. */
+    val searchQuery = TextFieldState()
+
     init {
         viewModelScope.launch {
             val prefs = preferencesRepository.getPreferences()
@@ -68,7 +74,7 @@ class TeaCollectionViewModel(
             is TeaCollectionIntent.ToggleNotBrewedLately ->
                 _state.update { it.copy(notBrewedLately = !it.notBrewedLately) }
 
-            is TeaCollectionIntent.SearchQueryChanged -> _state.update { it.copy(searchQuery = intent.query) }
+            is TeaCollectionIntent.ClearSearch -> searchQuery.clearText()
             is TeaCollectionIntent.ToggleFavorite -> toggleFavorite(intent.tea)
             is TeaCollectionIntent.TabSelected -> selectTab(intent.tab)
             is TeaCollectionIntent.TeaClicked -> {
@@ -96,7 +102,7 @@ class TeaCollectionViewModel(
             .distinctUntilChanged()
         val notBrewedLately = _state.map { it.notBrewedLately }.distinctUntilChanged()
         // Typing settles before the search runs; clearing it shows everything at once
-        val query = _state.map { it.searchQuery }.distinctUntilChanged()
+        val query = snapshotFlow { searchQuery.text.toString() }.distinctUntilChanged()
             .debounce { if (it.isBlank()) Duration.ZERO else SEARCH_DEBOUNCE }
 
         // Filtering, searching and sorting read every tea, so they run off Main
@@ -115,6 +121,7 @@ class TeaCollectionViewModel(
             _state.update {
                 it.copy(
                     teas = shown,
+                    searchQuery = query,
                     isLoading = false,
                     isEmpty = shown.isEmpty(),
                 )

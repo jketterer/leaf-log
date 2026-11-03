@@ -8,7 +8,7 @@ sealed interface TeaCollectionIntent {
     data object ShowFavorites : TeaCollectionIntent
     data class FilterByType(val teaTypeId: String) : TeaCollectionIntent
     data object ToggleNotBrewedLately : TeaCollectionIntent
-    data class SearchQueryChanged(val query: String) : TeaCollectionIntent
+    data object ClearSearch : TeaCollectionIntent
     data class TeaClicked(val teaId: String) : TeaCollectionIntent
     data class ToggleFavorite(val tea: Tea) : TeaCollectionIntent
     data class TabSelected(val tab: CollectionTab) : TeaCollectionIntent

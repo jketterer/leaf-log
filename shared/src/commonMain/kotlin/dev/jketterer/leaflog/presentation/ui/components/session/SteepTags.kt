@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -260,10 +263,10 @@ private fun TagPickerContent(
     onCreate: (name: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var query by remember { mutableStateOf("") }
+    val query = rememberTextFieldState()
     val confirmed = tags.associate { it.tagId to it.confirmed }
     val labels = vocabulary.map { it to it.label() }
-    val (matches, creatable) = searchTags(labels, query)
+    val (matches, creatable) = searchTags(labels, query.text.toString())
 
     Column(
         modifier = modifier
@@ -274,11 +277,10 @@ private fun TagPickerContent(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
+            state = query,
             placeholder = { Text(stringResource(Res.string.tags_search)) },
             leadingIcon = { Icon(FeatherIcons.Search, contentDescription = null) },
-            singleLine = true,
+            lineLimits = TextFieldLineLimits.SingleLine,
             modifier = Modifier.fillMaxWidth(),
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -288,10 +290,10 @@ private fun TagPickerContent(
             if (creatable) {
                 AssistChip(
                     onClick = {
-                        onCreate(query.trim())
-                        query = ""
+                        onCreate(query.text.trim().toString())
+                        query.clearText()
                     },
-                    label = { Text(stringResource(Res.string.tags_create, query.trim())) },
+                    label = { Text(stringResource(Res.string.tags_create, query.text.trim())) },
                     leadingIcon = {
                         Icon(FeatherIcons.Plus, contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize))
                     },

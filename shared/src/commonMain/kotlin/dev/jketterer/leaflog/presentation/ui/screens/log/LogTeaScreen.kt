@@ -321,12 +321,8 @@ private fun LogTeaDialogs(
             teas = state.availableTeas,
             recentTeas = state.suggestedTeas,
             teaTypes = state.availableTeaTypes,
-            query = state.teaPickerQuery,
             filter = state.teaPickerFilter,
             selectedTeaId = state.selectedTea?.id,
-            onQueryChanged = { query ->
-                onIntent(LogTeaIntent.TeaPickerQueryChanged(query))
-            },
             onFilterChanged = { filter ->
                 onIntent(LogTeaIntent.TeaPickerFilterChanged(filter))
             },

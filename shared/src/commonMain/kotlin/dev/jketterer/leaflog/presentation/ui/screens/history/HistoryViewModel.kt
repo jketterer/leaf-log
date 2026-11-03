@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -39,6 +42,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -71,16 +75,19 @@ class HistoryViewModel(
     private val clock: Clock,
 ) : ViewModel() {
 
-    // The query is saved so it outlives process death, as the search bar it fills does
-    private val _state = MutableStateFlow(
-        initialHistoryState(route).copy(searchQuery = savedStateHandle[SEARCH_QUERY_KEY] ?: ""),
-    )
+    private val _state = MutableStateFlow(initialHistoryState(route))
     val state: StateFlow<HistoryState> = _state.asStateFlow()
 
     private val _navEvents = Channel<HistoryNavEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
     val messages = UiMessages<Nothing>()
+
+    /**
+     * The search bar's text, held here so the field keeps its own text and cursor. Saved so it
+     * outlives process death, as the search bar it fills does.
+     */
+    val searchQuery = TextFieldState(savedStateHandle[SEARCH_QUERY_KEY] ?: "")
 
     private var loadDataJob: Job? = null
 
@@ -125,22 +132,22 @@ class HistoryViewModel(
     )
 
     init {
+        snapshotFlow { searchQuery.text.toString() }
+            .onEach { savedStateHandle[SEARCH_QUERY_KEY] = it }
+            .launchIn(viewModelScope)
         onIntent(HistoryIntent.LoadData)
     }
 
     fun onIntent(intent: HistoryIntent) {
         when (intent) {
             is HistoryIntent.LoadData -> loadData()
-            is HistoryIntent.SearchQueryChanged -> {
-                savedStateHandle[SEARCH_QUERY_KEY] = intent.query
-                _state.update { it.copy(searchQuery = intent.query) }
-            }
+            is HistoryIntent.ClearSearch -> searchQuery.clearText()
             is HistoryIntent.ShowFilterSheet -> _state.update { it.copy(showFilterSheet = true) }
             is HistoryIntent.HideFilterSheet -> _state.update { it.copy(showFilterSheet = false) }
             is HistoryIntent.FiltersChanged -> _state.update { it.copy(filters = intent.filters) }
             is HistoryIntent.ClearFilters -> {
-                savedStateHandle[SEARCH_QUERY_KEY] = ""
-                _state.update { it.copy(searchQuery = "", filters = HistoryFilters()) }
+                searchQuery.clearText()
+                _state.update { it.copy(filters = HistoryFilters()) }
             }
 
             is HistoryIntent.DeleteSession -> _state.update { it.copy(sessionPendingDelete = intent.sessionId) }
@@ -184,7 +191,7 @@ class HistoryViewModel(
         }
         val filters = _state.map { it.filters }.distinctUntilChanged()
         // Typing settles before the search runs; clearing it shows everything at once
-        val query = _state.map { it.searchQuery }.distinctUntilChanged()
+        val query = snapshotFlow { searchQuery.text.toString() }.distinctUntilChanged()
             .debounce { if (it.isBlank()) Duration.ZERO else SEARCH_DEBOUNCE }
 
         // Filtering, searching and grouping read every session, so they run off Main
@@ -206,6 +213,7 @@ class HistoryViewModel(
                 it.copy(
                     allSessions = data.sessions,
                     groups = groups,
+                    searchQuery = query,
                     teas = teasMap,
                     brewedTeas = brewedTeas,
                     teaTypes = data.types.associateBy { type -> type.id },

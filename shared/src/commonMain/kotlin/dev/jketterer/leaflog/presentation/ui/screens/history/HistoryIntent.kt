@@ -6,7 +6,7 @@ sealed interface HistoryIntent {
     data object LoadData : HistoryIntent
 
     // Search and filter
-    data class SearchQueryChanged(val query: String) : HistoryIntent
+    data object ClearSearch : HistoryIntent
     data object ShowFilterSheet : HistoryIntent
     data object HideFilterSheet : HistoryIntent
     data class FiltersChanged(val filters: HistoryFilters) : HistoryIntent

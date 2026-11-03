@@ -20,7 +20,6 @@ data class LogTeaState(
     val selectedTeaType: TeaType? = null,
     val availableTeas: List<Tea> = emptyList(),
     val suggestedTeas: List<Tea> = emptyList(),
-    val teaPickerQuery: String = "",
     val showTeaPicker: Boolean = false,
     val teaPickerFilter: TeaPickerFilter = TeaPickerFilter.All,
     val availableTeaTypes: List<TeaType> = emptyList(),

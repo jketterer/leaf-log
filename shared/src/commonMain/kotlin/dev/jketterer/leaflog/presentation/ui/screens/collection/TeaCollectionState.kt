@@ -11,6 +11,7 @@ data class TeaCollectionState(
     val selectedTypeId: String? = null,
     val notBrewedLately: Boolean = false,
     val selectedTab: CollectionTab = CollectionTab.TEAS,
+    /** The query [teas] were searched with, which trails the search bar while typing settles. */
     val searchQuery: String = "",
     val selectedSortOption: TeaSortOption = TeaSortOption.NAME_ASC,
     val isLoading: Boolean = false,

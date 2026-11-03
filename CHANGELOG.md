@@ -16,6 +16,14 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-03
+
+### Fixed
+
+- Typing in the tea picker's search on iOS no longer sends the cursor back to the start after the
+  first letter, and Collection and History search can no longer do the same.
+- The Brew again sheet's Start Brewing button is wide enough for its label.
+
 ## [0.8.0] - 2026-10-29
 
 Brew again: repeat a past brew by picking it from your history and seeing exactly what it was

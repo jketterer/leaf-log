@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.jketterer.leaflog.domain.models.TemperatureUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
+import dev.jketterer.leaflog.presentation.ui.components.common.clearFocusOnTap
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.start_steep_n
@@ -68,6 +69,7 @@ private fun NextSteepAdjustContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .clearFocusOnTap()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp)
             .padding(bottom = 32.dp),

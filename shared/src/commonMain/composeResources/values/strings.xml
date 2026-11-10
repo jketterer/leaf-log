@@ -450,7 +450,7 @@
     <string name="tags_more">More</string>
     <string name="tags_search">Find or create a tag</string>
     <string name="tags_create">Create “%1$s”</string>
-    <string name="tags_carried_over">From the last steep, tap to keep</string>
+    <string name="tags_carried_over">Carried over, tap to keep</string>
     <string name="collection_tab_teas">Teas</string>
     <string name="collection_tab_vessels">Vessels</string>
     <string name="collection_tab_flavors">Flavors</string>

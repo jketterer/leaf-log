@@ -5,6 +5,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.onLast
@@ -70,6 +71,7 @@ import leaf_log.shared.generated.resources.tag_fruity
 import leaf_log.shared.generated.resources.tag_merge
 import leaf_log.shared.generated.resources.tag_merge_text
 import leaf_log.shared.generated.resources.tags_add
+import leaf_log.shared.generated.resources.tags_carried_over
 import leaf_log.shared.generated.resources.tags_create
 import leaf_log.shared.generated.resources.tags_search
 import org.junit.Assert.assertEquals
@@ -258,6 +260,36 @@ class SessionFlowTest : FlowTest() {
         val brewed = latest().steeps.single()
         assertEquals(2f, brewed.rating)
         assertEquals("Too hot", brewed.notes)
+    }
+
+    @Test
+    fun `a new session's first steep offers last time's tags faded and keeps the one tapped`() {
+        runBlocking {
+            koin.get<EditSteepUseCase>()(sessionId) {
+                it.copy(tags = listOf(SteepTag("floral", confirmed = true), SteepTag("fruity", confirmed = true)))
+            }.getOrThrow()
+        }
+        launch()
+        startLogging()
+        waitFor(text(Res.string.last_time))
+        click(text(Res.string.begin_session))
+        click(text(Res.string.start_brewing))
+        clock.advance(30.seconds)
+        waitFor(text(Res.string.review_how_was_steep_n, 1))
+
+        val floral = hasText(text(Res.string.tag_floral)) and hasClickAction()
+        val carriedOver = hasStateDescription(text(Res.string.tags_carried_over))
+        waitFor(floral and carriedOver)
+        waitFor(hasText(text(Res.string.tag_fruity)) and hasClickAction() and carriedOver)
+        click(floral)
+        waitFor(floral and !carriedOver)
+        click(text(Res.string.review_finish_session))
+
+        waitFor(text(Res.string.review_done))
+        assertEquals(
+            setOf(SteepTag("floral", confirmed = true), SteepTag("fruity", confirmed = false)),
+            latest().steeps.single().tags.toSet(),
+        )
     }
 
     @Test

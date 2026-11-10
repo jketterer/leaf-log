@@ -18,7 +18,10 @@ val CURATED_TAG_KEYS = listOf(
     "lingering", "short", "drying", "returning_sweetness",
 )
 
-/** A tag on a steep. One carried over from the steep before stays unconfirmed until it's tapped. */
+/**
+ * A tag on a steep. One carried over, from the steep before or onto steep 1 from last time, stays
+ * unconfirmed until it's tapped.
+ */
 data class SteepTag(
     val tagId: String,
     val confirmed: Boolean,

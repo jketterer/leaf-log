@@ -138,6 +138,43 @@ class SessionAggregateUseCasesTest {
     }
 
     @Test
+    fun `a new session's first steep starts with the last completed one's confirmed tags unconfirmed`() = runTest {
+        val older = start(status = SessionStatus.COMPLETED).session.id
+        editSteep(older) { it.copy(tags = listOf(SteepTag("woody", confirmed = true))) }.getOrThrow()
+        editSession(older, startedAt = sessions.getSession(older)!!.startedAt - 1.days) { it }.getOrThrow()
+        val last = start(status = SessionStatus.COMPLETED).session.id
+        editSteep(last) {
+            it.copy(tags = listOf(SteepTag("floral", confirmed = true), SteepTag("sweet", confirmed = false)))
+        }.getOrThrow()
+        addSteep(last, 25.seconds, 95.0, 100.0).getOrThrow()
+        val brewing = start().session.id
+        editSteep(brewing) { it.copy(tags = listOf(SteepTag("smoky", confirmed = true))) }.getOrThrow()
+
+        val started = start()
+
+        assertEquals(listOf(SteepTag("floral", confirmed = false)), started.steeps.single().tags)
+        assertEquals(started, sessions.getSession(started.session.id))
+    }
+
+    @Test
+    fun `brew again starts with the tags of the session it copied`() = runTest {
+        val source = start(status = SessionStatus.COMPLETED).session.id
+        editSteep(source) { it.copy(tags = listOf(SteepTag("woody", confirmed = true))) }.getOrThrow()
+        editSession(source, startedAt = sessions.getSession(source)!!.startedAt - 1.days) { it }.getOrThrow()
+        val last = start(status = SessionStatus.COMPLETED).session.id
+        editSteep(last) { it.copy(tags = listOf(SteepTag("floral", confirmed = true))) }.getOrThrow()
+
+        val again = startSession(sessions.getSession(source)!!).getOrThrow()
+
+        assertEquals(listOf(SteepTag("woody", confirmed = false)), again.steeps.single().tags)
+    }
+
+    @Test
+    fun `a tea's first session starts with no tags`() = runTest {
+        assertEquals(emptyList(), start().steeps.single().tags)
+    }
+
+    @Test
     fun `an edit changes only what it names and null clears`() = runTest {
         val started = start()
         editSteep(started.session.id) { it.copy(rating = 4f, notes = "First sip") }.getOrThrow()

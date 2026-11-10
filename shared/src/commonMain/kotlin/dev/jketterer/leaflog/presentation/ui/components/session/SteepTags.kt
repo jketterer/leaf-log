@@ -128,8 +128,8 @@ internal fun <T> searchTags(
 
 /**
  * A steep's tags, with an Add chip that opens the whole vocabulary. Tags carried over from the
- * steep before are faded until tapped; tapping a confirmed one removes it. [suggestions] show too,
- * ready to tap, and Add becomes More.
+ * steep before, or from last time, are faded until tapped; tapping a confirmed one removes it.
+ * [suggestions] show too, ready to tap, and Add becomes More.
  */
 @Composable
 fun SteepTags(

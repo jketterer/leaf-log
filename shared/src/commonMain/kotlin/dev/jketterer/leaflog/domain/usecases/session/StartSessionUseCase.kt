@@ -7,6 +7,8 @@ import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.Steep
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.models.carriedForward
+import dev.jketterer.leaflog.domain.models.lastCompleted
 import dev.jketterer.leaflog.domain.repositories.TeaRepository
 import dev.jketterer.leaflog.domain.repositories.TeaSessionRepository
 import dev.jketterer.leaflog.domain.repositories.Transactor
@@ -16,7 +18,8 @@ import kotlin.uuid.Uuid
 
 /**
  * Creates a session and its first steep. Pass [SessionStatus.COMPLETED] to log one after the fact.
- * [notes] is the session's note; [rating] and [photos] go on steep 1.
+ * [notes] is the session's note; [rating] and [photos] go on steep 1, which starts with last time's
+ * steep 1 tags, unconfirmed: the session [planSessionId] replays, else the tea's last completed.
  * Brewing a finished tea puts it back in stock.
  */
 class StartSessionUseCase(
@@ -79,16 +82,25 @@ class StartSessionUseCase(
         started.steeps.single().requireValid()
 
         transactor {
-            teaSessionRepository.saveSession(started)
+            val tags = lastTimeTags(teaId, planSessionId)
+            val seeded = started.copy(steeps = started.steeps.map { it.copy(tags = tags) })
+            teaSessionRepository.saveSession(seeded)
             teaRepository.setFinished(teaId, finished = false)
             recomputeStats(teaId)
+            seeded
         }
-        started
     }
 
+    // Only what last time confirmed: a carry-over it never tapped wasn't tasted then either
+    private suspend fun lastTimeTags(teaId: String, planSessionId: String?) =
+        (planSessionId?.let { teaSessionRepository.getSession(it) }
+            ?: teaSessionRepository.getSessionsByTea(teaId).lastCompleted())
+            ?.steeps?.first()?.tags.orEmpty().filter { it.confirmed }.carriedForward()
+
     /**
-     * Brew Again: [source]'s set-up, with nothing it recorded about how it went. Its steeps become
-     * this session's plan, so every steep replays as brewed rather than only the first.
+     * Brew Again: [source]'s set-up, with nothing it recorded about how it went but its tags, to
+     * confirm again. Its steeps become this session's plan, so every steep replays as brewed rather
+     * than only the first.
      */
     suspend operator fun invoke(source: SessionWithSteeps): Result<SessionWithSteeps> {
         val first = source.steeps.first()

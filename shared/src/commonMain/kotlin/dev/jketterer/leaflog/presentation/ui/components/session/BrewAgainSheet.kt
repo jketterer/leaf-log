@@ -1,6 +1,7 @@
 package dev.jketterer.leaflog.presentation.ui.components.session
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -26,9 +29,11 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -137,49 +142,72 @@ private fun BrewAgainContent(
 ) {
     val teaColor = teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
         ?: MaterialTheme.colorScheme.primary
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
-            Text(
-                text = stringResource(Res.string.brew_again),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        if (last != null && best != null) {
-            val choices = listOf(last to Res.string.last_time, best to Res.string.best_brew)
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                choices.forEachIndexed { index, (choice, label) ->
-                    SegmentedButton(
-                        selected = choice.session.id == brew.session.id,
-                        onClick = { onSelect(choice.session.id) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = choices.size),
-                    ) {
-                        Text(stringResource(label), maxLines = 1)
+    val scrollState = rememberScrollState()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
+                Text(
+                    text = stringResource(Res.string.brew_again),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            if (last != null && best != null) {
+                val choices = listOf(last to Res.string.last_time, best to Res.string.best_brew)
+                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                    choices.forEachIndexed { index, (choice, label) ->
+                        SegmentedButton(
+                            selected = choice.session.id == brew.session.id,
+                            onClick = { onSelect(choice.session.id) },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = choices.size),
+                        ) {
+                            Text(stringResource(label), maxLines = 1)
+                        }
                     }
                 }
             }
+            AnimatedContent(targetState = brew, contentKey = { it.session.id }) { shown ->
+                BrewDetails(shown, remember(shown, tagVocabulary) { shown.dominantTags(tagVocabulary) })
+            }
         }
-        AnimatedContent(targetState = brew, contentKey = { it.session.id }) { shown ->
-            BrewDetails(shown, remember(shown, tagVocabulary) { shown.dominantTags(tagVocabulary) })
-        }
+        BrewAgainActions(
+            contentBelow = scrollState.canScrollForward,
+            onStart = onStart,
+            onAdjust = onAdjust,
+        )
+    }
+}
+
+/**
+ * Pinned under the scrolling details, so Start is always in reach. The divider fades in only while
+ * details are hidden below; it keeps its space either way, so the buttons never shift.
+ */
+@Composable
+private fun BrewAgainActions(contentBelow: Boolean, onStart: () -> Unit, onAdjust: () -> Unit) {
+    val dividerAlpha by animateFloatAsState(if (contentBelow) 1f else 0f)
+    Column {
+        HorizontalDivider(modifier = Modifier.graphicsLayer { alpha = dividerAlpha })
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            OutlinedButton(onClick = onAdjust, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = onAdjust, modifier = Modifier.heightIn(min = 56.dp)) {
                 Icon(FeatherIcons.Edit2, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(Res.string.adjust))
             }
-            Button(onClick = onStart) {
+            Button(onClick = onStart, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) {
                 Icon(FeatherIcons.Play, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(stringResource(Res.string.start_brewing))
@@ -411,7 +439,7 @@ private fun BrewAgainGongfuPreview() {
         steeps = session.steeps.map { if (it.number == 6) it.copy(brewingTime = 1.minutes) else it },
     )
     LeafLogTheme {
-        SheetPreviewContainer(height = 760.dp) {
+        SheetPreviewContainer(height = 560.dp) {
             BrewAgainContent(
                 teaName = "Lao Ban Zhang Sheng Pu-erh",
                 teaTypeColorHex = "#5D4037",

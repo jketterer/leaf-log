@@ -118,7 +118,7 @@ fun SteepEditSheet(
                         onParametersChange(time, temperature, water)
                         editingParameters = false
                     },
-                    onCancel = { editingParameters = false },
+                    onBack = { editingParameters = false },
                 )
             } else {
                 SteepEditSheetContent(
@@ -150,7 +150,7 @@ private fun sharedAxisX(forward: Boolean): ContentTransform {
 private fun SteepParametersContent(
     steep: Steep,
     onSave: (Duration, Double, Double) -> Unit,
-    onCancel: () -> Unit,
+    onBack: () -> Unit,
 ) {
     var brewedTime by remember(steep.id) { mutableStateOf(steep.brewedTime) }
     var temperature by remember(steep.id) { mutableStateOf<Double?>(steep.temperatureCelsius) }
@@ -168,7 +168,7 @@ private fun SteepParametersContent(
             val w = water
             if (t != null && w != null) onSave(brewedTime, t, w)
         },
-        onDismiss = onCancel,
+        onBack = onBack,
     )
 }
 

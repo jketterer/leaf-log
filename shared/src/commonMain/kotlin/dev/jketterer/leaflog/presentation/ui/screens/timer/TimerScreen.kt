@@ -318,6 +318,7 @@ private fun TimerContent(
         BrewParametersSheet(
             temperatureCelsius = state.editTemperatureCelsius,
             waterQuantityMl = state.editWaterQuantityMl,
+            hasChanges = state.hasEditChanges,
             teaQuantityGrams = state.editTeaQuantityGrams,
             isTeaBag = state.editIsTeaBag,
             waterType = state.editWaterType,

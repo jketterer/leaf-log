@@ -559,6 +559,13 @@
     <string name="field_minutes">Min</string>
     <string name="field_seconds">Sec</string>
     <string name="field_water_type">Water type</string>
+    <string name="water_type_filtered">Filtered</string>
+    <string name="water_type_tap">Tap</string>
+    <string name="water_type_spring">Spring</string>
+    <string name="water_type_distilled">Distilled</string>
+    <string name="water_type_mineral">Mineral</string>
+    <string name="water_type_alkaline">Alkaline</string>
+    <string name="water_type_other">Other</string>
     <string name="field_tea_name_required">Tea name *</string>
     <string name="field_timer_duration">Timer duration</string>
     <string name="log_tea_choose_title">Select a tea and vessel</string>

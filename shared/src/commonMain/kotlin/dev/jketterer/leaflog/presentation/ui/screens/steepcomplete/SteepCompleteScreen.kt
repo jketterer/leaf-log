@@ -234,6 +234,7 @@ private fun SteepCompleteContent(
             onBrewingTimeChanged = { onIntent(SteepCompleteIntent.EditBrewingTimeChanged(it)) },
             temperatureCelsius = state.editTemperatureCelsius,
             waterQuantityMl = state.editWaterQuantityMl,
+            hasChanges = state.hasEditChanges,
             teaQuantityGrams = state.editTeaQuantityGrams,
             isTeaBag = state.editIsTeaBag,
             waterType = state.editWaterType,

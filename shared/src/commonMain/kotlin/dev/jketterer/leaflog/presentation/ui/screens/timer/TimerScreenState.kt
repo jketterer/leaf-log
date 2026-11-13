@@ -38,6 +38,18 @@ data class TimerScreenState(
     val isLoading: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
+    /** Whether the edit sheet holds anything the session doesn't, so closing it would lose it. */
+    val hasEditChanges: Boolean
+        get() {
+            val session = session ?: return false
+            val steep = session.currentSteep
+            return editTemperatureCelsius != steep.temperatureCelsius ||
+                    editWaterQuantityMl != steep.waterQuantityMl ||
+                    editWaterType != session.session.waterType ||
+                    editIsTeaBag != (session.session.teaQuantityGrams == null) ||
+                    !editIsTeaBag && editTeaQuantityGrams?.toFloat() != session.session.teaQuantityGrams
+        }
+
     /**
      * Formatted remaining time as MM:SS.
      * Uses ceiling division to round up fractional seconds.

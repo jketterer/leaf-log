@@ -39,4 +39,18 @@ data class SteepCompleteState(
     val showDiscardConfirmation: Boolean = false,
     val isLoading: Boolean = true,
     val userPreferences: UserPreferences = UserPreferences(),
-)
+) {
+    /** Whether the edit sheet holds anything the steep doesn't, so closing it would lose it. */
+    val hasEditChanges: Boolean
+        get() {
+            val session = session ?: return false
+            val steep = session.currentSteep
+            return editBrewingTime != steep.brewedTime ||
+                    editTemperatureCelsius != steep.temperatureCelsius ||
+                    editWaterQuantityMl != steep.waterQuantityMl ||
+                    editWaterType != session.session.waterType ||
+                    editVessel?.id != vessel?.id ||
+                    editIsTeaBag != (session.session.teaQuantityGrams == null) ||
+                    !editIsTeaBag && editTeaQuantityGrams?.toFloat() != session.session.teaQuantityGrams
+        }
+}

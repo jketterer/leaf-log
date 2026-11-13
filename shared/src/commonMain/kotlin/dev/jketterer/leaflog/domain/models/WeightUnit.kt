@@ -6,7 +6,7 @@ enum class WeightUnit : MeasurementUnit {
 
     override val decimals: Int
         get() = when (this) {
-            GRAMS -> 1
+            GRAMS -> 2
             OUNCES -> 2
         }
 

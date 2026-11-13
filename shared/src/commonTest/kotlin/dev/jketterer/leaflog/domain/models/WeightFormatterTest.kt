@@ -11,6 +11,7 @@ class WeightFormatterTest {
     fun `a leaf weight shows as many decimals as it is typed in`() {
         assertEquals("5 g", WeightFormatter.format(5.0, GRAMS))
         assertEquals("5.5 g", WeightFormatter.format(5.5, GRAMS))
+        assertEquals("5.25 g", WeightFormatter.format(5.25, GRAMS))
         assertEquals("0.18 oz", WeightFormatter.format(5.0, OUNCES))
     }
 

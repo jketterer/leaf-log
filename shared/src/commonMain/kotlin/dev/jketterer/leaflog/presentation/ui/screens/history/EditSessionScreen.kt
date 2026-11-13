@@ -50,7 +50,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.SectionDivider
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.TimePickerField
 import dev.jketterer.leaflog.presentation.ui.components.common.UnitInputField
-import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeChips
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -70,6 +70,7 @@ import leaf_log.shared.generated.resources.header_session_details
 import leaf_log.shared.generated.resources.header_tea
 import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.save
+import leaf_log.shared.generated.resources.field_water_type
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -209,11 +210,12 @@ private fun EditSessionContent(
             }
 
             item(key = "water_type") {
-                WaterTypeSelector(
+                WaterTypeChips(
                     selectedWaterType = state.selectedWaterType,
                     onWaterTypeSelected = { waterType ->
                         onIntent(EditSessionIntent.WaterTypeSelected(waterType))
                     },
+                    label = stringResource(Res.string.field_water_type),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

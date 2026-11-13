@@ -40,6 +40,8 @@ import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.formatDate
 import dev.jketterer.leaflog.domain.usecases.session.BrewDifference
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
+import dev.jketterer.leaflog.presentation.ui.components.common.shortLabel
+import dev.jketterer.leaflog.presentation.ui.components.common.label
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
@@ -127,7 +129,7 @@ internal fun SessionReviewHeaderSection(
                 style = style,
                 iconSize = 16.dp,
             )
-            IconValue(FeatherIcons.Droplet, session.waterType.displayName, style, iconSize = 16.dp)
+            IconValue(FeatherIcons.Droplet, stringResource(session.waterType.label), style, iconSize = 16.dp)
             if (session.rinsed) {
                 IconValue(FeatherIcons.RefreshCw, stringResource(Res.string.rinsed), style, iconSize = 16.dp)
             }
@@ -268,7 +270,7 @@ private fun BrewDifference.valueOf(session: SessionWithSteeps, vessel: BrewingVe
         BrewDifference.TEMPERATURE -> formatTemperature(first.temperatureCelsius)
         BrewDifference.TIME -> formatBrewingTime(first.brewedTime.inWholeSeconds.toInt())
         BrewDifference.VESSEL -> vessel?.name ?: "-"
-        BrewDifference.WATER_TYPE -> session.session.waterType.displayName
+        BrewDifference.WATER_TYPE -> stringResource(session.session.waterType.shortLabel)
     }
 }
 

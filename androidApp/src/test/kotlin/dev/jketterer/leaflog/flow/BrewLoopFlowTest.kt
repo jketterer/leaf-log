@@ -3,11 +3,15 @@ package dev.jketterer.leaflog.flow
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import dev.jketterer.leaflog.domain.models.WaterType
@@ -122,6 +126,24 @@ class BrewLoopFlowTest : FlowTest() {
         click(text(Res.string.save))
 
         waitUntil("the session holds spring water") { session().session.waterType == WaterType.SPRING }
+    }
+
+    @Test
+    fun `a default water type chosen in Settings is the one a new session starts with`() {
+        launch()
+        click(text(Res.string.settings_title))
+        val spring = hasClickAction() and hasText(text(Res.string.water_type_spring))
+        waitFor(spring)
+        compose.onNode(spring).performScrollTo().performClick()
+        waitFor(spring and isSelected())
+        click(text(Res.string.navigate_up))
+
+        beginSession("Dragon Well")
+
+        waitUntil("the session holds spring water") {
+            val sessions = runBlocking { koin.get<TeaSessionRepository>().getAllSessions() }
+            sessions.singleOrNull()?.session?.waterType == WaterType.SPRING
+        }
     }
 
     /** From Home to Session Review: steep 1 rated 4 and steep 2 rated 5. */

@@ -58,6 +58,7 @@ import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.dominantTags
 import dev.jketterer.leaflog.domain.models.formatDate
+import dev.jketterer.leaflog.presentation.ui.components.common.label
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
@@ -248,7 +249,7 @@ private fun BrewDetails(brew: SessionWithSteeps, tags: List<TastingTag>) {
                     style = style,
                     iconSize = 16.dp,
                 )
-                IconValue(FeatherIcons.Droplet, brew.session.waterType.displayName, style, iconSize = 16.dp)
+                IconValue(FeatherIcons.Droplet, stringResource(brew.session.waterType.label), style, iconSize = 16.dp)
                 if (brew.session.rinsed) {
                     IconValue(FeatherIcons.RefreshCw, stringResource(Res.string.rinsed), style, iconSize = 16.dp)
                 }

@@ -26,6 +26,8 @@
     <string name="settings_temperature_unit_subtitle">Display unit for temperatures</string>
     <string name="settings_volume_unit_subtitle">Display unit for volumes</string>
     <string name="settings_weight_unit_subtitle">Display unit for leaf weights</string>
+    <string name="settings_default_water_type">Default water type</string>
+    <string name="settings_default_water_type_subtitle">Selected for each session you log</string>
 
     <!-- Units, as a screen reader speaks them -->
     <string name="unit_celsius">Celsius</string>
@@ -566,6 +568,14 @@
     <string name="water_type_mineral">Mineral</string>
     <string name="water_type_alkaline">Alkaline</string>
     <string name="water_type_other">Other</string>
+    <!-- Water types where nothing beside them says water -->
+    <string name="water_type_filtered_name">Filtered water</string>
+    <string name="water_type_tap_name">Tap water</string>
+    <string name="water_type_spring_name">Spring water</string>
+    <string name="water_type_distilled_name">Distilled water</string>
+    <string name="water_type_mineral_name">Mineral water</string>
+    <string name="water_type_alkaline_name">Alkaline water</string>
+    <string name="water_type_other_name">Other</string>
     <string name="field_tea_name_required">Tea name *</string>
     <string name="field_timer_duration">Timer duration</string>
     <string name="log_tea_choose_title">Select a tea and vessel</string>

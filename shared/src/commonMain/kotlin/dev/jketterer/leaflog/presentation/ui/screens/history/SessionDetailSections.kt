@@ -24,6 +24,7 @@ import compose.icons.feathericons.RefreshCw
 import dev.jketterer.leaflog.domain.models.Session
 import dev.jketterer.leaflog.domain.models.TimeFormatter
 import dev.jketterer.leaflog.domain.models.formatDate
+import dev.jketterer.leaflog.presentation.ui.components.common.label
 import dev.jketterer.leaflog.presentation.ui.components.common.PhotoGrid
 import dev.jketterer.leaflog.presentation.ui.components.common.RatingDisplay
 import dev.jketterer.leaflog.presentation.ui.components.common.currentDate
@@ -91,7 +92,7 @@ internal fun SessionHeaderSection(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             vesselName?.let { IconValue(FeatherIcons.Coffee, it, style, iconSize = 16.dp) }
-            IconValue(FeatherIcons.Droplet, session.waterType.displayName, style, iconSize = 16.dp)
+            IconValue(FeatherIcons.Droplet, stringResource(session.waterType.label), style, iconSize = 16.dp)
             IconValue(
                 icon = vectorResource(Res.drawable.ic_tea_leaf),
                 text = session.teaQuantityGrams?.let { formatWeight(it) }

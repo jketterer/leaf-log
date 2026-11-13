@@ -36,7 +36,7 @@ import dev.jketterer.leaflog.domain.models.VolumeUnit
 import dev.jketterer.leaflog.domain.models.WaterType
 import dev.jketterer.leaflog.domain.models.WeightUnit
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
-import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeChips
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.header_brewing
@@ -58,6 +58,8 @@ import leaf_log.shared.generated.resources.settings_weight_unit_subtitle
 import leaf_log.shared.generated.resources.theme_mode_dark
 import leaf_log.shared.generated.resources.theme_mode_light
 import leaf_log.shared.generated.resources.theme_mode_system
+import leaf_log.shared.generated.resources.settings_default_water_type
+import leaf_log.shared.generated.resources.settings_default_water_type_subtitle
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -394,18 +396,19 @@ private fun DefaultWaterTypeSetting(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "Default Water Type",
+                text = stringResource(Res.string.settings_default_water_type),
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
-                text = "Pre-selected water type when logging a session",
+                text = stringResource(Res.string.settings_default_water_type_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        WaterTypeSelector(
+        WaterTypeChips(
             selectedWaterType = currentWaterType,
             onWaterTypeSelected = onWaterTypeChange,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

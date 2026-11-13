@@ -62,7 +62,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.PresetChips
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
 import dev.jketterer.leaflog.presentation.ui.components.common.RinseSwitch
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
-import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeSelector
+import dev.jketterer.leaflog.presentation.ui.components.common.WaterTypeChips
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.TagChips
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
@@ -87,6 +87,7 @@ import leaf_log.shared.generated.resources.past_brew
 import leaf_log.shared.generated.resources.select_tea
 import leaf_log.shared.generated.resources.scratch
 import leaf_log.shared.generated.resources.steep_count
+import leaf_log.shared.generated.resources.field_water_type
 import org.jetbrains.compose.resources.stringResource
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -401,9 +402,10 @@ internal fun OptionalDetailsSection(
 
                 RinseSwitch(checked = rinsed, onCheckedChange = onRinsedChange)
 
-                WaterTypeSelector(
+                WaterTypeChips(
                     selectedWaterType = selectedWaterType,
                     onWaterTypeSelected = onWaterTypeSelected,
+                    label = stringResource(Res.string.field_water_type),
                     modifier = Modifier.fillMaxWidth(),
                 )
 

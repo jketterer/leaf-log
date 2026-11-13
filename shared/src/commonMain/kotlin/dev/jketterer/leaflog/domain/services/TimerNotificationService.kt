@@ -35,4 +35,7 @@ interface TimerNotificationService {
      * meaning background timer alerts will not be delivered.
      */
     suspend fun hasNotificationPermission(): Boolean
+
+    /** Open the system settings where the user turns the app's notifications back on. */
+    fun openNotificationSettings()
 }

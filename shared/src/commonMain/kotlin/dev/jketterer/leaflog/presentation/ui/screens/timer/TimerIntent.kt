@@ -21,6 +21,9 @@ sealed interface TimerIntent {
     /** Already brewed before Start, Finish early after. */
     data object CompleteNow : TimerIntent
     data object BackClicked : TimerIntent
+    /** Back from the background, maybe from turning notifications on in Settings. */
+    data object Resumed : TimerIntent
+    data object OpenNotificationSettings : TimerIntent
 
     // Quick Timer: ending it records nothing; a tea attached makes a session of its steeps
     data object JustATimer : TimerIntent

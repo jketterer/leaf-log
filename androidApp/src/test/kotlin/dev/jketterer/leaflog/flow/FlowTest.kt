@@ -162,6 +162,9 @@ abstract class FlowTest {
         if (allowed) shadowOf(app).grantPermissions(permission) else shadowOf(app).denyPermissions(permission)
     }
 
+    /** The next screen the app sent the user to outside itself, such as system settings. */
+    fun startedActivity(): Intent? = shadowOf(app).nextStartedActivity
+
     /** System back, as a gesture or the button, once the last tap's screen is up. */
     fun systemBack() {
         compose.waitForIdle()
@@ -355,7 +358,7 @@ abstract class FlowTest {
 
     /** Waits for [text] to leave the screen, as after a change that has yet to show. */
     fun waitUntilGone(text: String) = waitUntil("no \"$text\" is on screen") {
-        compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isEmpty()
+        compose.onAllNodes(hasText(text) or hasContentDescription(text)).fetchSemanticsNodes().isEmpty()
     }
 
     fun assertAbsent(text: String) {

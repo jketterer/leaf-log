@@ -110,6 +110,8 @@ class TimerViewModel(
             is TimerIntent.RestartTimer -> restartTimer()
             is TimerIntent.CompleteNow -> completeNow()
             is TimerIntent.BackClicked -> onBack()
+            is TimerIntent.Resumed -> recheckNotifications()
+            is TimerIntent.OpenNotificationSettings -> notificationService.openNotificationSettings()
             is TimerIntent.JustATimer -> endQuickTimer()
             is TimerIntent.ConfirmEndTimer -> endQuickTimer()
             is TimerIntent.CancelEndTimer -> _state.update { it.copy(showEndTimerConfirmation = false) }
@@ -177,6 +179,8 @@ class TimerViewModel(
                 val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
                 val vessel = brewingVesselRepository.getById(session.session.vesselId)
                 val hasNotificationPermission = notificationService.hasNotificationPermission()
+                // Read here too, so whether the bell warns lands with the page rather than after it
+                val preferences = preferencesRepository.getPreferences()
                 val nextSteep = nextSteepTime(session, resolvePlanUseCase(session))
 
                 // Prefer live TimerService state if it's already tracking this steep
@@ -230,6 +234,7 @@ class TimerViewModel(
                         vessel = vessel,
                         timerState = resolvedTimerState,
                         notificationsOff = !hasNotificationPermission,
+                        userPreferences = preferences,
                         isLoading = false,
                     )
                 }
@@ -269,13 +274,23 @@ class TimerViewModel(
             if (timer.isRunning) timerService.startCountdown()
             persist(timer)
 
+            val notificationsOff = !notificationService.hasNotificationPermission()
+            val preferences = preferencesRepository.getPreferences()
             _state.update {
                 it.copy(
                     timerState = timer,
-                    notificationsOff = !notificationService.hasNotificationPermission(),
+                    notificationsOff = notificationsOff,
+                    userPreferences = preferences,
                     isLoading = false,
                 )
             }
+        }
+    }
+
+    private fun recheckNotifications() {
+        viewModelScope.launch {
+            val notificationsOff = !notificationService.hasNotificationPermission()
+            _state.update { it.copy(notificationsOff = notificationsOff) }
         }
     }
 

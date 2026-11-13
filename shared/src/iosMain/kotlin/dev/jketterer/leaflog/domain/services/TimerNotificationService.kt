@@ -6,6 +6,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
 import dev.jketterer.leaflog.presentation.ui.navigation.DeepLinkHandler
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationOpenNotificationSettingsURLString
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionSound
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
@@ -224,6 +227,11 @@ class TimerNotificationServiceImpl : NSObject(),
         center.getNotificationSettingsWithCompletionHandler { settings ->
             continuation.resume(settings?.authorizationStatus == UNAuthorizationStatusAuthorized)
         }
+    }
+
+    fun openNotificationSettings() {
+        val url = NSURL.URLWithString(UIApplicationOpenNotificationSettingsURLString) ?: return
+        UIApplication.sharedApplication.openURL(url, options = emptyMap<Any?, Any>(), completionHandler = null)
     }
 
     private fun buildUserInfo(sessionId: String?, destination: String): Map<Any?, Any?> =

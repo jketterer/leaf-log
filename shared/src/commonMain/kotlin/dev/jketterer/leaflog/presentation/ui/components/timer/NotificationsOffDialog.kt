@@ -11,12 +11,14 @@ import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.notifications_off_text
 import leaf_log.shared.generated.resources.notifications_off_title
-import leaf_log.shared.generated.resources.ok
+import leaf_log.shared.generated.resources.not_now
+import leaf_log.shared.generated.resources.open_settings
 import org.jetbrains.compose.resources.stringResource
 
-/** Why a timer may finish without a sound: notifications are off for the app. */
+/** Why a timer may finish without a sound, and the way to Settings to turn notifications back on. */
 @Composable
 fun NotificationsOffDialog(
+    onOpenSettings: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -26,8 +28,13 @@ fun NotificationsOffDialog(
         title = { Text(stringResource(Res.string.notifications_off_title)) },
         text = { NotificationsOffDialogContent() },
         confirmButton = {
+            TextButton(onClick = onOpenSettings) {
+                Text(stringResource(Res.string.open_settings))
+            }
+        },
+        dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.ok))
+                Text(stringResource(Res.string.not_now))
             }
         },
     )
@@ -45,7 +52,8 @@ private fun NotificationsOffDialogPreview() {
         DialogPreviewContainer(
             title = stringResource(Res.string.notifications_off_title),
             buttons = {
-                TextButton(onClick = {}) { Text(stringResource(Res.string.ok)) }
+                TextButton(onClick = {}) { Text(stringResource(Res.string.not_now)) }
+                TextButton(onClick = {}) { Text(stringResource(Res.string.open_settings)) }
             },
         ) {
             NotificationsOffDialogContent()

@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -99,6 +100,11 @@ fun TimerScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     UiMessageEffect(viewModel.messages, snackbarHostState)
 
+    LifecycleResumeEffect(Unit) {
+        viewModel.onIntent(TimerIntent.Resumed)
+        onPauseOrDispose { }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.navigationEvents.collect { event ->
             when (event) {
@@ -151,7 +157,7 @@ private fun TimerContent(
                     }
                 },
                 actions = {
-                    if (state.notificationsOff) {
+                    if (state.warnsNotificationsOff) {
                         IconButton(onClick = { showNotificationsOff = true }) {
                             Icon(
                                 FeatherIcons.BellOff,
@@ -246,7 +252,13 @@ private fun TimerContent(
     }
 
     if (showNotificationsOff) {
-        NotificationsOffDialog(onDismiss = { showNotificationsOff = false })
+        NotificationsOffDialog(
+            onOpenSettings = {
+                showNotificationsOff = false
+                onIntent(TimerIntent.OpenNotificationSettings)
+            },
+            onDismiss = { showNotificationsOff = false },
+        )
     }
 
     // Discard session confirmation dialog

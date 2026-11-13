@@ -77,6 +77,7 @@ actual fun platformModule() = module {
             override fun cancelSessionReminder() = impl.cancelSessionReminder()
             override fun onTimerStopped() = impl.onTimerStopped()
             override suspend fun hasNotificationPermission() = impl.hasNotificationPermission()
+            override fun openNotificationSettings() = impl.openNotificationSettings()
         }
     }
 

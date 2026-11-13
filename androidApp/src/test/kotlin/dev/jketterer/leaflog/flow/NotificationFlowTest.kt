@@ -1,7 +1,10 @@
 package dev.jketterer.leaflog.flow
 
+import android.app.Application
 import android.app.Notification
+import android.provider.Settings
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.test.core.app.ApplicationProvider
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -21,7 +24,7 @@ import leaf_log.shared.generated.resources.discard_session_action
 import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.notifications_off
-import leaf_log.shared.generated.resources.ok
+import leaf_log.shared.generated.resources.open_settings
 import leaf_log.shared.generated.resources.pause
 import leaf_log.shared.generated.resources.review_done
 import leaf_log.shared.generated.resources.review_finish_session
@@ -197,8 +200,7 @@ class NotificationFlowTest : FlowTest() {
         allowNotifications(false)
         launch()
         beginSession("Dragon Well")
-        click(text(Res.string.notifications_off))
-        click(hasText(text(Res.string.ok)) and hasAnyAncestor(isDialog()))
+        waitFor(text(Res.string.notifications_off))
         click(text(Res.string.start_brewing))
         clock.advance(30.seconds)
         waitFor(text(Res.string.review_how_was_steep_n, 1))
@@ -207,6 +209,36 @@ class NotificationFlowTest : FlowTest() {
         click(text(Res.string.start_steep_n, 2))
         waitFor(text(Res.string.start_brewing))
         assertAbsent(text(Res.string.notifications_off))
+    }
+
+    @Test
+    fun `with timer alerts turned off in Settings no bell warns that notifications are off`() {
+        allowNotifications(false)
+        launch()
+        runBlocking { koin.get<PreferencesRepository>().updateTimerCompletionNotificationsEnabled(false) }
+        beginSession("Dragon Well")
+        waitFor(text(Res.string.start_brewing))
+        assertAbsent(text(Res.string.notifications_off))
+    }
+
+    @Test
+    fun `with notifications off the bell opens their settings and turning them on there clears it`() {
+        allowNotifications(false)
+        launch()
+        beginSession("Dragon Well")
+        click(text(Res.string.notifications_off))
+        click(hasText(text(Res.string.open_settings)) and hasAnyAncestor(isDialog()))
+        val settings = checkNotNull(startedActivity()) { "Settings didn't open" }
+        assertEquals(Settings.ACTION_APP_NOTIFICATION_SETTINGS, settings.action)
+        assertEquals(
+            ApplicationProvider.getApplicationContext<Application>().packageName,
+            settings.getStringExtra(Settings.EXTRA_APP_PACKAGE),
+        )
+
+        background()
+        allowNotifications(true)
+        foreground()
+        waitUntilGone(text(Res.string.notifications_off))
     }
 
     @Test

@@ -36,11 +36,18 @@ data class TimerScreenState(
     val editTeaQuantityGrams: Double? = null,
     val editIsTeaBag: Boolean = false,
     val editWaterType: WaterType? = null,
-    /** Without permission, a timer finishing in the background makes no sound. */
+    /** The system's permission: without it, a timer finishing in the background makes no sound. */
     val notificationsOff: Boolean = false,
     val isLoading: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
+    /**
+     * Whether to warn that the timer won't be heard: the user wants its alert, but the system
+     * blocks it. With timer alerts off in Settings, the silence is their choice.
+     */
+    val warnsNotificationsOff: Boolean
+        get() = notificationsOff && userPreferences.timerCompletionNotificationsEnabled
+
     /** Whether the edit sheet holds anything the session doesn't, so closing it would lose it. */
     val hasEditChanges: Boolean
         get() {

@@ -337,6 +337,8 @@
     <string name="timer_done">Done</string>
     <string name="notifications_off">Notifications off</string>
     <string name="notifications_off_title">Notifications are off</string>
+    <string name="open_settings">Open settings</string>
+    <string name="not_now">Not now</string>
     <string name="notifications_off_text">You won't hear when your tea is ready while Leaf Log is in the background.</string>
 
     <!-- Why an operation failed -->

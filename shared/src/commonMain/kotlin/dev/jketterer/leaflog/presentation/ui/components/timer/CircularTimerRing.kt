@@ -1,9 +1,11 @@
 package dev.jketterer.leaflog.presentation.ui.components.timer
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +33,9 @@ fun CircularTimerRing(
     modifier: Modifier = Modifier.size(240.dp),
     progress: Float,
     timeText: String,
+    // Under the time: its total, or why it isn't counting
+    caption: String? = null,
+    captionColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     ringColor: Color = MaterialTheme.colorScheme.primary,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
 ) {
@@ -49,8 +54,12 @@ fun CircularTimerRing(
     ) {
         // Sized by the ring alone (57sp at 240dp, at least 20dp): the ring already shrinks to
         // make room for large fonts, and the font scale on top would overflow it
+        val ringSize = minOf(maxWidth, maxHeight)
         val fontSize = with(LocalDensity.current) {
-            (minOf(maxWidth, maxHeight) * (57f / 240f)).coerceAtLeast(20.dp).toSp()
+            (ringSize * (57f / 240f)).coerceAtLeast(20.dp).toSp()
+        }
+        val captionSize = with(LocalDensity.current) {
+            (ringSize * (14f / 240f)).coerceAtLeast(10.dp).toSp()
         }
 
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -81,13 +90,29 @@ fun CircularTimerRing(
             )
         }
 
-        // Time text
-        Text(
-            text = timeText,
-            // Tabular figures, so the digits don't shift as they tick
-            style = MaterialTheme.typography.displayLarge.copy(fontSize = fontSize, fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Bold,
+        val captionStyle = MaterialTheme.typography.labelLarge.copy(
+            fontSize = captionSize,
+            lineHeight = captionSize * 1.4f,
+            fontFeatureSettings = "tnum",
         )
+        // A blank line above the time balances the caption's below it, so the time stays centered
+        // in the ring whether or not there's a caption
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "", style = captionStyle)
+            Text(
+                text = timeText,
+                // Tabular figures, so the digits don't shift as they tick
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontSize = fontSize,
+                    lineHeight = fontSize * (64f / 57f),
+                    fontFeatureSettings = "tnum",
+                ),
+                fontWeight = FontWeight.Bold,
+            )
+            AnimatedContent(targetState = caption, label = "timer_caption") { text ->
+                Text(text = text.orEmpty(), style = captionStyle, color = captionColor)
+            }
+        }
     }
 }
 
@@ -98,6 +123,7 @@ private fun CircularTimerRingPreview() {
         CircularTimerRing(
             progress = 0.65f,
             timeText = "1:30",
+            caption = "of 2:00",
         )
     }
 }
@@ -109,6 +135,7 @@ private fun CircularTimerRingCompletePreview() {
         CircularTimerRing(
             progress = 1.0f,
             timeText = "0:00",
+            caption = "Done",
         )
     }
 }

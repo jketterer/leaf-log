@@ -20,6 +20,8 @@ import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_session_action
 import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
+import leaf_log.shared.generated.resources.notifications_off
+import leaf_log.shared.generated.resources.ok
 import leaf_log.shared.generated.resources.pause
 import leaf_log.shared.generated.resources.review_done
 import leaf_log.shared.generated.resources.review_finish_session
@@ -195,7 +197,8 @@ class NotificationFlowTest : FlowTest() {
         allowNotifications(false)
         launch()
         beginSession("Dragon Well")
-        waitFor(NOTIFICATIONS_DISABLED)
+        click(text(Res.string.notifications_off))
+        click(hasText(text(Res.string.ok)) and hasAnyAncestor(isDialog()))
         click(text(Res.string.start_brewing))
         clock.advance(30.seconds)
         waitFor(text(Res.string.review_how_was_steep_n, 1))
@@ -203,7 +206,7 @@ class NotificationFlowTest : FlowTest() {
         allowNotifications(true)
         click(text(Res.string.start_steep_n, 2))
         waitFor(text(Res.string.start_brewing))
-        assertAbsent(NOTIFICATIONS_DISABLED)
+        assertAbsent(text(Res.string.notifications_off))
     }
 
     @Test
@@ -356,9 +359,4 @@ class NotificationFlowTest : FlowTest() {
     private val Notification.subText get() = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()
     private val Notification.progress get() = extras.getInt(Notification.EXTRA_PROGRESS)
     private val Notification.showsChronometer get() = extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER)
-
-    private companion object {
-        const val NOTIFICATIONS_DISABLED =
-            "Notifications are disabled, so you won't be alerted when your tea is ready in the background"
-    }
 }

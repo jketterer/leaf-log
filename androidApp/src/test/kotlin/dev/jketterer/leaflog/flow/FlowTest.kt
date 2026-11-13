@@ -360,7 +360,7 @@ abstract class FlowTest {
 
     fun assertAbsent(text: String) {
         compose.waitForIdle()
-        check(compose.onAllNodes(hasText(text)).fetchSemanticsNodes().isEmpty()) {
+        check(compose.onAllNodes(hasText(text) or hasContentDescription(text)).fetchSemanticsNodes().isEmpty()) {
             "Expected no \"$text\" on screen"
         }
     }

@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
+import kotlin.time.Duration
 
 /**
  * UI State for the Timer screen.
@@ -18,6 +19,7 @@ data class TimerScreenState(
     val timerState: TimerState = TimerState(),
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
+    val teaTypeColorHex: String? = null,
     val vessel: BrewingVessel? = null,
     /** A timer with no session, so nothing it times is recorded. */
     val isQuickTimer: Boolean = false,
@@ -34,7 +36,8 @@ data class TimerScreenState(
     val editTeaQuantityGrams: Double? = null,
     val editIsTeaBag: Boolean = false,
     val editWaterType: WaterType? = null,
-    val showNotificationWarning: Boolean = false,
+    /** Without permission, a timer finishing in the background makes no sound. */
+    val notificationsOff: Boolean = false,
     val isLoading: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
@@ -50,27 +53,23 @@ data class TimerScreenState(
                     !editIsTeaBag && editTeaQuantityGrams?.toFloat() != session.session.teaQuantityGrams
         }
 
-    /**
-     * Formatted remaining time as MM:SS.
-     * Uses ceiling division to round up fractional seconds.
-     */
+    /** Time left as M:SS, rounded up so the last second reads 0:01 until it's over. */
     val formattedTime: String
-        get() {
-            val remaining = when (timerState.status) {
+        get() = formatClock(
+            when (timerState.status) {
                 TimerStatus.RUNNING, TimerStatus.PAUSED -> timerState.remainingDuration
                 else -> timerState.totalDuration
-            }
+            },
+        )
 
-            // Round up to nearest second for display (ceiling division)
-            val milliseconds = remaining.inWholeMilliseconds
-            val totalSeconds = if (milliseconds > 0) {
-                (milliseconds + 999) / 1000  // Ceiling: round up if any fractional ms
-            } else {
-                0L
-            }
+    /** The steep's whole length as M:SS, adjustments included. */
+    val formattedTotal: String
+        get() = formatClock(timerState.totalDuration)
+}
 
-            val minutes = totalSeconds / 60
-            val seconds = totalSeconds % 60
-            return "${minutes}:${seconds.toString().padStart(2, '0')}"
-        }
+/** A duration as M:SS, a fractional second rounding up. */
+internal fun formatClock(duration: Duration): String {
+    val milliseconds = duration.inWholeMilliseconds
+    val totalSeconds = if (milliseconds > 0) (milliseconds + 999) / 1000 else 0L
+    return "${totalSeconds / 60}:${(totalSeconds % 60).toString().padStart(2, '0')}"
 }

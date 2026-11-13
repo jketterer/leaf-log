@@ -19,7 +19,6 @@ import leaf_log.shared.generated.resources.cancel
 import leaf_log.shared.generated.resources.finish_early
 import leaf_log.shared.generated.resources.just_a_timer
 import leaf_log.shared.generated.resources.log_it
-import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.pause
@@ -85,7 +84,6 @@ class QuickTimerFlowTest : FlowTest() {
         tap(ongoing()!!)
         waitFor(text(Res.string.pause))
 
-        click(text(Res.string.more_options))
         click(text(Res.string.finish_early))
         waitFor(text(Res.string.log_it))
         waitUntil("the ongoing notification and the backup alarm are gone") {

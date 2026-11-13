@@ -109,7 +109,6 @@ class TimerViewModel(
             is TimerIntent.CancelStop -> cancelDiscardSession()
             is TimerIntent.RestartTimer -> restartTimer()
             is TimerIntent.CompleteNow -> completeNow()
-            is TimerIntent.DismissNotificationWarning -> _state.update { it.copy(showNotificationWarning = false) }
             is TimerIntent.BackClicked -> onBack()
             is TimerIntent.JustATimer -> endQuickTimer()
             is TimerIntent.ConfirmEndTimer -> endQuickTimer()
@@ -175,6 +174,7 @@ class TimerViewModel(
                 val sessionId = session.session.id
                 val steep = session.currentSteep
                 val tea = teaRepository.getById(session.session.teaId)
+                val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
                 val vessel = brewingVesselRepository.getById(session.session.vesselId)
                 val hasNotificationPermission = notificationService.hasNotificationPermission()
                 val nextSteep = nextSteepTime(session, resolvePlanUseCase(session))
@@ -226,9 +226,10 @@ class TimerViewModel(
                     it.copy(
                         session = session,
                         tea = tea,
+                        teaTypeColorHex = teaType?.colorHex,
                         vessel = vessel,
                         timerState = resolvedTimerState,
-                        showNotificationWarning = !hasNotificationPermission,
+                        notificationsOff = !hasNotificationPermission,
                         isLoading = false,
                     )
                 }
@@ -271,7 +272,7 @@ class TimerViewModel(
             _state.update {
                 it.copy(
                     timerState = timer,
-                    showNotificationWarning = !notificationService.hasNotificationPermission(),
+                    notificationsOff = !notificationService.hasNotificationPermission(),
                     isLoading = false,
                 )
             }

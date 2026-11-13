@@ -330,6 +330,14 @@
     <string name="just_a_timer">Just a timer</string>
     <string name="what_are_you_brewing">What are you brewing?</string>
     <string name="log_it">Log it</string>
+    <string name="reset">Reset</string>
+    <string name="resume">Resume</string>
+    <string name="timer_of_total">of %1$s</string>
+    <string name="timer_paused">Paused</string>
+    <string name="timer_done">Done</string>
+    <string name="notifications_off">Notifications off</string>
+    <string name="notifications_off_title">Notifications are off</string>
+    <string name="notifications_off_text">You won't hear when your tea is ready while Leaf Log is in the background.</string>
 
     <!-- Why an operation failed -->
     <string name="failure_not_found">That no longer exists</string>

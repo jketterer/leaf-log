@@ -20,7 +20,6 @@ sealed interface TimerIntent {
     data object RestartTimer : TimerIntent
     /** Already brewed before Start, Finish early after. */
     data object CompleteNow : TimerIntent
-    data object DismissNotificationWarning : TimerIntent
     data object BackClicked : TimerIntent
 
     // Quick Timer: ending it records nothing; a tea attached makes a session of its steeps

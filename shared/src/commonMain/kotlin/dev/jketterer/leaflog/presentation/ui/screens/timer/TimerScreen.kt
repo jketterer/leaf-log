@@ -1,38 +1,23 @@
 package dev.jketterer.leaflog.presentation.ui.screens.timer
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,21 +26,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.AlertTriangle
 import compose.icons.feathericons.ArrowLeft
+import compose.icons.feathericons.BellOff
 import compose.icons.feathericons.CheckCircle
-import compose.icons.feathericons.Coffee
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
-import compose.icons.feathericons.X
+import dev.jketterer.leaflog.domain.models.BrewingVessel
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TimerState
@@ -65,16 +49,18 @@ import dev.jketterer.leaflog.presentation.ui.components.collection.TeaPickerShee
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewParametersSheet
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
-import dev.jketterer.leaflog.presentation.ui.components.common.SteepParameterCard
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
+import dev.jketterer.leaflog.presentation.ui.components.common.formatTemperature
+import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
+import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.timer.CircularTimerRing
-import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
-import dev.jketterer.leaflog.presentation.ui.components.timer.TimerControlButtons
+import dev.jketterer.leaflog.presentation.ui.components.timer.NotificationsOffDialog
 import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirmationDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_session_text
@@ -82,21 +68,21 @@ import leaf_log.shared.generated.resources.discard_session_title
 import leaf_log.shared.generated.resources.discard_steep_text
 import leaf_log.shared.generated.resources.discard_steep_title
 import leaf_log.shared.generated.resources.finish_early
-import leaf_log.shared.generated.resources.just_a_timer
-import leaf_log.shared.generated.resources.log_it
-import leaf_log.shared.generated.resources.quick_timer
-import leaf_log.shared.generated.resources.review_next_in
+import leaf_log.shared.generated.resources.more_options
+import leaf_log.shared.generated.resources.navigate_up
+import leaf_log.shared.generated.resources.notifications_off
 import leaf_log.shared.generated.resources.stop
 import leaf_log.shared.generated.resources.stop_timer_text
 import leaf_log.shared.generated.resources.stop_timer_title
-import leaf_log.shared.generated.resources.what_are_you_brewing
+import leaf_log.shared.generated.resources.tea_not_found
+import leaf_log.shared.generated.resources.timer_done
+import leaf_log.shared.generated.resources.timer_of_total
+import leaf_log.shared.generated.resources.timer_paused
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import leaf_log.shared.generated.resources.navigate_up
 
 /**
  * Timer Screen - brewing countdown timer.
@@ -143,7 +129,10 @@ private fun TimerContent(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     var showOverflowMenu by remember { mutableStateOf(false) }
-    val canFinishEarly = state.timerState.isRunning || state.timerState.canResume
+    var showNotificationsOff by remember { mutableStateOf(false) }
+    // Finish early is on the bar while running; paused, Reset has its place
+    val canFinishEarly = state.timerState.canResume
+    val isLoaded = !state.isLoading && (state.isQuickTimer || state.session != null)
 
     // System back asks before ending a Quick Timer, as the toolbar arrow does
     NavigationBackHandler(
@@ -155,40 +144,31 @@ private fun TimerContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            if (state.isQuickTimer) {
-                                stringResource(Res.string.quick_timer)
-                            } else {
-                                state.tea?.name ?: ""
-                            },
-                        )
-                        state.vessel?.name?.let {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = { onIntent(TimerIntent.BackClicked) }) {
                         Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
                     }
                 },
                 actions = {
+                    if (state.notificationsOff) {
+                        IconButton(onClick = { showNotificationsOff = true }) {
+                            Icon(
+                                FeatherIcons.BellOff,
+                                contentDescription = stringResource(Res.string.notifications_off),
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
                     // A Quick Timer has nothing to discard
                     if (!state.isQuickTimer || canFinishEarly) {
                         IconButton(onClick = { showOverflowMenu = true }) {
-                            Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
+                            Icon(FeatherIcons.MoreVertical, contentDescription = stringResource(Res.string.more_options))
                         }
                         DropdownMenu(
                             expanded = showOverflowMenu,
                             onDismissRequest = { showOverflowMenu = false },
                         ) {
-                            // Before Start, the way out is Already brewed, under the Start button
                             if (canFinishEarly) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(Res.string.finish_early)) },
@@ -230,32 +210,43 @@ private fun TimerContent(
                 },
             )
         },
+        bottomBar = {
+            AnimatedVisibility(visible = isLoaded, enter = fadeIn(), exit = fadeOut()) {
+                TimerBottomBar(
+                    status = state.timerState.status,
+                    isQuickTimer = state.isQuickTimer,
+                    onStart = { onIntent(TimerIntent.StartTimer) },
+                    onPause = { onIntent(TimerIntent.PauseTimer) },
+                    onResume = { onIntent(TimerIntent.ResumeTimer) },
+                    onReset = { onIntent(TimerIntent.ResetTimer) },
+                    onCompleteNow = { onIntent(TimerIntent.CompleteNow) },
+                    onJustATimer = { onIntent(TimerIntent.JustATimer) },
+                    onLogIt = { onIntent(TimerIntent.ShowTeaPicker) },
+                )
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        Column(
+        // No spinner: the load is quick, so the page fades in whole once it's there. A session
+        // that failed to load stays blank; the snackbar says why
+        AnimatedVisibility(
+            visible = isLoaded,
+            enter = fadeIn(),
+            exit = fadeOut(),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            when {
-                state.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                else -> {
-                    TimerRunningContent(
-                        state = state,
-                        onIntent = onIntent,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-            }
+            TimerBody(
+                state = state,
+                onIntent = onIntent,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
+    }
+
+    if (showNotificationsOff) {
+        NotificationsOffDialog(onDismiss = { showNotificationsOff = false })
     }
 
     // Discard session confirmation dialog
@@ -337,179 +328,115 @@ private fun TimerContent(
 }
 
 @Composable
-private fun TimerRunningContent(
+private fun TimerBody(
     state: TimerScreenState,
     onIntent: (TimerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val timer = state.timerState
+    val session = state.session
+    // A Quick Timer's plan is the length it started at; adjusting it keeps the same steps
+    val quickTimerPlanned = remember(timer.steepNumber) { timer.totalDuration }
+    val caption = when (timer.status) {
+        TimerStatus.NOT_STARTED -> null
+        TimerStatus.RUNNING -> stringResource(Res.string.timer_of_total, state.formattedTotal)
+        TimerStatus.PAUSED -> stringResource(Res.string.timer_paused)
+        TimerStatus.COMPLETE -> stringResource(Res.string.timer_done)
+    }
+
     BoxWithConstraints(modifier = modifier) {
-        // At least screen height, so the weights below share what the other content leaves;
-        // it scrolls only if that content alone doesn't fit
-        Column(
+        TimerPageLayout(
+            viewportHeight = maxHeight,
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .heightIn(min = maxHeight)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            // Notification permission warning
-            if (state.showNotificationWarning) {
-                NotificationWarningBanner(
-                    onDismiss = { onIntent(TimerIntent.DismissNotificationWarning) },
-                )
-            }
-
-            // Brewing parameters card
-            if (state.session != null) {
-                SteepParameterCard(
-                    session = state.session,
-                    onEditClick = { onIntent(TimerIntent.EditSession) },
-                )
-            } else if (state.isQuickTimer && !state.timerState.isComplete) {
-                AssistChip(
-                    onClick = { onIntent(TimerIntent.ShowTeaPicker) },
-                    label = { Text(stringResource(Res.string.what_are_you_brewing)) },
-                    leadingIcon = {
-                        Icon(
-                            FeatherIcons.Coffee,
-                            contentDescription = null,
-                            modifier = Modifier.size(AssistChipDefaults.IconSize),
-                        )
-                    },
-                )
-            }
-
-            // Circular timer ring + quick adjustment buttons. The ring grows into the space left
-            // over, up to 240dp; what it doesn't use falls below the buttons. What's around it
-            // animates its height, so the ring resizes smoothly rather than jumping
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                CircularTimerRing(
-                    progress = state.timerState.progress,
-                    timeText = state.formattedTime,
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .sizeIn(maxWidth = 240.dp, maxHeight = 240.dp)
-                        .aspectRatio(1f),
-                )
-                AnimatedVisibility(visible = !state.timerState.isComplete) {
-                    QuickAdjustButtons(
-                        onAdjust = { adjustment ->
-                            onIntent(TimerIntent.AdjustTime(adjustment))
-                        },
-                        modifier = Modifier.padding(top = 16.dp),
-                    )
-                }
-            }
-
-            // Only a Quick Timer stays here once done: a session's steep moves on to its review
-            AnimatedContent(targetState = state.timerState.isComplete) { isComplete ->
-                if (isComplete) {
-                    QuickTimerDoneButtons(
-                        nextTime = state.timerState.nextByFeel().totalDuration,
-                        onIntent = onIntent,
+                .padding(horizontal = 24.dp),
+            header = {
+                if (session != null) {
+                    val steep = session.currentSteep
+                    SteepTimerHeaderSection(
+                        teaName = state.tea?.name ?: stringResource(Res.string.tea_not_found),
+                        vesselName = state.vessel?.name,
+                        teaColor = state.teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
+                            ?: MaterialTheme.colorScheme.primary,
+                        steepNumber = steep.number,
+                        temperature = formatTemperature(steep.temperatureCelsius),
+                        water = formatVolume(steep.waterQuantityMl),
+                        leaf = session.session.teaQuantityGrams?.let { formatWeight(it) },
+                        onEditParameters = { onIntent(TimerIntent.EditSession) },
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 } else {
-                    TimerControlButtons(
-                        isRunning = state.timerState.isRunning,
-                        isPaused = state.timerState.status == TimerStatus.PAUSED,
-                        onStartClick = { onIntent(TimerIntent.StartTimer) },
-                        onPauseClick = { onIntent(TimerIntent.PauseTimer) },
-                        onResumeClick = { onIntent(TimerIntent.ResumeTimer) },
-                        onResetClick = { onIntent(TimerIntent.ResetTimer) },
-                        // A Quick Timer has no steep to record
-                        onAlreadyBrewedClick = { onIntent(TimerIntent.CompleteNow) }
-                            .takeUnless { state.isQuickTimer },
+                    QuickTimerHeaderSection(
+                        onPickTea = { onIntent(TimerIntent.ShowTeaPicker) },
+                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun QuickTimerDoneButtons(
-    nextTime: Duration,
-    onIntent: (TimerIntent) -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(0.7f),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Button(
-            onClick = { onIntent(TimerIntent.ShowTeaPicker) },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(Res.string.log_it))
-        }
-        OutlinedButton(
-            onClick = { onIntent(TimerIntent.NextByFeel) },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                stringResource(
-                    Res.string.review_next_in,
-                    formatBrewingTime(nextTime.inWholeSeconds.toInt()),
-                ),
-            )
-        }
-        TextButton(
-            onClick = { onIntent(TimerIntent.JustATimer) },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(stringResource(Res.string.just_a_timer))
-        }
-    }
-}
-
-@Composable
-private fun NotificationWarningBanner(
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 12.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = FeatherIcons.AlertTriangle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.size(18.dp),
-            )
-            Text(
-                text = "Notifications are disabled, so you won't be alerted when your tea is ready in the background",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-            )
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = FeatherIcons.X,
-                    contentDescription = "Dismiss",
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.size(18.dp),
+            },
+            ring = {
+                CircularTimerRing(
+                    progress = timer.progress,
+                    timeText = state.formattedTime,
+                    caption = caption,
+                    captionColor = if (timer.status == TimerStatus.PAUSED) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 )
-            }
-        }
+            },
+            controls = {
+                TimerControlsSection(
+                    planned = session?.currentSteep?.brewingTime ?: quickTimerPlanned,
+                    isComplete = timer.isComplete,
+                    nextByFeel = timer.nextByFeel().totalDuration.takeIf { state.isQuickTimer && timer.isComplete },
+                    onAdjust = { onIntent(TimerIntent.AdjustTime(it)) },
+                    onNextByFeel = { onIntent(TimerIntent.NextByFeel) },
+                )
+            },
+        )
     }
 }
+
+private val previewTea = Tea(
+    id = "tea-1",
+    name = "Dragon Well",
+    teaTypeId = "green",
+    createdAt = PreviewInstant,
+    updatedAt = PreviewInstant,
+    syncStatus = SyncStatus.LOCAL_ONLY,
+)
+
+private val previewVessel = BrewingVessel(
+    id = "vessel-1",
+    name = "Gaiwan",
+    iconName = null,
+    isSystemDefault = true,
+    displayOrder = 0,
+    createdAt = PreviewInstant,
+    updatedAt = PreviewInstant,
+)
 
 @Preview(showBackground = true)
 @Composable
-private fun NotificationWarningBannerPreview() {
+private fun TimerScreenNotStartedPreview() {
     LeafLogTheme {
-        NotificationWarningBanner(onDismiss = {})
+        TimerContent(
+            state = TimerScreenState(
+                timerState = TimerState(
+                    sessionId = "session-1",
+                    teaId = "tea-1",
+                    steepNumber = 1,
+                    totalDuration = 2.minutes,
+                    remainingDuration = 2.minutes,
+                ),
+                session = previewSession(),
+                tea = previewTea,
+                teaTypeColorHex = "#4CAF50",
+                vessel = previewVessel,
+            ),
+            onIntent = {},
+        )
     }
 }
 
@@ -517,12 +444,11 @@ private fun NotificationWarningBannerPreview() {
 @Composable
 private fun TimerScreenRunningPreview() {
     LeafLogTheme {
-        TimerRunningContent(
+        TimerContent(
             state = TimerScreenState(
                 timerState = TimerState(
                     sessionId = "session-1",
                     teaId = "tea-1",
-                    teaName = "Dragon Well",
                     steepNumber = 1,
                     totalDuration = 2.minutes,
                     remainingDuration = 1.minutes + 30.seconds,
@@ -530,14 +456,10 @@ private fun TimerScreenRunningPreview() {
                     startedAt = PreviewInstant,
                 ),
                 session = previewSession(),
-                tea = Tea(
-                    id = "tea-1",
-                    name = "Dragon Well",
-                    teaTypeId = "green",
-                    createdAt = PreviewInstant,
-                    updatedAt = PreviewInstant,
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                ),
+                tea = previewTea,
+                teaTypeColorHex = "#4CAF50",
+                vessel = previewVessel,
+                notificationsOff = true,
             ),
             onIntent = {},
         )
@@ -548,28 +470,22 @@ private fun TimerScreenRunningPreview() {
 @Composable
 private fun TimerScreenPausedPreview() {
     LeafLogTheme {
-        TimerRunningContent(
+        TimerContent(
             state = TimerScreenState(
                 timerState = TimerState(
                     sessionId = "session-1",
                     teaId = "tea-1",
-                    teaName = "Dragon Well",
-                    steepNumber = 1,
-                    totalDuration = 2.minutes,
-                    remainingDuration = 1.minutes + 23.seconds,
+                    steepNumber = 3,
+                    totalDuration = 25.seconds,
+                    remainingDuration = 12.seconds,
                     status = TimerStatus.PAUSED,
                     startedAt = PreviewInstant,
                     pausedAt = PreviewInstant,
                 ),
-                session = previewSession(),
-                tea = Tea(
-                    id = "tea-1",
-                    name = "Dragon Well",
-                    teaTypeId = "green",
-                    createdAt = PreviewInstant,
-                    updatedAt = PreviewInstant,
-                    syncStatus = SyncStatus.LOCAL_ONLY,
-                ),
+                session = previewSession(ratings = listOf(4f, 4.5f, null), brewingTime = 20.seconds),
+                tea = previewTea,
+                teaTypeColorHex = "#4CAF50",
+                vessel = previewVessel,
             ),
             onIntent = {},
         )

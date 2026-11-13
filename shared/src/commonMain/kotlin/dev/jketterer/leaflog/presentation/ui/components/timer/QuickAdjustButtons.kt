@@ -1,7 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.components.timer
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -10,89 +11,48 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.jketterer.leaflog.presentation.ui.components.common.formatSteepIncrement
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
- * Quick adjustment buttons for timer (+/- 30s, +/- 1m).
+ * The steps a timer adjusts by, from the steep's planned length: seconds for a short gongfu steep,
+ * half-minutes and minutes for a long one. Keyed on the plan, not the time left, so the buttons
+ * don't change under a finger mid-steep.
  */
+internal fun adjustSteps(planned: Duration): List<Duration> =
+    if (planned < 1.minutes) {
+        listOf((-10).seconds, (-5).seconds, 5.seconds, 10.seconds)
+    } else {
+        listOf((-1).minutes, (-30).seconds, 30.seconds, 1.minutes)
+    }
+
+/** One row of buttons that add or take time off a running steep, sized to the steep's plan. */
 @Composable
 fun QuickAdjustButtons(
+    planned: Duration,
     onAdjust: (Duration) -> Unit,
-    enabled: Boolean = true,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
-    val compactPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // Wraps only at large font scales, where four don't fit a phone's width
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Fine adjustments — closer to the timer ring
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        adjustSteps(planned).forEach { step ->
             OutlinedButton(
-                onClick = { onAdjust(Duration.parse("-10s")) },
+                onClick = { onAdjust(step) },
                 enabled = enabled,
-                contentPadding = compactPadding,
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
             ) {
-                Text("-10s", style = MaterialTheme.typography.labelMedium)
-            }
-            OutlinedButton(
-                onClick = { onAdjust(Duration.parse("-5s")) },
-                enabled = enabled,
-                contentPadding = compactPadding,
-            ) {
-                Text("-5s", style = MaterialTheme.typography.labelMedium)
-            }
-            OutlinedButton(
-                onClick = { onAdjust(Duration.parse("5s")) },
-                enabled = enabled,
-                contentPadding = compactPadding,
-            ) {
-                Text("+5s", style = MaterialTheme.typography.labelMedium)
-            }
-            OutlinedButton(
-                onClick = { onAdjust(Duration.parse("10s")) },
-                enabled = enabled,
-                contentPadding = compactPadding,
-            ) {
-                Text("+10s", style = MaterialTheme.typography.labelMedium)
-            }
-        }
-        // Coarse adjustments
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FilledTonalButton(
-                onClick = { onAdjust(Duration.parse("-1m")) },
-                enabled = enabled,
-                contentPadding = compactPadding,
-            ) {
-                Text("-1m", style = MaterialTheme.typography.labelLarge)
-            }
-            FilledTonalButton(
-                onClick = { onAdjust(Duration.parse("-30s")) },
-                enabled = enabled,
-                contentPadding = compactPadding,
-            ) {
-                Text("-30s", style = MaterialTheme.typography.labelLarge)
-            }
-            FilledTonalButton(
-                onClick = { onAdjust(Duration.parse("30s")) },
-                enabled = enabled,
-                contentPadding = compactPadding,
-            ) {
-                Text("+30s", style = MaterialTheme.typography.labelLarge)
-            }
-            FilledTonalButton(
-                onClick = { onAdjust(Duration.parse("1m")) },
-                enabled = enabled,
-                contentPadding = compactPadding,
-            ) {
-                Text("+1m", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = formatSteepIncrement(step),
+                    style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+                )
             }
         }
     }
@@ -100,12 +60,17 @@ fun QuickAdjustButtons(
 
 @Preview(showBackground = true)
 @Composable
-private fun QuickAdjustButtonsPreview() {
+private fun QuickAdjustButtonsGongfuPreview() {
     LeafLogTheme {
-        QuickAdjustButtons(
-            onAdjust = {},
-            enabled = true,
-        )
+        QuickAdjustButtons(planned = 20.seconds, onAdjust = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun QuickAdjustButtonsWesternPreview() {
+    LeafLogTheme {
+        QuickAdjustButtons(planned = 3.minutes, onAdjust = {})
     }
 }
 
@@ -113,9 +78,6 @@ private fun QuickAdjustButtonsPreview() {
 @Composable
 private fun QuickAdjustButtonsDisabledPreview() {
     LeafLogTheme {
-        QuickAdjustButtons(
-            onAdjust = {},
-            enabled = false,
-        )
+        QuickAdjustButtons(planned = 20.seconds, onAdjust = {}, enabled = false)
     }
 }

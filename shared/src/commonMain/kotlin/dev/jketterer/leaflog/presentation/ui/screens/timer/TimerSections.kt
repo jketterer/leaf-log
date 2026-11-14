@@ -26,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
@@ -40,7 +39,6 @@ import compose.icons.feathericons.Thermometer
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatBrewingTime
-import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
 import dev.jketterer.leaflog.presentation.ui.components.timer.QuickAdjustButtons
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
@@ -110,12 +108,9 @@ internal fun TimerPageLayout(
     }
 }
 
-/** Which tea and vessel, the steep, then what it brews with, tapped to change them. */
+/** The steep under the tea's header, then what it brews with, tapped to change them. */
 @Composable
-internal fun SteepTimerHeaderSection(
-    teaName: String,
-    vesselName: String?,
-    teaColor: Color,
+internal fun SteepTimerDetailsSection(
     steepNumber: Int,
     temperature: String,
     water: String,
@@ -124,7 +119,6 @@ internal fun SteepTimerHeaderSection(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
         Text(
             text = stringResource(Res.string.review_steep_n, steepNumber),
             style = MaterialTheme.typography.displaySmall,
@@ -288,12 +282,9 @@ internal fun TimerBottomBar(
 
 @Preview(showBackground = true)
 @Composable
-private fun SteepTimerHeaderSectionPreview() {
+private fun SteepTimerDetailsSectionPreview() {
     LeafLogTheme {
-        SteepTimerHeaderSection(
-            teaName = "Tie Guan Yin",
-            vesselName = "Gaiwan",
-            teaColor = Color(0xFFC27400),
+        SteepTimerDetailsSection(
             steepNumber = 3,
             temperature = "95°C",
             water = "120 mL",

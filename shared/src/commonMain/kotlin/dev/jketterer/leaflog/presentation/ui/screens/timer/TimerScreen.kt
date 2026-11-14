@@ -1,6 +1,13 @@
 package dev.jketterer.leaflog.presentation.ui.screens.timer
 
 import androidx.compose.animation.AnimatedVisibility
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -27,7 +34,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -61,7 +67,6 @@ import dev.jketterer.leaflog.presentation.ui.components.timer.TimerResetConfirma
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_session_text
@@ -75,7 +80,6 @@ import leaf_log.shared.generated.resources.notifications_off
 import leaf_log.shared.generated.resources.stop
 import leaf_log.shared.generated.resources.stop_timer_text
 import leaf_log.shared.generated.resources.stop_timer_title
-import leaf_log.shared.generated.resources.tea_not_found
 import leaf_log.shared.generated.resources.timer_done
 import leaf_log.shared.generated.resources.timer_of_total
 import leaf_log.shared.generated.resources.timer_paused
@@ -92,7 +96,7 @@ import kotlin.time.Duration.Companion.seconds
 fun TimerScreen(
     route: NavRoute.TimerRoute,
     onNavigateBack: () -> Unit,
-    onNavigateToSteepComplete: (String) -> Unit,
+    onNavigateToSteepComplete: (String, TeaHeaderInfo?) -> Unit,
     onNavigateToSessionTimer: (String) -> Unit,
     viewModel: TimerViewModel = koinViewModel { parametersOf(route) },
 ) {
@@ -109,7 +113,7 @@ fun TimerScreen(
         viewModel.navigationEvents.collect { event ->
             when (event) {
                 is TimerNavEvent.NavigateToSteepComplete -> {
-                    onNavigateToSteepComplete(event.sessionId)
+                    onNavigateToSteepComplete(event.sessionId, event.header)
                 }
 
                 is TimerNavEvent.NavigateToSessionTimer -> onNavigateToSessionTimer(event.sessionId)
@@ -233,10 +237,11 @@ private fun TimerContent(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        // No spinner: the load is quick, so the page fades in whole once it's there. A session
-        // that failed to load stays blank; the snackbar says why
+        // No spinner: the load is quick, so the page fades in whole once it's there, all but a
+        // header the route brought, which shows from the first frame. A session that failed to
+        // load shows no more than that header; the snackbar says why
         AnimatedVisibility(
-            visible = isLoaded,
+            visible = isLoaded || state.header != null,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier
@@ -245,6 +250,7 @@ private fun TimerContent(
         ) {
             TimerBody(
                 state = state,
+                isLoaded = isLoaded,
                 onIntent = onIntent,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -342,11 +348,14 @@ private fun TimerContent(
 @Composable
 private fun TimerBody(
     state: TimerScreenState,
+    isLoaded: Boolean,
     onIntent: (TimerIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val timer = state.timerState
     val session = state.session
+    // Fades in what loads around a header that was there from the start
+    val contentAlpha by animateFloatAsState(if (isLoaded) 1f else 0f, label = "timer_content")
     // A Quick Timer's plan is the length it started at; adjusting it keeps the same steps
     val quickTimerPlanned = remember(timer.steepNumber) { timer.totalDuration }
     val caption = when (timer.status) {
@@ -364,47 +373,65 @@ private fun TimerBody(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             header = {
-                if (session != null) {
-                    val steep = session.currentSteep
-                    SteepTimerHeaderSection(
-                        teaName = state.tea?.name ?: stringResource(Res.string.tea_not_found),
-                        vesselName = state.vessel?.name,
-                        teaColor = state.teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
-                            ?: MaterialTheme.colorScheme.primary,
-                        steepNumber = steep.number,
-                        temperature = formatTemperature(steep.temperatureCelsius),
-                        water = formatVolume(steep.waterQuantityMl),
-                        leaf = session.session.teaQuantityGrams?.let { formatWeight(it) },
-                        onEditParameters = { onIntent(TimerIntent.EditSession) },
+                val header = state.header
+                if (header != null) {
+                    Column(
                         modifier = Modifier.padding(top = 8.dp),
-                    )
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        TeaHeader(info = header)
+                        if (session != null) {
+                            val steep = session.currentSteep
+                            SteepTimerDetailsSection(
+                                steepNumber = steep.number,
+                                temperature = formatTemperature(steep.temperatureCelsius),
+                                water = formatVolume(steep.waterQuantityMl),
+                                leaf = session.session.teaQuantityGrams?.let { formatWeight(it) },
+                                onEditParameters = { onIntent(TimerIntent.EditSession) },
+                                modifier = Modifier.alpha(contentAlpha),
+                            )
+                        }
+                    }
                 } else {
                     QuickTimerHeaderSection(
                         onPickTea = { onIntent(TimerIntent.ShowTeaPicker) },
-                        modifier = Modifier.padding(top = 8.dp),
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .alpha(contentAlpha),
                     )
                 }
             },
+            // Until the timer loads, empty slots: its default state would only animate away
             ring = {
-                CircularTimerRing(
-                    progress = timer.progress,
-                    timeText = state.formattedTime,
-                    caption = caption,
-                    captionColor = if (timer.status == TimerStatus.PAUSED) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
+                if (isLoaded) {
+                    CircularTimerRing(
+                        progress = timer.progress,
+                        timeText = state.formattedTime,
+                        caption = caption,
+                        captionColor = if (timer.status == TimerStatus.PAUSED) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.alpha(contentAlpha),
+                    )
+                } else {
+                    Box(Modifier)
+                }
             },
             controls = {
-                TimerControlsSection(
-                    planned = session?.currentSteep?.brewingTime ?: quickTimerPlanned,
-                    isComplete = timer.isComplete,
-                    nextByFeel = timer.nextByFeel().totalDuration.takeIf { state.isQuickTimer && timer.isComplete },
-                    onAdjust = { onIntent(TimerIntent.AdjustTime(it)) },
-                    onNextByFeel = { onIntent(TimerIntent.NextByFeel) },
-                )
+                if (isLoaded) {
+                    TimerControlsSection(
+                        planned = session?.currentSteep?.brewingTime ?: quickTimerPlanned,
+                        isComplete = timer.isComplete,
+                        nextByFeel = timer.nextByFeel().totalDuration.takeIf { state.isQuickTimer && timer.isComplete },
+                        onAdjust = { onIntent(TimerIntent.AdjustTime(it)) },
+                        onNextByFeel = { onIntent(TimerIntent.NextByFeel) },
+                        modifier = Modifier.alpha(contentAlpha),
+                    )
+                } else {
+                    Box(Modifier)
+                }
             },
         )
     }
@@ -417,6 +444,13 @@ private val previewTea = Tea(
     createdAt = PreviewInstant,
     updatedAt = PreviewInstant,
     syncStatus = SyncStatus.LOCAL_ONLY,
+)
+
+private val previewHeader = TeaHeaderInfo(
+    sessionId = "session-1",
+    teaName = "Dragon Well",
+    vesselName = "Gaiwan",
+    colorHex = "#4CAF50",
 )
 
 private val previewVessel = BrewingVessel(
@@ -444,7 +478,7 @@ private fun TimerScreenNotStartedPreview() {
                 ),
                 session = previewSession(),
                 tea = previewTea,
-                teaTypeColorHex = "#4CAF50",
+                header = previewHeader,
                 vessel = previewVessel,
             ),
             onIntent = {},
@@ -469,7 +503,7 @@ private fun TimerScreenRunningPreview() {
                 ),
                 session = previewSession(),
                 tea = previewTea,
-                teaTypeColorHex = "#4CAF50",
+                header = previewHeader,
                 vessel = previewVessel,
                 notificationsOff = true,
             ),
@@ -496,7 +530,7 @@ private fun TimerScreenPausedPreview() {
                 ),
                 session = previewSession(ratings = listOf(4f, 4.5f, null), brewingTime = 20.seconds),
                 tea = previewTea,
-                teaTypeColorHex = "#4CAF50",
+                header = previewHeader,
                 vessel = previewVessel,
             ),
             onIntent = {},

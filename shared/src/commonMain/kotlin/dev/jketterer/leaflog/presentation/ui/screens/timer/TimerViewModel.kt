@@ -24,6 +24,7 @@ import dev.jketterer.leaflog.domain.usecases.timer.PauseTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.RestoreTimerStateUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.screens.steepcomplete.nextSteepTime
@@ -75,7 +76,7 @@ class TimerViewModel(
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
-        TimerScreenState(isQuickTimer = route.sessionId == null, isLoading = true),
+        TimerScreenState(isQuickTimer = route.sessionId == null, header = route.header, isLoading = true),
     )
     val state: StateFlow<TimerScreenState> = _state.asStateFlow()
 
@@ -182,6 +183,7 @@ class TimerViewModel(
                 // Read here too, so whether the bell warns lands with the page rather than after it
                 val preferences = preferencesRepository.getPreferences()
                 val nextSteep = nextSteepTime(session, resolvePlanUseCase(session))
+                val header = TeaHeaderInfo(sessionId, tea?.name, vessel?.name, teaType?.colorHex)
 
                 // Prefer live TimerService state if it's already tracking this steep
                 // (e.g., navigating back while timer is still running)
@@ -214,7 +216,7 @@ class TimerViewModel(
                 // If timer was already complete (e.g., app killed during SteepComplete),
                 // redirect to SteepComplete immediately
                 if (resolvedTimerState.status == TimerStatus.COMPLETE) {
-                    _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(sessionId))
+                    _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(sessionId, header))
                     return@launch
                 }
 
@@ -230,7 +232,7 @@ class TimerViewModel(
                     it.copy(
                         session = session,
                         tea = tea,
-                        teaTypeColorHex = teaType?.colorHex,
+                        header = header,
                         vessel = vessel,
                         timerState = resolvedTimerState,
                         notificationsOff = !hasNotificationPermission,
@@ -453,7 +455,7 @@ class TimerViewModel(
             // Reset singleton state so the next Timer screen (e.g., next steep) starts
             // clean and doesn't receive a stale COMPLETE emission in collectTimerState()
             timerService.stop()
-            _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(session.session.id))
+            _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(session.session.id, _state.value.header))
         }
     }
 
@@ -575,7 +577,7 @@ class TimerViewModel(
         val sessionId = session.session.id
         if (timer.isComplete) {
             timerService.onNextSteep()
-            _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(sessionId))
+            _navigationEvents.send(TimerNavEvent.NavigateToSteepComplete(sessionId, header = null))
         } else {
             timerService.updateState(
                 timer.copy(
@@ -611,6 +613,6 @@ class TimerViewModel(
 
 sealed interface TimerNavEvent {
     data object NavigateBack : TimerNavEvent
-    data class NavigateToSteepComplete(val sessionId: String) : TimerNavEvent
+    data class NavigateToSteepComplete(val sessionId: String, val header: TeaHeaderInfo?) : TimerNavEvent
     data class NavigateToSessionTimer(val sessionId: String) : TimerNavEvent
 }

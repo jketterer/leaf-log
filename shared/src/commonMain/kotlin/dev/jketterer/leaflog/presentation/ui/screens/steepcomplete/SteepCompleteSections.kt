@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,6 +49,7 @@ import dev.jketterer.leaflog.presentation.ui.components.session.RatingSelector
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepTags
 import dev.jketterer.leaflog.presentation.ui.components.session.TagChips
 import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -65,19 +65,17 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.time.Duration.Companion.seconds
 
-/** Which tea and vessel, the question it asks of this steep, then the steep's parameters, tapped to change them. */
+/** The session's header, the question it asks of this steep, then the steep's parameters, tapped to change them. */
 @Composable
 internal fun SteepHeaderSection(
-    teaName: String,
-    vesselName: String?,
-    teaColor: Color,
+    header: TeaHeaderInfo,
     steep: Steep,
     teaQuantityGrams: Float?,
     onEditParameters: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
+        TeaHeader(info = header)
         Text(
             text = stringResource(Res.string.review_how_was_steep_n, steep.number),
             style = MaterialTheme.typography.displaySmall,
@@ -232,9 +230,7 @@ private val previewSteep = previewSession(brewingTime = 45.seconds).steeps.first
 private fun SteepHeaderSectionPreview() {
     LeafLogTheme {
         SteepHeaderSection(
-            teaName = "Tie Guan Yin",
-            vesselName = "Gaiwan",
-            teaColor = Color(0xFFC27400),
+            header = TeaHeaderInfo("session-1", "Tie Guan Yin", "Gaiwan", "#C27400"),
             steep = previewSteep,
             teaQuantityGrams = 5f,
             onEditParameters = {},
@@ -248,9 +244,12 @@ private fun SteepHeaderSectionPreview() {
 private fun SteepHeaderSectionLongNamesPreview() {
     LeafLogTheme {
         SteepHeaderSection(
-            teaName = "Lishan High Mountain Winter Harvest Oolong",
-            vesselName = "Yixing Zhuni Xi Shi Teapot",
-            teaColor = Color(0xFFC27400),
+            header = TeaHeaderInfo(
+                "session-1",
+                "Lishan High Mountain Winter Harvest Oolong",
+                "Yixing Zhuni Xi Shi Teapot",
+                "#C27400",
+            ),
             steep = previewSteep,
             teaQuantityGrams = 5f,
             onEditParameters = {},

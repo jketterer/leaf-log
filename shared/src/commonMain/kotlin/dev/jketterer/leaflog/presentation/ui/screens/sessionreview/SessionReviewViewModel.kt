@@ -15,6 +15,7 @@ import dev.jketterer.leaflog.domain.usecases.session.CompareWithBestUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.DebouncedSave
@@ -48,7 +49,7 @@ class SessionReviewViewModel(
     appScope: CoroutineScope,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(SessionReviewState())
+    private val _state = MutableStateFlow(SessionReviewState(header = route.header))
     val state: StateFlow<SessionReviewState> = _state.asStateFlow()
 
     private val _navigationEvents = Channel<SessionReviewNavEvent>()
@@ -121,12 +122,14 @@ class SessionReviewViewModel(
                 val vsBest = compareWithBestUseCase(session)
                 val bestVesselId = (vsBest as? VsBest.Versus)?.best?.session?.vesselId
                 val tea = teaRepository.getById(session.session.teaId)
+                val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
+                val vessel = brewingVesselRepository.getById(session.session.vesselId)
                 _state.update {
                     it.copy(
                         session = session,
                         tea = tea,
-                        teaTypeColorHex = tea?.let { t -> teaTypeRepository.getById(t.teaTypeId) }?.colorHex,
-                        vessel = brewingVesselRepository.getById(session.session.vesselId),
+                        header = TeaHeaderInfo(session.session.id, tea?.name, vessel?.name, teaType?.colorHex),
+                        vessel = vessel,
                         bestVessel = bestVesselId?.let { id -> brewingVesselRepository.getById(id) },
                         vsBest = vsBest,
                         notes = session.session.notes ?: "",

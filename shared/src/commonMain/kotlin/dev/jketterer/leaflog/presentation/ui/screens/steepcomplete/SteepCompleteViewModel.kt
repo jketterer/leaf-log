@@ -19,6 +19,7 @@ import dev.jketterer.leaflog.domain.usecases.session.EditSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.EditSteepUseCase
 import dev.jketterer.leaflog.domain.usecases.session.FinishSessionUseCase
 import dev.jketterer.leaflog.domain.usecases.session.ResolvePlanUseCase
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessages
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
 import dev.jketterer.leaflog.presentation.ui.viewmodel.DebouncedSave
@@ -60,7 +61,7 @@ class SteepCompleteViewModel(
     appScope: CoroutineScope,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(SteepCompleteState())
+    private val _state = MutableStateFlow(SteepCompleteState(header = route.header))
     val state: StateFlow<SteepCompleteState> = _state.asStateFlow()
 
     private val _navigationEvents = Channel<SteepCompleteNavEvent>()
@@ -184,7 +185,7 @@ class SteepCompleteViewModel(
                     it.copy(
                         session = session,
                         tea = tea,
-                        teaTypeColorHex = teaType?.colorHex,
+                        header = TeaHeaderInfo(session.session.id, tea?.name, vessel?.name, teaType?.colorHex),
                         vessel = vessel,
                         vessels = vessels,
                         rating = steep.rating ?: 0f,
@@ -269,7 +270,7 @@ class SteepCompleteViewModel(
         val temperature = _state.value.nextSteepTemperature ?: steep.temperatureCelsius
         val waterQuantity = steep.waterQuantityMl
 
-        _state.update { it.copy(isLoading = true, showAdjustSheet = false) }
+        _state.update { it.copy(isSaving = true, showAdjustSheet = false) }
 
         viewModelScope.launch {
             notesSave.flush()
@@ -279,12 +280,11 @@ class SteepCompleteViewModel(
                 temperatureCelsius = temperature,
                 waterQuantityMl = waterQuantity,
             ).onSuccess { updated ->
-                _state.update { it.copy(isLoading = false) }
                 // Reset TimerService singleton state before the next Timer screen starts
                 timerService.onNextSteep()
-                _navigationEvents.send(SteepCompleteNavEvent.NavigateToTimer(updated.session.id))
+                _navigationEvents.send(SteepCompleteNavEvent.NavigateToTimer(updated.session.id, _state.value.header))
             }.onFailure { e ->
-                _state.update { it.copy(isLoading = false) }
+                _state.update { it.copy(isSaving = false) }
                 messages.failure(e, Res.string.couldnt_start_steep)
             }
         }
@@ -292,7 +292,7 @@ class SteepCompleteViewModel(
 
     private fun finishSession() {
         val session = _state.value.session ?: return
-        _state.update { it.copy(isLoading = true) }
+        _state.update { it.copy(isSaving = true) }
 
         viewModelScope.launch {
             notesSave.flush()
@@ -300,11 +300,10 @@ class SteepCompleteViewModel(
                 .onSuccess { finished ->
                     timerService.onSessionResolved(finished.session.id)
 
-                    _state.update { it.copy(isLoading = false) }
-                    _navigationEvents.send(SteepCompleteNavEvent.NavigateToReview(finished.session.id))
+                    _navigationEvents.send(SteepCompleteNavEvent.NavigateToReview(finished.session.id, _state.value.header))
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(isLoading = false) }
+                    _state.update { it.copy(isSaving = false) }
                     messages.failure(e, Res.string.couldnt_finish_session)
                 }
         }
@@ -312,7 +311,7 @@ class SteepCompleteViewModel(
 
     private fun confirmDiscardSession() {
         val session = _state.value.session ?: return
-        _state.update { it.copy(showDiscardConfirmation = false, isLoading = true) }
+        _state.update { it.copy(showDiscardConfirmation = false, isSaving = true) }
         // The steep is going, so its notes have nowhere to land
         notesSave.cancel()
 
@@ -323,7 +322,7 @@ class SteepCompleteViewModel(
                     _navigationEvents.send(SteepCompleteNavEvent.NavigateToHome())
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(isLoading = false) }
+                    _state.update { it.copy(isSaving = false) }
                     messages.failure(e, Res.string.couldnt_discard_steep)
                 }
         }
@@ -388,7 +387,7 @@ class SteepCompleteViewModel(
 
 sealed interface SteepCompleteNavEvent {
     data class NavigateToHome(val finishedSessionId: String? = null) : SteepCompleteNavEvent
-    data class NavigateToReview(val sessionId: String) : SteepCompleteNavEvent
-    data class NavigateToTimer(val sessionId: String) : SteepCompleteNavEvent
+    data class NavigateToReview(val sessionId: String, val header: TeaHeaderInfo?) : SteepCompleteNavEvent
+    data class NavigateToTimer(val sessionId: String, val header: TeaHeaderInfo?) : SteepCompleteNavEvent
     data object NavigateBack : SteepCompleteNavEvent
 }

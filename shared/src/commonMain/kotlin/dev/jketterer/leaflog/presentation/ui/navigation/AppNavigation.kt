@@ -2,6 +2,7 @@ package dev.jketterer.leaflog.presentation.ui.navigation
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -22,6 +23,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -106,29 +108,35 @@ fun AppNavigation() {
             }
         }
     ) { paddingValues ->
-        NavDisplay(
-            entries = navigator.entries(appEntryProvider(navigator)),
-            onBack = navigator::goBack,
-            modifier = Modifier
-                .padding(bottom = paddingValues.calculateBottomPadding())
-                .consumeWindowInsets(PaddingValues(bottom = paddingValues.calculateBottomPadding()))
-                .imePadding()
-                .fillMaxSize(),
-            transitionSpec = {
-                if (isTabSwitch()) fadeThrough()
-                else slideInHorizontally(initialOffsetX = { it }) togetherWith
-                        slideOutHorizontally(targetOffsetX = { -it })
-            },
-            popTransitionSpec = {
-                if (isTabSwitch()) fadeThrough()
-                else slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                        slideOutHorizontally(targetOffsetX = { it })
-            },
-            predictivePopTransitionSpec = {
-                slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                        slideOutHorizontally(targetOffsetX = { it })
-            },
-        )
+        // Shared elements, such as the tea header in the brew flow, hold still across a transition
+        SharedTransitionLayout {
+            CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                NavDisplay(
+                    entries = navigator.entries(appEntryProvider(navigator)),
+                    onBack = navigator::goBack,
+                    modifier = Modifier
+                        .padding(bottom = paddingValues.calculateBottomPadding())
+                        .consumeWindowInsets(PaddingValues(bottom = paddingValues.calculateBottomPadding()))
+                        .imePadding()
+                        .fillMaxSize(),
+                    sharedTransitionScope = this,
+                    transitionSpec = {
+                        if (isTabSwitch() || isWithinBrewFlow()) fadeThrough()
+                        else slideInHorizontally(initialOffsetX = { it }) togetherWith
+                                slideOutHorizontally(targetOffsetX = { -it })
+                    },
+                    popTransitionSpec = {
+                        if (isTabSwitch() || isWithinBrewFlow()) fadeThrough()
+                        else slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                                slideOutHorizontally(targetOffsetX = { it })
+                    },
+                    predictivePopTransitionSpec = {
+                        slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                                slideOutHorizontally(targetOffsetX = { it })
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -370,13 +378,13 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
         // Timer Destinations
         // =========================================================
 
-        entry<NavRoute.TimerRoute> { route ->
+        entry<NavRoute.TimerRoute>(metadata = BrewFlowMetadata) { route ->
             TimerScreen(
                 route = route,
                 // Timer keeps running in background via TimerService
                 onNavigateBack = { navigator.navigateUp(route) },
-                onNavigateToSteepComplete = { sessionId ->
-                    navigator.replace(route, NavRoute.SteepCompleteRoute(sessionId))
+                onNavigateToSteepComplete = { sessionId, header ->
+                    navigator.replace(route, NavRoute.SteepCompleteRoute(sessionId, header))
                 },
                 onNavigateToSessionTimer = { sessionId ->
                     navigator.replace(route, NavRoute.TimerRoute(sessionId))
@@ -384,7 +392,7 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             )
         }
 
-        entry<NavRoute.SessionReviewRoute> { route ->
+        entry<NavRoute.SessionReviewRoute>(metadata = BrewFlowMetadata) { route ->
             SessionReviewScreen(
                 route = route,
                 onNavigateToHome = { finishedSessionId ->
@@ -394,17 +402,17 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             )
         }
 
-        entry<NavRoute.SteepCompleteRoute> { route ->
+        entry<NavRoute.SteepCompleteRoute>(metadata = BrewFlowMetadata) { route ->
             SteepCompleteScreen(
                 route = route,
                 onNavigateToHome = { finishedSessionId ->
                     navigator.resetHome(NavRoute.HomeRoute(finishedSessionId))
                 },
-                onNavigateToReview = { sessionId ->
-                    navigator.replace(route, NavRoute.SessionReviewRoute(sessionId))
+                onNavigateToReview = { sessionId, header ->
+                    navigator.replace(route, NavRoute.SessionReviewRoute(sessionId, header = header))
                 },
-                onNavigateToTimer = { sessionId ->
-                    navigator.replace(route, NavRoute.TimerRoute(sessionId))
+                onNavigateToTimer = { sessionId, header ->
+                    navigator.replace(route, NavRoute.TimerRoute(sessionId, header))
                 },
                 onNavigateBack = { navigator.navigateUp(route) },
             )
@@ -426,6 +434,10 @@ private fun NavKey.hidesBottomBar() = when (this) {
     -> true
     else -> false
 }
+
+/** One step of the brew loop to the next: the same session, so the same screen changing in place. */
+private fun AnimatedContentTransitionScope<Scene<NavKey>>.isWithinBrewFlow() =
+    initialState.metadata[BREW_FLOW_METADATA] == true && targetState.metadata[BREW_FLOW_METADATA] == true
 
 private fun AnimatedContentTransitionScope<Scene<NavKey>>.isTabSwitch() =
     initialState.metadata[TAB_METADATA] != targetState.metadata[TAB_METADATA]

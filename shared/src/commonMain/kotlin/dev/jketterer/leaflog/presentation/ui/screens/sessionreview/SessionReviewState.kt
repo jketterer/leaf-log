@@ -5,11 +5,13 @@ import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.usecases.session.VsBest
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 
 data class SessionReviewState(
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
-    val teaTypeColorHex: String? = null,
+    /** From the route until the session loads, so the header shows on the first frame. */
+    val header: TeaHeaderInfo? = null,
     val vessel: BrewingVessel? = null,
     /** The best session's vessel, for a vessel difference to name. */
     val bestVessel: BrewingVessel? = null,

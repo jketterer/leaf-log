@@ -4,6 +4,7 @@ import androidx.navigation3.runtime.NavKey
 import dev.jketterer.leaflog.domain.models.CalendarYear
 import dev.jketterer.leaflog.domain.models.RecapPeriod
 import dev.jketterer.leaflog.domain.models.Season
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 
@@ -44,9 +45,12 @@ sealed interface NavRoute : NavKey {
     @Serializable
     data class EditSessionRoute(val sessionId: String) : NavRoute
 
-    /** No [sessionId]: the Quick Timer, timing a tea not yet named. */
+    /**
+     * No [sessionId]: the Quick Timer, timing a tea not yet named. A [header], from the brew flow's
+     * last screen, is drawn before the session loads, here and on the routes below.
+     */
     @Serializable
-    data class TimerRoute(val sessionId: String? = null) : NavRoute
+    data class TimerRoute(val sessionId: String? = null, val header: TeaHeaderInfo? = null) : NavRoute
 
     @Serializable
     data object AnalyticsRoute : NavRoute
@@ -81,9 +85,13 @@ sealed interface NavRoute : NavKey {
     data class FlavorDetailRoute(val tagId: String) : NavRoute
 
     @Serializable
-    data class SteepCompleteRoute(val sessionId: String) : NavRoute
+    data class SteepCompleteRoute(val sessionId: String, val header: TeaHeaderInfo? = null) : NavRoute
 
     /** [logged]: saved from Log Tea, so leaving returns to where Log Tea was opened, with no Undo. */
     @Serializable
-    data class SessionReviewRoute(val sessionId: String, val logged: Boolean = false) : NavRoute
+    data class SessionReviewRoute(
+        val sessionId: String,
+        val logged: Boolean = false,
+        val header: TeaHeaderInfo? = null,
+    ) : NavRoute
 }

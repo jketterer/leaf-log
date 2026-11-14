@@ -8,6 +8,7 @@ import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import kotlin.time.Duration
 
 /**
@@ -19,7 +20,8 @@ data class TimerScreenState(
     val timerState: TimerState = TimerState(),
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
-    val teaTypeColorHex: String? = null,
+    /** From the route until the session loads, so the header shows on the first frame. */
+    val header: TeaHeaderInfo? = null,
     val vessel: BrewingVessel? = null,
     /** A timer with no session, so nothing it times is recorded. */
     val isQuickTimer: Boolean = false,

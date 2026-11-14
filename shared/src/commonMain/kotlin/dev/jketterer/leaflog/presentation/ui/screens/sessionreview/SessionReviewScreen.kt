@@ -15,7 +15,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -29,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,15 +50,15 @@ import dev.jketterer.leaflog.presentation.ui.components.session.SteepEditSheet
 import dev.jketterer.leaflog.presentation.ui.components.session.SteepTimelineSection
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.review_add_note
 import leaf_log.shared.generated.resources.review_done
 import leaf_log.shared.generated.resources.review_note_header
 import leaf_log.shared.generated.resources.review_photos_header
-import leaf_log.shared.generated.resources.tea_not_found
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -110,7 +108,22 @@ private fun SessionReviewContent(
             },
         )
         Box(modifier = Modifier.weight(1f)) {
+            val header = state.header
             when {
+                session != null && header != null -> SessionReviewBody(
+                    state = state,
+                    session = session,
+                    header = header,
+                    onIntent = onIntent,
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                // The route's header, where the body's will be, holding still as the screen loads
+                header != null -> TeaHeader(
+                    info = header,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                )
+
                 state.isLoading -> Box(
                     Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -119,14 +132,7 @@ private fun SessionReviewContent(
                 }
 
                 // Failed to load; the snackbar says why
-                session == null -> {}
-
-                else -> SessionReviewBody(
-                    state = state,
-                    session = session,
-                    onIntent = onIntent,
-                    modifier = Modifier.fillMaxSize(),
-                )
+                else -> {}
             }
             SnackbarHost(
                 hostState = snackbarHostState,
@@ -171,11 +177,10 @@ private fun SessionReviewContent(
 private fun SessionReviewBody(
     state: SessionReviewState,
     session: SessionWithSteeps,
+    header: TeaHeaderInfo,
     onIntent: (SessionReviewIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val teaColor = state.teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
-        ?: MaterialTheme.colorScheme.primary
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -183,9 +188,7 @@ private fun SessionReviewBody(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         SessionReviewHeaderSection(
-            teaName = state.tea?.name ?: stringResource(Res.string.tea_not_found),
-            vesselName = state.vessel?.name,
-            teaColor = teaColor,
+            header = header,
             rating = session.effectiveRating,
             isNewBest = state.vsBest is VsBest.NewBest,
             session = session.session,
@@ -256,7 +259,7 @@ private fun SessionReviewPreview() {
                     updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
-                teaTypeColorHex = "#FF9800",
+                header = TeaHeaderInfo("session-1", "Tie Guan Yin", "Gaiwan", "#FF9800"),
                 vessel = BrewingVessel(
                     id = "vessel",
                     name = "Gaiwan",

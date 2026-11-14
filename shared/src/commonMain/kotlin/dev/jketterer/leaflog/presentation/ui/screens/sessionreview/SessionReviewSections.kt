@@ -14,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -54,6 +53,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.session.IconValue
 import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -80,21 +80,19 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
 /**
- * Which tea and vessel, that the session is done, how it rated and whether that's a new best for
+ * The session's header, that the session is done, how it rated and whether that's a new best for
  * the tea, then how it was set up.
  */
 @Composable
 internal fun SessionReviewHeaderSection(
-    teaName: String,
-    vesselName: String?,
-    teaColor: Color,
+    header: TeaHeaderInfo,
     rating: Float?,
     isNewBest: Boolean,
     session: Session,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TeaHeader(teaName = teaName, vesselName = vesselName, teaColor = teaColor)
+        TeaHeader(info = header)
         Text(
             text = stringResource(Res.string.review_session_complete),
             style = MaterialTheme.typography.displaySmall,
@@ -280,9 +278,7 @@ private fun SessionReviewHeaderSectionPreview() {
     val session = previewSession(ratings = listOf(4f, 4.5f, null))
     LeafLogTheme {
         SessionReviewHeaderSection(
-            teaName = "Tie Guan Yin",
-            vesselName = "Gaiwan",
-            teaColor = Color(0xFFC27400),
+            header = TeaHeaderInfo("session-1", "Tie Guan Yin", "Gaiwan", "#C27400"),
             rating = session.effectiveRating,
             isNewBest = false,
             session = session.session.copy(rinsed = true),
@@ -297,9 +293,7 @@ private fun SessionReviewHeaderSectionNewBestPreview() {
     val session = previewSession(ratings = listOf(5f))
     LeafLogTheme {
         SessionReviewHeaderSection(
-            teaName = "Dragon Well",
-            vesselName = null,
-            teaColor = Color(0xFF4CAF50),
+            header = TeaHeaderInfo("session-1", "Dragon Well", null, "#4CAF50"),
             rating = session.effectiveRating,
             isNewBest = true,
             session = session.session,

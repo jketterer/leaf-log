@@ -14,24 +14,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
+import dev.jketterer.leaflog.presentation.ui.navigation.LocalSharedTransitionScope
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
+import kotlinx.serialization.Serializable
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.ic_tea_leaf
+import leaf_log.shared.generated.resources.tea_not_found
+import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 
-/** Which tea and vessel, over a brew screen's headline, beside a leaf on a tile in the tea type's color. */
+/**
+ * Which tea and vessel, over a brew screen's headline, beside a leaf on a tile in the tea type's color.
+ * Given a [sharedKey], such as the session's id, it holds still as the screen changes to another
+ * screen's header with the same key.
+ */
 @Composable
 fun TeaHeader(
     teaName: String,
     vesselName: String?,
     teaColor: Color,
     modifier: Modifier = Modifier,
+    sharedKey: Any? = null,
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.sharedTeaHeader(sharedKey),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -66,6 +78,46 @@ fun TeaHeader(
                 )
             }
         }
+    }
+}
+
+/**
+ * What a brew flow screen's [TeaHeader] shows. A route carries it so the next screen draws its header
+ * on its first frame, before it loads, where it holds still against the last screen's.
+ */
+@Serializable
+data class TeaHeaderInfo(
+    /** Keys the header shared across the session's screens. */
+    val sessionId: String,
+    /** Null for a tea since deleted. */
+    val teaName: String?,
+    val vesselName: String?,
+    val colorHex: String?,
+)
+
+/** A brew flow screen's header, shared with the session's other screens. */
+@Composable
+fun TeaHeader(
+    info: TeaHeaderInfo,
+    modifier: Modifier = Modifier,
+) {
+    TeaHeader(
+        teaName = info.teaName ?: stringResource(Res.string.tea_not_found),
+        vesselName = info.vesselName,
+        teaColor = info.colorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
+            ?: MaterialTheme.colorScheme.primary,
+        modifier = modifier,
+        sharedKey = info.sessionId,
+    )
+}
+
+@Composable
+private fun Modifier.sharedTeaHeader(key: Any?): Modifier {
+    val scope = LocalSharedTransitionScope.current
+    if (key == null || scope == null) return this
+    val animatedContentScope = LocalNavAnimatedContentScope.current
+    return with(scope) {
+        sharedElement(rememberSharedContentState("tea-header/$key"), animatedContentScope)
     }
 }
 

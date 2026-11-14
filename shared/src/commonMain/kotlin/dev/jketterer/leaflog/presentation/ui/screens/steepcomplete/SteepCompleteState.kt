@@ -6,12 +6,14 @@ import dev.jketterer.leaflog.domain.models.TastingTag
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.UserPreferences
 import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import kotlin.time.Duration
 
 data class SteepCompleteState(
     val session: SessionWithSteeps? = null,
     val tea: Tea? = null,
-    val teaTypeColorHex: String? = null,
+    /** From the route until the session loads, so the header shows on the first frame. */
+    val header: TeaHeaderInfo? = null,
     val vessel: BrewingVessel? = null,
     val vessels: List<BrewingVessel> = emptyList(),
     val rating: Float = 0f,
@@ -38,6 +40,8 @@ data class SteepCompleteState(
     // Discard
     val showDiscardConfirmation: Boolean = false,
     val isLoading: Boolean = true,
+    /** Starting the next steep, finishing or discarding: the page stays, its buttons wait. */
+    val isSaving: Boolean = false,
     val userPreferences: UserPreferences = UserPreferences(),
 ) {
     /** Whether the edit sheet holds anything the steep doesn't, so closing it would lose it. */

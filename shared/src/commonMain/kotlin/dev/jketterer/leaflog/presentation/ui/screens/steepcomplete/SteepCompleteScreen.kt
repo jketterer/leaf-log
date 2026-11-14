@@ -38,7 +38,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,8 +60,9 @@ import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.components.timer.NextSteepAdjustSheet
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeader
+import dev.jketterer.leaflog.presentation.ui.components.session.TeaHeaderInfo
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_session_action
@@ -75,7 +75,6 @@ import leaf_log.shared.generated.resources.review_change_steep_n
 import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_steep_n
 import leaf_log.shared.generated.resources.start_steep_n
-import leaf_log.shared.generated.resources.tea_not_found
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -86,8 +85,8 @@ import leaf_log.shared.generated.resources.navigate_up
 fun SteepCompleteScreen(
     route: NavRoute.SteepCompleteRoute,
     onNavigateToHome: (finishedSessionId: String?) -> Unit,
-    onNavigateToReview: (String) -> Unit,
-    onNavigateToTimer: (String) -> Unit,
+    onNavigateToReview: (String, TeaHeaderInfo?) -> Unit,
+    onNavigateToTimer: (String, TeaHeaderInfo?) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: SteepCompleteViewModel = koinViewModel { parametersOf(route) },
 ) {
@@ -99,8 +98,8 @@ fun SteepCompleteScreen(
         viewModel.navigationEvents.collect { event ->
             when (event) {
                 is SteepCompleteNavEvent.NavigateToHome -> onNavigateToHome(event.finishedSessionId)
-                is SteepCompleteNavEvent.NavigateToReview -> onNavigateToReview(event.sessionId)
-                is SteepCompleteNavEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId)
+                is SteepCompleteNavEvent.NavigateToReview -> onNavigateToReview(event.sessionId, event.header)
+                is SteepCompleteNavEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId, event.header)
                 is SteepCompleteNavEvent.NavigateBack -> onNavigateBack()
             }
         }
@@ -153,7 +152,23 @@ private fun SteepCompleteContent(
                 },
             )
             Box(modifier = Modifier.weight(1f)) {
+                val header = state.header
                 when {
+                    state.session != null && header != null -> {
+                        SteepCompleteBody(
+                            state = state,
+                            header = header,
+                            onIntent = onIntent,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+
+                    // The route's header, where the body's will be, holding still as the screen loads
+                    header != null -> TeaHeader(
+                        info = header,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                    )
+
                     state.isLoading -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -164,22 +179,14 @@ private fun SteepCompleteContent(
                     }
 
                     // Failed to load; the snackbar says why
-                    state.session == null -> {}
-
-                    else -> {
-                        SteepCompleteBody(
-                            state = state,
-                            onIntent = onIntent,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                    else -> {}
                 }
                 SnackbarHost(
                     hostState = snackbarHostState,
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
-            if (!state.isLoading && state.session != null) {
+            if (state.session != null) {
                 SteepCompleteBottomBar(
                     finishLeads = state.finishLeads,
                     nextSteepNumber = state.session.currentSteep.number + 1,
@@ -189,6 +196,7 @@ private fun SteepCompleteContent(
                     onNext = { onIntent(SteepCompleteIntent.StartNextSteep) },
                     onAdjust = { onIntent(SteepCompleteIntent.ShowAdjustSheet) },
                     onFinishSession = { onIntent(SteepCompleteIntent.FinishSession) },
+                    enabled = !state.isSaving,
                 )
             }
         }
@@ -259,14 +267,13 @@ private fun SteepCompleteContent(
 @Composable
 private fun SteepCompleteBody(
     state: SteepCompleteState,
+    header: TeaHeaderInfo,
     onIntent: (SteepCompleteIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val session = state.session ?: return
     val steep = session.currentSteep
     val comparison = state.comparison?.steeps?.firstOrNull { it.number == steep.number }
-    val teaColor = state.teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
-        ?: MaterialTheme.colorScheme.primary
     // The question up top; the answer sits on the buttons, where a thumb reaches the stars, and
     // the height left over opens between them
     BoxWithConstraints(modifier = modifier) {
@@ -278,9 +285,7 @@ private fun SteepCompleteBody(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             SteepHeaderSection(
-                teaName = state.tea?.name ?: stringResource(Res.string.tea_not_found),
-                vesselName = state.vessel?.name,
-                teaColor = teaColor,
+                header = header,
                 steep = steep,
                 teaQuantityGrams = session.session.teaQuantityGrams,
                 onEditParameters = { onIntent(SteepCompleteIntent.ShowEditParametersSheet) },
@@ -320,6 +325,7 @@ private fun SteepCompleteBottomBar(
     onAdjust: () -> Unit,
     onFinishSession: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val nextLabel = stringResource(Res.string.start_steep_n, nextSteepNumber)
     val finish = stringResource(Res.string.review_finish_session)
@@ -337,6 +343,7 @@ private fun SteepCompleteBottomBar(
                 time = nextTime,
                 temperature = nextTemperature,
                 onClick = onAdjust,
+                enabled = enabled,
             )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -345,17 +352,19 @@ private fun SteepCompleteBottomBar(
                 if (finishLeads) {
                     Button(
                         onClick = onFinishSession,
+                        enabled = enabled,
                         modifier = Modifier.weight(1f)
                     ) { Text(finish) }
-                    OutlinedButton(onClick = onNext, modifier = Modifier.weight(1f)) {
+                    OutlinedButton(onClick = onNext, enabled = enabled, modifier = Modifier.weight(1f)) {
                         Text(
                             nextLabel
                         )
                     }
                 } else {
-                    Button(onClick = onNext, modifier = Modifier.weight(1f)) { Text(nextLabel) }
+                    Button(onClick = onNext, enabled = enabled, modifier = Modifier.weight(1f)) { Text(nextLabel) }
                     OutlinedButton(
                         onClick = onFinishSession,
+                        enabled = enabled,
                         modifier = Modifier.weight(1f)
                     ) { Text(finish) }
                 }
@@ -372,12 +381,13 @@ private fun NextSteepRow(
     temperature: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(start = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -444,7 +454,7 @@ private fun SteepCompleteScreenWesternPreview() {
                     updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
-                teaTypeColorHex = "#4CAF50",
+                header = TeaHeaderInfo("session-1", "Dragon Well", "Gaiwan", "#4CAF50"),
                 vocabulary = previewVocabulary,
                 suggestedTags = previewVocabulary.take(TAG_SUGGESTIONS),
                 nextSteepDuration = 180.seconds,
@@ -486,7 +496,7 @@ private fun SteepCompleteScreenGongfuPreview() {
                     updatedAt = PreviewInstant,
                     syncStatus = SyncStatus.LOCAL_ONLY,
                 ),
-                teaTypeColorHex = "#FF9800",
+                header = TeaHeaderInfo("session-1", "Tie Guan Yin", "Gaiwan", "#FF9800"),
                 vocabulary = previewVocabulary,
                 suggestedTags = previewVocabulary.take(TAG_SUGGESTIONS),
                 comparison = previewComparison(),

@@ -39,6 +39,8 @@ data class LogTeaState(
     val temperatureCelsius: Double? = null,
     val brewingTime: Duration? = null,
     val selectedVessel: BrewingVessel? = null,
+    // Picked, by a tap or the route: a vessel only inferred from the tea follows a change of tea
+    val vesselChosen: Boolean = false,
     val selectedWaterType: WaterType = WaterType.FILTERED,
     val rinsed: Boolean = false,
     val location: String = "",

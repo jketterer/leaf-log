@@ -1,25 +1,21 @@
 package dev.jketterer.leaflog.presentation.ui.components.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import compose.icons.FeatherIcons
@@ -29,116 +25,67 @@ import compose.icons.feathericons.Plus
 import compose.icons.feathericons.X
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.add_tea
 import leaf_log.shared.generated.resources.close_menu
+import leaf_log.shared.generated.resources.ic_tea_leaf
 import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.quick_timer
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 
-/**
- * Expandable FAB with options for "Log Session" and "Quick Timer".
- */
+/** Home's + menu: start a session, run a bare timer, or add a tea to the collection. */
 @Composable
 fun ExpandableFAB(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onLogSessionClick: () -> Unit,
     onQuickTimerClick: () -> Unit,
-    visible: Boolean = true,
+    onAddTeaClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val rotation by animateFloatAsState(
-        targetValue = if (expanded) 45f else 0f,
-        label = "fab_rotation",
+    val toggleLabel = stringResource(if (expanded) Res.string.close_menu else Res.string.open_menu)
+    // Top to bottom, so the most used sits nearest the button
+    val items = listOf(
+        MenuItem(Res.string.add_tea, vectorResource(Res.drawable.ic_tea_leaf), onAddTeaClick),
+        MenuItem(Res.string.quick_timer, FeatherIcons.Clock, onQuickTimerClick),
+        MenuItem(Res.string.log_session, FeatherIcons.Edit, onLogSessionClick),
     )
 
-    AnimatedVisibility(
-        visible = visible,
+    FloatingActionButtonMenu(
+        expanded = expanded,
         modifier = modifier,
+        button = {
+            ToggleFloatingActionButton(
+                checked = expanded,
+                onCheckedChange = onExpandedChange,
+                modifier = Modifier.semantics {
+                    // Read before the items, which sit above it
+                    traversalIndex = -1f
+                    contentDescription = toggleLabel
+                },
+            ) {
+                val icon by remember { derivedStateOf { if (checkedProgress > 0.5f) FeatherIcons.X else FeatherIcons.Plus } }
+                Icon(icon, contentDescription = null, modifier = Modifier.animateIcon({ checkedProgress }))
+            }
+        },
     ) {
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            // Menu items (shown when expanded)
-            AnimatedVisibility(
-                visible = expanded,
-                enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
-                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    // Log Session option
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.log_session),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier
-                                .padding(end = 12.dp)
-                                .padding(vertical = 8.dp, horizontal = 12.dp),
-                        )
-                        SmallFloatingActionButton(
-                            onClick = {
-                                onExpandedChange(false)
-                                onLogSessionClick()
-                            },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        ) {
-                            Icon(
-                                imageVector = FeatherIcons.Edit,
-                                contentDescription = stringResource(Res.string.log_session),
-                            )
-                        }
-                    }
-
-                    // Quick Timer option
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.quick_timer),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier
-                                .padding(end = 12.dp)
-                                .padding(vertical = 8.dp, horizontal = 12.dp),
-                        )
-                        SmallFloatingActionButton(
-                            onClick = {
-                                onExpandedChange(false)
-                                onQuickTimerClick()
-                            },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        ) {
-                            Icon(
-                                imageVector = FeatherIcons.Clock,
-                                contentDescription = stringResource(Res.string.quick_timer),
-                            )
-                        }
-                    }
-                }
-            }
-
-            // Main FAB
-            FloatingActionButton(
-                onClick = { onExpandedChange(!expanded) },
-            ) {
-                Icon(
-                    imageVector = if (expanded) FeatherIcons.X else FeatherIcons.Plus,
-                    contentDescription = if (expanded) stringResource(Res.string.close_menu) else stringResource(Res.string.open_menu),
-                    modifier = Modifier.rotate(rotation),
-                )
-            }
+        items.forEach { item ->
+            FloatingActionButtonMenuItem(
+                onClick = {
+                    onExpandedChange(false)
+                    item.onClick()
+                },
+                text = { Text(stringResource(item.label)) },
+                // The leaf's vector declares 800dp
+                icon = { Icon(item.icon, contentDescription = null, modifier = Modifier.size(24.dp)) },
+            )
         }
     }
 }
+
+private class MenuItem(val label: StringResource, val icon: ImageVector, val onClick: () -> Unit)
 
 @Preview(showBackground = true)
 @Composable
@@ -149,7 +96,7 @@ private fun ExpandableFABCollapsedPreview() {
             onExpandedChange = {},
             onLogSessionClick = {},
             onQuickTimerClick = {},
-            modifier = Modifier.padding(16.dp),
+            onAddTeaClick = {},
         )
     }
 }
@@ -163,7 +110,7 @@ private fun ExpandableFABExpandedPreview() {
             onExpandedChange = {},
             onLogSessionClick = {},
             onQuickTimerClick = {},
-            modifier = Modifier.padding(16.dp),
+            onAddTeaClick = {},
         )
     }
 }

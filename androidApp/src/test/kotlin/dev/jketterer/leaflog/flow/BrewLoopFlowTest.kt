@@ -43,6 +43,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import kotlin.time.Duration.Companion.seconds
+import dev.jketterer.leaflog.domain.repositories.TeaRepository
+import leaf_log.shared.generated.resources.log_session
+import leaf_log.shared.generated.resources.open_menu
+import leaf_log.shared.generated.resources.field_tea_name_required
+import leaf_log.shared.generated.resources.close_menu
+import leaf_log.shared.generated.resources.add_tea
 
 class BrewLoopFlowTest : FlowTest() {
 
@@ -91,6 +97,35 @@ class BrewLoopFlowTest : FlowTest() {
         recreate()
         waitFor(text(Res.string.tab_history))
         assertAbsent(text(Res.string.undo))
+    }
+
+    @Test
+    fun `Undo steps aside while the menu is open and comes back when it closes unused`() {
+        launch()
+        brewTwoSteepsAndFinish()
+        click(text(Res.string.review_done))
+        waitFor(text(Res.string.undo))
+
+        click(text(Res.string.open_menu))
+        waitFor(text(Res.string.add_tea))
+        waitUntilGone(text(Res.string.undo))
+
+        click(text(Res.string.close_menu))
+        click(text(Res.string.undo))
+        waitFor(text(Res.string.review_how_was_steep_n, 2))
+    }
+
+    @Test
+    fun `with no teas yet Log session opens on adding one`() {
+        runBlocking {
+            val teas = koin.get<TeaRepository>()
+            teas.getAll().forEach { teas.delete(it.id) }
+        }
+        launch()
+        click(text(Res.string.open_menu))
+        click(text(Res.string.log_session))
+
+        waitFor(hasSetTextAction() and hasText(text(Res.string.field_tea_name_required)))
     }
 
     @Test

@@ -30,7 +30,6 @@ import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
 import leaf_log.shared.generated.resources.open_menu
-import leaf_log.shared.generated.resources.select_tea
 import leaf_log.shared.generated.resources.settings_title
 import leaf_log.shared.generated.resources.tab_collection
 import leaf_log.shared.generated.resources.tab_history
@@ -132,7 +131,6 @@ class FormFlowTest : FlowTest() {
         launch()
         click(text(Res.string.open_menu))
         click(text(Res.string.log_session))
-        click(text(Res.string.select_tea))
         // Under Recent and under All
         waitFor("Dragon Well")
         compose.onAllNodes(hasClickAction() and hasText("Dragon Well"))[0].performClick()

@@ -24,6 +24,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import leaf_log.shared.generated.resources.open_menu
+import leaf_log.shared.generated.resources.add_tea
 
 /** Teas, tea types and vessels, changed where the user keeps them: Dragon Well, never brewed. */
 // The tea and vessel menus and the tea type dialogs don't read strings.xml yet
@@ -47,6 +49,18 @@ class LibraryFlowTest : FlowTest() {
         waitFor("Add tea")
         waitUntilGone("Dragon Well")
         assertTrue(runBlocking { koin.get<TeaRepository>().getAll() }.none { it.id == teaId })
+    }
+
+    @Test
+    fun `Add tea from Home's menu opens the tea form and back returns Home`() {
+        launch()
+        click(text(Res.string.open_menu))
+        click(text(Res.string.add_tea))
+        waitFor("Add Tea")
+
+        systemBack()
+        waitFor(text(Res.string.settings_title))
+        assertAbsent("Add Tea")
     }
 
     @Test

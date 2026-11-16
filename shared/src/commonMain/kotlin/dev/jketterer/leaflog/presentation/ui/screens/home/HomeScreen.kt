@@ -1,5 +1,8 @@
 package dev.jketterer.leaflog.presentation.ui.screens.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +31,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,6 +92,7 @@ private val SECTION_SPACING = 16.dp
 fun HomeScreen(
     route: NavRoute.HomeRoute,
     onNavigateToLogTea: (NavRoute.LogTeaRoute) -> Unit,
+    onNavigateToAddTea: () -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
     onNavigateToCollection: () -> Unit,
@@ -108,6 +115,10 @@ fun HomeScreen(
             when (event) {
                 is HomeNavEvent.NavigateToLogTea -> {
                     onNavigateToLogTea(event.route)
+                }
+
+                is HomeNavEvent.NavigateToAddTea -> {
+                    onNavigateToAddTea()
                 }
 
                 is HomeNavEvent.NavigateToSession -> {
@@ -165,6 +176,8 @@ private fun HomeContent(
     onIntent: (HomeIntent) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    var fabExpanded by rememberSaveable { mutableStateOf(false) }
+
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -326,32 +339,36 @@ private fun HomeContent(
 
         }
 
-        if (state.isFabExpanded) {
+        if (fabExpanded) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.4f))
-                    .clickable { onIntent(HomeIntent.FabExpandedChanged(false)) },
+                    .clickable { fabExpanded = false },
             )
         }
 
         ExpandableFAB(
-            expanded = state.isFabExpanded,
-            onExpandedChange = { onIntent(HomeIntent.FabExpandedChanged(it)) },
+            expanded = fabExpanded,
+            onExpandedChange = { fabExpanded = it },
             onLogSessionClick = { onIntent(HomeIntent.LogTeaClicked) },
             onQuickTimerClick = { onIntent(HomeIntent.QuickTimerClicked) },
-            visible = true,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
+            onAddTeaClick = { onIntent(HomeIntent.AddTeaClicked) },
+            modifier = Modifier.align(Alignment.BottomEnd),
         )
 
-        SnackbarHost(
-            hostState = snackbarHostState,
+        // Out of the menu's way while it's open. Leaving composition stops a snackbar's timeout, so
+        // closing the menu brings Undo back rather than losing it
+        AnimatedVisibility(
+            visible = !fabExpanded,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp),
-        )
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            SnackbarHost(hostState = snackbarHostState)
+        }
     }
 
     // Delete session confirmation dialog

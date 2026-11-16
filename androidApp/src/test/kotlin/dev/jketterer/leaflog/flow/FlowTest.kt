@@ -44,7 +44,6 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.begin_session
 import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.open_menu
-import leaf_log.shared.generated.resources.select_tea
 import org.jetbrains.compose.resources.PluralStringResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getPluralString
@@ -379,7 +378,6 @@ abstract class FlowTest {
     fun beginSession(tea: String) {
         click(text(Res.string.open_menu))
         click(text(Res.string.log_session))
-        click(text(Res.string.select_tea))
         click(tea)
         click("Gaiwan")
         click("5 g")

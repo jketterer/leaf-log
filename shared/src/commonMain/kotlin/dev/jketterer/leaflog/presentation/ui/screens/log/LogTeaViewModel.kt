@@ -44,6 +44,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.couldnt_load
 import leaf_log.shared.generated.resources.couldnt_save_session
@@ -70,13 +72,18 @@ class LogTeaViewModel(
     private val getInProgressSessionInfoUseCase: GetInProgressSessionInfoUseCase,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(LogTeaState())
+    // Loading from the start, so nothing waiting on the load reads the empty lists before it
+    private val _state = MutableStateFlow(LogTeaState(isLoading = true, vesselChosen = route.vesselId != null))
     val state: StateFlow<LogTeaState> = _state.asStateFlow()
 
     private val _navEvents = Channel<LogTeaNavigationEvent>()
     val navEvents = _navEvents.receiveAsFlow()
 
     val messages = UiMessages<Nothing>()
+
+    // Picking a tea reads the vessel and a vessel reads the tea, each across a suspension: one at a
+    // time, in the order tapped, so neither writes back what it read before the other landed
+    private val selection = Mutex()
 
     private sealed interface PendingAction {
         data object StartTimer : PendingAction
@@ -105,9 +112,18 @@ class LogTeaViewModel(
         onIntent(LogTeaIntent.LoadData)
         collectPairBrews()
         loadTagVocabulary()
-        route.sourceSessionId?.let(::selectSourceSession)
-        route.teaId?.let(::selectTea)
-        route.vesselId?.let(::selectVessel)
+        applyRoute()
+    }
+
+    /** The route's brew, tea or vessel once loaded; with no tea named, the picker opens to pick one. */
+    private fun applyRoute() = viewModelScope.launch {
+        state.first { !it.isLoading }
+        selection.withLock {
+            route.sourceSessionId?.let { return@launch selectSourceSession(it) }
+            // The vessel first, so the tea keeps it rather than inferring its own
+            route.vesselId?.let { selectVessel(it) }
+            route.teaId?.let { selectTea(it) } ?: showTeaPicker()
+        }
     }
 
     fun onIntent(intent: LogTeaIntent) {
@@ -116,14 +132,14 @@ class LogTeaViewModel(
             is LogTeaIntent.ShowTeaPicker -> showTeaPicker()
             is LogTeaIntent.HideTeaPicker -> hideTeaPicker()
             is LogTeaIntent.TeaPickerFilterChanged -> updateTeaPickerFilter(intent.filter)
-            is LogTeaIntent.TeaSelected -> selectTea(intent.teaId)
+            is LogTeaIntent.TeaSelected -> viewModelScope.launch { selection.withLock { selectTea(intent.teaId) } }
             is LogTeaIntent.QuickAddTeaSaved -> handleQuickAddTeaSaved(intent.name, intent.teaTypeId)
             is LogTeaIntent.TeaBagModeChanged -> updateTeaBagMode(intent.isTeaBag)
             is LogTeaIntent.TeaQuantityChanged -> updateTeaQuantity(intent.grams)
             is LogTeaIntent.WaterQuantityChanged -> updateWaterQuantity(intent.milliliters)
             is LogTeaIntent.TemperatureChanged -> updateTemperature(intent.celsius)
             is LogTeaIntent.BrewingTimeChanged -> updateBrewingTime(intent.duration)
-            is LogTeaIntent.VesselSelected -> selectVessel(intent.vesselId)
+            is LogTeaIntent.VesselSelected -> viewModelScope.launch { selection.withLock { selectVessel(intent.vesselId) } }
             is LogTeaIntent.WaterTypeSelected -> selectWaterType(intent.waterType)
             is LogTeaIntent.RinsedChanged -> selectRinsed(intent.rinsed)
             is LogTeaIntent.LocationChanged -> updateLocation(intent.location)
@@ -246,7 +262,7 @@ class LogTeaViewModel(
         teaPickerFilter = TeaPickerFilter.All,
     )
 
-    private fun selectTea(teaId: String?) = viewModelScope.launch {
+    private suspend fun selectTea(teaId: String?) {
         if (teaId == null) {
             _state.update {
                 it.copy(
@@ -257,25 +273,41 @@ class LogTeaViewModel(
                     hasUnsavedChanges = true,
                 ).withPickerReset()
             }
-            return@launch
+            return
         }
 
-        // Wait for initial data load to complete before attempting to find tea
         state.first { !it.isLoading }
+        applyTea(_state.value.availableTeas.firstOrNull { it.id == teaId })
+    }
 
-        val tea = _state.value.availableTeas.firstOrNull { it.id == teaId }
+    /** Selects [tea] with the vessel to brew it in, filled for that pair, in one update. */
+    private suspend fun applyTea(tea: Tea?) {
         val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
-        val prefill = prefillFor(tea, _state.value.selectedVessel)
+        val vessel = if (tea != null) vesselFor(tea) else _state.value.selectedVessel
+        val prefill = prefillFor(tea, vessel)
         _state.update {
             prefill(
                 it.copy(
                     selectedTea = tea,
                     selectedTeaType = teaType,
+                    selectedVessel = vessel,
                     showTeaPicker = false,
                     hasUnsavedChanges = true,
                 ).withPickerReset(),
             )
         }
+    }
+
+    /**
+     * The vessel to brew [tea] in: the one picked, else the one it was last brewed in, else the only
+     * one there is. A tea never brewed, among several vessels, leaves the choice open.
+     */
+    private suspend fun vesselFor(tea: Tea): BrewingVessel? {
+        val state = _state.value
+        if (state.vesselChosen) return state.selectedVessel
+        val lastVesselId = teaSessionRepository.getSessionsByTea(tea.id).lastCompleted()?.session?.vesselId
+        return state.availableVessels.firstOrNull { it.id == lastVesselId }
+            ?: state.availableVessels.singleOrNull()
     }
 
     /**
@@ -306,15 +338,13 @@ class LogTeaViewModel(
     }
 
     /** Adjust from a Brew again sheet: [sessionId]'s tea and vessel, filled from it. */
-    private fun selectSourceSession(sessionId: String) = viewModelScope.launch {
-        state.first { !it.isLoading }
-
-        val brew = teaSessionRepository.getSession(sessionId) ?: return@launch
+    private suspend fun selectSourceSession(sessionId: String) {
+        val brew = teaSessionRepository.getSession(sessionId) ?: return
         val tea = _state.value.availableTeas.firstOrNull { it.id == brew.session.teaId }
         val teaType = tea?.let { teaTypeRepository.getById(it.teaTypeId) }
         val vessel = _state.value.availableVessels.firstOrNull { it.id == brew.session.vesselId }
         _state.update {
-            it.copy(selectedTea = tea, selectedTeaType = teaType, selectedVessel = vessel)
+            it.copy(selectedTea = tea, selectedTeaType = teaType, selectedVessel = vessel, vesselChosen = true)
                 .filledFrom(BrewingParametersPrefill.of(brew))
         }
     }
@@ -348,20 +378,7 @@ class LogTeaViewModel(
     private fun handleQuickAddTeaSaved(name: String, teaTypeId: String) {
         viewModelScope.launch {
             createTeaUseCase(name = name, teaTypeId = teaTypeId)
-                .onSuccess { tea ->
-                    val teaType = teaTypeRepository.getById(tea.teaTypeId)
-                    val prefill = prefillFor(tea, _state.value.selectedVessel)
-                    _state.update {
-                        prefill(
-                            it.copy(
-                                selectedTea = tea,
-                                selectedTeaType = teaType,
-                                showTeaPicker = false,
-                                hasUnsavedChanges = true,
-                            ).withPickerReset(),
-                        )
-                    }
-                }
+                .onSuccess { tea -> selection.withLock { applyTea(tea) } }
                 .onFailure { messages.failure(it, Res.string.couldnt_save_tea) }
         }
     }
@@ -429,8 +446,8 @@ class LogTeaViewModel(
         }
     }
 
-    private fun selectVessel(vesselId: String?) = viewModelScope.launch {
-        if (vesselId == null) return@launch
+    private suspend fun selectVessel(vesselId: String?) {
+        if (vesselId == null) return
 
         state.first { !it.isLoading }
 
@@ -441,7 +458,8 @@ class LogTeaViewModel(
             val selected = prefill(
                 currentState.copy(
                     selectedVessel = vessel,
-                    hasUnsavedChanges = true
+                    vesselChosen = true,
+                    hasUnsavedChanges = true,
                 ),
             )
             if (tea == null && vessel?.capacityMl != null) {

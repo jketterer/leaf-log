@@ -67,6 +67,8 @@ import dev.jketterer.leaflog.presentation.ui.screens.vessel.VesselListViewModel
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.add_first_tea
+import leaf_log.shared.generated.resources.add_tea
+import leaf_log.shared.generated.resources.add_vessel
 import leaf_log.shared.generated.resources.collection_empty
 import leaf_log.shared.generated.resources.collection_no_favorites
 import leaf_log.shared.generated.resources.collection_no_type
@@ -251,13 +253,13 @@ private fun TeaCollectionContent(
         floatingActionButton = {
             // Flavors come from tagging steeps, not from here
             val add = when (state.selectedTab) {
-                CollectionTab.TEAS -> onNavigateToAddTea to "Add tea"
-                CollectionTab.VESSELS -> onNavigateToAddVessel to "Add vessel"
+                CollectionTab.TEAS -> onNavigateToAddTea to Res.string.add_tea
+                CollectionTab.VESSELS -> onNavigateToAddVessel to Res.string.add_vessel
                 CollectionTab.FLAVORS -> null
             }
             if (add != null) {
                 FloatingActionButton(onClick = add.first) {
-                    Icon(imageVector = FeatherIcons.Plus, contentDescription = add.second)
+                    Icon(imageVector = FeatherIcons.Plus, contentDescription = stringResource(add.second))
                 }
             }
         },

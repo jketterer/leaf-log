@@ -10,7 +10,7 @@ sealed interface HomeIntent {
     data object QuickTimerClicked : HomeIntent
     data class StartQuickTimer(val durationSeconds: Int) : HomeIntent
     data object DismissDurationSheet : HomeIntent
-    data class FabExpandedChanged(val expanded: Boolean) : HomeIntent
+    data object AddTeaClicked : HomeIntent
     data class UndoFinishClicked(val sessionId: String) : HomeIntent
     data class BrewAgainCardClicked(val teaId: String, val vesselId: String) : HomeIntent
     data class BrewAgain(val intent: BrewAgainIntent) : HomeIntent

@@ -8,6 +8,8 @@
     <string name="open_menu">Open menu</string>
     <string name="close_menu">Close menu</string>
     <string name="log_session">Log Session</string>
+    <string name="add_tea">Add tea</string>
+    <string name="add_vessel">Add vessel</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

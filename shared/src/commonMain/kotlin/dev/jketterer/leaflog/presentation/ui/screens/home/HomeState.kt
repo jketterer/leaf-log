@@ -31,8 +31,6 @@ data class HomeState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val isEmpty: Boolean = true,
-    // FAB menu state
-    val isFabExpanded: Boolean = false,
     val showDurationSheet: Boolean = false,
     val sessionPendingDelete: String? = null,
     // In-progress session conflict dialog

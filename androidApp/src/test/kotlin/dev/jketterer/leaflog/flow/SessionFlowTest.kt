@@ -31,7 +31,6 @@ import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.review_how_was_steep_n
 import leaf_log.shared.generated.resources.review_finish_session
 import leaf_log.shared.generated.resources.review_done
-import leaf_log.shared.generated.resources.select_tea
 import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.begin_session
@@ -82,6 +81,9 @@ import org.junit.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
+import leaf_log.shared.generated.resources.log_tea_choose_title
+import leaf_log.shared.generated.resources.change
+import androidx.compose.ui.test.isSelected
 
 /**
  * A finished session read back from History, and changed there: Dragon Well in the Gaiwan
@@ -405,6 +407,42 @@ class SessionFlowTest : FlowTest() {
         click(hasText(label) and hasClickAction())
     }
 
+    @Test
+    fun `Log session opens on the tea picker and a tea brewed before comes in its vessel`() {
+        launch()
+        click(text(Res.string.open_menu))
+        click(text(Res.string.log_session))
+        // Under Recent and under All
+        waitFor(row)
+        compose.onAllNodes(row)[0].performClick()
+
+        waitFor(isSelected() and hasText("Gaiwan"))
+        waitFor(text(Res.string.last_time))
+    }
+
+    @Test
+    fun `a vessel that came with the tea follows a change of tea but one tapped stays`() {
+        runBlocking { koin.get<CreateTeaUseCase>()(name = "Sencha", teaTypeId = "green").getOrThrow() }
+        launch()
+        click(text(Res.string.open_menu))
+        click(text(Res.string.log_session))
+        waitFor(row)
+        compose.onAllNodes(row)[0].performClick()
+        waitFor(isSelected() and hasText("Gaiwan"))
+
+        click(text(Res.string.change))
+        click("Sencha")
+        // Never brewed, among several vessels: the choice is left open
+        waitFor(text(Res.string.log_tea_choose_title))
+
+        click("Teapot")
+        click(text(Res.string.change))
+        waitFor(row)
+        compose.onAllNodes(row)[0].performClick()
+        waitUntilGone("Sencha")
+        waitFor(isSelected() and hasText("Teapot"))
+    }
+
     private fun Steep.confirmedTagIds() = tags.filter { it.confirmed }.map { it.tagId }.toSet()
 
     private fun openSession(index: Int = 0) {
@@ -418,7 +456,6 @@ class SessionFlowTest : FlowTest() {
     private fun startLogging() {
         click(text(Res.string.open_menu))
         click(text(Res.string.log_session))
-        click(text(Res.string.select_tea))
         // Under Recent and under All
         waitFor(row)
         compose.onAllNodes(row)[0].performClick()

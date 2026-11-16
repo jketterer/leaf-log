@@ -172,7 +172,8 @@ fun TeaPickerSheet(
     val hideThen: (() -> Unit) -> Unit = { action ->
         scope.launch { sheetState.hide() }.invokeOnCompletion { action() }
     }
-    var addingTea by rememberSaveable { mutableStateOf(false) }
+    // With no teas to pick from, adding one is the only way forward
+    var addingTea by rememberSaveable { mutableStateOf(teas.isEmpty()) }
     // The field owns its text and cursor. Round-tripping the query through a caller lets a stale
     // value land between keystrokes, which on iOS throws the cursor back to the start
     val queryState = rememberTextFieldState()

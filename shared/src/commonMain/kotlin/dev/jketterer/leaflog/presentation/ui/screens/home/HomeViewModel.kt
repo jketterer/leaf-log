@@ -184,15 +184,13 @@ class HomeViewModel(
             is HomeIntent.Resumed ->
                 _state.update { it.copy(today = currentDate(), greeting = generateGreeting()) }
 
-            is HomeIntent.LogTeaClicked -> {
-                _state.update { it.copy(isFabExpanded = false) }
+            is HomeIntent.LogTeaClicked ->
                 inProgressDelegate.checkAndProceed(HomePendingAction.NavigateToLogTea)
-            }
 
-            is HomeIntent.QuickTimerClicked -> {
-                _state.update { it.copy(isFabExpanded = false) }
+            is HomeIntent.QuickTimerClicked ->
                 inProgressDelegate.checkAndProceed(HomePendingAction.ShowDurationSheet)
-            }
+
+            is HomeIntent.AddTeaClicked -> _navEvents.trySend(HomeNavEvent.NavigateToAddTea)
 
             is HomeIntent.StartQuickTimer -> {
                 _state.update { it.copy(showDurationSheet = false) }
@@ -212,10 +210,6 @@ class HomeViewModel(
 
             is HomeIntent.DismissDurationSheet -> {
                 _state.update { it.copy(showDurationSheet = false) }
-            }
-
-            is HomeIntent.FabExpandedChanged -> {
-                _state.update { it.copy(isFabExpanded = intent.expanded) }
             }
 
             is HomeIntent.UndoFinishClicked -> undoFinish(intent.sessionId)
@@ -490,6 +484,7 @@ sealed interface HomeNavEvent {
     data object NavigateToCollection : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
     data class NavigateToLogTea(val route: NavRoute.LogTeaRoute) : HomeNavEvent
+    data object NavigateToAddTea : HomeNavEvent
 
     data object NavigateToSettings : HomeNavEvent
     data class CompleteSession(val sessionId: String) : HomeNavEvent

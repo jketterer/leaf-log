@@ -28,22 +28,17 @@ pass's export (Photos and backup) serves; import it after the fresh-install run.
 
 ## Android
 
-### 0. Upgrade from 0.7.0
-
-Once, for the release after 0.7.0. On 0.7.0, save a method from a gongfu session, start a session
-on it and leave it after steep 1. Tag a steep with a custom tag.
-
-- [ ] Install over it. The session is still in progress, and steep 2 suggests the method's time.
-- [ ] Rename the custom tag in Collection → Flavors. The tagged session shows the new name.
-
 ### 1. Fresh install
 
 Uninstall first; system in dark mode; an API 34+ device.
 
 - [ ] Cold start: the splash is dark, not white.
 - [ ] The notification prompt appears, and denying it crashes nothing.
+- [ ] Start a steep. The Timer shows the notifications-off bell; tap it → Open settings lands on
+      Leaf Log's own notification page, not App info. Turn them on → back: the bell is gone
+      without leaving the Timer.
 
-Allow notifications in system settings, then import the reference backup.
+Discard that session from its review, then import the reference backup.
 
 ### 2. One steep, watched
 
@@ -112,7 +107,9 @@ Uninstall first; system in dark mode; region set to Australia.
       until a chip is tapped, after which the choice holds.
 - [ ] The notification prompt appears. Deny → start a timer: it runs, nothing crashes, and the
       in-app timer completes.
-- [ ] Grant from system settings → the next timer posts notifications without a restart.
+- [ ] While a timer runs, the Timer shows the notifications-off bell; tap it → Open settings lands
+      on Leaf Log's notifications in Settings. Turn them on → back: the bell is gone without
+      leaving the Timer, and the next timer posts notifications without a restart.
 
 Import the reference backup.
 

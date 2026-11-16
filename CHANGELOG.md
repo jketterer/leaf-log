@@ -16,6 +16,47 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-14
+
+A redesigned timer, and tasting tags that remember what you tasted last time.
+
+### Added
+
+- A new session's first steep starts with the tags you kept last time you brewed that tea, or on
+  the brew you're repeating, waiting for a tap to keep them again.
+- The timer shows when notifications are off. Tapping it explains why your tea may finish without
+  a sound and opens the system settings to turn them back on.
+- Add tea in Home's + menu, beside Log session and Quick timer.
+
+### Changed
+
+- Log session opens straight on the tea picker, or on adding a tea when you have none yet.
+- Picking a tea in Log Tea picks the vessel you last brewed it in, unless you've picked one
+  yourself.
+- Home's + menu is redesigned. Collection's + opens the same kind of menu, to add a tea or a vessel
+  from any tab.
+- The timer screen is redesigned: it shows the steep's full length beside the time left, and says
+  when it's paused or done. The buttons that add or take off time follow the steep, ±5s and ±10s
+  for a steep under a minute, ±30s and ±1m for a longer one, in a single row.
+- The brew parameters sheet is redesigned, and closing it with changes you haven't saved asks
+  before throwing them away.
+- Water type is picked from a row of chips everywhere: Log Tea, Edit Session, Session Review and
+  Settings.
+- Leaf weight in grams takes two decimals.
+- The tea and vessel stay in place at the top as you move from the timer to Steep Complete and
+  Session Review.
+- The Brew again sheet keeps Start Brewing and Adjust at the bottom while the brew scrolls above
+  them.
+
+### Fixed
+
+- The Undo after finishing a session no longer covers Home's + menu: it steps aside while the menu
+  is open and comes back when it closes.
+- Brew again and the session menu on a session no longer ignore a tap made while the session is
+  still loading: they wait for it.
+- Tapping outside a field closes the keyboard on the brew parameters, quick timer and next steep
+  sheets.
+
 ## [0.8.1] - 2026-11-03
 
 ### Fixed

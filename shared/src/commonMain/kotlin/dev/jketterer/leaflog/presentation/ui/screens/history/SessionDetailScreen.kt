@@ -1,9 +1,12 @@
 package dev.jketterer.leaflog.presentation.ui.screens.history
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -153,7 +156,8 @@ private fun SessionDetailContent(
                 }
                 Box {
                     var showMenu by remember { mutableStateOf(false) }
-                    IconButton(onClick = { showMenu = true }) {
+                    // Nothing to edit or delete until the session loads
+                    IconButton(onClick = { showMenu = true }, enabled = state.session != null) {
                         Icon(FeatherIcons.MoreVertical, contentDescription = stringResource(Res.string.more_options))
                     }
                     DropdownMenu(
@@ -193,21 +197,24 @@ private fun SessionDetailContent(
             )
         }
 
-        Surface(shadowElevation = 8.dp) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Button(
-                    onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
-                    modifier = Modifier.weight(1f),
+        // Only once there's a session to brew again: a tap while it loads would have nothing to open
+        AnimatedVisibility(visible = state.session != null, enter = fadeIn(), exit = fadeOut()) {
+            Surface(shadowElevation = 8.dp) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(FeatherIcons.Coffee, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(stringResource(Res.string.brew_again))
+                    Button(
+                        onClick = { onIntent(SessionDetailIntent.BrewAgainClicked) },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(FeatherIcons.Coffee, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(Res.string.brew_again))
+                    }
                 }
             }
         }

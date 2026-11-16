@@ -16,6 +16,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -349,10 +350,12 @@ abstract class FlowTest {
     /** Clicks the one clickable node showing [text], as its text or content description. */
     fun click(text: String) = click(hasClickAction() and (hasText(text) or hasContentDescription(text)))
 
-    /** Clicks the one node matching [matcher], once it's on screen. */
+    /** Clicks the one node matching [matcher], once it's on screen and enabled. */
     fun click(matcher: SemanticsMatcher) {
-        waitFor(matcher)
-        compose.onNode(matcher).performClick()
+        // A disabled control still has a click action, and a click on it is lost
+        val enabled = matcher and isEnabled()
+        waitFor(enabled)
+        compose.onNode(enabled).performClick()
     }
 
     /** Waits for [text] to leave the screen, as after a change that has yet to show. */

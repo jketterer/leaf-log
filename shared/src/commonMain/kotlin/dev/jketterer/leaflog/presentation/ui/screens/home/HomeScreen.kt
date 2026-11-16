@@ -1,10 +1,5 @@
 package dev.jketterer.leaflog.presentation.ui.screens.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +16,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,14 +25,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
@@ -176,8 +166,6 @@ private fun HomeContent(
     onIntent: (HomeIntent) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    var fabExpanded by rememberSaveable { mutableStateOf(false) }
-
     Box(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -339,36 +327,12 @@ private fun HomeContent(
 
         }
 
-        if (fabExpanded) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .clickable { fabExpanded = false },
-            )
-        }
-
         ExpandableFAB(
-            expanded = fabExpanded,
-            onExpandedChange = { fabExpanded = it },
             onLogSessionClick = { onIntent(HomeIntent.LogTeaClicked) },
             onQuickTimerClick = { onIntent(HomeIntent.QuickTimerClicked) },
             onAddTeaClick = { onIntent(HomeIntent.AddTeaClicked) },
-            modifier = Modifier.align(Alignment.BottomEnd),
+            snackbarHostState = snackbarHostState,
         )
-
-        // Out of the menu's way while it's open. Leaving composition stops a snackbar's timeout, so
-        // closing the menu brings Undo back rather than losing it
-        AnimatedVisibility(
-            visible = !fabExpanded,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp),
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            SnackbarHost(hostState = snackbarHostState)
-        }
     }
 
     // Delete session confirmation dialog

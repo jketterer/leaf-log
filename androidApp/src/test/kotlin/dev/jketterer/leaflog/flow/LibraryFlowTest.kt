@@ -26,6 +26,9 @@ import org.junit.Before
 import org.junit.Test
 import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.add_tea
+import leaf_log.shared.generated.resources.collection_tab_flavors
+import leaf_log.shared.generated.resources.collection_empty
+import leaf_log.shared.generated.resources.add_vessel
 
 /** Teas, tea types and vessels, changed where the user keeps them: Dragon Well, never brewed. */
 // The tea and vessel menus and the tea type dialogs don't read strings.xml yet
@@ -46,7 +49,7 @@ class LibraryFlowTest : FlowTest() {
         click("Delete Tea")
         click(inDialog(text(Res.string.delete)))
 
-        waitFor("Add tea")
+        waitFor(text(Res.string.collection_empty))
         waitUntilGone("Dragon Well")
         assertTrue(runBlocking { koin.get<TeaRepository>().getAll() }.none { it.id == teaId })
     }
@@ -112,9 +115,21 @@ class LibraryFlowTest : FlowTest() {
     }
 
     @Test
+    fun `Collection's menu adds a tea from any tab`() {
+        launch()
+        click(text(Res.string.tab_collection))
+        click(text(Res.string.collection_tab_flavors))
+        click(text(Res.string.open_menu))
+        click(text(Res.string.add_tea))
+
+        waitFor("Add Tea")
+    }
+
+    @Test
     fun `a vessel added is listed among the active vessels`() {
         openVessels()
-        click("Add vessel")
+        click(text(Res.string.open_menu))
+        click(text(Res.string.add_vessel))
         type("Name *", "Shiboridashi")
         type(text(Res.string.field_capacity), "250")
         click(text(Res.string.save))

@@ -412,9 +412,7 @@ class SessionFlowTest : FlowTest() {
         launch()
         click(text(Res.string.open_menu))
         click(text(Res.string.log_session))
-        // Under Recent and under All
-        waitFor(row)
-        compose.onAllNodes(row)[0].performClick()
+        pickTea()
 
         waitFor(isSelected() and hasText("Gaiwan"))
         waitFor(text(Res.string.last_time))
@@ -426,8 +424,7 @@ class SessionFlowTest : FlowTest() {
         launch()
         click(text(Res.string.open_menu))
         click(text(Res.string.log_session))
-        waitFor(row)
-        compose.onAllNodes(row)[0].performClick()
+        pickTea()
         waitFor(isSelected() and hasText("Gaiwan"))
 
         click(text(Res.string.change))
@@ -437,8 +434,7 @@ class SessionFlowTest : FlowTest() {
 
         click("Teapot")
         click(text(Res.string.change))
-        waitFor(row)
-        compose.onAllNodes(row)[0].performClick()
+        pickTea()
         waitUntilGone("Sencha")
         waitFor(isSelected() and hasText("Teapot"))
     }
@@ -456,10 +452,16 @@ class SessionFlowTest : FlowTest() {
     private fun startLogging() {
         click(text(Res.string.open_menu))
         click(text(Res.string.log_session))
-        // Under Recent and under All
-        waitFor(row)
-        compose.onAllNodes(row)[0].performClick()
+        pickTea()
         click("Gaiwan")
+    }
+
+    /** Dragon Well from the tea picker, listed under Recent and under All, once the sheet has settled. */
+    private fun pickTea() {
+        waitFor(row)
+        // A tap while the sheet still slides up lands where the row was
+        compose.waitForIdle()
+        compose.onAllNodes(row)[0].performClick()
     }
 
     /** A new steep set up as the best brew, 0:30, rated 4 and finished, leaving its Session Review open. */

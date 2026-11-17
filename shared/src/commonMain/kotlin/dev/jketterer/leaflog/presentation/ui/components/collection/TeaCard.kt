@@ -35,11 +35,14 @@ import compose.icons.feathericons.Heart
 import dev.jketterer.leaflog.presentation.ui.theme.HeartFilled
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Check
+import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.MapPin
 import compose.icons.feathericons.Star
 import dev.jketterer.leaflog.data.local.ImageStorage
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
+import dev.jketterer.leaflog.presentation.ui.components.session.IconValue
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlin.time.Instant
@@ -126,49 +129,56 @@ fun TeaCard(
                             BrewingParamChip(icon = FeatherIcons.Check, text = "Finished")
                         }
                     }
-                    val detailInfo = buildList {
-                        add(teaTypeName)
-                        tea.origin?.let { add(it) }
-                    }
-                    Text(
-                        text = detailInfo.joinToString(" · "),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    val hasBrews = tea.totalSessions > 0
-                    if (hasBrews || tea.averageRating != null) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            if (hasBrews) {
-                                Text(
-                                    text = pluralStringResource(Res.plurals.brew_count, tea.totalSessions, tea.totalSessions),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            tea.averageRating?.let { rating ->
-                                if (hasBrews) {
-                                    Text(
-                                        text = "·",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        if (teaTypeName.isNotBlank()) {
+                            Text(
+                                text = teaTypeName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                            )
+                        }
+                        tea.origin?.let { origin ->
+                            Row(
+                                modifier = Modifier.weight(1f, fill = false),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
                                 Icon(
-                                    imageVector = FeatherIcons.Star,
+                                    imageVector = FeatherIcons.MapPin,
                                     contentDescription = null,
-                                    modifier = Modifier.size(10.dp),
+                                    modifier = Modifier.size(12.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Text(
+                                    text = origin,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                    val hasBrews = tea.totalSessions > 0
+                    if (hasBrews || tea.averageRating != null) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            if (hasBrews) {
+                                IconValue(
+                                    icon = FeatherIcons.Coffee,
+                                    text = pluralStringResource(Res.plurals.brew_count, tea.totalSessions, tea.totalSessions),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                            tea.averageRating?.let { rating ->
+                                IconValue(
+                                    icon = FeatherIcons.Star,
                                     text = formatRating(rating),
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }

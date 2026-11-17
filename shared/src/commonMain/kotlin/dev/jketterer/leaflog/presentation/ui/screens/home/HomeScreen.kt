@@ -308,6 +308,7 @@ private fun HomeContent(
                             SessionCard(
                                 teaName = sessionData.teaName,
                                 tags = sessionData.tags,
+                                teaTypeColorHex = sessionData.teaTypeColorHex,
                                 session = sessionData.session,
                                 onSessionClick = {
                                     onIntent(HomeIntent.SessionClicked(sessionData.session.session.id))
@@ -431,6 +432,7 @@ private fun HomeScreenPreview() {
                 recentSessionsWithTea = listOf(
                     SessionWithTeaData(
                         teaName = "Test Tea",
+                        teaTypeColorHex = "#FF9800",
                         session = previewSession(
                             id = "1",
                             status = SessionStatus.COMPLETED,
@@ -439,6 +441,7 @@ private fun HomeScreenPreview() {
                     ),
                     SessionWithTeaData(
                         teaName = "Dragonwell",
+                        teaTypeColorHex = "#4CAF50",
                         session = previewSession(
                             id = "2",
                             ratings = listOf(4f, 3.5f),

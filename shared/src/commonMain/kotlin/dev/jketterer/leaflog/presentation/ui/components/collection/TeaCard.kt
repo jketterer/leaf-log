@@ -82,7 +82,7 @@ fun TeaCard(
             if (accentColor != null) {
                 Box(
                     modifier = Modifier
-                        .width(6.dp)
+                        .width(4.dp)
                         .fillMaxHeight()
                         .background(accentColor),
                 )

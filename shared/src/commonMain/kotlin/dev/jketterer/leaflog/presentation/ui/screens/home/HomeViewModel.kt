@@ -8,6 +8,8 @@ import dev.jketterer.leaflog.domain.models.InProgressSessionDetails
 import dev.jketterer.leaflog.domain.models.SessionStatus
 import dev.jketterer.leaflog.domain.models.SessionWithSteeps
 import dev.jketterer.leaflog.domain.models.TastingTag
+import dev.jketterer.leaflog.domain.models.Tea
+import dev.jketterer.leaflog.domain.models.TeaType
 import dev.jketterer.leaflog.domain.models.TimerState
 import dev.jketterer.leaflog.domain.models.TimerStatus
 import dev.jketterer.leaflog.domain.models.dominantTags
@@ -340,15 +342,17 @@ class HomeViewModel(
         combine(
             teaSessionRepository.getRecentSessionsFlow(limit = 5),
             teaRepository.getAllFlow(),
+            teaTypeRepository.getAllFlow(),
             tastingTagRepository.getAllFlow(),
-            ::Triple,
+            ::RecentSessionsData,
         )
             .catch { e ->
                 messages.failure(e, Res.string.couldnt_load)
                 loaded.value = true
             }
-            .collect { (sessions, teas, vocabulary) ->
+            .collect { (sessions, teas, types, vocabulary) ->
                 val teaMap = teas.associateBy { it.id }
+                val typeMap = types.associateBy { it.id }
 
                 _state.update {
                     it.copy(
@@ -358,6 +362,7 @@ class HomeViewModel(
                                 session = session,
                                 teaName = tea?.name ?: "Unknown Tea",
                                 tags = session.dominantTags(vocabulary),
+                                teaTypeColorHex = tea?.teaTypeId?.let { typeMap[it]?.colorHex },
                             )
                         },
                         isEmpty = sessions.isEmpty(),
@@ -473,6 +478,14 @@ data class SessionWithTeaData(
     val session: SessionWithSteeps,
     val teaName: String = "Unknown Tea",
     val tags: List<TastingTag> = emptyList(),
+    val teaTypeColorHex: String? = null,
+)
+
+private data class RecentSessionsData(
+    val sessions: List<SessionWithSteeps>,
+    val teas: List<Tea>,
+    val types: List<TeaType>,
+    val vocabulary: List<TastingTag>,
 )
 
 sealed interface HomeNavEvent {

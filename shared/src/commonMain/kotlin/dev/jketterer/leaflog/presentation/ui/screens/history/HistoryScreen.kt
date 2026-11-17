@@ -318,6 +318,7 @@ private fun HistoryContent(
                                         onIntent(HistoryIntent.DeleteSession(sessionId))
                                     },
                                     timeOnly = group.period is HistoryPeriod.Day,
+                                    teaTypeColorHex = tea?.teaTypeId?.let { state.teaTypes[it]?.colorHex },
                                     modifier = Modifier.animateItem(),
                                 )
                             }

@@ -24,8 +24,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -55,6 +58,7 @@ import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
 import dev.jketterer.leaflog.presentation.ui.components.common.formatWeight
 import dev.jketterer.leaflog.presentation.ui.components.common.previewSession
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
+import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.brew_again
 import leaf_log.shared.generated.resources.brewing_steep_n
@@ -73,7 +77,8 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * One session, for reading back: the tea and how it rated, when and how long, each steep's rating,
  * its dominant [tags] and note, then steep 1's parameters, quieter. [timeOnly] shows when it started
- * as a clock time, for a list already headed by its day.
+ * as a clock time, for a list already headed by its day. [teaTypeColorHex] edges the card in its tea
+ * type's color, for a list that mixes teas.
  */
 @Composable
 fun SessionCard(
@@ -85,8 +90,10 @@ fun SessionCard(
     onDeleteClick: (() -> Unit)? = null,
     onBrewAgainClick: (() -> Unit)? = null,
     timeOnly: Boolean = false,
+    teaTypeColorHex: String? = null,
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val accentColor = teaTypeColorHex?.let { teaTypeColor(it) }?.takeIf { it.isSpecified }
     val first = session.steeps.first()
     val last = session.steeps.last()
     val inProgress = session.session.status == SessionStatus.IN_PROGRESS
@@ -100,7 +107,23 @@ fun SessionCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .then(
+                    if (accentColor != null) {
+                        // Drawn rather than laid out, so the stripe spans the card without an
+                        // intrinsic measure of its flowing rows
+                        Modifier.drawBehind {
+                            drawRect(accentColor, size = Size(ACCENT_WIDTH.toPx(), size.height))
+                        }
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(
+                    start = if (accentColor != null) ACCENT_WIDTH + 12.dp else 16.dp,
+                    top = 16.dp,
+                    end = 16.dp,
+                    bottom = 16.dp,
+                ),
             verticalAlignment = Alignment.Top,
         ) {
             Column(
@@ -134,7 +157,10 @@ fun SessionCard(
                         text = if (timeOnly) {
                             TimeFormatter.formatClockTime(session.startedAt)
                         } else {
-                            TimeFormatter.formatRelativeTimestamp(session.startedAt, currentInstant())
+                            TimeFormatter.formatRelativeTimestamp(
+                                session.startedAt,
+                                currentInstant()
+                            )
                         },
                         style = metaStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -146,7 +172,11 @@ fun SessionCard(
                         ) {
                             SteepRatingDots(session.steeps.map { it.rating })
                             Text(
-                                text = pluralStringResource(Res.plurals.steep_count, steepCount, steepCount),
+                                text = pluralStringResource(
+                                    Res.plurals.steep_count,
+                                    steepCount,
+                                    steepCount
+                                ),
                                 style = metaStyle,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -176,14 +206,23 @@ fun SessionCard(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     session.session.teaQuantityGrams?.let {
-                        IconValue(vectorResource(Res.drawable.ic_tea_leaf), formatWeight(it), paramStyle)
+                        IconValue(
+                            vectorResource(Res.drawable.ic_tea_leaf),
+                            formatWeight(it),
+                            paramStyle
+                        )
                     }
-                    IconValue(FeatherIcons.Thermometer, formatTemperature(first.temperatureCelsius), paramStyle)
+                    IconValue(
+                        FeatherIcons.Thermometer,
+                        formatTemperature(first.temperatureCelsius),
+                        paramStyle
+                    )
                     IconValue(FeatherIcons.Droplet, formatVolume(first.waterQuantityMl), paramStyle)
                 }
             }
 
-            val canBrewAgain = session.session.status == SessionStatus.COMPLETED && onBrewAgainClick != null
+            val canBrewAgain =
+                session.session.status == SessionStatus.COMPLETED && onBrewAgainClick != null
             // Without an action there's no menu
             if (canBrewAgain || onDeleteClick != null) Box(
                 modifier = Modifier.align(Alignment.CenterVertically)
@@ -222,6 +261,8 @@ fun SessionCard(
         }
     }
 }
+
+private val ACCENT_WIDTH = 4.dp
 
 /** A value beside the icon that says what it is, quiet, in [style]. */
 @Composable
@@ -269,7 +310,11 @@ private fun SteepRatingDots(ratings: List<Float?>) {
             Canvas(Modifier.size(10.dp)) {
                 val stroke = 1.dp.toPx()
                 if (rating == null) {
-                    drawCircle(color, radius = (size.minDimension - stroke) / 2, style = Stroke(stroke))
+                    drawCircle(
+                        color,
+                        radius = (size.minDimension - stroke) / 2,
+                        style = Stroke(stroke)
+                    )
                 } else {
                     drawCircle(color.copy(alpha = 0.24f))
                     clipRect(top = size.height * (1 - rating / 5f)) { drawCircle(color) }
@@ -280,7 +325,13 @@ private fun SteepRatingDots(ratings: List<Float?>) {
 }
 
 private val previewTags = listOf("floral", "honey", "returning_sweetness").map { key ->
-    TastingTag(id = key, key = key, name = null, isCustom = false, displayOrder = CURATED_TAG_KEYS.indexOf(key))
+    TastingTag(
+        id = key,
+        key = key,
+        name = null,
+        isCustom = false,
+        displayOrder = CURATED_TAG_KEYS.indexOf(key)
+    )
 }
 
 @Preview
@@ -301,6 +352,7 @@ private fun SessionCardCompletedPreview() {
             onSessionClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
+            teaTypeColorHex = "#4CAF50",
         )
     }
 }
@@ -323,6 +375,7 @@ private fun SessionCardGongfuPreview() {
             onSessionClick = {},
             onDeleteClick = {},
             onBrewAgainClick = {},
+            teaTypeColorHex = "#8D4E2A",
         )
     }
 }

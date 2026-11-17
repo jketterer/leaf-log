@@ -1,6 +1,19 @@
 package dev.jketterer.leaflog.flow
 
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.isSelected
+import androidx.compose.ui.test.performClick
+import dev.jketterer.leaflog.domain.models.SessionStatus
+import dev.jketterer.leaflog.domain.models.WaterType
+import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
+import leaf_log.shared.generated.resources.archive
+import leaf_log.shared.generated.resources.brew_with_vessel
+import leaf_log.shared.generated.resources.edit_vessel
+import leaf_log.shared.generated.resources.more_options
+import leaf_log.shared.generated.resources.unarchive
+import leaf_log.shared.generated.resources.undo
+import kotlin.time.Duration.Companion.seconds
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -31,7 +44,7 @@ import leaf_log.shared.generated.resources.collection_empty
 import leaf_log.shared.generated.resources.add_vessel
 
 /** Teas, tea types and vessels, changed where the user keeps them: Dragon Well, never brewed. */
-// The tea and vessel menus and the tea type dialogs don't read strings.xml yet
+// The tea menu and the tea type dialogs don't read strings.xml yet
 class LibraryFlowTest : FlowTest() {
 
     private lateinit var teaId: String
@@ -141,28 +154,79 @@ class LibraryFlowTest : FlowTest() {
     }
 
     @Test
-    fun `a vessel archived after confirming shows only under All`() {
-        openVessels()
-        click("Gaiwan")
-        waitFor("120 mL")
-        click("More options")
-        click("Archive")
-        click(inDialog("Archive"))
+    fun `a vessel archived from its page stays open and shows only under All`() {
+        openGaiwan()
+        click(text(Res.string.more_options))
+        click(text(Res.string.archive))
 
+        waitFor(text(Res.string.unarchive))
+        assertTrue(vessels().single { it.name == "Gaiwan" }.isArchived)
+        systemBack()
         waitFor("Active")
         waitUntilGone("Gaiwan")
         click("All")
         waitFor("Gaiwan")
-        assertTrue(vessels().single { it.name == "Gaiwan" }.isArchived)
+    }
+
+    @Test
+    fun `Undo on the archived snackbar brings the vessel back`() {
+        openGaiwan()
+        click(text(Res.string.more_options))
+        click(text(Res.string.archive))
+        click(text(Res.string.undo))
+
+        waitFor(text(Res.string.brew_with_vessel))
+        assertFalse(vessels().single { it.name == "Gaiwan" }.isArchived)
+    }
+
+    @Test
+    fun `a vessel edited from its page shows the change on return`() {
+        openGaiwan()
+        click(text(Res.string.edit_vessel))
+        type("Name *", "Old Gaiwan")
+        click(text(Res.string.save))
+
+        waitFor(text(Res.string.brew_with_vessel))
+        waitFor(hasText("Old Gaiwan") and !hasSetTextAction())
+    }
+
+    @Test
+    fun `brew with this vessel opens Log Tea on the tea picker with the vessel chosen`() {
+        openGaiwan()
+        click(text(Res.string.brew_with_vessel))
+
+        val row = hasText("Dragon Well") and hasClickAction()
+        waitFor(row)
+        compose.onAllNodes(row)[0].performClick()
+        waitFor(isSelected() and hasText("Gaiwan"))
+    }
+
+    @Test
+    fun `a tea brewed in a vessel is listed on its page and opens the tea`() {
+        runBlocking {
+            val gaiwan = vessels().single { it.name == "Gaiwan" }
+            koin.get<StartSessionUseCase>()(
+                teaId = teaId,
+                vesselId = gaiwan.id,
+                waterType = WaterType.FILTERED,
+                brewingTime = 30.seconds,
+                temperatureCelsius = 80.0,
+                waterQuantityMl = 100.0,
+                status = SessionStatus.COMPLETED,
+            ).getOrThrow()
+        }
+        openGaiwan()
+
+        waitFor(hasText("1 session, last", substring = true))
+        click("Dragon Well")
+        waitFor("Brew This Tea")
     }
 
     @Test
     fun `a vessel no session used is deleted after confirming`() {
-        openVessels()
-        click("Gaiwan")
-        waitFor("120 mL")
-        click("More options")
-        click("Delete")
+        openGaiwan()
+        click(text(Res.string.more_options))
+        click(text(Res.string.delete))
         click(inDialog(text(Res.string.delete)))
 
         waitFor("Active")
@@ -183,6 +247,12 @@ class LibraryFlowTest : FlowTest() {
         click(text(Res.string.settings_title))
         compose.onNode(hasText("Tea Types")).performScrollTo()
         click("Tea Types")
+    }
+
+    private fun openGaiwan() {
+        openVessels()
+        click("Gaiwan")
+        waitFor("120 mL")
     }
 
     private fun openVessels() {

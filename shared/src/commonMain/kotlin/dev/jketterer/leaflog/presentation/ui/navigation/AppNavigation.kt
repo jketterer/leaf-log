@@ -317,6 +317,9 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
                 onNavigateToEditVessel = { vesselId ->
                     navigator.navigate(NavRoute.EditVesselRoute(vesselId))
                 },
+                onNavigateToTea = { teaId -> navigator.navigate(NavRoute.TeaDetailsRoute(teaId)) },
+                onNavigateToLogTea = { navigator.navigate(it) },
+                onNavigateToTimer = { sessionId -> navigator.openOnHome(NavRoute.TimerRoute(sessionId)) },
             )
         }
 

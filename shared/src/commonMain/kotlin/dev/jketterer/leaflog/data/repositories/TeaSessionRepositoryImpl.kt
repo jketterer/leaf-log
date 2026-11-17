@@ -39,6 +39,9 @@ class TeaSessionRepositoryImpl(
     override suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps> =
         teaSessionDao.getSessionsByVessel(vesselId).toAggregates()
 
+    override fun getSessionsByVesselFlow(vesselId: String): Flow<List<SessionWithSteeps>> =
+        teaSessionDao.getSessionsByVesselFlow(vesselId).map { it.toAggregates() }
+
     override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> =
         teaSessionDao.getInProgressSessionsFlow().map { it.toAggregates() }
 

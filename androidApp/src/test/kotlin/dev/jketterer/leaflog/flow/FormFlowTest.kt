@@ -18,6 +18,7 @@ import dev.jketterer.leaflog.domain.usecases.session.StartSessionUseCase
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.edit_vessel
 import leaf_log.shared.generated.resources.cancel
 import leaf_log.shared.generated.resources.discard
 import leaf_log.shared.generated.resources.discard_changes_title
@@ -82,15 +83,11 @@ class FormFlowTest : FlowTest() {
         click("Vessels")
         click("Gaiwan")
         assertGuarded(
-            // Edit does nothing until the vessel loads
-            open = {
-                waitFor("120 mL")
-                click("Edit")
-            },
+            open = { click(text(Res.string.edit_vessel)) },
             field = "Name *",
             was = "Gaiwan",
             typed = "Porcelain gaiwan",
-            behind = "Edit",
+            behind = text(Res.string.edit_vessel),
         )
     }
 

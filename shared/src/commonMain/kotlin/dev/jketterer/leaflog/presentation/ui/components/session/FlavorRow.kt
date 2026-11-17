@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,7 +33,7 @@ import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * A flavor and the share of sessions it turned up in, as words and a tertiary bar: one line of a
+ * A flavor and the share of sessions it turned up in, as words and a bar in [color]: one line of a
  * flavor profile. [isCustom] marks a tag the user made.
  */
 @Composable
@@ -42,6 +43,7 @@ fun FlavorRow(
     outOf: Int,
     modifier: Modifier = Modifier,
     isCustom: Boolean = false,
+    color: Color = MaterialTheme.colorScheme.tertiary,
     onClick: (() -> Unit)? = null,
 ) {
     Column(
@@ -86,7 +88,7 @@ fun FlavorRow(
                 Modifier
                     .fillMaxWidth(count.toFloat() / outOf)
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.tertiary, CircleShape),
+                    .background(color, CircleShape),
             )
         }
     }

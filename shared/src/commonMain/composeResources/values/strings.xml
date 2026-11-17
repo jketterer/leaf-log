@@ -107,10 +107,6 @@
         <item quantity="one">You have %1$d incomplete session</item>
         <item quantity="other">You have %1$d incomplete sessions</item>
     </plurals>
-    <plurals name="vessel_in_use">
-        <item quantity="one">%1$d session is using this vessel. Use Archive to hide it from selection instead.</item>
-        <item quantity="other">%1$d sessions are using this vessel. Use Archive to hide it from selection instead.</item>
-    </plurals>
     <plurals name="tea_type_in_use">
         <item quantity="one">&quot;%2$s&quot; is used by %1$d tea. Choose a type to move it to, and &quot;%2$s&quot; will be deleted.</item>
         <item quantity="other">&quot;%2$s&quot; is used by %1$d teas. Choose a type to move them to, and &quot;%2$s&quot; will be deleted.</item>
@@ -282,6 +278,32 @@
     <string name="clear_search">Clear search</string>
     <string name="tea_not_found">Tea not found</string>
     <string name="vessel_not_found">Vessel not found</string>
+    <!-- Vessel detail -->
+    <string name="vessel_nothing_brewed">Nothing brewed in this yet</string>
+    <string name="vessel_nothing_brewed_body">Brew with it and the teas it holds gather here.</string>
+    <!-- The one tea type a vessel is kept for: "Mostly Sheng" -->
+    <string name="vessel_mostly">Mostly %1$s</string>
+    <!-- The one tea type every session in a vessel was: "Sheng only" -->
+    <string name="vessel_only">%1$s only</string>
+    <string name="vessel_archived_label">Archived</string>
+    <string name="vessel_last_brewed">Last brewed</string>
+    <string name="header_seasoned_with">Seasoned with</string>
+    <string name="header_teas">Teas</string>
+    <!-- A tea's sessions in the vessel and when it was last brewed there: "14 sessions, last Jan 15" -->
+    <plurals name="vessel_tea_sessions">
+        <item quantity="one">%1$d session, last %2$s</item>
+        <item quantity="other">%1$d sessions, last %2$s</item>
+    </plurals>
+    <plurals name="show_all_teas">
+        <item quantity="one">Show all %1$d tea</item>
+        <item quantity="other">Show all %1$d teas</item>
+    </plurals>
+    <string name="brew_with_vessel">Brew with this vessel</string>
+    <string name="edit_vessel">Edit vessel</string>
+    <string name="archive">Archive</string>
+    <string name="unarchive">Unarchive</string>
+    <string name="vessel_archived">Vessel archived</string>
+    <string name="vessel_photo">Vessel photo</string>
     <string name="no_tea_types">No tea types yet</string>
     <string name="no_teas_found">No teas found</string>
     <string name="collection_empty">No teas in your collection yet</string>

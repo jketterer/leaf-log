@@ -197,6 +197,22 @@ interface TeaSessionDao {
             SELECT id FROM tea_session
             WHERE deletedAt IS NULL
             AND parentSessionId IS NULL
+            AND vesselId = :vesselId
+        )
+        ORDER BY timestamp DESC
+    """
+    )
+    @Transaction
+    fun getSessionsByVesselFlow(vesselId: String): Flow<List<SteepRow>>
+
+    @Query(
+        """
+        SELECT * FROM tea_session
+        WHERE deletedAt IS NULL
+        AND COALESCE(parentSessionId, id) IN (
+            SELECT id FROM tea_session
+            WHERE deletedAt IS NULL
+            AND parentSessionId IS NULL
             AND status = 'IN_PROGRESS'
         )
         ORDER BY timestamp DESC

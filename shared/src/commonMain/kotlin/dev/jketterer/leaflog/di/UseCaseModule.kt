@@ -33,6 +33,7 @@ import dev.jketterer.leaflog.domain.usecases.timer.ResumeTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.timer.StartTimerUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.CreateBrewingVesselUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.DeleteBrewingVesselUseCase
+import dev.jketterer.leaflog.domain.usecases.vessel.SetVesselArchivedUseCase
 import dev.jketterer.leaflog.domain.usecases.vessel.UpdateBrewingVesselUseCase
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
@@ -84,5 +85,6 @@ val useCaseModule = module {
     // Brewing vessel use cases
     factoryOf(::CreateBrewingVesselUseCase)
     factoryOf(::DeleteBrewingVesselUseCase)
+    factoryOf(::SetVesselArchivedUseCase)
     factoryOf(::UpdateBrewingVesselUseCase)
 }

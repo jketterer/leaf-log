@@ -1,391 +1,430 @@
 package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import compose.icons.FeatherIcons
 import compose.icons.feathericons.Archive
 import compose.icons.feathericons.ArrowLeft
-import compose.icons.feathericons.Edit
+import compose.icons.feathericons.Coffee
+import compose.icons.feathericons.Edit2
 import compose.icons.feathericons.MoreVertical
 import compose.icons.feathericons.Trash2
 import dev.jketterer.leaflog.data.local.ImageStorage
+import dev.jketterer.leaflog.domain.models.TeaTypeDistribution
+import dev.jketterer.leaflog.domain.models.VesselProfile
 import dev.jketterer.leaflog.presentation.ui.components.common.ConfirmDestructiveDialog
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
-import dev.jketterer.leaflog.presentation.ui.components.common.formatVolume
-import dev.jketterer.leaflog.presentation.ui.components.vessel.VesselIconHelper
+import dev.jketterer.leaflog.presentation.ui.components.common.FullscreenImageViewer
+import dev.jketterer.leaflog.presentation.ui.components.common.PreviewInstant
+import dev.jketterer.leaflog.presentation.ui.components.session.SessionInProgressDialog
 import dev.jketterer.leaflog.presentation.ui.messages.UiMessageEffect
 import dev.jketterer.leaflog.presentation.ui.navigation.NavRoute
+import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
+import leaf_log.shared.generated.resources.archive
+import leaf_log.shared.generated.resources.brew_with_vessel
 import leaf_log.shared.generated.resources.delete
 import leaf_log.shared.generated.resources.delete_vessel_text
 import leaf_log.shared.generated.resources.delete_vessel_title
+import leaf_log.shared.generated.resources.edit_vessel
+import leaf_log.shared.generated.resources.more_options
 import leaf_log.shared.generated.resources.navigate_up
-import leaf_log.shared.generated.resources.vessel_in_use
+import leaf_log.shared.generated.resources.unarchive
 import leaf_log.shared.generated.resources.vessel_not_found
-import org.jetbrains.compose.resources.pluralStringResource
+import leaf_log.shared.generated.resources.vessel_nothing_brewed
+import leaf_log.shared.generated.resources.vessel_nothing_brewed_body
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.time.Duration.Companion.days
 
 @Composable
 fun VesselDetailScreen(
     route: NavRoute.VesselDetailRoute,
     onNavigateBack: () -> Unit,
     onNavigateToEditVessel: (String) -> Unit,
+    onNavigateToTea: (teaId: String) -> Unit,
+    onNavigateToLogTea: (NavRoute.LogTeaRoute) -> Unit,
+    onNavigateToTimer: (sessionId: String) -> Unit,
     viewModel: VesselDetailViewModel = koinViewModel { parametersOf(route) },
-    imageStorage: ImageStorage = koinInject(),
 ) {
     val state by viewModel.state.collectAsState()
-    val navigationEvent by viewModel.navigationEvent.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    UiMessageEffect(viewModel.messages, snackbarHostState)
-    var showMenu by remember { mutableStateOf(false) }
+    UiMessageEffect(viewModel.messages, snackbarHostState, onAction = viewModel::onIntent)
 
-    // Handle navigation events
-    LaunchedEffect(navigationEvent) {
-        when (val event = navigationEvent) {
-            is VesselDetailNavigationEvent.NavigateToEditVessel -> {
-                onNavigateToEditVessel(event.vesselId)
-                viewModel.onNavigationEventHandled()
+    LaunchedEffect(Unit) {
+        viewModel.navEvents.collect { event ->
+            when (event) {
+                is VesselDetailNavigationEvent.NavigateBack -> onNavigateBack()
+                is VesselDetailNavigationEvent.NavigateToEditVessel -> onNavigateToEditVessel(event.vesselId)
+                is VesselDetailNavigationEvent.NavigateToTea -> onNavigateToTea(event.teaId)
+                is VesselDetailNavigationEvent.NavigateToLogTea -> onNavigateToLogTea(event.route)
+                is VesselDetailNavigationEvent.NavigateToTimer -> onNavigateToTimer(event.sessionId)
             }
-
-            is VesselDetailNavigationEvent.NavigateBack,
-            is VesselDetailNavigationEvent.NavigateBackAfterDelete -> {
-                onNavigateBack()
-                viewModel.onNavigationEventHandled()
-            }
-
-            null -> {}
         }
     }
 
-    // Archive confirmation dialog
-    if (state.showArchiveConfirmation) {
-        AlertDialog(
-            onDismissRequest = { viewModel.onIntent(VesselDetailIntent.CancelArchive) },
-            title = { Text("Archive Vessel?") },
-            text = {
-                Text(
-                    "\"${state.vessel?.name}\" will be hidden from vessel selection but will " +
-                            "still appear in your session history. You can unarchive it later."
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { viewModel.onIntent(VesselDetailIntent.ConfirmArchive) }) {
-                    Text("Archive")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.onIntent(VesselDetailIntent.CancelArchive) }) {
-                    Text("Cancel")
-                }
-            },
-        )
+    VesselDetailContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        snackbarHostState = snackbarHostState,
+    )
+}
+
+@Composable
+private fun VesselDetailContent(
+    state: VesselDetailState,
+    onIntent: (VesselDetailIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    // Null in a preview, where no Koin application is running and resolving would throw.
+    imageStorage: ImageStorage? = if (LocalInspectionMode.current) null else koinInject(),
+) {
+    val vessel = state.vessel
+    val photo = vessel?.imagePath?.let { path -> imageStorage?.resolveImagePath(path) }
+    var showPhoto by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val inset = Modifier.padding(horizontal = 16.dp)
+    // The heading follows the photo when there is one
+    val headingIndex = if (photo != null) 1 else 0
+    val headingVisible by remember(headingIndex) {
+        derivedStateOf { listState.firstVisibleItemIndex <= headingIndex }
     }
 
-    // Delete confirmation dialog
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    AnimatedVisibility(visible = vessel != null && !headingVisible, enter = fadeIn(), exit = fadeOut()) {
+                        Text(vessel?.name.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { onIntent(VesselDetailIntent.BackClicked) }) {
+                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
+                    }
+                },
+                actions = {
+                    if (vessel != null) {
+                        IconButton(onClick = { onIntent(VesselDetailIntent.EditVesselClicked) }) {
+                            Icon(FeatherIcons.Edit2, contentDescription = stringResource(Res.string.edit_vessel))
+                        }
+                        VesselMenu(isArchived = vessel.isArchived, canDelete = !state.hasSessions, onIntent = onIntent)
+                    }
+                },
+            )
+        },
+        bottomBar = {
+            if (vessel != null) {
+                VesselBottomBar(isArchived = vessel.isArchived, onIntent = onIntent)
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
+        when {
+            state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+
+            vessel == null -> EmptyState(
+                message = stringResource(Res.string.vessel_not_found),
+                modifier = Modifier.padding(padding),
+            )
+
+            // No side padding: the tea rows run edge to edge, as in the tea picker, and the rest inset
+            else -> LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = padding.calculateTopPadding() + 8.dp,
+                    bottom = padding.calculateBottomPadding() + 16.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                if (photo != null) {
+                    item(key = "photo") { VesselPhoto(photo, onClick = { showPhoto = true }, modifier = inset) }
+                }
+                item(key = "heading") {
+                    VesselHeading(
+                        vessel = vessel,
+                        dominantType = state.profile?.dominantType,
+                        onlyType = state.profile?.onlyType == true,
+                        showIcon = photo == null,
+                        modifier = inset,
+                    )
+                }
+                val profile = state.profile
+                if (profile == null) {
+                    item(key = "nothing_brewed") {
+                        EmptyState(
+                            message = stringResource(Res.string.vessel_nothing_brewed),
+                            body = stringResource(Res.string.vessel_nothing_brewed_body),
+                            // EmptyState fills and scrolls, so it needs a bounded height in a list
+                            modifier = inset.heightIn(max = 320.dp),
+                        )
+                    }
+                    return@LazyColumn
+                }
+                item(key = "stats") {
+                    VesselStats(
+                        sessions = profile.sessions,
+                        teas = profile.teas.size,
+                        lastBrewed = profile.lastBrewed,
+                        modifier = inset,
+                    )
+                }
+                if (profile.types.size > 1) {
+                    item(key = "seasoned_with") {
+                        SeasonedWithSection(profile.types, profile.sessions, modifier = Modifier.animateItem().then(inset))
+                    }
+                }
+                item(key = "teas") {
+                    VesselTeasSection(
+                        teas = profile.teas,
+                        onTeaClick = { onIntent(VesselDetailIntent.TeaClicked(it)) },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
+            }
+        }
+    }
+
+    if (showPhoto && photo != null) {
+        FullscreenImageViewer(photos = listOf(photo), initialIndex = 0, onDismiss = { showPhoto = false })
+    }
+
+    VesselDetailDialogs(state, onIntent)
+}
+
+@Composable
+private fun VesselMenu(
+    isArchived: Boolean,
+    canDelete: Boolean,
+    onIntent: (VesselDetailIntent) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(FeatherIcons.MoreVertical, contentDescription = stringResource(Res.string.more_options))
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (!isArchived) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.archive)) },
+                    leadingIcon = { Icon(FeatherIcons.Archive, contentDescription = null) },
+                    onClick = {
+                        expanded = false
+                        onIntent(VesselDetailIntent.ArchiveVesselClicked)
+                    },
+                )
+            }
+            // A vessel a session used is archived instead
+            if (canDelete) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.delete)) },
+                    leadingIcon = { Icon(FeatherIcons.Trash2, contentDescription = null) },
+                    onClick = {
+                        expanded = false
+                        onIntent(VesselDetailIntent.DeleteVesselClicked)
+                    },
+                )
+            }
+        }
+    }
+}
+
+/** Brew with it, or bring it back when it's archived. */
+@Composable
+private fun VesselBottomBar(
+    isArchived: Boolean,
+    onIntent: (VesselDetailIntent) -> Unit,
+) {
+    Surface(tonalElevation = 3.dp) {
+        AnimatedContent(
+            targetState = isArchived,
+            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+        ) { archived ->
+            if (archived) {
+                FilledTonalButton(
+                    onClick = { onIntent(VesselDetailIntent.UnarchiveVesselClicked) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(FeatherIcons.Archive, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(Res.string.unarchive))
+                }
+            } else {
+                Button(
+                    onClick = { onIntent(VesselDetailIntent.BrewWithVesselClicked) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(FeatherIcons.Coffee, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(Res.string.brew_with_vessel))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun VesselDetailDialogs(
+    state: VesselDetailState,
+    onIntent: (VesselDetailIntent) -> Unit,
+) {
     if (state.showDeleteConfirmation) {
         ConfirmDestructiveDialog(
             title = stringResource(Res.string.delete_vessel_title),
             text = stringResource(Res.string.delete_vessel_text, state.vessel?.name.orEmpty()),
             confirmLabel = stringResource(Res.string.delete),
-            onConfirm = { viewModel.onIntent(VesselDetailIntent.ConfirmDelete) },
-            onDismiss = { viewModel.onIntent(VesselDetailIntent.CancelDelete) },
+            onConfirm = { onIntent(VesselDetailIntent.ConfirmDelete) },
+            onDismiss = { onIntent(VesselDetailIntent.CancelDelete) },
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            TopAppBar(
-                title = { Text(state.vessel?.name ?: "Vessel Details") },
-                navigationIcon = {
-                    IconButton(onClick = { viewModel.onIntent(VesselDetailIntent.BackClicked) }) {
-                        Icon(FeatherIcons.ArrowLeft, contentDescription = stringResource(Res.string.navigate_up))
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.onIntent(VesselDetailIntent.EditVesselClicked) }) {
-                        Icon(FeatherIcons.Edit, contentDescription = "Edit")
-                    }
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(FeatherIcons.MoreVertical, contentDescription = "More options")
-                    }
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false },
-                    ) {
-                        if (state.isArchived) {
-                            DropdownMenuItem(
-                                text = { Text("Unarchive") },
-                                onClick = {
-                                    showMenu = false
-                                    viewModel.onIntent(VesselDetailIntent.UnarchiveVesselClicked)
-                                },
-                                leadingIcon = {
-                                    Icon(FeatherIcons.Archive, contentDescription = null)
-                                },
-                            )
-                        } else {
-                            DropdownMenuItem(
-                                text = { Text("Archive") },
-                                onClick = {
-                                    showMenu = false
-                                    viewModel.onIntent(VesselDetailIntent.ArchiveVesselClicked)
-                                },
-                                leadingIcon = {
-                                    Icon(FeatherIcons.Archive, contentDescription = null)
-                                },
-                                enabled = state.canArchive,
-                            )
-                        }
-                        DropdownMenuItem(
-                            text = { Text("Delete") },
-                            onClick = {
-                                showMenu = false
-                                viewModel.onIntent(VesselDetailIntent.DeleteVesselClicked)
-                            },
-                            leadingIcon = {
-                                Icon(FeatherIcons.Trash2, contentDescription = null)
-                            },
-                            enabled = state.canDelete,
-                        )
-                    }
-                }
-            )
-            Box(modifier = Modifier.fillMaxSize()) {
-                when {
-                    state.isLoading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-
-                    state.vessel == null -> {
-                        EmptyState(message = stringResource(Res.string.vessel_not_found))
-                    }
-
-                    else -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            // Archived status banner
-                            if (state.isArchived) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    ),
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                                    ) {
-                                        Text(
-                                            text = "This vessel is archived",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        )
-                                        Text(
-                                            text = "It won't appear in vessel selection when logging sessions.",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Vessel info card
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(24.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    // Large image or icon
-                                    if (state.vessel!!.imagePath != null) {
-                                        AsyncImage(
-                                            model = imageStorage.resolveImagePath(state.vessel!!.imagePath!!),
-                                            contentDescription = null,
-                                            modifier = Modifier
-                                                .size(80.dp)
-                                                .clip(MaterialTheme.shapes.medium),
-                                            contentScale = ContentScale.Crop,
-                                        )
-                                    } else {
-                                        Icon(
-                                            painter = VesselIconHelper.getIconForVessel(state.vessel!!.iconName),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(80.dp),
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-
-                                    // Vessel name
-                                    Text(
-                                        text = state.vessel!!.name,
-                                        style = MaterialTheme.typography.headlineMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-
-                                }
-                            }
-
-                            // Vessel details card
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Text(
-                                        text = "Details",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    // Capacity
-                                    if (state.vessel!!.capacityMl != null) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(
-                                                text = "Capacity",
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-                                            Text(
-                                                text = formatVolume(state.vessel!!.capacityMl!!.toDouble()),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                        }
-                                    }
-
-                                    // Sessions count
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = "Sessions",
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                        Text(
-                                            text = state.sessionCount.toString(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Delete constraints info (if applicable)
-                            if (!state.canDelete) {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer
-                                    )
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Text(
-                                            text = "Cannot Delete",
-                                            style = MaterialTheme.typography.titleSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onErrorContainer
-                                        )
-
-                                        val reason = when {
-                                            state.totalVesselCount <= 1 ->
-                                                "This is the last vessel. At least one vessel must remain."
-
-                                            state.sessionCount > 0 -> pluralStringResource(
-                                                Res.plurals.vessel_in_use,
-                                                state.sessionCount,
-                                                state.sessionCount,
-                                            )
-
-                                            else -> "Unknown reason"
-                                        }
-
-                                        Text(
-                                            text = reason,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onErrorContainer
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter),
+    state.inProgressDialogState?.let { dialogState ->
+        SessionInProgressDialog(
+            teaName = dialogState.teaName,
+            vesselName = dialogState.vesselName,
+            session = dialogState.session,
+            isProcessing = dialogState.isProcessing,
+            onResume = { onIntent(VesselDetailIntent.ResumeInProgress) },
+            onCompleteAndContinue = { onIntent(VesselDetailIntent.CompleteInProgressAndContinue) },
+            onDiscardAndContinue = { onIntent(VesselDetailIntent.DiscardInProgressAndContinue) },
+            onDismiss = { onIntent(VesselDetailIntent.DismissInProgressDialog) },
         )
+    }
+}
+
+private val previewProfile = VesselProfile(
+    sessions = 48,
+    lastBrewed = PreviewInstant - 3.days,
+    types = listOf(
+        TeaTypeDistribution(previewSheng, 40, 83f),
+        TeaTypeDistribution(previewShou, 8, 17f),
+    ),
+    dominantType = previewSheng,
+    onlyType = false,
+    teas = listOf(
+        previewVesselTea("2019 Yiwu Gushu", previewSheng, 14, 3),
+        previewVesselTea("2008 Menghai 7542", previewShou, 8, 14),
+        previewVesselTea("Bulang Old Tree", previewSheng, 9, 21),
+        previewVesselTea("Jingmai Spring", previewSheng, 7, 30),
+        previewVesselTea("Mengku Bingdao", previewSheng, 6, 45),
+        previewVesselTea("Old Lao Ban Zhang", previewSheng, 4, 90, finished = true),
+    ),
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselDetailPreview() {
+    LeafLogTheme {
+        VesselDetailContent(
+            state = VesselDetailState(vessel = previewVessel(), profile = previewProfile, hasSessions = true, isLoading = false),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselDetailMixedUsePreview() {
+    LeafLogTheme {
+        VesselDetailContent(
+            state = VesselDetailState(
+                vessel = previewVessel(),
+                profile = previewProfile.copy(
+                    sessions = 2,
+                    types = listOf(TeaTypeDistribution(previewSheng, 1, 50f), TeaTypeDistribution(previewShou, 1, 50f)),
+                    dominantType = null,
+                    onlyType = false,
+                    teas = listOf(
+                        previewVesselTea("2019 Yiwu Gushu", previewSheng, 1, 3),
+                        previewVesselTea("2008 Menghai 7542", previewShou, 1, 14),
+                    ),
+                ),
+                hasSessions = true,
+                isLoading = false,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselDetailArchivedPreview() {
+    LeafLogTheme {
+        VesselDetailContent(
+            state = VesselDetailState(
+                vessel = previewVessel(isArchived = true),
+                profile = previewProfile,
+                hasSessions = true,
+                isLoading = false,
+            ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselDetailNeverUsedPreview() {
+    LeafLogTheme {
+        VesselDetailContent(
+            state = VesselDetailState(vessel = previewVessel(), isLoading = false),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun VesselDetailLoadingPreview() {
+    LeafLogTheme {
+        VesselDetailContent(state = VesselDetailState(), onIntent = {})
     }
 }

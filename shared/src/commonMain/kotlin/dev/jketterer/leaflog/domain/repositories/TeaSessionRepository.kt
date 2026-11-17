@@ -15,6 +15,7 @@ interface TeaSessionRepository {
     suspend fun getSessionsByTea(teaId: String): List<SessionWithSteeps>
     fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>>
     suspend fun getSessionsByVessel(vesselId: String): List<SessionWithSteeps>
+    fun getSessionsByVesselFlow(vesselId: String): Flow<List<SessionWithSteeps>>
     fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>>
 
     /** The session [steepId] belongs to. Steep 1's id is the session's own. */

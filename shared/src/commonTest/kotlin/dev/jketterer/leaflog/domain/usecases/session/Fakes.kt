@@ -82,7 +82,9 @@ class FakeBrewingVesselRepository(vessels: List<BrewingVessel> = emptyList()) :
     override fun getAllFlow(): Flow<List<BrewingVessel>> = TODO("unused by these tests")
     override suspend fun getAll(): List<BrewingVessel> = TODO("unused by these tests")
     override fun getByIdFlow(id: String): Flow<BrewingVessel?> = TODO("unused by these tests")
-    override suspend fun upsert(vessel: BrewingVessel) = TODO("unused by these tests")
+    override suspend fun upsert(vessel: BrewingVessel) {
+        vessels[vessel.id] = vessel
+    }
     override suspend fun initializeDefaults() = TODO("unused by these tests")
     override fun getActiveFlow(): Flow<List<BrewingVessel>> = TODO("unused by these tests")
     override suspend fun getActive(): List<BrewingVessel> =
@@ -134,6 +136,7 @@ class FakeTeaSessionRepository(
     override fun getRecentSessionsFlow(limit: Int): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getSessionFlow(id: String): Flow<SessionWithSteeps?> = TODO("unused by these tests")
     override fun getSessionsByTeaFlow(teaId: String): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
+    override fun getSessionsByVesselFlow(vesselId: String): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getInProgressSessionsFlow(): Flow<List<SessionWithSteeps>> = TODO("unused by these tests")
     override fun getSessionIdsFlow(): Flow<List<String>> = TODO("unused by these tests")
 

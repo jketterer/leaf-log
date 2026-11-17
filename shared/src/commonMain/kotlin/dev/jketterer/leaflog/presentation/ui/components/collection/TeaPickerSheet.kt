@@ -1,19 +1,14 @@
 package dev.jketterer.leaflog.presentation.ui.components.collection
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -42,7 +37,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,7 +46,6 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import compose.icons.FeatherIcons
-import compose.icons.feathericons.Check
 import compose.icons.feathericons.Plus
 import compose.icons.feathericons.Search
 import compose.icons.feathericons.Star
@@ -60,14 +53,12 @@ import compose.icons.feathericons.X
 import dev.jketterer.leaflog.domain.models.SyncStatus
 import dev.jketterer.leaflog.domain.models.Tea
 import dev.jketterer.leaflog.domain.models.TeaType
-import dev.jketterer.leaflog.presentation.ui.components.common.BrewingParamChip
 import dev.jketterer.leaflog.presentation.ui.components.common.EmptyState
 import dev.jketterer.leaflog.presentation.ui.components.common.SectionHeader
 import dev.jketterer.leaflog.presentation.ui.components.common.SheetPreviewContainer
 import dev.jketterer.leaflog.presentation.ui.components.common.formatRating
 import dev.jketterer.leaflog.presentation.ui.search.matchesQuery
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
-import dev.jketterer.leaflog.presentation.ui.theme.teaTypeColor
 import kotlinx.coroutines.launch
 import leaf_log.shared.generated.resources.Res
 import leaf_log.shared.generated.resources.brew_count
@@ -293,12 +284,14 @@ fun TeaPickerContent(
                         }
                         items(section.teas, key = { "${section.title}_${it.id}" }) { tea ->
                             val teaType = teaTypesById[tea.teaTypeId]
-                            TeaPickerRow(
+                            TeaRow(
                                 tea = tea,
-                                teaTypeName = teaType?.name ?: "",
                                 teaTypeColorHex = teaType?.colorHex,
-                                isSelected = tea.id == selectedTeaId,
+                                supportingText = listOfNotNull(teaType?.name?.takeIf { it.isNotBlank() }, tea.origin)
+                                    .joinToString(" · "),
                                 onClick = { onTeaSelected(tea) },
+                                isSelected = tea.id == selectedTeaId,
+                                trailingContent = { TeaPickerStats(tea) },
                             )
                         }
                     }
@@ -388,115 +381,37 @@ private fun TeaPickerSectionHeader(
     }
 }
 
+/** The tea's rating and how often it was brewed, at the end of its row. */
 @Composable
-private fun TeaPickerRow(
-    tea: Tea,
-    teaTypeName: String,
-    teaTypeColorHex: String?,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val accentColor = teaTypeColorHex?.let { teaTypeColor(it) }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .clickable(onClick = onClick)
-            .background(
-                if (isSelected) {
-                    MaterialTheme.colorScheme.surfaceVariant
-                } else {
-                    Color.Transparent
-                },
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (accentColor != null) {
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .background(accentColor),
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
-        ) {
+private fun TeaPickerStats(tea: Tea) {
+    Column(horizontalAlignment = Alignment.End) {
+        tea.averageRating?.let { rating ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(
-                    text = tea.name,
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
+                Icon(
+                    imageVector = FeatherIcons.Star,
+                    contentDescription = null,
+                    modifier = Modifier.size(10.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (tea.finishedAt != null) {
-                    BrewingParamChip(icon = FeatherIcons.Check, text = "Finished")
-                }
-            }
-            val details = listOfNotNull(teaTypeName.takeIf { it.isNotBlank() }, tea.origin)
-            if (details.isNotEmpty()) {
                 Text(
-                    text = details.joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-
-        Column(
-            modifier = Modifier.padding(end = 16.dp),
-            horizontalAlignment = Alignment.End,
-        ) {
-            tea.averageRating?.let { rating ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Icon(
-                        imageVector = FeatherIcons.Star,
-                        contentDescription = null,
-                        modifier = Modifier.size(10.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = formatRating(rating),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            if (tea.totalSessions > 0) {
-                Text(
-                    text = pluralStringResource(
-                        Res.plurals.brew_count,
-                        tea.totalSessions,
-                        tea.totalSessions
-                    ),
+                    text = formatRating(rating),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
-
-        if (isSelected) {
-            Icon(
-                imageVector = FeatherIcons.Check,
-                contentDescription = "Selected",
-                modifier = Modifier
-                    .padding(end = 16.dp)
-                    .size(18.dp),
-                tint = MaterialTheme.colorScheme.primary,
+        if (tea.totalSessions > 0) {
+            Text(
+                text = pluralStringResource(
+                    Res.plurals.brew_count,
+                    tea.totalSessions,
+                    tea.totalSessions
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

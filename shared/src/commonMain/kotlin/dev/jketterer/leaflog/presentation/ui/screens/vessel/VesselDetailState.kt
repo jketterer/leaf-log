@@ -1,22 +1,16 @@
 package dev.jketterer.leaflog.presentation.ui.screens.vessel
 
 import dev.jketterer.leaflog.domain.models.BrewingVessel
+import dev.jketterer.leaflog.domain.models.VesselProfile
+import dev.jketterer.leaflog.presentation.ui.viewmodel.InProgressDialogState
 
 data class VesselDetailState(
     val vessel: BrewingVessel? = null,
-    val sessionCount: Int = 0,
-    val totalVesselCount: Int = 0,
-    val activeVesselCount: Int = 0,
-    val isLoading: Boolean = false,
+    /** Null until a session brewed in it is completed. */
+    val profile: VesselProfile? = null,
+    /** Any session, completed or not, keeps it from being deleted. */
+    val hasSessions: Boolean = false,
+    val isLoading: Boolean = true,
     val showDeleteConfirmation: Boolean = false,
-    val showArchiveConfirmation: Boolean = false,
-) {
-    val canDelete: Boolean
-        get() = totalVesselCount > 1 && sessionCount == 0
-
-    val canArchive: Boolean
-        get() = activeVesselCount > 1
-
-    val isArchived: Boolean
-        get() = vessel?.isArchived == true
-}
+    val inProgressDialogState: InProgressDialogState? = null,
+)

@@ -16,24 +16,19 @@ import dev.jketterer.leaflog.presentation.ui.components.common.FabMenu
 import dev.jketterer.leaflog.presentation.ui.components.common.FabMenuItem
 import dev.jketterer.leaflog.presentation.ui.theme.LeafLogTheme
 import leaf_log.shared.generated.resources.Res
-import leaf_log.shared.generated.resources.add_tea
-import leaf_log.shared.generated.resources.ic_tea_leaf
 import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.quick_timer
-import org.jetbrains.compose.resources.vectorResource
 
-/** Home's + menu: start a session, run a bare timer, or add a tea to the collection. */
+/** Home's + menu: start a session or run a bare timer. */
 @Composable
 fun BoxScope.ExpandableFAB(
     onLogSessionClick: () -> Unit,
     onQuickTimerClick: () -> Unit,
-    onAddTeaClick: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     FabMenu(
         items = listOf(
-            FabMenuItem(Res.string.add_tea, vectorResource(Res.drawable.ic_tea_leaf), onAddTeaClick),
             FabMenuItem(Res.string.quick_timer, FeatherIcons.Clock, onQuickTimerClick),
             FabMenuItem(Res.string.log_session, FeatherIcons.Edit, onLogSessionClick),
         ),
@@ -50,7 +45,6 @@ private fun ExpandableFABPreview() {
             ExpandableFAB(
                 onLogSessionClick = {},
                 onQuickTimerClick = {},
-                onAddTeaClick = {},
                 snackbarHostState = remember { SnackbarHostState() },
             )
         }

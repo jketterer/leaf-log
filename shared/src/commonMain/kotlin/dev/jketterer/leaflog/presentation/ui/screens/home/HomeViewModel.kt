@@ -192,8 +192,6 @@ class HomeViewModel(
             is HomeIntent.QuickTimerClicked ->
                 inProgressDelegate.checkAndProceed(HomePendingAction.ShowDurationSheet)
 
-            is HomeIntent.AddTeaClicked -> _navEvents.trySend(HomeNavEvent.NavigateToAddTea)
-
             is HomeIntent.StartQuickTimer -> {
                 _state.update { it.copy(showDurationSheet = false) }
                 // Running already: the tea is poured by the time a timer is remembered. The Timer
@@ -497,7 +495,6 @@ sealed interface HomeNavEvent {
     data object NavigateToCollection : HomeNavEvent
     data class NavigateToSession(val sessionId: String) : HomeNavEvent
     data class NavigateToLogTea(val route: NavRoute.LogTeaRoute) : HomeNavEvent
-    data object NavigateToAddTea : HomeNavEvent
 
     data object NavigateToSettings : HomeNavEvent
     data class CompleteSession(val sessionId: String) : HomeNavEvent

@@ -147,7 +147,6 @@ private fun appEntryProvider(navigator: Navigator) = remember(navigator) {
             HomeScreen(
                 route = route,
                 onNavigateToLogTea = { navigator.navigate(it) },
-                onNavigateToAddTea = { navigator.navigate(NavRoute.EditTeaRoute()) },
                 onNavigateToSession = { sessionId ->
                     navigator.navigate(NavRoute.SessionDetailsRoute(sessionId))
                 },

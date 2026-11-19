@@ -68,18 +68,6 @@ class LibraryFlowTest : FlowTest() {
     }
 
     @Test
-    fun `Add tea from Home's menu opens the tea form and back returns Home`() {
-        launch()
-        click(text(Res.string.open_menu))
-        click(text(Res.string.add_tea))
-        waitFor("Add Tea")
-
-        systemBack()
-        waitFor(text(Res.string.settings_title))
-        assertAbsent("Add Tea")
-    }
-
-    @Test
     fun `brew this tea opens Log Tea with the tea chosen`() {
         openTea()
         click("Brew This Tea")

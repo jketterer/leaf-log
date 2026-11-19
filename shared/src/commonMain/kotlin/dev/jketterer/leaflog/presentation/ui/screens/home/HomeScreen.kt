@@ -82,7 +82,6 @@ private val SECTION_SPACING = 16.dp
 fun HomeScreen(
     route: NavRoute.HomeRoute,
     onNavigateToLogTea: (NavRoute.LogTeaRoute) -> Unit,
-    onNavigateToAddTea: () -> Unit,
     onNavigateToSession: (String) -> Unit,
     onNavigateToHistory: (filterDateStart: String?, filterDateEnd: String?) -> Unit,
     onNavigateToCollection: () -> Unit,
@@ -105,10 +104,6 @@ fun HomeScreen(
             when (event) {
                 is HomeNavEvent.NavigateToLogTea -> {
                     onNavigateToLogTea(event.route)
-                }
-
-                is HomeNavEvent.NavigateToAddTea -> {
-                    onNavigateToAddTea()
                 }
 
                 is HomeNavEvent.NavigateToSession -> {
@@ -331,7 +326,6 @@ private fun HomeContent(
         ExpandableFAB(
             onLogSessionClick = { onIntent(HomeIntent.LogTeaClicked) },
             onQuickTimerClick = { onIntent(HomeIntent.QuickTimerClicked) },
-            onAddTeaClick = { onIntent(HomeIntent.AddTeaClicked) },
             snackbarHostState = snackbarHostState,
         )
     }

@@ -48,7 +48,7 @@ import leaf_log.shared.generated.resources.log_session
 import leaf_log.shared.generated.resources.open_menu
 import leaf_log.shared.generated.resources.field_tea_name_required
 import leaf_log.shared.generated.resources.close_menu
-import leaf_log.shared.generated.resources.add_tea
+import leaf_log.shared.generated.resources.quick_timer
 
 class BrewLoopFlowTest : FlowTest() {
 
@@ -107,7 +107,7 @@ class BrewLoopFlowTest : FlowTest() {
         waitFor(text(Res.string.undo))
 
         click(text(Res.string.open_menu))
-        waitFor(text(Res.string.add_tea))
+        waitFor(text(Res.string.quick_timer))
         waitUntilGone(text(Res.string.undo))
 
         click(text(Res.string.close_menu))

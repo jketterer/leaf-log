@@ -16,6 +16,28 @@ Build numbers are automatic: Xcode Cloud on iOS, a UTC timestamp on Android.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-19
+
+A vessel page that shows what you brew in it.
+
+### Added
+
+- Session cards on Home and History are edged in their tea type's color, as tea cards are.
+
+### Changed
+
+- A vessel's page is redesigned. It shows how many sessions and teas it has brewed and when it was
+  last used, the tea types it's seasoned with, and each tea brewed in it with its sessions there,
+  each opening that tea. A vessel kept for one type says so: "Mostly Sheng", or "Sheng only".
+- Brew with this vessel, on a vessel's page, starts logging a session with that vessel picked.
+- Archiving a vessel no longer asks first: it archives right away, with an Undo.
+- Tea cards show the origin beside a pin and the brew count beside a cup, in place of dots between
+  them.
+
+### Removed
+
+- Add tea is gone from Home's + menu. Collection's + still adds a tea.
+
 ## [0.9.0] - 2026-11-14
 
 A redesigned timer, and tasting tags that remember what you tasted last time.
